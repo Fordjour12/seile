@@ -1,0 +1,3 @@
+{
+  "extends": "@seile/config/tsconfig.base.json"
+}
