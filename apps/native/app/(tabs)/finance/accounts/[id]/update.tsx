@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     gap: UI_PRESETS.spacing.md,
-    paddingTop: UI_PRESETS.spacing.section,
+    paddingTop: UI_PRESETS.spacing["4xl"],
   },
   title: {
     ...Typography.titleLG,
