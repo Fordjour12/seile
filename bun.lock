@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "seile",
@@ -41,6 +40,7 @@
         "expo-dev-client": "~55.0.10",
         "expo-font": "~55.0.4",
         "expo-haptics": "~55.0.8",
+        "expo-image": "~55.0.5",
         "expo-image-picker": "~55.0.10",
         "expo-linear-gradient": "~55.0.8",
         "expo-linking": "~55.0.7",
@@ -54,6 +54,7 @@
         "expo-status-bar": "~55.0.4",
         "expo-system-ui": "~55.0.9",
         "expo-web-browser": "~55.0.9",
+        "iconoir-react-native": "^7.11.0",
         "react": "19.2.0",
         "react-dom": "19.2.0",
         "react-native": "0.83.2",
@@ -983,6 +984,8 @@
     "https-proxy-agent": ["https-proxy-agent@7.0.6", "", { "dependencies": { "agent-base": "^7.1.2", "debug": "4" } }, "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="],
 
     "hyphenate-style-name": ["hyphenate-style-name@1.1.0", "", {}, "sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw=="],
+
+    "iconoir-react-native": ["iconoir-react-native@7.11.0", "", { "peerDependencies": { "react": "18", "react-native": ">=0.73.0", "react-native-svg": "^15.8.0" } }, "sha512-e7y0lJvvo1POP1ZdSBDheRHD5j59YZ1vApNNW9CQSyWqhc41QYlswd6//KjUglSIV12kgzQnLJ1Fuvd/SvIPlw=="],
 
     "ignore": ["ignore@5.3.2", "", {}, "sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g=="],
 
