@@ -161,6 +161,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: UI_PRESETS.spacing.screen,
     paddingBottom: UI_PRESETS.spacing.section,
     gap: UI_PRESETS.spacing.xl,
+    paddingTop: UI_PRESETS.spacing.screen
   },
   summaryCard: {
     gap: UI_PRESETS.spacing.sm,
