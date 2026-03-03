@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireSignedRequest } from "./lib/auth";
 import { resolveSystemUserId } from "./lib/security";
@@ -19,12 +20,15 @@ import {
 const MAX_PAGE_SIZE = 50;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_ACCOUNT_COUNT = 50;
+const ACTIVE_STATUS = "active";
+const ARCHIVED_STATUS = "archived";
 
 export const createAccount = mutation({
   args: {
     name: accountNameValidator,
     type: accountTypeValidator,
     currency: currencyValidator,
+    openingBalance: v.optional(v.number()),
     note: v.optional(v.string()),
     auth: authPayloadValidator,
   },
@@ -42,13 +46,13 @@ export const createAccount = mutation({
       userId,
       name: normalizeAccountName(args.name),
       type: args.type,
+      status: ACTIVE_STATUS,
       currency: normalizeCurrency(args.currency),
-      balance: 0,
-      isArchived: false,
+      balance: args.openingBalance ?? 0,
       note: normalizeOptionalNote(args.note),
       createdAt: now,
       updatedAt: now,
-    });
+    } as any);
 
     const account = await ctx.db.get(accountId);
     if (!account) {
@@ -71,10 +75,13 @@ export const updateAccount = mutation({
       throw new ConvexError("Validation: no updatable fields provided");
     }
 
-    await ctx.db.patch(account._id, {
-      ...patch,
-      updatedAt: Date.now(),
-    });
+    await ctx.db.patch(
+      account._id,
+      {
+        ...patch,
+        updatedAt: Date.now(),
+      } as any
+    );
 
     const updatedAccount = await ctx.db.get(account._id);
     if (!updatedAccount) {
@@ -96,9 +103,9 @@ export const deleteAccount = mutation({
     const userId = resolveSystemUserId();
     const account = await requireOwnedAccount(ctx, args.accountId, userId);
     await ctx.db.patch(account._id, {
-      isArchived: true,
+      status: ARCHIVED_STATUS,
       updatedAt: Date.now(),
-    });
+    } as any);
 
     return true;
   },
@@ -119,11 +126,9 @@ export const listAccounts = query({
 
     const accountQuery = args.includeArchived
       ? ctx.db.query("accounts").withIndex("by_userId", (queryByUser) => queryByUser.eq("userId", userId))
-      : ctx.db
-          .query("accounts")
-          .withIndex("by_userId_and_isArchived", (queryByArchive) =>
-            queryByArchive.eq("userId", userId).eq("isArchived", false)
-          );
+      : (ctx.db.query("accounts") as any).withIndex("by_userId_and_status", (queryByStatus: any) =>
+          queryByStatus.eq("userId", userId).eq("status", ACTIVE_STATUS)
+        );
 
     return accountQuery.order("desc").paginate({
       cursor,
@@ -144,7 +149,7 @@ export const getAccountById = query({
 });
 
 async function requireOwnedAccount(
-  ctx: { db: { get: (id: Id<"accounts">) => Promise<Doc<"accounts"> | null> } },
+  ctx: MutationCtx | QueryCtx,
   accountId: Id<"accounts">,
   expectedUserId: string
 ): Promise<Doc<"accounts">> {
@@ -156,16 +161,7 @@ async function requireOwnedAccount(
 }
 
 async function countUserAccounts(
-  ctx: {
-    db: {
-      query: (table: "accounts") => {
-        withIndex: (
-          indexName: "by_userId",
-          cb: (query: { eq: (field: "userId", value: string) => unknown }) => unknown
-        ) => { collect: () => Promise<Doc<"accounts">[]> };
-      };
-    };
-  },
+  ctx: MutationCtx,
   userId: string
 ): Promise<number> {
   const accounts = await ctx.db
@@ -180,15 +176,30 @@ function buildAccountPatch(
   args: Pick<
     {
       name?: string;
-      type?: "cash" | "bank" | "investment" | "credit";
+      type?: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
       currency?: string;
-      isArchived?: boolean;
+      balance?: number;
+      status?: "active" | "archived" | "closed";
       note?: string;
     },
-    "name" | "type" | "currency" | "isArchived" | "note"
+    "name" | "type" | "currency" | "balance" | "status" | "note"
   >
-): Partial<Pick<Doc<"accounts">, "name" | "type" | "currency" | "isArchived" | "note">> {
-  const patch: Partial<Pick<Doc<"accounts">, "name" | "type" | "currency" | "isArchived" | "note">> = {};
+): Partial<{
+  name: string;
+  type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
+  currency: string;
+  balance: number;
+  status: "active" | "archived" | "closed";
+  note: string | undefined;
+}> {
+  const patch: Partial<{
+    name: string;
+    type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
+    currency: string;
+    balance: number;
+    status: "active" | "archived" | "closed";
+    note: string | undefined;
+  }> = {};
 
   if (args.name !== undefined) {
     patch.name = normalizeAccountName(args.name);
@@ -199,8 +210,11 @@ function buildAccountPatch(
   if (args.currency !== undefined) {
     patch.currency = normalizeCurrency(args.currency);
   }
-  if (args.isArchived !== undefined) {
-    patch.isArchived = args.isArchived;
+  if (args.balance !== undefined) {
+    patch.balance = args.balance;
+  }
+  if (args.status !== undefined) {
+    patch.status = args.status;
   }
   if (args.note !== undefined) {
     patch.note = normalizeOptionalNote(args.note);

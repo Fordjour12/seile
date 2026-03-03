@@ -5,6 +5,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   savings: "Savings",
   credit: "Credit",
   cash: "Cash",
+  investment: "Investment",
 };
 
 const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {

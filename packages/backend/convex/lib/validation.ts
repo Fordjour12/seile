@@ -1,18 +1,34 @@
 import { ConvexError } from "convex/values";
 import { v } from "convex/values";
 
-export const ACCOUNT_TYPES = ["cash", "bank", "investment", "credit"] as const;
+export const ACCOUNT_TYPES = [
+  "checking",
+  "savings",
+  "cash",
+  "credit",
+  "investment",
+  "bank",
+] as const;
+export const ACCOUNT_STATUSES = ["active", "archived", "closed"] as const;
 export const MAX_ACCOUNT_NAME_LENGTH = 80;
 export const MAX_NOTE_LENGTH = 300;
 
 export const accountNameValidator = v.string();
 export const accountTypeValidator = v.union(
+  v.literal("checking"),
+  v.literal("savings"),
   v.literal("cash"),
-  v.literal("bank"),
+  v.literal("credit"),
   v.literal("investment"),
-  v.literal("credit")
+  v.literal("bank")
+);
+export const accountStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("archived"),
+  v.literal("closed")
 );
 export const currencyValidator = v.string();
+export const balanceValidator = v.number();
 
 export const authPayloadValidator = v.object({
   ts: v.number(),
@@ -32,7 +48,8 @@ export const updateAccountValidator = v.object({
   name: v.optional(accountNameValidator),
   type: v.optional(accountTypeValidator),
   currency: v.optional(currencyValidator),
-  isArchived: v.optional(v.boolean()),
+  balance: v.optional(balanceValidator),
+  status: v.optional(accountStatusValidator),
   note: v.optional(v.string()),
   auth: authPayloadValidator,
 });
