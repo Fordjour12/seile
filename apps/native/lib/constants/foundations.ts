@@ -1,3 +1,5 @@
+import { BASE_UNIT, RADIUS_SCALE, SIZE_SCALE, SPACING_ALIASES, SPACE_SCALE, scale } from "./tokens";
+
 export const SHARED_TOKENS = {
   fontSans: "Figtree, ui-sans-serif, sans-serif, system-ui",
   fontSerif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
@@ -142,40 +144,21 @@ export const DARK_ELEVATION_TOKENS = {
 } as const;
 
 export const UI_PRESETS = {
-  radius: {
-    sm: 10,
-    md: 12,
-    lg: 14,
-    xl: 16,
-    xxl: 18,
-    full: 999,
-    modal: 24,
-  },
-  spacing: {
-    xs: 4,
-    sm: 6,
-    md: 8,
-    lg: 10,
-    xl: 12,
-    xxl: 14,
-    xxxl: 16,
-    section: 20,
-    screen: 24,
-    "4xl": 38,
-  },
+  radius: RADIUS_SCALE,
+  spacing: SPACING_ALIASES,
   size: {
-    controlSm: 40,
-    controlMd: 44,
-    controlLg: 48,
-    input: 46,
-    listItem: 56,
-    listItemCompact: 44,
-    iconTouch: 40,
-    avatarXs: 24,
-    avatarSm: 32,
-    avatarMd: 40,
-    avatarLg: 56,
-    avatarXl: 72,
+    controlSm: SIZE_SCALE.control.sm,
+    controlMd: SIZE_SCALE.control.md,
+    controlLg: SIZE_SCALE.control.lg,
+    input: SIZE_SCALE.input,
+    listItem: SIZE_SCALE.listItem,
+    listItemCompact: SIZE_SCALE.listItemCompact,
+    iconTouch: SIZE_SCALE.iconTouch,
+    avatarXs: SIZE_SCALE.avatar.xs,
+    avatarSm: SIZE_SCALE.avatar.sm,
+    avatarMd: SIZE_SCALE.avatar.md,
+    avatarLg: SIZE_SCALE.avatar.lg,
+    avatarXl: SIZE_SCALE.avatar.xl,
   },
   opacity: {
     disabled: 0.45,
@@ -183,4 +166,10 @@ export const UI_PRESETS = {
     pressed: 0.84,
     backdrop: 0.6,
   },
+} as const;
+
+export const FOUNDATION_SCALE = {
+  baseUnit: BASE_UNIT,
+  scale,
+  space: SPACE_SCALE,
 } as const;

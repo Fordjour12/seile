@@ -1,4 +1,5 @@
 import { SHARED_TOKENS, UI_PRESETS } from "./foundations";
+import { scale } from "./tokens";
 import { Typography } from "./typography";
 
 export const ButtonTokens = {
@@ -30,9 +31,9 @@ export const CardTokens = {
   cozy: { padding: UI_PRESETS.spacing.xxxl, gap: UI_PRESETS.spacing.xl, borderRadius: UI_PRESETS.radius.xl },
   spacious: { padding: UI_PRESETS.spacing.section, gap: UI_PRESETS.spacing.xxl, borderRadius: UI_PRESETS.radius.xxl },
   media: {
-    sm: { height: 120, borderRadius: UI_PRESETS.radius.sm },
-    md: { height: 160, borderRadius: UI_PRESETS.radius.md },
-    lg: { height: 220, borderRadius: UI_PRESETS.radius.lg },
+    sm: { height: scale(30), borderRadius: UI_PRESETS.radius.sm },
+    md: { height: scale(40), borderRadius: UI_PRESETS.radius.md },
+    lg: { height: scale(55), borderRadius: UI_PRESETS.radius.lg },
   },
 } as const;
 
@@ -52,16 +53,16 @@ export const ListItemTokens = {
 } as const;
 
 export const BadgeTokens = {
-  base: { borderRadius: UI_PRESETS.radius.full, borderCurve: "continuous" as const, paddingHorizontal: UI_PRESETS.spacing.md, paddingVertical: UI_PRESETS.spacing.xs, minHeight: 20, alignItems: "center" as const, justifyContent: "center" as const },
+  base: { borderRadius: UI_PRESETS.radius.full, borderCurve: "continuous" as const, paddingHorizontal: UI_PRESETS.spacing.md, paddingVertical: UI_PRESETS.spacing.xs, minHeight: scale(5), alignItems: "center" as const, justifyContent: "center" as const },
   solid: { text: Typography.labelSM },
   subtle: { text: Typography.labelSM },
   outline: { borderWidth: 1, text: Typography.labelSM },
-  dot: { size: 8 },
+  dot: { size: scale(2) },
 } as const;
 
 export const ChipTokens = {
-  base: { minHeight: 32, paddingHorizontal: UI_PRESETS.spacing.lg, paddingVertical: UI_PRESETS.spacing.sm, borderRadius: UI_PRESETS.radius.full, borderCurve: "continuous" as const, flexDirection: "row" as const, alignItems: "center" as const, gap: UI_PRESETS.spacing.sm },
-  compact: { minHeight: 28, paddingHorizontal: UI_PRESETS.spacing.md, paddingVertical: 4 },
+  base: { minHeight: scale(8), paddingHorizontal: UI_PRESETS.spacing.lg, paddingVertical: UI_PRESETS.spacing.sm, borderRadius: UI_PRESETS.radius.full, borderCurve: "continuous" as const, flexDirection: "row" as const, alignItems: "center" as const, gap: UI_PRESETS.spacing.sm },
+  compact: { minHeight: scale(7), paddingHorizontal: UI_PRESETS.spacing.md, paddingVertical: scale(1) },
   text: Typography.labelSM,
   selected: { borderWidth: 1 },
   unselected: { borderWidth: 1 },
@@ -78,11 +79,11 @@ export const ModalTokens = {
 } as const;
 
 export const HeaderTokens = {
-  screen: { minHeight: 56, paddingHorizontal: UI_PRESETS.spacing.xxxl, paddingVertical: UI_PRESETS.spacing.lg, gap: UI_PRESETS.spacing.md },
+  screen: { minHeight: scale(14), paddingHorizontal: UI_PRESETS.spacing.xxxl, paddingVertical: UI_PRESETS.spacing.lg, gap: UI_PRESETS.spacing.md },
   title: Typography.titleMD,
   subtitle: Typography.captionLG,
   actionLabel: Typography.labelMD,
-  actionIcon: { size: 20, touchTarget: UI_PRESETS.size.iconTouch },
+  actionIcon: { size: scale(5), touchTarget: UI_PRESETS.size.iconTouch },
 } as const;
 
 export const AvatarTokens = {
@@ -91,20 +92,20 @@ export const AvatarTokens = {
   md: { size: UI_PRESETS.size.avatarMd, radius: UI_PRESETS.size.avatarMd / 2, text: Typography.labelMD },
   lg: { size: UI_PRESETS.size.avatarLg, radius: UI_PRESETS.size.avatarLg / 2, text: Typography.labelLG },
   xl: { size: UI_PRESETS.size.avatarXl, radius: UI_PRESETS.size.avatarXl / 2, text: Typography.titleSM },
-  ring: { width: 2, offset: 2 },
+  ring: { width: scale(0.5), offset: scale(0.5) },
 } as const;
 
 export const ToastTokens = {
-  container: { minHeight: 52, borderRadius: UI_PRESETS.radius.lg, borderCurve: "continuous" as const, paddingHorizontal: UI_PRESETS.spacing.xl, paddingVertical: UI_PRESETS.spacing.lg, gap: UI_PRESETS.spacing.md, shadowLevel: "shadowLg" },
+  container: { minHeight: scale(13), borderRadius: UI_PRESETS.radius.lg, borderCurve: "continuous" as const, paddingHorizontal: UI_PRESETS.spacing.xl, paddingVertical: UI_PRESETS.spacing.lg, gap: UI_PRESETS.spacing.md, shadowLevel: "shadowLg" },
   title: Typography.labelMD,
   message: Typography.bodySM,
   action: Typography.labelSM,
-  icon: { size: 18 },
+  icon: { size: scale(4.5) },
 } as const;
 
 export const EmptyStateTokens = {
   container: { paddingHorizontal: UI_PRESETS.spacing.section, paddingVertical: UI_PRESETS.spacing.screen, alignItems: "center" as const, justifyContent: "center" as const, gap: UI_PRESETS.spacing.lg },
-  icon: { size: 40 },
+  icon: { size: scale(10) },
   title: Typography.titleSM,
   message: Typography.bodySM,
   cta: ButtonTokens.secondary,
@@ -112,7 +113,7 @@ export const EmptyStateTokens = {
 
 export const DialogTokens = {
   overlay: { opacity: UI_PRESETS.opacity.backdrop },
-  container: { maxWidth: 420, borderRadius: CardTokens.base.borderRadius, borderCurve: "continuous" as const, padding: CardTokens.base.padding, gap: CardTokens.base.gap, borderWidth: 1, shadowLevel: "shadowXl" },
+  container: { maxWidth: scale(105), borderRadius: CardTokens.base.borderRadius, borderCurve: "continuous" as const, padding: CardTokens.base.padding, gap: CardTokens.base.gap, borderWidth: 1, shadowLevel: "shadowXl" },
   title: Typography.titleLG,
   description: Typography.bodySM,
   actions: { gap: UI_PRESETS.spacing.md, justifyContent: "flex-end" as const },
@@ -125,7 +126,7 @@ export const AlertTokens = {
   title: Typography.labelMD,
   message: Typography.bodySM,
   action: Typography.labelSM,
-  icon: { size: 16 },
+  icon: { size: scale(4) },
 } as const;
 
 export const BannerTokens = {
@@ -133,7 +134,7 @@ export const BannerTokens = {
   title: Typography.labelMD,
   message: Typography.bodySM,
   action: Typography.labelSM,
-  icon: { size: 18 },
+  icon: { size: scale(4.5) },
 } as const;
 
 export const ActionSheetTokens = {
@@ -159,6 +160,6 @@ export const AnimationTokens = {
 export const BottomSheetTokens = {
   modal: { snapPoints: ["28%", "55%", "86%"] as const, borderRadius: UI_PRESETS.radius.modal, borderCurve: "continuous" as const, paddingHorizontal: UI_PRESETS.spacing.section, paddingTop: UI_PRESETS.spacing.xl, paddingBottom: UI_PRESETS.spacing.screen, gap: UI_PRESETS.spacing.xl, shadowLevel: "shadowXl" },
   detached: { snapPoints: ["32%", "62%"] as const, bottomInset: UI_PRESETS.spacing.section, sideInset: UI_PRESETS.spacing.xxxl, borderRadius: UI_PRESETS.radius.modal, borderCurve: "continuous" as const, paddingHorizontal: UI_PRESETS.spacing.section, paddingTop: UI_PRESETS.spacing.xl, paddingBottom: UI_PRESETS.spacing.section, gap: UI_PRESETS.spacing.xl, shadowLevel: "shadow2Xl" },
-  handle: { width: 40, height: 4, borderRadius: UI_PRESETS.radius.full, marginTop: UI_PRESETS.spacing.sm, marginBottom: UI_PRESETS.spacing.sm },
+  handle: { width: scale(10), height: scale(1), borderRadius: UI_PRESETS.radius.full, marginTop: UI_PRESETS.spacing.sm, marginBottom: UI_PRESETS.spacing.sm },
   header: { title: Typography.titleSM, subtitle: Typography.bodySM },
 } as const;
