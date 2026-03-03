@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { toast } from "sonner-native";
 import { AccountForm, Banner, Button, Spinner, Text, View, type AccountFormValues } from "@/components";
 import { getAccount, updateAccount, type Account, type UpdateAccountPayload } from "@/lib/accounts";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
@@ -59,7 +60,20 @@ export default function UpdateAccount() {
 
       if (!updated) {
         setError("Unable to update account.");
+        toast.error("Update failed", {
+          description: "That account could not be updated.",
+        });
+        return;
       }
+
+      toast.success("Account updated", {
+        description: `${updated.name} has been saved.`,
+      });
+    } catch {
+      setError("Unable to update account.");
+      toast.error("Update failed", {
+        description: "That account could not be updated.",
+      });
     } finally {
       setLoading(false);
     }
@@ -101,7 +115,20 @@ export default function UpdateAccount() {
         />
       ) : null}
 
-      <Button title="Back to accounts" variant="outline" onPress={() => router.replace("/(tabs)/finance/accounts" as any)} />
+      {!isLoading && account ? (
+        <Button
+          title="Delete account"
+          variant="destructive"
+          onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/delete` as any)}
+          disabled={loading}
+        />
+      ) : null}
+
+      <Button
+        title="Back to accounts"
+        variant="outline"
+        onPress={() => router.replace("/(tabs)/finance/accounts" as any)}
+      />
     </View>
   );
 }

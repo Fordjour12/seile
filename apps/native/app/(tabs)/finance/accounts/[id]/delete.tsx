@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { toast } from "sonner-native";
+import {
+  deleteAccount,
+  formatAccountBalance,
+  formatAccountType,
+  getAccount,
+  type Account,
+  type DeleteAccountPayload,
+} from "@/lib/accounts";
 import {
   Alert,
   Banner,
@@ -13,7 +22,6 @@ import {
   Text,
   View,
 } from "@/components";
-import { deleteAccount, getAccount, type Account, type DeleteAccountPayload } from "@/lib/accounts";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -68,10 +76,21 @@ export default function DeleteAccountScreen() {
       const success = await deleteAccount(payload);
       if (!success) {
         setError("Deletion failed. Try again.");
+        toast.error("Delete failed", {
+          description: "This account may have already been removed.",
+        });
         return;
       }
 
+      toast.success("Account deleted", {
+        description: `${account?.name ?? "Account"} was archived.`,
+      });
       router.replace("/(tabs)/finance/accounts" as any);
+    } catch {
+      setError("Deletion failed. Try again.");
+      toast.error("Delete failed", {
+        description: "This account may have already been removed.",
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -117,7 +136,7 @@ export default function DeleteAccountScreen() {
           <Alert
             variant="error"
             title="This action cannot be undone"
-            message="Associated transactions may lose account references unless reassigned first."
+            message={`${formatAccountType(account.type)} account with ${formatAccountBalance(account.balance, account.currencyCode)} will be archived.`}
           />
 
           {isDeleting ? (
@@ -141,9 +160,9 @@ export default function DeleteAccountScreen() {
 
       <Dialog
         visible={showDialog}
-        title="Confirm deletion"
-        description="Deleting this account is permanent. Continue?"
-        confirmLabel="Yes, delete"
+        title="Confirm archive"
+        description="Archiving keeps history but removes this account from active workflows."
+        confirmLabel="Yes, archive"
         cancelLabel="Keep account"
         tone="destructive"
         onCancel={() => setShowDialog(false)}
