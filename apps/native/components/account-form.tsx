@@ -10,7 +10,7 @@ import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 export type AccountFormMode = "create" | "update";
-export type AccountType = "checking" | "savings";
+export type AccountType = "checking" | "savings" | "credit" | "cash";
 
 export interface AccountFormValues {
   name: string;
@@ -131,6 +131,8 @@ export function AccountForm({
         <View style={styles.chipRow}>
           <Chip label="Checking" selected={type === "checking"} onSelect={() => setType("checking")} />
           <Chip label="Savings" selected={type === "savings"} onSelect={() => setType("savings")} />
+          <Chip label="Credit" selected={type === "credit"} onSelect={() => setType("credit")} />
+          <Chip label="Cash" selected={type === "cash"} onSelect={() => setType("cash")} />
         </View>
       </View>
 

@@ -13,9 +13,11 @@ import {
 import { Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
 
 import { NAV_THEME, Typography, CardTokens, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
+import { listAccounts } from "@/lib/accounts";
 
 const OPACITY = {
   pressed: 0.84,
@@ -83,25 +85,39 @@ const sampleDebts: DebtItem[] = [
   },
 ];
 
-const sampleAccountOverview: AccountOverviewMetrics = {
-  totalCash: 18345.79,
-  moneyInMtd: 8950.0,
-  moneyOutMtd: 6124.45,
-  accountsCount: 5,
-  periodLabel: "Mar 2026 · Month-to-date",
-};
-
 export default function Index() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const [accountOverview, setAccountOverview] = useState<AccountOverviewMetrics>({
+    totalCash: 0,
+    moneyInMtd: 8950,
+    moneyOutMtd: 6124.45,
+    accountsCount: 0,
+    periodLabel: "Mar 2026 · Month-to-date",
+  });
+
+  useEffect(() => {
+    async function loadAccountOverview() {
+      const accounts = await listAccounts();
+      const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
+
+      setAccountOverview((previous) => ({
+        ...previous,
+        totalCash,
+        accountsCount: accounts.length,
+      }));
+    }
+
+    void loadAccountOverview();
+  }, []);
 
   const navItems = [
     {
       key: "accounting",
       badge: "AC",
       label: "Accounts",
-      meta: "Tracked accounts: 0",
+      meta: `Tracked accounts: ${accountOverview.accountsCount}`,
       route: "/(tabs)/finance/accounts",
     },
     {
@@ -148,7 +164,7 @@ export default function Index() {
       {/*<View>*/}
       <SectionHeader title="Overview" subtitle="MONTHLY SNAPSHOT" />
       <AccountOverviewCard
-        metrics={sampleAccountOverview}
+        metrics={accountOverview}
         onViewAccountsPress={() => router.push("/(tabs)/finance/accounts" as any)}
       />
       <OverviewChartCard />
