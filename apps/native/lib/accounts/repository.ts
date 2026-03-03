@@ -1,4 +1,5 @@
 import { postJson } from "./http-client";
+import { signPayload } from "./signing";
 import type {
   Account,
   AccountStatus,
@@ -73,27 +74,25 @@ function mapOutgoingType(type: AccountType): BackendAccountType {
 
 async function accountRequest<TResponse>(
   path: string,
+  functionName: string,
   payload: Record<string, unknown>,
 ): Promise<TResponse> {
-  return postJson<TResponse>(path, payload);
-}
-
-export async function listAccounts(): Promise<Account[]> {
-  const response = await accountRequest<PaginatedAccounts>("/accounts/list", {
-    includeArchived: false,
-    pagination: {
-      limit: 50,
-    },
+  const signed = await signPayload(functionName, payload);
+  return postJson<TResponse>(path, {
+    ...signed.payload,
+    auth: signed.auth,
   });
-
-  return response.page.map(mapAccount);
 }
 
 export async function getAccount(accountId: string): Promise<Account | null> {
   try {
-    const response = await accountRequest<BackendAccount>("/accounts/getById", {
-      accountId,
-    });
+    const response = await accountRequest<BackendAccount>(
+      "/accounts/getById",
+      "accounts:getAccountById",
+      {
+        accountId,
+      },
+    );
 
     return mapAccount(response);
   } catch {
@@ -102,7 +101,7 @@ export async function getAccount(accountId: string): Promise<Account | null> {
 }
 
 export async function createAccount(payload: CreateAccountPayload): Promise<Account> {
-  const response = await accountRequest<BackendAccount>("/accounts/create", {
+  const response = await accountRequest<BackendAccount>("/accounts/create", "accounts:createAccount", {
     name: payload.name,
     type: mapOutgoingType(payload.type),
     currency: payload.currencyCode ?? "GHS",
@@ -118,7 +117,7 @@ export async function updateAccount(
   payload: UpdateAccountPayload,
 ): Promise<Account | null> {
   try {
-    const response = await accountRequest<BackendAccount>("/accounts/update", {
+    const response = await accountRequest<BackendAccount>("/accounts/update", "accounts:updateAccount", {
       accountId,
       name: payload.name,
       type: payload.type ? mapOutgoingType(payload.type) : undefined,
@@ -135,9 +134,20 @@ export async function updateAccount(
 }
 
 export async function deleteAccount(payload: DeleteAccountPayload): Promise<boolean> {
-  const response = await accountRequest<ArchiveResponse>("/accounts/archive", {
+  const response = await accountRequest<ArchiveResponse>("/accounts/archive", "accounts:deleteAccount", {
     accountId: payload.id,
   });
 
   return response.success;
+}
+
+export async function listAccounts(): Promise<Account[]> {
+  const response = await accountRequest<PaginatedAccounts>("/accounts/list", "accounts:listAccounts", {
+    includeArchived: false,
+    pagination: {
+      limit: 50,
+    },
+  });
+
+  return response.page.map(mapAccount);
 }

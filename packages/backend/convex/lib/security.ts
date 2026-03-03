@@ -2,7 +2,6 @@ import { ConvexError } from "convex/values";
 
 export const DEFAULT_SYSTEM_USER_ID = "local-user";
 export const MAX_REQUEST_SKEW_MS = 5 * 60 * 1000;
-const DEFAULT_DEV_HMAC_SECRET = "local-dev-hmac-secret";
 const APP_HMAC_SECRET_KEY = "APP_HMAC_SECRET";
 const SYSTEM_USER_ID_KEY = "SYSTEM_USER_ID";
 
@@ -22,8 +21,10 @@ export function stableJson(value: unknown): string {
   }
 
   const objectValue = value as Record<string, unknown>;
-  const keys = Object.keys(objectValue).sort();
-  const entries = keys.map((key) => `"${key}":${stableJson(objectValue[key])}`);
+  const entries = Object.keys(objectValue)
+    .sort()
+    .filter((key) => objectValue[key] !== undefined)
+    .map((key) => `"${key}":${stableJson(objectValue[key])}`);
   return `{${entries.join(",")}}`;
 }
 
@@ -33,7 +34,10 @@ export function resolveSystemUserId(): string {
 
 export function getHmacSecret(): string {
   const secret = process.env[APP_HMAC_SECRET_KEY];
-  return secret ?? DEFAULT_DEV_HMAC_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new ConvexError("APP_HMAC_SECRET is missing or invalid");
+  }
+  return secret;
 }
 
 export function assertTimestampFresh(ts: number, now: number = Date.now()): void {
