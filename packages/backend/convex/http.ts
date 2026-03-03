@@ -1,7 +1,9 @@
-import { anyApi, httpRouter } from "convex/server";
+import { httpRouter } from "convex/server";
 
 import { httpAction } from "./_generated/server";
-import { buildSigningMessage, getHmacSecret, signMessage } from "./lib/security";
+import type { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
+import { buildSigningMessage, getHmacSecret, signMessage, type AuthPayload } from "./lib/security";
 
 const http = httpRouter();
 
@@ -38,8 +40,11 @@ function createNonce(): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function withSignedAuth(functionName: string, payload: Record<string, unknown>) {
-  const auth = {
+async function withSignedAuth<TPayload extends Record<string, unknown>>(
+  functionName: string,
+  payload: TPayload,
+): Promise<TPayload & { auth: AuthPayload }> {
+  const auth: AuthPayload = {
     ts: Date.now(),
     nonce: createNonce(),
     sig: "",
@@ -54,14 +59,48 @@ async function withSignedAuth(functionName: string, payload: Record<string, unkn
   };
 }
 
+type ListAccountsPayload = {
+  includeArchived?: boolean;
+  pagination?: {
+    cursor?: string | null;
+    limit?: number;
+  };
+};
+
+type GetAccountPayload = {
+  accountId: Id<"accounts">;
+};
+
+type CreateAccountPayload = {
+  name: string;
+  type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
+  currency: string;
+  openingBalance?: number;
+  note?: string;
+};
+
+type UpdateAccountPayload = {
+  accountId: Id<"accounts">;
+  name?: string;
+  type?: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
+  currency?: string;
+  balance?: number;
+  status?: "active" | "archived" | "closed";
+  note?: string;
+};
+
+type ArchiveAccountPayload = {
+  accountId: Id<"accounts">;
+};
+
 http.route({
   path: "/accounts/list",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const payload = await readBody(request);
+      const payload = (await readBody(request)) as ListAccountsPayload;
       const args = await withSignedAuth("accounts:listAccounts", payload);
-      const result = await ctx.runMutation((anyApi as any).accounts.listAccounts, args);
+      const result = await ctx.runMutation(api.accounts.listAccounts, args);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -74,9 +113,9 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const payload = await readBody(request);
+      const payload = (await readBody(request)) as GetAccountPayload;
       const args = await withSignedAuth("accounts:getAccountById", payload);
-      const result = await ctx.runMutation((anyApi as any).accounts.getAccountById, args);
+      const result = await ctx.runMutation(api.accounts.getAccountById, args);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -89,9 +128,9 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const payload = await readBody(request);
+      const payload = (await readBody(request)) as CreateAccountPayload;
       const args = await withSignedAuth("accounts:createAccount", payload);
-      const result = await ctx.runMutation((anyApi as any).accounts.createAccount, args);
+      const result = await ctx.runMutation(api.accounts.createAccount, args);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -104,9 +143,9 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const payload = await readBody(request);
+      const payload = (await readBody(request)) as UpdateAccountPayload;
       const args = await withSignedAuth("accounts:updateAccount", payload);
-      const result = await ctx.runMutation((anyApi as any).accounts.updateAccount, args);
+      const result = await ctx.runMutation(api.accounts.updateAccount, args);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -119,9 +158,9 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const payload = await readBody(request);
+      const payload = (await readBody(request)) as ArchiveAccountPayload;
       const args = await withSignedAuth("accounts:deleteAccount", payload);
-      const result = await ctx.runMutation((anyApi as any).accounts.deleteAccount, args);
+      const result = await ctx.runMutation(api.accounts.deleteAccount, args);
       return json(200, { success: result });
     } catch (error) {
       return json(400, { error: errorMessage(error) });
