@@ -161,6 +161,12 @@ export default function AccountsIndexScreen() {
       />
 
       <AccountOverviewCard metrics={overviewMetrics} style={styles.overviewCard} />
+      <Card variant="outline" style={[styles.summaryCard, { borderColor: theme.border }]}>
+        <Text style={[Typography.labelSM, { color: theme.mutedForeground }]}>Tracked Total</Text>
+        <Text style={[Typography.titleLG, styles.summaryValue, { color: theme.text }]}>
+          {currencyFormatter.format(totalBalance)}
+        </Text>
+      </Card>
 
       {hasError ? (
         <Banner
@@ -224,7 +230,7 @@ export default function AccountsIndexScreen() {
       ) : null}
 
       {!isLoading && !hasError && balanceByType.points.length > 0 ? (
-        <Card variant="outline" style={[styles.chartCard, { borderColor: theme.border }]}> 
+        <Card variant="outline" style={[styles.chartCard, { borderColor: theme.border }]}>
           <Text style={[Typography.titleSM, { color: theme.text }]}>Balance by Account Type</Text>
           <ThemedBarChart
             data={balanceByType.points}
@@ -265,37 +271,9 @@ export default function AccountsIndexScreen() {
         </View>
       ) : null}
 
-      {!isLoading && !hasError && transactions.length > 0 ? (
-        <Card variant="outline" style={[styles.listCard, { borderColor: theme.border }]}> 
-          <SectionHeader title="Recent Transactions" subtitle="LATEST 10" />
-          <View style={styles.list}>
-            {transactions.map((transaction) => (
-              <ListItem
-                key={transaction.id}
-                title={transaction.title}
-                subtitle={`${transaction.category} · ${transaction.accountName} · ${formatTransactionTime(transaction.createdAt)}`}
-                onPress={() => router.push(`/(tabs)/finance/transactions/${transaction.id}` as any)}
-                right={
-                  <Text
-                    style={[
-                      Typography.labelSM,
-                      {
-                        color: transaction.direction === "in" ? theme.chart2 : theme.destructive,
-                      },
-                    ]}
-                  >
-                    {formatTransactionAmount(transaction.amount, transaction.direction, transaction.currencyCode)}
-                  </Text>
-                }
-                style={styles.listItem}
-              />
-            ))}
-          </View>
-        </Card>
-      ) : null}
 
       {!isLoading && !hasError && accounts.length > 0 ? (
-        <Card variant="outline" style={[styles.listCard, { borderColor: theme.border }]}> 
+        <Card variant="outline" style={[styles.listCard, { borderColor: theme.border }]}>
           <SectionHeader title="Linked Accounts" subtitle={`${accounts.length} total`} />
           <View style={styles.list}>
             {accounts.map((account) => {
@@ -309,7 +287,7 @@ export default function AccountsIndexScreen() {
                   meta={mapped.balanceLabel}
                   onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/update` as any)}
                   right={
-                    <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}> 
+                    <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>
                       {formatAccountStatus(account.status)}
                     </Text>
                   }
@@ -342,12 +320,36 @@ export default function AccountsIndexScreen() {
         <Button title="Create Account" onPress={() => router.push("/(tabs)/finance/accounts/create" as any)} />
       ) : null}
 
-      <Card variant="outline" style={[styles.summaryCard, { borderColor: theme.border }]}> 
-        <Text style={[Typography.labelSM, { color: theme.mutedForeground }]}>Tracked Total</Text>
-        <Text style={[Typography.titleLG, styles.summaryValue, { color: theme.text }]}>
-          {currencyFormatter.format(totalBalance)}
-        </Text>
-      </Card>
+
+
+      {!isLoading && !hasError && transactions.length > 0 ? (
+        <Card variant="outline" style={[styles.listCard, { borderColor: theme.border }]}>
+          <SectionHeader title="Recent Transactions" subtitle="LATEST 10" />
+          <View style={styles.list}>
+            {transactions.map((transaction) => (
+              <ListItem
+                key={transaction.id}
+                title={transaction.title}
+                subtitle={`${transaction.category} · ${transaction.accountName} · ${formatTransactionTime(transaction.createdAt)}`}
+                onPress={() => router.push(`/(tabs)/finance/transactions/${transaction.id}` as any)}
+                right={
+                  <Text
+                    style={[
+                      Typography.labelSM,
+                      {
+                        color: transaction.direction === "in" ? theme.chart2 : theme.destructive,
+                      },
+                    ]}
+                  >
+                    {formatTransactionAmount(transaction.amount, transaction.direction, transaction.currencyCode)}
+                  </Text>
+                }
+                style={styles.listItem}
+              />
+            ))}
+          </View>
+        </Card>
+      ) : null}
     </ScrollView>
   );
 }
