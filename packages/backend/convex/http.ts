@@ -3,7 +3,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
-import { buildSigningMessage, getHmacSecret, signMessage, type AuthPayload } from "./lib/security";
+import type { AuthPayload } from "./lib/security";
 
 const http = httpRouter();
 
@@ -34,29 +34,23 @@ async function readBody(request: Request): Promise<Record<string, unknown>> {
   return body as Record<string, unknown>;
 }
 
-function createNonce(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+function hasValidAuth(auth: unknown): auth is AuthPayload {
+  if (!auth || typeof auth !== "object") {
+    return false;
+  }
+
+  const authValue = auth as Record<string, unknown>;
+  return (
+    typeof authValue.ts === "number" &&
+    typeof authValue.nonce === "string" &&
+    typeof authValue.sig === "string"
+  );
 }
 
-async function withSignedAuth<TPayload extends Record<string, unknown>>(
-  functionName: string,
-  payload: TPayload,
-): Promise<TPayload & { auth: AuthPayload }> {
-  const auth: AuthPayload = {
-    ts: Date.now(),
-    nonce: createNonce(),
-    sig: "",
-  };
-
-  const signingMessage = buildSigningMessage(functionName, payload, auth);
-  auth.sig = await signMessage(getHmacSecret(), signingMessage);
-
-  return {
-    ...payload,
-    auth,
-  };
+function assertSignedPayload(payload: Record<string, unknown>): void {
+  if (!hasValidAuth(payload.auth)) {
+    throw new Error("Unauthorized: missing or invalid auth payload");
+  }
 }
 
 type ListAccountsPayload = {
@@ -65,10 +59,12 @@ type ListAccountsPayload = {
     cursor?: string | null;
     limit?: number;
   };
+  auth: AuthPayload;
 };
 
 type GetAccountPayload = {
   accountId: Id<"accounts">;
+  auth: AuthPayload;
 };
 
 type CreateAccountPayload = {
@@ -77,6 +73,7 @@ type CreateAccountPayload = {
   currency: string;
   openingBalance?: number;
   note?: string;
+  auth: AuthPayload;
 };
 
 type UpdateAccountPayload = {
@@ -87,10 +84,12 @@ type UpdateAccountPayload = {
   balance?: number;
   status?: "active" | "archived" | "closed";
   note?: string;
+  auth: AuthPayload;
 };
 
 type ArchiveAccountPayload = {
   accountId: Id<"accounts">;
+  auth: AuthPayload;
 };
 
 http.route({
@@ -99,8 +98,8 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     try {
       const payload = (await readBody(request)) as ListAccountsPayload;
-      const args = await withSignedAuth("accounts:listAccounts", payload);
-      const result = await ctx.runMutation(api.accounts.listAccounts, args);
+      assertSignedPayload(payload);
+      const result = await ctx.runMutation(api.accounts.listAccounts, payload);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -114,8 +113,8 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     try {
       const payload = (await readBody(request)) as GetAccountPayload;
-      const args = await withSignedAuth("accounts:getAccountById", payload);
-      const result = await ctx.runMutation(api.accounts.getAccountById, args);
+      assertSignedPayload(payload);
+      const result = await ctx.runMutation(api.accounts.getAccountById, payload);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -129,8 +128,8 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     try {
       const payload = (await readBody(request)) as CreateAccountPayload;
-      const args = await withSignedAuth("accounts:createAccount", payload);
-      const result = await ctx.runMutation(api.accounts.createAccount, args);
+      assertSignedPayload(payload);
+      const result = await ctx.runMutation(api.accounts.createAccount, payload);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -144,8 +143,8 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     try {
       const payload = (await readBody(request)) as UpdateAccountPayload;
-      const args = await withSignedAuth("accounts:updateAccount", payload);
-      const result = await ctx.runMutation(api.accounts.updateAccount, args);
+      assertSignedPayload(payload);
+      const result = await ctx.runMutation(api.accounts.updateAccount, payload);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
@@ -159,8 +158,8 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     try {
       const payload = (await readBody(request)) as ArchiveAccountPayload;
-      const args = await withSignedAuth("accounts:deleteAccount", payload);
-      const result = await ctx.runMutation(api.accounts.deleteAccount, args);
+      assertSignedPayload(payload);
+      const result = await ctx.runMutation(api.accounts.deleteAccount, payload);
       return json(200, { success: result });
     } catch (error) {
       return json(400, { error: errorMessage(error) });
