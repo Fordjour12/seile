@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -13,6 +13,7 @@ import {
   Text,
   View,
 } from "@/components";
+import { deleteAccount, getAccount, type Account, type DeleteAccountPayload } from "@/lib/accounts";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -22,32 +23,81 @@ export default function DeleteAccountScreen() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
+  const [account, setAccount] = useState<Account | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
-  const [hasError, setHasError] = useState(id === "error");
-  const [notFound] = useState(!id);
+  const [error, setError] = useState<string | null>(null);
 
-  const onDelete = () => {
+  useEffect(() => {
+    async function load() {
+      if (!id) {
+        setError("Account ID is missing.");
+        setIsLoading(false);
+        return;
+      }
+
+      const found = await getAccount(id);
+      setAccount(found);
+      setIsLoading(false);
+
+      if (!found) {
+        setError("Account not found.");
+      }
+    }
+
+    void load();
+  }, [id]);
+
+  const onDelete = async () => {
+    if (!id) {
+      setError("Account ID is missing.");
+      return;
+    }
+
     setShowDialog(false);
     setIsDeleting(true);
-    setTimeout(() => {
-      setIsDeleting(false);
+    setError(null);
+
+    try {
+      const payload: DeleteAccountPayload = {
+        id,
+        hardDelete: false,
+      };
+
+      const success = await deleteAccount(payload);
+      if (!success) {
+        setError("Deletion failed. Try again.");
+        return;
+      }
+
       router.replace("/(tabs)/finance/accounts" as any);
-    }, 900);
+    } finally {
+      setIsDeleting(false);
+    }
   };
+
+  const notFound = !isLoading && !account;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <SectionHeader title="Delete Account" subtitle={`Account ID: ${id ?? "unknown"}`} />
 
-      {hasError ? (
+      {error ? (
         <Banner
           variant="error"
           title="Deletion failed"
-          message="Try again, or cancel and review linked transactions first."
+          message={error}
           actionLabel="Retry"
-          onActionPress={() => setHasError(false)}
+          onActionPress={() => setError(null)}
         />
+      ) : null}
+
+      {isLoading ? (
+        <View style={styles.deletingState}>
+          <Spinner />
+          <Text style={[Typography.bodySM, { color: theme.mutedForeground }]}>Loading account…</Text>
+        </View>
       ) : null}
 
       {notFound ? (
@@ -57,12 +107,12 @@ export default function DeleteAccountScreen() {
           actionLabel="Back to accounts"
           onActionPress={() => router.replace("/(tabs)/finance/accounts" as any)}
         />
-      ) : (
+      ) : null}
+
+      {!isLoading && account ? (
         <Card variant="outline" style={[styles.confirmCard, { borderColor: theme.border }]}>
-          <Text style={[Typography.titleSM, { color: theme.text }]}>Delete this account permanently?</Text>
-          <Text style={[Typography.bodySM, { color: theme.mutedForeground }]}>
-            This action removes the account and disconnects it from future reconciliation workflows.
-          </Text>
+          <Text style={[Typography.titleSM, { color: theme.text }]}>Archive {account.name}?</Text>
+          <Text style={[Typography.bodySM, { color: theme.mutedForeground }]}>This action archives the account for history.</Text>
 
           <Alert
             variant="error"
@@ -87,7 +137,7 @@ export default function DeleteAccountScreen() {
             />
           </View>
         </Card>
-      )}
+      ) : null}
 
       <Dialog
         visible={showDialog}
