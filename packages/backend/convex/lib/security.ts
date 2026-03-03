@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 
 export const DEFAULT_SYSTEM_USER_ID = "local-user";
 export const MAX_REQUEST_SKEW_MS = 5 * 60 * 1000;
+const DEFAULT_DEV_HMAC_SECRET = "local-dev-hmac-secret";
 const APP_HMAC_SECRET_KEY = "APP_HMAC_SECRET";
 const SYSTEM_USER_ID_KEY = "SYSTEM_USER_ID";
 
@@ -32,10 +33,7 @@ export function resolveSystemUserId(): string {
 
 export function getHmacSecret(): string {
   const secret = process.env[APP_HMAC_SECRET_KEY];
-  if (!secret) {
-    throw new ConvexError("Unauthorized: invalid signature");
-  }
-  return secret;
+  return secret ?? DEFAULT_DEV_HMAC_SECRET;
 }
 
 export function assertTimestampFresh(ts: number, now: number = Date.now()): void {
