@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 
 import { Banner, Button, Card, SectionHeader, Spinner, Text, View } from "@/components";
 import { formatTransactionAmount, formatTransactionTime, getTransaction, type TransactionRecord } from "@/lib/transactions";
@@ -71,7 +71,7 @@ export default function TransactionDetailScreen() {
         </Card>
       ) : null}
 
-      <Button title="Back to Accounts" variant="outline" onPress={() => router.replace("/(tabs)/finance/accounts" as any)} />
+      <Button title="Back to Accounts" variant="outline" onPress={() => router.replace("/(tabs)/finance/accounts" as Href)} />
     </ScrollView>
   );
 }

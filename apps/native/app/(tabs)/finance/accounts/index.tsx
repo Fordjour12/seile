@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import {
   AccountOverviewCard,
   Banner,
@@ -157,7 +157,7 @@ export default function AccountsIndexScreen() {
         title="Accounts"
         subtitle="Cash, cards, and investment accounts"
         actionLabel="New"
-        onActionPress={() => router.push("/(tabs)/finance/accounts/create" as any)}
+        onActionPress={() => router.push("/(tabs)/finance/accounts/create" as Href)}
       />
 
       <AccountOverviewCard metrics={overviewMetrics} style={styles.overviewCard} />
@@ -192,7 +192,7 @@ export default function AccountsIndexScreen() {
           title="No accounts yet"
           message="Create your first account to start tracking cash flow and balances."
           actionLabel="Create account"
-          onActionPress={() => router.push("/(tabs)/finance/accounts/create" as any)}
+          onActionPress={() => router.push("/(tabs)/finance/accounts/create" as Href)}
         />
       ) : null}
 
@@ -250,7 +250,7 @@ export default function AccountsIndexScreen() {
               { backgroundColor: theme.card, borderColor: theme.border },
               pressed && styles.pressed,
             ]}
-            onPress={() => router.push("/(tabs)/finance/accounts/create" as any)}
+            onPress={() => router.push("/(tabs)/finance/accounts/create" as Href)}
           >
             <Text style={[Typography.titleSM, { color: theme.text }]}>Create account</Text>
             <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>Add a manual account</Text>
@@ -285,7 +285,7 @@ export default function AccountsIndexScreen() {
                   title={mapped.title}
                   subtitle={mapped.subtitle}
                   meta={mapped.balanceLabel}
-                  onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/update` as any)}
+                  onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/update` as Href)}
                   right={
                     <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>
                       {formatAccountStatus(account.status)}
@@ -305,19 +305,19 @@ export default function AccountsIndexScreen() {
             title="Edit First Account"
             variant="outline"
             style={styles.actionButton}
-            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/update` as any)}
+            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/update` as Href)}
           />
           <Button
             title="Delete First Account"
             variant="destructive"
             style={styles.actionButton}
-            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/delete` as any)}
+            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/delete` as Href)}
           />
         </View>
       ) : null}
 
       {!isLoading && !hasError ? (
-        <Button title="Create Account" onPress={() => router.push("/(tabs)/finance/accounts/create" as any)} />
+        <Button title="Create Account" onPress={() => router.push("/(tabs)/finance/accounts/create" as Href)} />
       ) : null}
 
 
@@ -331,7 +331,7 @@ export default function AccountsIndexScreen() {
                 key={transaction.id}
                 title={transaction.title}
                 subtitle={`${transaction.category} · ${transaction.accountName} · ${formatTransactionTime(transaction.createdAt)}`}
-                onPress={() => router.push(`/(tabs)/finance/transactions/${transaction.id}` as any)}
+                onPress={() => router.push(`/(tabs)/finance/transactions/${transaction.id}` as Href)}
                 right={
                   <Text
                     style={[

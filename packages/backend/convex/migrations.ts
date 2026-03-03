@@ -1,18 +1,14 @@
 import { mutation } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 
 export const backfillAccountsV2 = mutation({
   args: {},
   handler: async (ctx) => {
-    const accounts = (await ctx.db.query("accounts").collect()) as Array<{
-      _id: string;
-      type?: string;
-      status?: string;
-      isArchived?: boolean;
-    }>;
+    const accounts = await ctx.db.query("accounts").collect();
 
     let updatedCount = 0;
 
-    for (const account of accounts) {
+    for (const account of accounts as Doc<"accounts">[]) {
       const nextStatus = account.status ?? (account.isArchived ? "archived" : "active");
       const nextType = account.type === "bank" ? "checking" : account.type;
 
@@ -28,7 +24,7 @@ export const backfillAccountsV2 = mutation({
 
       if (Object.keys(patch).length > 0) {
         patch.updatedAt = Date.now();
-        await ctx.db.patch(account._id as any, patch as any);
+        await ctx.db.patch(account._id, patch);
         updatedCount += 1;
       }
     }

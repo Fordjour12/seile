@@ -52,7 +52,7 @@ export const createAccount = mutation({
       note: normalizeOptionalNote(args.note),
       createdAt: now,
       updatedAt: now,
-    } as any);
+    });
 
     const account = await ctx.db.get(accountId);
     if (!account) {
@@ -75,13 +75,10 @@ export const updateAccount = mutation({
       throw new ConvexError("Validation: no updatable fields provided");
     }
 
-    await ctx.db.patch(
-      account._id,
-      {
-        ...patch,
-        updatedAt: Date.now(),
-      } as any
-    );
+    await ctx.db.patch(account._id, {
+      ...patch,
+      updatedAt: Date.now(),
+    });
 
     const updatedAccount = await ctx.db.get(account._id);
     if (!updatedAccount) {
@@ -105,7 +102,7 @@ export const deleteAccount = mutation({
     await ctx.db.patch(account._id, {
       status: ARCHIVED_STATUS,
       updatedAt: Date.now(),
-    } as any);
+    });
 
     return true;
   },
@@ -126,7 +123,7 @@ export const listAccounts = mutation({
 
     const accountQuery = args.includeArchived
       ? ctx.db.query("accounts").withIndex("by_userId", (queryByUser) => queryByUser.eq("userId", userId))
-      : (ctx.db.query("accounts") as any).withIndex("by_userId_and_status", (queryByStatus: any) =>
+      : ctx.db.query("accounts").withIndex("by_userId_and_status", (queryByStatus) =>
           queryByStatus.eq("userId", userId).eq("status", ACTIVE_STATUS)
         );
 
@@ -164,14 +161,16 @@ async function countUserAccounts(
   ctx: MutationCtx,
   userId: string
 ): Promise<number> {
-  const activeAccounts = await (ctx.db.query("accounts") as any)
-    .withIndex("by_userId_and_status", (queryByStatus: any) =>
+  const activeAccounts = await ctx.db
+    .query("accounts")
+    .withIndex("by_userId_and_status", (queryByStatus) =>
       queryByStatus.eq("userId", userId).eq("status", ACTIVE_STATUS)
     )
     .collect();
 
-  const closedAccounts = await (ctx.db.query("accounts") as any)
-    .withIndex("by_userId_and_status", (queryByStatus: any) =>
+  const closedAccounts = await ctx.db
+    .query("accounts")
+    .withIndex("by_userId_and_status", (queryByStatus) =>
       queryByStatus.eq("userId", userId).eq("status", "closed")
     )
     .collect();

@@ -11,7 +11,7 @@ import {
   type DebtItem,
 } from "@/components";
 import { Pressable, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 
@@ -165,19 +165,19 @@ export default function Index() {
       <SectionHeader title="Overview" subtitle="MONTHLY SNAPSHOT" />
       <AccountOverviewCard
         metrics={accountOverview}
-        onViewAccountsPress={() => router.push("/(tabs)/finance/accounts" as any)}
+        onViewAccountsPress={() => router.push("/(tabs)/finance/accounts" as Href)}
       />
       <OverviewChartCard />
       <DebtSnapshotCard
         debts={sampleDebts}
-        onViewAllPress={() => router.push("/(tabs)/finance/debt" as any)}
+        onViewAllPress={() => router.push("/(tabs)/finance/debt" as Href)}
       />
 
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
           <SectionHeader title="" subtitle="BUDGET ENVELOPES" />
           <Pressable
-            onPress={() => router.push("/(tabs)/finance/budget" as any)}
+            onPress={() => router.push("/(tabs)/finance/budget" as Href)}
           >
             <Text style={[Typography.labelSM, { color: theme.chart4 }]}>
               View All
@@ -198,7 +198,7 @@ export default function Index() {
                 pressed && { opacity: OPACITY.pressed },
               ]}
               onPress={() =>
-                router.push("/(tabs)/finance/transactions/add" as any)
+                router.push("/(tabs)/finance/transactions/add" as Href)
               }
             >
               <Text style={[Typography.bodyMD, { color: theme.text }]}>
@@ -217,7 +217,7 @@ export default function Index() {
                 pressed && { opacity: OPACITY.pressed },
               ]}
               onPress={() =>
-                router.push("/(tabs)/finance/recurring/add" as any)
+                router.push("/(tabs)/finance/recurring/add" as Href)
               }
             >
               <Text style={[Typography.bodyMD, { color: theme.text }]}>
@@ -241,7 +241,7 @@ export default function Index() {
               },
               pressed && { opacity: OPACITY.pressed },
             ]}
-            onPress={() => router.push("/(tabs)/finance/budget" as any)}
+            onPress={() => router.push("/(tabs)/finance/budget" as Href)}
           >
             <Text style={[Typography.bodyMD, { color: theme.text }]}>
               Budgeting
@@ -273,7 +273,7 @@ export default function Index() {
                 },
                 pressed && { opacity: OPACITY.pressed },
               ]}
-              onPress={() => router.push(nav.route as any)}
+              onPress={() => router.push(nav.route as Href)}
             >
               <View style={styles.cardHeader}>
                 <View
