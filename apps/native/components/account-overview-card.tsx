@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
     paddingVertical: UI_PRESETS.spacing.lg,
     gap: UI_PRESETS.spacing.sm,
     marginTop: UI_PRESETS.spacing.section,
+    marginBottom: UI_PRESETS.spacing.section
   },
   headerRow: {
     flexDirection: "row",

@@ -29,3 +29,4 @@ export { ThemedBarChart } from "./themed-bar-chart";
 export { BudgetEnvelopesList, type BudgetEnvelope } from "./budget-envelopes-list";
 export { DebtSnapshotCard, type DebtItem, type DebtType } from "./debt-snapshot-card";
 export { AccountOverviewCard, type AccountOverviewMetrics } from "./account-overview-card";
+export { AccountForm, type AccountFormValues, type AccountFormMode, type AccountType } from "./account-form";
