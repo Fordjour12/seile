@@ -2,7 +2,22 @@ export const BASE_UNIT = 4;
 
 export const scale = (steps: number) => steps * BASE_UNIT;
 
-export const SPACE_SCALE = {
+const strictTokenGroup = <T extends Record<string, number>>(name: string, tokens: T): T =>
+  new Proxy(tokens, {
+    get(target, prop, receiver) {
+      if (typeof prop === "symbol") {
+        return Reflect.get(target, prop, receiver);
+      }
+
+      if (prop in target) {
+        return Reflect.get(target, prop, receiver);
+      }
+
+      throw new Error(`[tokens] Unknown token "${String(prop)}" accessed on ${name}.`);
+    },
+  });
+
+const RAW_SPACE_SCALE = {
   1: scale(1),
   2: scale(2),
   3: scale(3),
@@ -15,7 +30,9 @@ export const SPACE_SCALE = {
   12: scale(12),
 } as const;
 
-export const SPACING_ALIASES = {
+export const SPACE_SCALE = strictTokenGroup("SPACE_SCALE", RAW_SPACE_SCALE);
+
+const RAW_SPACING_ALIASES = {
   xs: SPACE_SCALE[1],
   sm: scale(1.5),
   md: SPACE_SCALE[2],
@@ -27,6 +44,8 @@ export const SPACING_ALIASES = {
   screen: SPACE_SCALE[6],
   "4xl": scale(9.5),
 } as const;
+
+export const SPACING_ALIASES = strictTokenGroup("SPACING_ALIASES", RAW_SPACING_ALIASES);
 
 export const SIZE_SCALE = {
   control: {
