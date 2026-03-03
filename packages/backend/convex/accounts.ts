@@ -1,8 +1,8 @@
 import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "./_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { requireSignedRequest } from "./lib/auth";
 import { resolveSystemUserId } from "./lib/security";
 import {
@@ -111,7 +111,7 @@ export const deleteAccount = mutation({
   },
 });
 
-export const listAccounts = query({
+export const listAccounts = mutation({
   args: {
     includeArchived: v.optional(v.boolean()),
     pagination: paginationValidator,
@@ -137,7 +137,7 @@ export const listAccounts = query({
   },
 });
 
-export const getAccountById = query({
+export const getAccountById = mutation({
   args: {
     accountId: v.id("accounts"),
     auth: authPayloadValidator,
@@ -149,7 +149,7 @@ export const getAccountById = query({
 });
 
 async function requireOwnedAccount(
-  ctx: MutationCtx | QueryCtx,
+  ctx: MutationCtx,
   accountId: Id<"accounts">,
   expectedUserId: string
 ): Promise<Doc<"accounts">> {
@@ -164,12 +164,20 @@ async function countUserAccounts(
   ctx: MutationCtx,
   userId: string
 ): Promise<number> {
-  const accounts = await ctx.db
-    .query("accounts")
-    .withIndex("by_userId", (queryByUser) => queryByUser.eq("userId", userId))
+  const activeAccounts = await (ctx.db.query("accounts") as any)
+    .withIndex("by_userId_and_status", (queryByStatus: any) =>
+      queryByStatus.eq("userId", userId).eq("status", ACTIVE_STATUS)
+    )
     .collect();
 
-  return accounts.length;
+  const closedAccounts = await (ctx.db.query("accounts") as any)
+    .withIndex("by_userId_and_status", (queryByStatus: any) =>
+      queryByStatus.eq("userId", userId).eq("status", "closed")
+    )
+    .collect();
+
+  // Soft-deleted (archived) accounts are excluded from the active account cap.
+  return activeAccounts.length + closedAccounts.length;
 }
 
 function buildAccountPatch(

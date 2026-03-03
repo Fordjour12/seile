@@ -38,7 +38,7 @@ export const authPayloadValidator = v.object({
 
 export const paginationValidator = v.optional(
   v.object({
-    cursor: v.optional(v.string()),
+    cursor: v.optional(v.union(v.string(), v.null())),
     limit: v.optional(v.number()),
   })
 );

@@ -1,4 +1,3 @@
-import { buildSignedPayload } from "./signing";
 import { postJson } from "./http-client";
 import type {
   Account,
@@ -72,24 +71,18 @@ function mapOutgoingType(type: AccountType): BackendAccountType {
   return type;
 }
 
-async function signedRequest<TResponse>(
-  functionName: string,
+async function accountRequest<TResponse>(
   path: string,
-  payloadWithoutAuth: Record<string, unknown>,
+  payload: Record<string, unknown>,
 ): Promise<TResponse> {
-  const auth = await buildSignedPayload(functionName, payloadWithoutAuth);
-  return postJson<TResponse>(path, {
-    ...payloadWithoutAuth,
-    auth,
-  });
+  return postJson<TResponse>(path, payload);
 }
 
 export async function listAccounts(): Promise<Account[]> {
-  const response = await signedRequest<PaginatedAccounts>("accounts:listAccounts", "/accounts/list", {
+  const response = await accountRequest<PaginatedAccounts>("/accounts/list", {
     includeArchived: false,
     pagination: {
       limit: 50,
-      cursor: null,
     },
   });
 
@@ -98,7 +91,7 @@ export async function listAccounts(): Promise<Account[]> {
 
 export async function getAccount(accountId: string): Promise<Account | null> {
   try {
-    const response = await signedRequest<BackendAccount>("accounts:getAccountById", "/accounts/getById", {
+    const response = await accountRequest<BackendAccount>("/accounts/getById", {
       accountId,
     });
 
@@ -109,7 +102,7 @@ export async function getAccount(accountId: string): Promise<Account | null> {
 }
 
 export async function createAccount(payload: CreateAccountPayload): Promise<Account> {
-  const response = await signedRequest<BackendAccount>("accounts:createAccount", "/accounts/create", {
+  const response = await accountRequest<BackendAccount>("/accounts/create", {
     name: payload.name,
     type: mapOutgoingType(payload.type),
     currency: payload.currencyCode ?? "GHS",
@@ -125,7 +118,7 @@ export async function updateAccount(
   payload: UpdateAccountPayload,
 ): Promise<Account | null> {
   try {
-    const response = await signedRequest<BackendAccount>("accounts:updateAccount", "/accounts/update", {
+    const response = await accountRequest<BackendAccount>("/accounts/update", {
       accountId,
       name: payload.name,
       type: payload.type ? mapOutgoingType(payload.type) : undefined,
@@ -142,7 +135,7 @@ export async function updateAccount(
 }
 
 export async function deleteAccount(payload: DeleteAccountPayload): Promise<boolean> {
-  const response = await signedRequest<ArchiveResponse>("accounts:deleteAccount", "/accounts/archive", {
+  const response = await accountRequest<ArchiveResponse>("/accounts/archive", {
     accountId: payload.id,
   });
 
