@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 
 export const DEFAULT_SYSTEM_USER_ID = "local-user";
 export const MAX_REQUEST_SKEW_MS = 5 * 60 * 1000;
+export const REQUEST_NONCE_RETENTION_MS = MAX_REQUEST_SKEW_MS + 60 * 1000;
 const APP_HMAC_SECRET_KEY = "APP_HMAC_SECRET";
 const SYSTEM_USER_ID_KEY = "SYSTEM_USER_ID";
 
@@ -45,6 +46,10 @@ export function assertTimestampFresh(ts: number, now: number = Date.now()): void
   if (delta > MAX_REQUEST_SKEW_MS) {
     throw new ConvexError("Unauthorized: request expired");
   }
+}
+
+export function isRequestNonceExpired(createdAt: number, now: number = Date.now()): boolean {
+  return now - createdAt > REQUEST_NONCE_RETENTION_MS;
 }
 
 export function buildSigningMessage(

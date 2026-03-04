@@ -18,6 +18,7 @@ import React, { useEffect, useState } from "react";
 import { NAV_THEME, Typography, CardTokens, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { listAccounts } from "@/lib/accounts";
+import { getTransactionSummary } from "@/lib/transactions";
 
 const OPACITY = {
   pressed: 0.84,
@@ -99,14 +100,35 @@ export default function Index() {
 
   useEffect(() => {
     async function loadAccountOverview() {
-      const accounts = await listAccounts();
-      const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
+      try {
+        const [accounts, summary] = await Promise.all([
+          listAccounts(),
+          getTransactionSummary(
+            new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+            new Date().toISOString(),
+          ),
+        ]);
+        const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
+        const now = new Date();
+        const periodLabel = `${now.toLocaleString("en-US", { month: "short" })} ${now.getFullYear()} · Month-to-date`;
 
-      setAccountOverview((previous) => ({
-        ...previous,
-        totalCash,
-        accountsCount: accounts.length,
-      }));
+        setAccountOverview({
+          totalCash,
+          moneyInMtd: summary.income,
+          moneyOutMtd: summary.expense,
+          accountsCount: accounts.length,
+          periodLabel,
+        });
+      } catch {
+        const accounts = await listAccounts();
+        const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
+
+        setAccountOverview((previous) => ({
+          ...previous,
+          totalCash,
+          accountsCount: accounts.length,
+        }));
+      }
     }
 
     void loadAccountOverview();
@@ -128,11 +150,18 @@ export default function Index() {
       route: "/(tabs)/finance/recurring",
     },
     {
-      key: "insights",
-      badge: "IN",
-      label: "Insights",
-      meta: "Advanced metrics and anomalies",
-      route: "/(tabs)/finance/insights",
+      key: "transactions",
+      badge: "TX",
+      label: "Transactions",
+      meta: "Create, review, and reverse entries",
+      route: "/(tabs)/finance/transactions",
+    },
+    {
+      key: "subscriptions",
+      badge: "SB",
+      label: "Subscriptions",
+      meta: "Renewals, trials, and monthly totals",
+      route: "/(tabs)/finance/subscriptions",
     },
     {
       key: "debt",
@@ -198,7 +227,7 @@ export default function Index() {
                 pressed && { opacity: OPACITY.pressed },
               ]}
               onPress={() =>
-                router.push("/(tabs)/finance/transactions/add" as Href)
+                router.push("/(tabs)/finance/transactions/create" as Href)
               }
             >
               <Text style={[Typography.bodyMD, { color: theme.text }]}>
@@ -217,7 +246,7 @@ export default function Index() {
                 pressed && { opacity: OPACITY.pressed },
               ]}
               onPress={() =>
-                router.push("/(tabs)/finance/recurring/add" as Href)
+                router.push("/(tabs)/finance/recurring/create" as Href)
               }
             >
               <Text style={[Typography.bodyMD, { color: theme.text }]}>

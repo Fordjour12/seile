@@ -6,6 +6,7 @@ import { api } from "./_generated/api";
 import type { AuthPayload } from "./lib/security";
 
 const http = httpRouter();
+const apiAny = api as any;
 
 function json(status: number, payload: unknown): Response {
   return new Response(JSON.stringify(payload), {
@@ -92,6 +93,14 @@ type ArchiveAccountPayload = {
   auth: AuthPayload;
 };
 
+type TransactionIdPayload = {
+  id: Id<"transactions">;
+};
+
+type RecurringIdPayload = {
+  id: Id<"recurringTransactions">;
+};
+
 http.route({
   path: "/accounts/list",
   method: "POST",
@@ -161,6 +170,308 @@ http.route({
       assertSignedPayload(payload);
       const result = await ctx.runMutation(api.accounts.deleteAccount, payload);
       return json(200, { success: result });
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/transactions/list",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as {
+        limit?: number;
+        before?: number;
+      };
+      const result = await ctx.runQuery(apiAny["transactions/queries"].listTransactions, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/transactions/getById",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as TransactionIdPayload;
+      const result = await ctx.runQuery(apiAny["transactions/queries"].getTransactionById, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/transactions/summary",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as {
+        from: number;
+        to: number;
+      };
+      const result = await ctx.runQuery(apiAny["transactions/queries"].getTransactionSummary, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/transactions/create",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["transactions/mutations"].createTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/transactions/update",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["transactions/mutations"].updateTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/transactions/delete",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["transactions/mutations"].deleteTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/transactions/reverse",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as TransactionIdPayload;
+      const result = await ctx.runMutation(apiAny["transactions/mutations"].reverseTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/recurring/list",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as { includeInactive?: boolean };
+      const result = await ctx.runQuery(apiAny["recurring/queries"].listRecurringTransactions, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/recurring/upcoming",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as { withinDays: number };
+      const result = await ctx.runQuery(apiAny["recurring/queries"].getUpcomingRecurring, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/recurring/create",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["recurring/mutations"].createRecurringTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/recurring/update",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["recurring/mutations"].updateRecurringTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/recurring/pause",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as RecurringIdPayload;
+      const result = await ctx.runMutation(apiAny["recurring/mutations"].pauseRecurringTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/recurring/resume",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as RecurringIdPayload;
+      const result = await ctx.runMutation(apiAny["recurring/mutations"].resumeRecurringTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/recurring/delete",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["recurring/mutations"].deleteRecurringTransaction, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/subscriptions/list",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as { includeInactive?: boolean };
+      const result = await ctx.runQuery(apiAny["subscriptions/queries"].listSubscriptions, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/subscriptions/by-status",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as {
+        status: "active" | "trial" | "paused" | "cancelled";
+      };
+      const result = await ctx.runQuery(apiAny["subscriptions/queries"].getByStatus, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/subscriptions/upcoming",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as { withinDays: number };
+      const result = await ctx.runQuery(apiAny["subscriptions/queries"].getUpcomingRenewals, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/subscriptions/monthly-spend",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      await readBody(request);
+      const result = await ctx.runQuery(apiAny["subscriptions/queries"].getMonthlySubscriptionSpend, {});
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/subscriptions/create",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["subscriptions/mutations"].createSubscription, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/subscriptions/cancel",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as RecurringIdPayload;
+      const result = await ctx.runMutation(apiAny["subscriptions/mutations"].cancelSubscription, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/categories/list",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      await readBody(request);
+      const result = await ctx.runQuery(apiAny["categories/queries"].listCategories, {});
+      return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });
     }

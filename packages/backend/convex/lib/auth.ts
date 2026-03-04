@@ -6,6 +6,7 @@ import {
   assertValidSignature,
   buildSigningMessage,
   getHmacSecret,
+  isRequestNonceExpired,
   signMessage,
   type AuthPayload,
 } from "./security";
@@ -32,12 +33,13 @@ export async function requireSignedRequest(
 }
 
 async function assertNonceFreshAndPersist(ctx: SignedRequestCtx, auth: AuthPayload): Promise<void> {
+  const now = Date.now();
   const existing = await ctx.db
     .query("requestNonces")
     .withIndex("by_nonce", (query) => query.eq("nonce", auth.nonce))
     .first();
 
-  if (existing) {
+  if (existing && !isRequestNonceExpired(existing.createdAt, now)) {
     throw new ConvexError("Unauthorized: replay detected");
   }
 
@@ -48,7 +50,7 @@ async function assertNonceFreshAndPersist(ctx: SignedRequestCtx, auth: AuthPaylo
 
   await ctx.db.insert("requestNonces", {
     nonce: auth.nonce,
-    createdAt: auth.ts,
+    createdAt: now,
   });
 }
 

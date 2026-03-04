@@ -1,40 +1,26 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema } from "convex/server";
 
-export const accountTypeValidator = v.union(
-  v.literal("checking"),
-  v.literal("savings"),
-  v.literal("cash"),
-  v.literal("credit"),
-  v.literal("investment"),
-  v.literal("bank")
-);
+import { accountsTable } from "./schema/accounts";
+import { categoriesTable } from "./schema/categories";
+import { recurringTransactionsTable } from "./schema/recurring_transactions";
+import { requestNoncesTable } from "./schema/request_nonces";
+import { transactionsTable } from "./schema/transactions";
 
-export const accountStatusValidator = v.union(
-  v.literal("active"),
-  v.literal("archived"),
-  v.literal("closed")
-);
+export {
+  accountStatusValidator,
+  accountTypeValidator,
+} from "./schema/validators";
+export {
+  recurringKindValidator,
+  scheduleTypeValidator,
+  subscriptionStatusValidator,
+} from "./schema/recurring_transactions";
+export { transactionKindValidator } from "./schema/transactions";
 
 export default defineSchema({
-  accounts: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    type: accountTypeValidator,
-    status: accountStatusValidator,
-    currency: v.string(),
-    balance: v.number(),
-    note: v.optional(v.string()),
-    // Legacy field retained during migration window.
-    isArchived: v.optional(v.boolean()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_userId", ["userId"])
-    .index("by_userId_and_status", ["userId", "status"]),
-
-  requestNonces: defineTable({
-    nonce: v.string(),
-    createdAt: v.number(),
-  }).index("by_nonce", ["nonce"]),
+  accounts: accountsTable,
+  categories: categoriesTable,
+  requestNonces: requestNoncesTable,
+  transactions: transactionsTable,
+  recurringTransactions: recurringTransactionsTable,
 });
