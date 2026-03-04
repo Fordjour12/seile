@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 import {
   deleteAccount,
@@ -85,7 +85,7 @@ export default function DeleteAccountScreen() {
       toast.success("Account deleted", {
         description: `${account?.name ?? "Account"} was archived.`,
       });
-      router.replace("/(tabs)/finance/accounts" as any);
+      router.replace("/(tabs)/finance/accounts" as Href);
     } catch {
       setError("Deletion failed. Try again.");
       toast.error("Delete failed", {
@@ -124,7 +124,7 @@ export default function DeleteAccountScreen() {
           title="Account not found"
           message="This account no longer exists, so there is nothing to delete."
           actionLabel="Back to accounts"
-          onActionPress={() => router.replace("/(tabs)/finance/accounts" as any)}
+          onActionPress={() => router.replace("/(tabs)/finance/accounts" as Href)}
         />
       ) : null}
 

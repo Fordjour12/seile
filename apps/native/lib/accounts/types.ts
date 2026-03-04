@@ -1,4 +1,4 @@
-export type AccountType = "checking" | "savings" | "credit" | "cash";
+export type AccountType = "checking" | "savings" | "credit" | "cash" | "investment";
 
 export type AccountStatus = "active" | "archived" | "closed";
 

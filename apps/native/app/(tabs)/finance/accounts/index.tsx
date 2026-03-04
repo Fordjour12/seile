@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import {
   AccountOverviewCard,
   Banner,
@@ -31,7 +31,8 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "GHS",
 });
 
-type MonthlyFlow = {
+type MonthlyFlowPoint = {
+  monthKey: string;
   month: string;
   in: number;
   out: number;
@@ -53,6 +54,7 @@ export default function AccountsIndexScreen() {
   const [hasError, setHasError] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [flowTransactions, setFlowTransactions] = useState<TransactionRecord[]>([]);
 
   const refreshAccounts = useCallback(async () => {
     setHasError(false);
@@ -63,10 +65,12 @@ export default function AccountsIndexScreen() {
       setAccounts(nextAccounts);
 
       try {
-        const latestTransactions = await listTransactions({ limit: 10 });
-        setTransactions(latestTransactions);
+        const backendTransactions = await listTransactions({ limit: 300 });
+        setFlowTransactions(backendTransactions);
+        setTransactions(backendTransactions.slice(0, 10));
       } catch {
         setTransactions([]);
+        setFlowTransactions([]);
       }
     } catch {
       setHasError(true);
@@ -79,61 +83,67 @@ export default function AccountsIndexScreen() {
     void refreshAccounts();
   }, [refreshAccounts]);
 
-  const accountsWithFlow = useMemo(
-    () =>
-      accounts.map((account, index) => {
-        const base = Math.max(Math.abs(account.balance), 100);
-        const multiplier = 0.12 + index * 0.02;
+  const monthBuckets = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 4 }, (_, offset) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (3 - offset), 1);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const month = date.toLocaleString("en-US", { month: "short" });
 
-        const monthlyFlow: MonthlyFlow[] = [
-          { month: "Jan", in: base * (0.92 + multiplier), out: base * (0.55 + multiplier * 0.6) },
-          { month: "Feb", in: base * (0.96 + multiplier), out: base * (0.58 + multiplier * 0.6) },
-          { month: "Mar", in: base * (1 + multiplier), out: base * (0.61 + multiplier * 0.6) },
-          { month: "Apr", in: base * (1.04 + multiplier), out: base * (0.64 + multiplier * 0.6) },
-        ];
+      return { monthKey, month };
+    });
+  }, []);
 
-        return {
-          ...account,
-          monthlyFlow,
-        };
-      }),
-    [accounts],
-  );
+  const trendData = useMemo<MonthlyFlowPoint[]>(() => {
+    const flowByMonth = monthBuckets.reduce<Record<string, { in: number; out: number }>>((acc, bucket) => {
+      acc[bucket.monthKey] = { in: 0, out: 0 };
+      return acc;
+    }, {});
 
-  const trendData = useMemo(() => {
-    const flowMonths = accountsWithFlow
-      .flatMap((account) => account.monthlyFlow ?? [])
-      .reduce<Record<string, { in: number; out: number }>>((acc, monthFlow) => {
-        const current = acc[monthFlow.month] ?? { in: 0, out: 0 };
-        acc[monthFlow.month] = {
-          in: current.in + monthFlow.in,
-          out: current.out + monthFlow.out,
-        };
-        return acc;
-      }, {});
+    for (const transaction of flowTransactions) {
+      const occurredAt = new Date(transaction.occurredAt);
+      if (Number.isNaN(occurredAt.getTime())) {
+        continue;
+      }
 
-    return Object.entries(flowMonths).map(([month, flow]) => ({
-      month,
-      in: flow.in,
-      out: flow.out,
+      const monthKey = `${occurredAt.getFullYear()}-${String(occurredAt.getMonth() + 1).padStart(2, "0")}`;
+      if (!flowByMonth[monthKey]) {
+        continue;
+      }
+
+      if (transaction.kind === "income" || transaction.kind === "adjustment") {
+        flowByMonth[monthKey].in += transaction.amount;
+      }
+
+      if (transaction.kind === "expense") {
+        flowByMonth[monthKey].out += transaction.amount;
+      }
+    }
+
+    return monthBuckets.map((bucket) => ({
+      monthKey: bucket.monthKey,
+      month: bucket.month,
+      in: flowByMonth[bucket.monthKey]?.in ?? 0,
+      out: flowByMonth[bucket.monthKey]?.out ?? 0,
     }));
-  }, [accountsWithFlow]);
+  }, [flowTransactions, monthBuckets]);
 
   const overviewMetrics: AccountOverviewMetrics = useMemo(() => {
-    const totalCash = accountsWithFlow.reduce((sum, account) => sum + account.balance, 0);
-    const latestFlow = trendData.at(-1);
+    const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
+    const currentMonthKey = monthBuckets.at(-1)?.monthKey;
+    const latestFlow = trendData.find((flow) => flow.monthKey === currentMonthKey) ?? trendData.at(-1);
 
     return {
       totalCash,
       moneyInMtd: latestFlow?.in ?? 0,
       moneyOutMtd: latestFlow?.out ?? 0,
-      accountsCount: accountsWithFlow.length,
+      accountsCount: accounts.length,
       periodLabel: latestFlow ? `${latestFlow.month} · Month-to-date` : "Current Month (MTD)",
     };
-  }, [accountsWithFlow, trendData]);
+  }, [accounts, monthBuckets, trendData]);
 
   const totalBalance = overviewMetrics.totalCash;
-  const hasMonthlyTrend = trendData.length > 0;
+  const hasMonthlyTrend = flowTransactions.length > 0;
 
   const balanceByType = useMemo(() => {
     const grouped = accounts.reduce<Record<string, number>>((acc, account) => {
@@ -157,7 +167,7 @@ export default function AccountsIndexScreen() {
         title="Accounts"
         subtitle="Cash, cards, and investment accounts"
         actionLabel="New"
-        onActionPress={() => router.push("/(tabs)/finance/accounts/create" as any)}
+        onActionPress={() => router.push("/(tabs)/finance/accounts/create" as Href)}
       />
 
       <AccountOverviewCard metrics={overviewMetrics} style={styles.overviewCard} />
@@ -192,7 +202,7 @@ export default function AccountsIndexScreen() {
           title="No accounts yet"
           message="Create your first account to start tracking cash flow and balances."
           actionLabel="Create account"
-          onActionPress={() => router.push("/(tabs)/finance/accounts/create" as any)}
+          onActionPress={() => router.push("/(tabs)/finance/accounts/create" as Href)}
         />
       ) : null}
 
@@ -250,7 +260,7 @@ export default function AccountsIndexScreen() {
               { backgroundColor: theme.card, borderColor: theme.border },
               pressed && styles.pressed,
             ]}
-            onPress={() => router.push("/(tabs)/finance/accounts/create" as any)}
+            onPress={() => router.push("/(tabs)/finance/accounts/create" as Href)}
           >
             <Text style={[Typography.titleSM, { color: theme.text }]}>Create account</Text>
             <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>Add a manual account</Text>
@@ -285,7 +295,7 @@ export default function AccountsIndexScreen() {
                   title={mapped.title}
                   subtitle={mapped.subtitle}
                   meta={mapped.balanceLabel}
-                  onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/update` as any)}
+                  onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/update` as Href)}
                   right={
                     <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>
                       {formatAccountStatus(account.status)}
@@ -305,19 +315,19 @@ export default function AccountsIndexScreen() {
             title="Edit First Account"
             variant="outline"
             style={styles.actionButton}
-            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/update` as any)}
+            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/update` as Href)}
           />
           <Button
             title="Delete First Account"
             variant="destructive"
             style={styles.actionButton}
-            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/delete` as any)}
+            onPress={() => router.push(`/(tabs)/finance/accounts/${accounts[0].id}/delete` as Href)}
           />
         </View>
       ) : null}
 
       {!isLoading && !hasError ? (
-        <Button title="Create Account" onPress={() => router.push("/(tabs)/finance/accounts/create" as any)} />
+        <Button title="Create Account" onPress={() => router.push("/(tabs)/finance/accounts/create" as Href)} />
       ) : null}
 
 
@@ -331,7 +341,7 @@ export default function AccountsIndexScreen() {
                 key={transaction.id}
                 title={transaction.title}
                 subtitle={`${transaction.category} · ${transaction.accountName} · ${formatTransactionTime(transaction.createdAt)}`}
-                onPress={() => router.push(`/(tabs)/finance/transactions/${transaction.id}` as any)}
+                onPress={() => router.push(`/(tabs)/finance/transactions/${transaction.id}` as Href)}
                 right={
                   <Text
                     style={[

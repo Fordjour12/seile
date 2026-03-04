@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
+
 import { toast } from "sonner-native";
 import { Text, View } from "@/components";
 import { AccountForm, type AccountFormValues } from "@/components/account-form";
@@ -29,7 +30,7 @@ export default function CreateAccount() {
       toast.success("Account created", {
         description: `${account.name} is ready to use.`,
       });
-      router.replace("/(tabs)/finance/accounts" as any);
+      router.replace("/(tabs)/finance/accounts" as Href);
     } catch {
       toast.error("Could not create account", {
         description: "Please try again.",

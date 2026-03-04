@@ -33,6 +33,14 @@ Follow the prompts to create a new Convex project and connect it to your applica
 
 Copy environment variables from `packages/backend/.env.local` to `apps/*/.env`.
 
+For `apps/native/.env`, use Expo public variable names:
+
+```bash
+EXPO_PUBLIC_CONVEX_URL="<your Convex cloud URL>"
+EXPO_PUBLIC_CONVEX_SITE_URL="<your Convex site URL>"
+EXPO_PUBLIC_APP_HMAC_SECRET="<optional local dev secret, 32+ chars>"
+```
+
 Then, run the development server:
 
 ```bash
