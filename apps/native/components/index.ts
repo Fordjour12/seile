@@ -35,3 +35,5 @@ export { FinanceScheduleFields } from "./finance-schedule-fields";
 export { FinanceAccountPicker } from "./finance-account-picker";
 export { FinanceCategoryPicker } from "./finance-category-picker";
 export { FinanceDateTimePickerField } from "./finance-datetime-picker-field";
+
+export { SavingsSummaryCard } from "./savings-summary-card";
