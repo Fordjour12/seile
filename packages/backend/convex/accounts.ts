@@ -13,6 +13,7 @@ import {
   normalizeAccountName,
   normalizeCurrency,
   normalizeOptionalNote,
+  normalizeOptionalProviderName,
   paginationValidator,
   updateAccountValidator,
 } from "./lib/validation";
@@ -26,6 +27,7 @@ const ARCHIVED_STATUS = "archived";
 export const createAccount = mutation({
   args: {
     name: accountNameValidator,
+    providerName: v.optional(v.string()),
     type: accountTypeValidator,
     currency: currencyValidator,
     openingBalance: v.optional(v.number()),
@@ -42,9 +44,12 @@ export const createAccount = mutation({
     }
 
     const now = Date.now();
+    const providerName = normalizeOptionalProviderName(args.providerName);
+    assertProviderNameByType(args.type, providerName);
     const accountId = await ctx.db.insert("accounts", {
       userId,
       name: normalizeAccountName(args.name),
+      providerName,
       type: args.type,
       status: ACTIVE_STATUS,
       currency: normalizeCurrency(args.currency),
@@ -71,6 +76,12 @@ export const updateAccount = mutation({
     const userId = resolveSystemUserId();
     const account = await requireOwnedAccount(ctx, args.accountId, userId);
     const patch = buildAccountPatch(args);
+    const hasProviderNameUpdate = Object.prototype.hasOwnProperty.call(args, "providerName");
+    if (patch.type !== undefined || hasProviderNameUpdate) {
+      const nextType = patch.type ?? account.type;
+      const nextProviderName = hasProviderNameUpdate ? patch.providerName : account.providerName;
+      assertProviderNameByType(nextType, nextProviderName);
+    }
     if (Object.keys(patch).length === 0) {
       throw new ConvexError("Validation: no updatable fields provided");
     }
@@ -183,16 +194,18 @@ function buildAccountPatch(
   args: Pick<
     {
       name?: string;
+      providerName?: string;
       type?: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
       currency?: string;
       balance?: number;
       status?: "active" | "archived" | "closed";
       note?: string;
     },
-    "name" | "type" | "currency" | "balance" | "status" | "note"
+    "name" | "providerName" | "type" | "currency" | "balance" | "status" | "note"
   >
 ): Partial<{
   name: string;
+  providerName: string | undefined;
   type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
   currency: string;
   balance: number;
@@ -201,6 +214,7 @@ function buildAccountPatch(
 }> {
   const patch: Partial<{
     name: string;
+    providerName: string | undefined;
     type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
     currency: string;
     balance: number;
@@ -210,6 +224,9 @@ function buildAccountPatch(
 
   if (args.name !== undefined) {
     patch.name = normalizeAccountName(args.name);
+  }
+  if (args.providerName !== undefined) {
+    patch.providerName = normalizeOptionalProviderName(args.providerName);
   }
   if (args.type !== undefined) {
     patch.type = args.type;
@@ -228,4 +245,17 @@ function buildAccountPatch(
   }
 
   return patch;
+}
+
+function isProviderRequired(type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank"): boolean {
+  return type !== "cash";
+}
+
+function assertProviderNameByType(
+  type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank",
+  providerName: string | undefined
+): void {
+  if (isProviderRequired(type) && !providerName) {
+    throw new ConvexError("Validation: provider name is required for this account type");
+  }
 }

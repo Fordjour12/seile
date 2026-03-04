@@ -6,6 +6,7 @@ import { accountStatusValidator, accountTypeValidator } from "./validators";
 export const accountsTable = defineTable({
   userId: v.string(),
   name: v.string(),
+  providerName: v.optional(v.string()),
   type: accountTypeValidator,
   status: accountStatusValidator,
   currency: v.string(),

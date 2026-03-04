@@ -51,10 +51,11 @@ export function mapAccountListItem(account: Account): {
   subtitle: string;
   balanceLabel: string;
 } {
+  const statusAndType = `${formatAccountType(account.type)} · ${formatAccountStatus(account.status)}`;
   return {
     id: account.id,
     title: account.name,
-    subtitle: `${formatAccountType(account.type)} · ${formatAccountStatus(account.status)}`,
+    subtitle: account.providerName ? `${account.providerName} · ${statusAndType}` : statusAndType,
     balanceLabel: formatAccountBalance(account.balance, account.currencyCode),
   };
 }

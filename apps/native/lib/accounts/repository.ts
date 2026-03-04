@@ -17,6 +17,7 @@ type BackendAccount = {
   _creationTime: number;
   userId: string;
   name: string;
+  providerName?: string;
   type: BackendAccountType;
   status?: BackendAccountStatus;
   currency: string;
@@ -58,6 +59,7 @@ function mapAccount(account: BackendAccount): Account {
   return {
     id: account._id,
     name: account.name,
+    providerName: account.providerName,
     type: mapBackendType(account.type),
     status: mapBackendStatus(account),
     currencyCode: account.currency,
@@ -103,6 +105,7 @@ export async function getAccount(accountId: string): Promise<Account | null> {
 export async function createAccount(payload: CreateAccountPayload): Promise<Account> {
   const response = await accountRequest<BackendAccount>("/accounts/create", "accounts:createAccount", {
     name: payload.name,
+    providerName: payload.providerName,
     type: mapOutgoingType(payload.type),
     currency: payload.currencyCode ?? "GHS",
     openingBalance: payload.openingBalance ?? 0,
@@ -120,6 +123,7 @@ export async function updateAccount(
     const response = await accountRequest<BackendAccount>("/accounts/update", "accounts:updateAccount", {
       accountId,
       name: payload.name,
+      providerName: payload.providerName,
       type: payload.type ? mapOutgoingType(payload.type) : undefined,
       currency: payload.currencyCode,
       balance: payload.balance,

@@ -5,6 +5,7 @@ export type AccountStatus = "active" | "archived" | "closed";
 export interface Account {
   id: string;
   name: string;
+  providerName?: string;
   type: AccountType;
   status: AccountStatus;
   currencyCode: string;
@@ -16,6 +17,7 @@ export interface Account {
 
 export interface CreateAccountPayload {
   name: string;
+  providerName?: string;
   type: AccountType;
   currencyCode?: string;
   openingBalance?: number;
@@ -24,6 +26,7 @@ export interface CreateAccountPayload {
 
 export interface UpdateAccountPayload {
   name?: string;
+  providerName?: string;
   type?: AccountType;
   status?: AccountStatus;
   currencyCode?: string;

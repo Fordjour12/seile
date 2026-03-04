@@ -51,6 +51,7 @@ export default function UpdateAccount() {
     try {
       const payload: UpdateAccountPayload = {
         name: values.name,
+        providerName: values.providerName || undefined,
         type: values.type,
         status: values.isActive ? "active" : "archived",
         balance: Number(values.balance),
@@ -107,6 +108,7 @@ export default function UpdateAccount() {
           submitLabel="Save changes"
           loading={loading}
           initialValues={{
+            providerName: account.providerName ?? "",
             name: account.name,
             balance: `${account.balance}`,
             type: account.type,

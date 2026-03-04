@@ -11,6 +11,7 @@ export const ACCOUNT_TYPES = [
 ] as const;
 export const ACCOUNT_STATUSES = ["active", "archived", "closed"] as const;
 export const MAX_ACCOUNT_NAME_LENGTH = 80;
+export const MAX_PROVIDER_NAME_LENGTH = 80;
 export const MAX_NOTE_LENGTH = 300;
 
 export const accountNameValidator = v.string();
@@ -46,6 +47,7 @@ export const paginationValidator = v.optional(
 export const updateAccountValidator = v.object({
   accountId: v.id("accounts"),
   name: v.optional(accountNameValidator),
+  providerName: v.optional(v.string()),
   type: v.optional(accountTypeValidator),
   currency: v.optional(currencyValidator),
   balance: v.optional(balanceValidator),
@@ -62,6 +64,23 @@ export function normalizeAccountName(name: string): string {
   if (trimmed.length > MAX_ACCOUNT_NAME_LENGTH) {
     throw new ConvexError("Validation: account name is too long");
   }
+  return trimmed;
+}
+
+export function normalizeOptionalProviderName(providerName: string | undefined): string | undefined {
+  if (providerName === undefined) {
+    return undefined;
+  }
+
+  const trimmed = providerName.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (trimmed.length > MAX_PROVIDER_NAME_LENGTH) {
+    throw new ConvexError("Validation: provider name is too long");
+  }
+
   return trimmed;
 }
 

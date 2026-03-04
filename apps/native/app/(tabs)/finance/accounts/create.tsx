@@ -21,6 +21,7 @@ export default function CreateAccount() {
     try {
       const payload: CreateAccountPayload = {
         name: values.name,
+        providerName: values.providerName || undefined,
         type: values.type,
         openingBalance: Number(values.balance),
         currencyCode: "GHS",

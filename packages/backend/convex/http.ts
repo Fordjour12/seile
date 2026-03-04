@@ -70,6 +70,7 @@ type GetAccountPayload = {
 
 type CreateAccountPayload = {
   name: string;
+  providerName?: string;
   type: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
   currency: string;
   openingBalance?: number;
@@ -80,6 +81,7 @@ type CreateAccountPayload = {
 type UpdateAccountPayload = {
   accountId: Id<"accounts">;
   name?: string;
+  providerName?: string;
   type?: "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
   currency?: string;
   balance?: number;
