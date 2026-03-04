@@ -53,7 +53,8 @@ function attachComputed(row: Doc<"savingsGoals">) {
   const targetDate = row.targetDate;
   const now = Date.now();
   const monthsUntilTarget = targetDate && targetDate > now ? Math.max(1, Math.ceil((targetDate - now) / (30 * 24 * 60 * 60 * 1000))) : undefined;
-  const monthlyLedgerImpact = row.monthlyContribution ?? (monthsUntilTarget ? row.targetAmount / monthsUntilTarget : 0);
+  const remainingAmount = Math.max(0, row.targetAmount - row.currentAmount);
+  const monthlyLedgerImpact = row.monthlyContribution ?? (monthsUntilTarget ? remainingAmount / monthsUntilTarget : 0);
 
   return {
     ...row,

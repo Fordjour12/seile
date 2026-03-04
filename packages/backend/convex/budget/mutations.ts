@@ -158,6 +158,7 @@ export const copyPreviousPeriod = mutation({
     const periods = await ctx.db.query("budgetPeriods").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
     const previous = periods
       .filter((item) => item._id !== toPeriod._id && (item.status === "active" || item.status === "closed"))
+      .filter((item) => item.year < toPeriod.year || (item.year === toPeriod.year && item.month < toPeriod.month))
       .sort((a, b) => (b.year - a.year) || (b.month - a.month))[0];
 
     if (!previous) return { copiedCount: 0, noPreviousPeriod: true };

@@ -77,7 +77,7 @@ export default function Index() {
         const now = new Date();
         const periodLabel = `${now.toLocaleString("en-US", { month: "short" })} ${now.getFullYear()} · Month-to-date`;
 
-        const [debts, savings, budget] = await Promise.all([listDebtPlans("draft"), getSavingsSummary(), getBudgetSummary()]);
+        const [debts, savings, budget] = await Promise.all([listDebtPlans(), getSavingsSummary(), getBudgetSummary()]);
 
         setAccountOverview({
           totalCash,
