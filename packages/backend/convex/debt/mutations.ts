@@ -11,6 +11,7 @@ export const createDebtPlan = mutation({
   args: {
     name: v.string(),
     debtType: debtTypeValidator,
+    status: v.optional(v.union(v.literal("draft"), v.literal("active"), v.literal("archived"))),
     currency: v.optional(v.string()),
     originalBalance: v.number(),
     currentBalance: v.number(),
@@ -25,14 +26,19 @@ export const createDebtPlan = mutation({
   },
   handler: async (ctx, args): Promise<{ id: Id<"debtPlans"> }> => {
     const now = Date.now();
+    const originalBalance = validateDebtMoney("originalBalance", args.originalBalance);
+    const currentBalance = validateDebtMoney("currentBalance", args.currentBalance);
+    if (currentBalance > originalBalance) {
+      throw new ConvexError("Validation: currentBalance cannot exceed originalBalance");
+    }
     const id = await ctx.db.insert("debtPlans", {
       userId: resolveSystemUserId(),
       name: validateDebtName(args.name),
       debtType: args.debtType,
-      status: "draft",
+      status: args.status ?? "active",
       currency: validateDebtCurrency(args.currency ?? "GHS"),
-      originalBalance: validateDebtMoney("originalBalance", args.originalBalance),
-      currentBalance: validateDebtMoney("currentBalance", args.currentBalance),
+      originalBalance,
+      currentBalance,
       monthlyDue: validateDebtMoney("monthlyDue", args.monthlyDue),
       apr: validateApr(args.apr),
       nextDueDate: args.nextDueDate,
@@ -54,7 +60,9 @@ export const updateDebtPlan = mutation({
   args: {
     id: v.id("debtPlans"),
     name: v.optional(v.string()),
+    debtType: v.optional(debtTypeValidator),
     currency: v.optional(v.string()),
+    originalBalance: v.optional(v.number()),
     currentBalance: v.optional(v.number()),
     monthlyDue: v.optional(v.number()),
     apr: v.optional(v.number()),
@@ -70,7 +78,9 @@ export const updateDebtPlan = mutation({
     const existing = await requireOwnedDebt(ctx, args.id);
     const patch: Partial<Doc<"debtPlans">> = { updatedAt: Date.now() };
     if (args.name !== undefined) patch.name = validateDebtName(args.name);
+    if (args.debtType !== undefined) patch.debtType = args.debtType;
     if (args.currency !== undefined) patch.currency = validateDebtCurrency(args.currency);
+    if (args.originalBalance !== undefined) patch.originalBalance = validateDebtMoney("originalBalance", args.originalBalance);
     if (args.currentBalance !== undefined) patch.currentBalance = validateDebtMoney("currentBalance", args.currentBalance);
     if (args.monthlyDue !== undefined) patch.monthlyDue = validateDebtMoney("monthlyDue", args.monthlyDue);
     if (args.apr !== undefined) patch.apr = validateApr(args.apr);
@@ -81,6 +91,19 @@ export const updateDebtPlan = mutation({
     if (args.priorityRank !== undefined) patch.priorityRank = validatePriorityRank(args.priorityRank);
     if (args.notes !== undefined) patch.notes = args.notes.trim() || undefined;
     if (args.status !== undefined) patch.status = args.status;
+    if (
+      patch.originalBalance !== undefined &&
+      (patch.currentBalance ?? existing.currentBalance) > patch.originalBalance
+    ) {
+      throw new ConvexError("Validation: currentBalance cannot exceed originalBalance");
+    }
+    if (
+      patch.originalBalance === undefined &&
+      patch.currentBalance !== undefined &&
+      patch.currentBalance > existing.originalBalance
+    ) {
+      throw new ConvexError("Validation: currentBalance cannot exceed originalBalance");
+    }
 
     await ctx.db.patch(existing._id, patch);
     const updated = await ctx.db.get(existing._id);

@@ -41,7 +41,7 @@ export default function SubscriptionDetailScreen() {
     try {
       await cancelSubscription(id);
       toast.success("Subscription cancelled");
-      router.replace("/(tabs)/finance/subscriptions" as Href);
+      router.replace("/(tabs)/finance/recurring" as Href);
     } catch (error) {
       toast.error("Could not cancel subscription", {
         description: error instanceof Error ? error.message : "Please try again.",
@@ -88,7 +88,7 @@ export default function SubscriptionDetailScreen() {
         />
       ) : null}
 
-      <Button title="Back to subscriptions" variant="outline" onPress={() => router.replace("/(tabs)/finance/subscriptions" as Href)} />
+      <Button title="Back to schedules" variant="outline" onPress={() => router.replace("/(tabs)/finance/recurring" as Href)} />
     </ScrollView>
   );
 }

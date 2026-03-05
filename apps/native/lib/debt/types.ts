@@ -30,3 +30,9 @@ export interface CreateDebtPlanPayload {
 export interface UpdateDebtPlanPayload extends Partial<CreateDebtPlanPayload> {
   status?: DebtPlanStatus;
 }
+
+export interface DebtSnapshot {
+  totalCurrentBalance: number;
+  totalMonthlyDue: number;
+  countByStatus: Partial<Record<DebtPlanStatus, number>>;
+}

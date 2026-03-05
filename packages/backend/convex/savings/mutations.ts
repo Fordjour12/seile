@@ -16,6 +16,7 @@ import {
 export const createSavingsGoal = mutation({
   args: {
     name: v.string(),
+    status: v.optional(savingsStatusValidator),
     currency: v.optional(v.string()),
     targetAmount: v.number(),
     currentAmount: v.number(),
@@ -39,7 +40,7 @@ export const createSavingsGoal = mutation({
     const id = await ctx.db.insert("savingsGoals", {
       userId: resolveSystemUserId(),
       name: validateSavingsName(args.name),
-      status: "draft",
+      status: args.status ?? "active",
       currency: validateSavingsCurrency(args.currency ?? "GHS"),
       targetAmount,
       currentAmount,
@@ -84,6 +85,9 @@ export const updateSavingsGoal = mutation({
     const targetAmount = args.targetAmount ?? existing.targetAmount;
     const currentAmount = args.currentAmount ?? existing.currentAmount;
     validateCurrentAmount(currentAmount, validateTargetAmount(targetAmount));
+    if (args.targetDate !== undefined && args.targetDate <= Date.now()) {
+      throw new ConvexError("Validation: targetDate must be in the future");
+    }
     if (args.name !== undefined) patch.name = validateSavingsName(args.name);
     if (args.status !== undefined) patch.status = args.status;
     if (args.currency !== undefined) patch.currency = validateSavingsCurrency(args.currency);

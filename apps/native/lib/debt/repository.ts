@@ -2,7 +2,13 @@ import * as SecureStore from "expo-secure-store";
 
 import { postJson } from "@/lib/accounts/http-client";
 
-import type { CreateDebtPlanPayload, DebtPlan, DebtPlanStatus, UpdateDebtPlanPayload } from "./types";
+import type {
+  CreateDebtPlanPayload,
+  DebtPlan,
+  DebtPlanStatus,
+  DebtSnapshot,
+  UpdateDebtPlanPayload,
+} from "./types";
 
 type BackendDebtPlan = {
   _id: string;
@@ -59,7 +65,9 @@ export async function getDebtPlanById(id: string): Promise<DebtPlan> {
   return mapDebtPlan(row);
 }
 
-export async function createDebtPlan(payload: CreateDebtPlanPayload): Promise<string> {
+export async function createDebtPlan(
+  payload: CreateDebtPlanPayload & { status?: DebtPlanStatus },
+): Promise<DebtPlan> {
   const result = await postJson<{ id: string }>("/debt/create", {
     name: payload.name,
     debtType: payload.debtType,
@@ -68,14 +76,17 @@ export async function createDebtPlan(payload: CreateDebtPlanPayload): Promise<st
     currentBalance: payload.currentBalance,
     monthlyDue: payload.monthlyDue,
     apr: payload.apr,
+    status: payload.status,
   });
-  return result.id;
+  return getDebtPlanById(result.id);
 }
 
 export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload): Promise<DebtPlan> {
   const row = await postJson<BackendDebtPlan>("/debt/update", {
     id,
     ...payload,
+    debtType: payload.debtType,
+    originalBalance: payload.originalBalance,
     currency: payload.currencyCode,
   });
   return mapDebtPlan(row);
@@ -83,4 +94,8 @@ export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload)
 
 export async function archiveDebtPlan(id: string): Promise<boolean> {
   return postJson<boolean>("/debt/archive", { id });
+}
+
+export async function getDebtSnapshot(): Promise<DebtSnapshot> {
+  return postJson<DebtSnapshot>("/debt/snapshot", {});
 }

@@ -114,7 +114,7 @@ export default function CreateSubscriptionScreen() {
       });
 
       toast.success("Subscription created");
-      router.replace("/(tabs)/finance/subscriptions" as Href);
+      router.replace("/(tabs)/finance/recurring" as Href);
     } catch (error) {
       toast.error("Could not create subscription", {
         description: error instanceof Error ? error.message : "Please try again.",
@@ -202,7 +202,7 @@ export default function CreateSubscriptionScreen() {
       </Card>
 
       <Button title={loading ? "Creating..." : "Create subscription"} onPress={onSubmit} disabled={loading} />
-      <Button title="Back to subscriptions" variant="outline" onPress={() => router.replace("/(tabs)/finance/subscriptions" as Href)} />
+      <Button title="Back to schedules" variant="outline" onPress={() => router.replace("/(tabs)/finance/recurring" as Href)} />
     </ScrollView>
   );
 }

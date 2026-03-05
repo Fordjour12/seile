@@ -144,7 +144,7 @@ export default function Index() {
       key: "recurring",
       badge: "RC",
       label: "Schedules",
-      meta: "Active: 0 · Subscriptions: 0",
+      meta: "Recurring flows and subscriptions",
       route: "/(tabs)/finance/recurring",
     },
     {
@@ -155,13 +155,6 @@ export default function Index() {
       route: "/(tabs)/finance/transactions",
     },
     {
-      key: "subscriptions",
-      badge: "SB",
-      label: "Subscriptions",
-      meta: "Renewals, trials, and monthly totals",
-      route: "/(tabs)/finance/subscriptions",
-    },
-    {
       key: "debt",
       badge: "DB",
       label: "Debt",
@@ -169,11 +162,13 @@ export default function Index() {
       route: "/(tabs)/finance/debt",
     },
     {
-      key: "investments",
-      badge: "IV",
-      label: "Investments",
-      meta: "Track portfolio value",
-      route: "/(tabs)/finance/planning/investments",
+      key: "budget",
+      badge: "BG",
+      label: "Budget",
+      meta: budgetSummary.activePeriod
+        ? `Active ${String(budgetSummary.activePeriod.month).padStart(2, "0")}/${budgetSummary.activePeriod.year}`
+        : "Plan envelopes and allocations",
+      route: "/(tabs)/finance/budget",
     },
   ];
 
@@ -199,17 +194,27 @@ export default function Index() {
         debts={debtItems}
         onViewAllPress={() => router.push("/(tabs)/finance/debt" as Href)}
       />
-      <SavingsSummaryCard
-        totalTarget={savingsSummary.totalTarget}
-        totalCurrent={savingsSummary.totalCurrent}
-        percentComplete={savingsSummary.percentComplete}
-        goalsCount={Object.values(savingsSummary.countByStatus).reduce((sum, count) => sum + count, 0)}
-      />
-      <View style={styles.sectionHeaderRow}>
-        <Text style={[Typography.bodyMD, { color: theme.text }]}>Total Monthly Commitment</Text>
-        <Text style={[Typography.labelSM, { color: theme.primary }]}>
-          {(debtItems.reduce((sum, debt) => sum + debt.monthlyDue, 0) + savingsSummary.totalMonthlyCommitment).toFixed(2)}
-        </Text>
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <SectionHeader title="" subtitle="SAVINGS GOALS" />
+          <Pressable onPress={() => router.push("/(tabs)/finance/savings" as Href)}>
+            <Text style={[Typography.labelSM, { color: theme.chart4 }]}>
+              View All
+            </Text>
+          </Pressable>
+        </View>
+        <SavingsSummaryCard
+          totalTarget={savingsSummary.totalTarget}
+          totalCurrent={savingsSummary.totalCurrent}
+          percentComplete={savingsSummary.percentComplete}
+          goalsCount={Object.values(savingsSummary.countByStatus).reduce((sum, count) => sum + count, 0)}
+        />
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[Typography.bodyMD, { color: theme.text }]}>Total Monthly Commitment</Text>
+          <Text style={[Typography.labelSM, { color: theme.primary }]}>
+            {(debtItems.reduce((sum, debt) => sum + debt.monthlyDue, 0) + savingsSummary.totalMonthlyCommitment).toFixed(2)}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.section}>
