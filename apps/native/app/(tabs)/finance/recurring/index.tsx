@@ -75,7 +75,7 @@ export default function RecurringIndexScreen() {
         <Button
           title="Add subscription"
           variant="outline"
-          onPress={() => router.push("/(tabs)/finance/subscriptions/create" as Href)}
+          onPress={() => router.push("/(tabs)/finance/recurring/subscriptions/create" as Href)}
           style={styles.actionButton}
         />
       </View>
