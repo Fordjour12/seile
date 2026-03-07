@@ -152,7 +152,7 @@ export default function Index() {
       badge: "SC",
       label: "Scheduler",
       meta: "Calendar, alerts, and task sessions",
-      route: "/(tabs)/finance/scheduler",
+      route: "/(tabs)/scheduler",
     },
     {
       key: "transactions",

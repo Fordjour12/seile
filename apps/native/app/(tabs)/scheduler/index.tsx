@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
+import { useLocalSearchParams, usePathname, useRouter } from "expo-router";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,6 +14,7 @@ import {
   Banner,
   Card,
   Chip,
+  Dialog,
   EmptyState,
   Spinner,
   Text,
@@ -378,6 +380,9 @@ function SchedulerAgendaView({
 }
 
 export default function SchedulerScreen() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { id: routeTaskId } = useLocalSearchParams<{ id?: string }>();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const todayDate = toDateKey(new Date());
@@ -389,17 +394,24 @@ export default function SchedulerScreen() {
   const [activeView, setActiveView] = useState<SchedulerView>("month");
   const [selectedDate, setSelectedDate] = useState(todayDate);
   const [taskFilter, setTaskFilter] = useState<SchedulerFilter>("all");
-  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
-  const [isAddSheetVisible, setIsAddSheetVisible] = useState(false);
+  const isCreateRoute = pathname.endsWith("/scheduler/create");
+  const isDeleteRoute = pathname.endsWith("/delete");
+  const isUpdateRoute = pathname.endsWith("/update");
+  const activeTask = routeTaskId ? tasks.find((task) => task.id === routeTaskId) ?? null : null;
 
   const stats = useMemo(() => getSchedulerStats(tasks, todayDate), [tasks, todayDate]);
   const tasksById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
-  const activeTask = detailTaskId ? tasksById.get(detailTaskId) ?? null : null;
 
   const fabPulse = useSharedValue(1);
   const fabStyle = useAnimatedStyle(() => ({
     transform: [{ scale: fabPulse.value }],
   }));
+
+  useEffect(() => {
+    if (activeTask?.dueDate) {
+      setSelectedDate(activeTask.dueDate);
+    }
+  }, [activeTask?.dueDate]);
 
   useEffect(() => {
     if (stats.overdue > 0) {
@@ -419,8 +431,8 @@ export default function SchedulerScreen() {
     try {
       const nextTasks = await synchronizeSchedulerState();
       setTasks(nextTasks);
-      if (detailTaskId && !nextTasks.some((task) => task.id === detailTaskId)) {
-        setDetailTaskId(null);
+      if (routeTaskId && !nextTasks.some((task) => task.id === routeTaskId)) {
+        router.replace("/(tabs)/scheduler");
       }
     } catch (error) {
       setHasError(true);
@@ -436,13 +448,26 @@ export default function SchedulerScreen() {
 
   useEffect(() => {
     void refreshTasks();
-  }, []);
+  }, [routeTaskId, router]);
+
+  function closeCreateRoute() {
+    router.replace("/(tabs)/scheduler");
+  }
+
+  function closeDetailRoute() {
+    if (routeTaskId && (isUpdateRoute || isDeleteRoute)) {
+      router.replace(`/(tabs)/scheduler/${routeTaskId}`);
+      return;
+    }
+
+    router.replace("/(tabs)/scheduler");
+  }
 
   async function handleCreateTask(payload: CreateSchedulerTaskPayload) {
     try {
       await createSchedulerTask(payload);
       await refreshTasks({ silent: true });
-      setIsAddSheetVisible(false);
+      closeCreateRoute();
       setSelectedDate(payload.dueDate);
       toast.success("Task added");
     } catch (error) {
@@ -487,7 +512,7 @@ export default function SchedulerScreen() {
   async function handleDeleteTask(taskId: string) {
     try {
       await deleteSchedulerTask(taskId);
-      setDetailTaskId(null);
+      router.replace("/(tabs)/scheduler");
       await refreshTasks({ silent: true });
       toast.success("Task deleted");
     } catch (error) {
@@ -690,7 +715,7 @@ export default function SchedulerScreen() {
                   tasks={tasks}
                   todayDate={todayDate}
                   tasksById={tasksById}
-                  onOpenTask={setDetailTaskId}
+                  onOpenTask={(taskId) => router.push(`/(tabs)/scheduler/${taskId}`)}
                 />
               ) : null}
             </Card>
@@ -708,7 +733,7 @@ export default function SchedulerScreen() {
                         task={task}
                         theme={theme}
                         dependencyCount={getOutstandingDependencyCount(task, tasksById)}
-                        onPress={() => setDetailTaskId(task.id)}
+                        onPress={() => router.push(`/(tabs)/scheduler/${task.id}`)}
                       />
                     ))}
                   </View>
@@ -755,7 +780,7 @@ export default function SchedulerScreen() {
                     task={task}
                     theme={theme}
                     dependencyCount={getOutstandingDependencyCount(task, tasksById)}
-                    onPress={() => setDetailTaskId(task.id)}
+                    onPress={() => router.push(`/(tabs)/scheduler/${task.id}`)}
                   />
                 ))}
               </View>
@@ -846,7 +871,7 @@ export default function SchedulerScreen() {
       </ScrollView>
 
       <Animated.View style={[styles.fabWrap, fabStyle]}>
-        <Pressable onPress={() => setIsAddSheetVisible(true)} style={styles.fabButton}>
+        <Pressable onPress={() => router.push("/(tabs)/scheduler/create")} style={styles.fabButton}>
           <LinearGradient
             colors={["#7C6EFA", "#A78BFA"]}
             start={{ x: 0, y: 0 }}
@@ -861,21 +886,40 @@ export default function SchedulerScreen() {
       </Animated.View>
 
       <SchedulerAddTaskSheet
-        visible={isAddSheetVisible}
-        onClose={() => setIsAddSheetVisible(false)}
+        visible={isCreateRoute}
+        onClose={closeCreateRoute}
         onSubmit={handleCreateTask}
       />
 
       <SchedulerTaskDetailSheet
-        visible={Boolean(activeTask)}
+        visible={Boolean(activeTask) && !isDeleteRoute}
         task={activeTask}
         tasksById={tasksById}
         theme={theme}
-        onClose={() => setDetailTaskId(null)}
+        onClose={closeDetailRoute}
         onUpdateTask={handleUpdateTask}
         onToggleSubtask={handleToggleSubtask}
         onDeleteTask={handleDeleteTask}
-        onOpenTask={setDetailTaskId}
+        onOpenTask={(taskId) => router.push(`/(tabs)/scheduler/${taskId}`)}
+      />
+
+      <Dialog
+        visible={Boolean(activeTask) && isDeleteRoute}
+        title="Delete Task"
+        description={
+          activeTask
+            ? `Delete "${activeTask.title}"? This cannot be undone.`
+            : "Delete this task? This cannot be undone."
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        tone="destructive"
+        onCancel={closeDetailRoute}
+        onConfirm={() => {
+          if (activeTask) {
+            void handleDeleteTask(activeTask.id);
+          }
+        }}
       />
     </>
   );

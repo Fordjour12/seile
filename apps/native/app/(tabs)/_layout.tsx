@@ -60,6 +60,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="scheduler"
+        options={{
+          title: "Scheduler",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="calendar" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="auth-smoke"
         options={{
           title: "Auth",
