@@ -148,6 +148,13 @@ export default function Index() {
       route: "/(tabs)/finance/recurring",
     },
     {
+      key: "scheduler",
+      badge: "SC",
+      label: "Scheduler",
+      meta: "Calendar, alerts, and task sessions",
+      route: "/(tabs)/finance/scheduler",
+    },
+    {
       key: "transactions",
       badge: "TX",
       label: "Transactions",

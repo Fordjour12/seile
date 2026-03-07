@@ -111,6 +111,10 @@ type SavingsIdPayload = {
   id: Id<"savingsGoals">;
 };
 
+type SchedulerTaskIdPayload = {
+  id: Id<"schedulerTasks">;
+};
+
 type BudgetPeriodIdPayload = {
   id: Id<"budgetPeriods">;
 };
@@ -475,6 +479,108 @@ http.route({
     try {
       const payload = (await readBody(request)) as RecurringIdPayload;
       const result = await ctx.runMutation(apiAny["subscriptions/mutations"].cancelSubscription, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/scheduler/tasks/list",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as {
+        includeCompleted?: boolean;
+      };
+      const result = await ctx.runQuery(apiAny["scheduler/queries"].listSchedulerTasks, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/scheduler/tasks/getById",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as SchedulerTaskIdPayload;
+      const result = await ctx.runQuery(apiAny["scheduler/queries"].getSchedulerTaskById, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/scheduler/tasks/create",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["scheduler/mutations"].createSchedulerTask, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/scheduler/tasks/update",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["scheduler/mutations"].updateSchedulerTask, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/scheduler/tasks/toggle-subtask",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = await readBody(request);
+      const result = await ctx.runMutation(apiAny["scheduler/mutations"].toggleSchedulerSubtask, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/scheduler/tasks/delete",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as SchedulerTaskIdPayload;
+      const result = await ctx.runMutation(apiAny["scheduler/mutations"].deleteSchedulerTask, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/scheduler/tasks/reconcile",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as {
+        todayDate: string;
+      };
+      const result = await ctx.runMutation(apiAny["scheduler/mutations"].reconcileSchedulerTasks, payload);
       return json(200, result);
     } catch (error) {
       return json(400, { error: errorMessage(error) });

@@ -18,6 +18,7 @@ import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { LockScreen } from "@/components/lock-screen";
+import { SchedulerAppSync } from "@/lib/scheduler/use-scheduler-app-sync";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -98,6 +99,7 @@ export default function RootLayout() {
     <ConvexProvider client={convex}>
       <AuthProvider>
         <View style={StyleSheet.absoluteFill}>
+          <SchedulerAppSync />
           <AppContent />
           <AuthGate />
         </View>

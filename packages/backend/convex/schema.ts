@@ -8,6 +8,12 @@ import { recurringTransactionsTable } from "./schema/recurring_transactions";
 import { debtPlansTable, debtStatusValidator, debtTypeValidator, payoffStrategyValidator } from "./schema/debt_plans";
 import { savingsGoalsTable, savingsStatusValidator } from "./schema/savings_goals";
 import { requestNoncesTable } from "./schema/request_nonces";
+import {
+  schedulerTaskPriorityValidator,
+  schedulerTaskRecurrenceValidator,
+  schedulerTaskStatusValidator,
+  schedulerTasksTable,
+} from "./schema/scheduler_tasks";
 import { transactionsTable } from "./schema/transactions";
 
 export {
@@ -22,6 +28,11 @@ export {
 export { transactionKindValidator } from "./schema/transactions";
 export { budgetPeriodStatusValidator };
 export { debtStatusValidator, debtTypeValidator, payoffStrategyValidator, savingsStatusValidator };
+export {
+  schedulerTaskPriorityValidator,
+  schedulerTaskRecurrenceValidator,
+  schedulerTaskStatusValidator,
+};
 
 export default defineSchema({
   accounts: accountsTable,
@@ -33,4 +44,5 @@ export default defineSchema({
   recurringTransactions: recurringTransactionsTable,
   debtPlans: debtPlansTable,
   savingsGoals: savingsGoalsTable,
+  schedulerTasks: schedulerTasksTable,
 });
