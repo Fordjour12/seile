@@ -103,6 +103,22 @@ type RecurringIdPayload = {
   id: Id<"recurringTransactions">;
 };
 
+type DebtIdPayload = {
+  id: Id<"debtPlans">;
+};
+
+type SavingsIdPayload = {
+  id: Id<"savingsGoals">;
+};
+
+type BudgetPeriodIdPayload = {
+  id: Id<"budgetPeriods">;
+};
+
+type BudgetEnvelopeIdPayload = {
+  id: Id<"budgetEnvelopes">;
+};
+
 http.route({
   path: "/accounts/list",
   method: "POST",
@@ -479,5 +495,199 @@ http.route({
     }
   }),
 });
+
+
+http.route({
+  path: "/debt/list",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as { status?: "draft" | "active" | "archived"; includeArchived?: boolean };
+      const result = await ctx.runQuery(apiAny["debt/queries"].listDebtPlans, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/debt/snapshot",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      await readBody(request);
+      const result = await ctx.runQuery(apiAny["debt/queries"].getDebtSnapshot, {});
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({
+  path: "/debt/getById",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as DebtIdPayload;
+      const result = await ctx.runQuery(apiAny["debt/queries"].getDebtPlanById, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({ path: "/debt/create", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["debt/mutations"].createDebtPlan, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/debt/update", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["debt/mutations"].updateDebtPlan, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/debt/reorder", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["debt/mutations"].reorderDebtPlans, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/debt/archive", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as DebtIdPayload; const result = await ctx.runMutation(apiAny["debt/mutations"].archiveDebtPlan, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({
+  path: "/savings/list",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const payload = (await readBody(request)) as { status?: "draft" | "active" | "completed" | "archived"; includeArchived?: boolean };
+      const result = await ctx.runQuery(apiAny["savings/queries"].listSavingsGoals, payload);
+      return json(200, result);
+    } catch (error) {
+      return json(400, { error: errorMessage(error) });
+    }
+  }),
+});
+
+http.route({ path: "/savings/summary", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { await readBody(request); const result = await ctx.runQuery(apiAny["savings/queries"].getSavingsSummary, {}); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/savings/getById", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as SavingsIdPayload; const result = await ctx.runQuery(apiAny["savings/queries"].getSavingsGoalById, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/savings/create", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["savings/mutations"].createSavingsGoal, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/savings/update", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["savings/mutations"].updateSavingsGoal, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/savings/reorder", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["savings/mutations"].reorderSavingsGoals, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/savings/archive", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as SavingsIdPayload; const result = await ctx.runMutation(apiAny["savings/mutations"].archiveSavingsGoal, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+
+
+http.route({ path: "/budget/periods/list", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runQuery(apiAny["budget/queries"].listBudgetPeriods, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/active", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { await readBody(request); const result = await ctx.runQuery(apiAny["budget/queries"].getActivePeriod, {}); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/getById", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as BudgetPeriodIdPayload; const result = await ctx.runQuery(apiAny["budget/queries"].getBudgetPeriodById, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/summary", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { await readBody(request); const result = await ctx.runQuery(apiAny["budget/queries"].getBudgetSummary, {}); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/create", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["budget/mutations"].createBudgetPeriod, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/update", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["budget/mutations"].updateBudgetPeriod, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/activate", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as BudgetPeriodIdPayload; const result = await ctx.runMutation(apiAny["budget/mutations"].activateBudgetPeriod, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/close", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as BudgetPeriodIdPayload; const result = await ctx.runMutation(apiAny["budget/mutations"].closeBudgetPeriod, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/archive", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as BudgetPeriodIdPayload; const result = await ctx.runMutation(apiAny["budget/mutations"].archiveBudgetPeriod, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/periods/copy", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["budget/mutations"].copyPreviousPeriod, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/envelopes/list", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runQuery(apiAny["budget/queries"].listEnvelopes, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/envelopes/getById", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as BudgetEnvelopeIdPayload; const result = await ctx.runQuery(apiAny["budget/queries"].getEnvelopeById, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/envelopes/history", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runQuery(apiAny["budget/queries"].getEnvelopeHistory, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/envelopes/create", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["budget/mutations"].createEnvelope, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/envelopes/update", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["budget/mutations"].updateEnvelope, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/envelopes/reorder", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = await readBody(request); const result = await ctx.runMutation(apiAny["budget/mutations"].reorderEnvelopes, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
+
+http.route({ path: "/budget/envelopes/delete", method: "POST", handler: httpAction(async (ctx, request) => {
+  try { const payload = (await readBody(request)) as BudgetEnvelopeIdPayload; const result = await ctx.runMutation(apiAny["budget/mutations"].deleteEnvelope, payload); return json(200, result); }
+  catch (error) { return json(400, { error: errorMessage(error) }); }
+})});
 
 export default http;

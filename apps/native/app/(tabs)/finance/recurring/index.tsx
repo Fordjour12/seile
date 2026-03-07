@@ -4,8 +4,20 @@ import { useRouter, type Href } from "expo-router";
 
 import { Banner, Button, Card, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
 import { listRecurringTransactions, type RecurringTransaction } from "@/lib/recurring";
+import {
+  getMonthlySubscriptionSpend,
+  listUpcomingRenewals,
+  type Subscription,
+} from "@/lib/subscriptions";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
+
+function formatCurrency(amount: number): string {
+  return `GH₵${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 export default function RecurringIndexScreen() {
   const router = useRouter();
@@ -13,6 +25,8 @@ export default function RecurringIndexScreen() {
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
   const [items, setItems] = useState<RecurringTransaction[]>([]);
+  const [upcomingRenewals, setUpcomingRenewals] = useState<Subscription[]>([]);
+  const [monthlySubscriptionTotal, setMonthlySubscriptionTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -20,10 +34,18 @@ export default function RecurringIndexScreen() {
     setIsLoading(true);
     setHasError(false);
     try {
-      const rows = await listRecurringTransactions(true);
+      const [rows, upcoming, monthlySpend] = await Promise.all([
+        listRecurringTransactions(true),
+        listUpcomingRenewals(30),
+        getMonthlySubscriptionSpend(),
+      ]);
       setItems(rows);
+      setUpcomingRenewals(upcoming);
+      setMonthlySubscriptionTotal(monthlySpend.monthlyTotal);
     } catch {
       setItems([]);
+      setUpcomingRenewals([]);
+      setMonthlySubscriptionTotal(0);
       setHasError(true);
     } finally {
       setIsLoading(false);
@@ -44,7 +66,55 @@ export default function RecurringIndexScreen() {
         subtitle={`Active: ${activeCount} · Subscriptions: ${subscriptionsCount}`}
       />
 
-      <Button title="Create schedule" onPress={() => router.push("/(tabs)/finance/recurring/create" as Href)} />
+      <View style={styles.actionsRow}>
+        <Button
+          title="Create schedule"
+          onPress={() => router.push("/(tabs)/finance/recurring/create" as Href)}
+          style={styles.actionButton}
+        />
+        <Button
+          title="Add subscription"
+          variant="outline"
+          onPress={() => router.push("/(tabs)/finance/recurring/subscriptions/create" as Href)}
+          style={styles.actionButton}
+        />
+      </View>
+
+      {!isLoading ? (
+        <Card variant="outline" style={[styles.summaryCard, { borderColor: theme.border }]}>
+          <Text style={[Typography.labelSM, { color: theme.mutedForeground }]}>Subscription Layer</Text>
+          <View style={styles.summaryMetrics}>
+            <View style={styles.metricBlock}>
+              <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>Monthly spend</Text>
+              <Text style={[Typography.titleSM, { color: theme.foreground }]}>
+                {formatCurrency(monthlySubscriptionTotal)}
+              </Text>
+            </View>
+            <View style={styles.metricBlock}>
+              <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>Upcoming renewals</Text>
+              <Text style={[Typography.titleSM, { color: theme.foreground }]}>{upcomingRenewals.length}</Text>
+            </View>
+          </View>
+          {upcomingRenewals.length > 0 ? (
+            <View style={styles.renewalsList}>
+              {upcomingRenewals.slice(0, 3).map((item) => (
+                <View key={`renewal-${item.id}`} style={styles.renewalRow}>
+                  <Text style={[Typography.bodySM, { color: theme.foreground }]}>
+                    {item.subscriptionMeta.serviceName}
+                  </Text>
+                  <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>
+                    {new Date(item.nextRunAt).toLocaleDateString()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>
+              No subscription renewals in the next 30 days.
+            </Text>
+          )}
+        </Card>
+      ) : null}
 
       {hasError ? (
         <Banner
@@ -78,21 +148,40 @@ export default function RecurringIndexScreen() {
               key={item.id}
               onPress={() => router.push(`/(tabs)/finance/recurring/${item.id}` as Href)}
             >
-              <Card variant="outline" style={[styles.card, { borderColor: theme.border }]}> 
+              <Card variant="outline" style={[styles.card, { borderColor: theme.border }]}>
                 <View style={styles.rowBetween}>
-                  <Text style={[Typography.titleSM, { color: theme.foreground }]}>{item.note || item.kind}</Text>
-                  <Text
-                    style={[
-                      Typography.labelSM,
-                      { color: item.isActive ? theme.chart2 : theme.mutedForeground, textTransform: "uppercase" },
-                    ]}
-                  >
-                    {item.isActive ? "Active" : "Paused"}
+                  <Text style={[Typography.titleSM, { color: theme.foreground }]}>
+                    {item.isSubscription ? item.subscriptionMeta?.serviceName : item.note || item.kind}
                   </Text>
+                  <View style={styles.statusGroup}>
+                    {item.isSubscription ? (
+                      <Text
+                        style={[
+                          Typography.labelSM,
+                          {
+                            color: theme.chart4,
+                            textTransform: "uppercase",
+                          },
+                        ]}
+                      >
+                        Subscription
+                      </Text>
+                    ) : null}
+                    <Text
+                      style={[
+                        Typography.labelSM,
+                        { color: item.isActive ? theme.chart2 : theme.mutedForeground, textTransform: "uppercase" },
+                      ]}
+                    >
+                      {item.isActive ? "Active" : "Paused"}
+                    </Text>
+                  </View>
                 </View>
 
-                <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}> 
-                  {item.scheduleType} every {item.interval} · Next run {new Date(item.nextRunAt).toLocaleDateString()}
+                <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>
+                  {item.isSubscription
+                    ? `${formatCurrency(item.amount)} · ${item.scheduleType} · Next renewal ${new Date(item.nextRunAt).toLocaleDateString()}`
+                    : `${item.scheduleType} every ${item.interval} · Next run ${new Date(item.nextRunAt).toLocaleDateString()}`}
                 </Text>
               </Card>
             </Pressable>
@@ -110,8 +199,35 @@ const styles = StyleSheet.create({
     paddingBottom: UI_PRESETS.spacing.section,
     gap: UI_PRESETS.spacing.md,
   },
+  actionsRow: {
+    flexDirection: "row",
+    gap: UI_PRESETS.spacing.sm,
+  },
+  actionButton: {
+    flex: 1,
+  },
   loadingState: {
     flexDirection: "row",
+    alignItems: "center",
+    gap: UI_PRESETS.spacing.sm,
+  },
+  summaryCard: {
+    gap: UI_PRESETS.spacing.md,
+  },
+  summaryMetrics: {
+    flexDirection: "row",
+    gap: UI_PRESETS.spacing.md,
+  },
+  metricBlock: {
+    flex: 1,
+    gap: UI_PRESETS.spacing.xs,
+  },
+  renewalsList: {
+    gap: UI_PRESETS.spacing.xs,
+  },
+  renewalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     gap: UI_PRESETS.spacing.sm,
   },
@@ -119,6 +235,11 @@ const styles = StyleSheet.create({
   rowBetween: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    gap: UI_PRESETS.spacing.sm,
+  },
+  statusGroup: {
+    flexDirection: "row",
     alignItems: "center",
     gap: UI_PRESETS.spacing.sm,
   },

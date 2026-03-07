@@ -1,0 +1,136 @@
+import * as SecureStore from "expo-secure-store";
+
+import { postJson } from "@/lib/accounts/http-client";
+
+import type {
+  CreateSavingsGoalPayload,
+  SavingsGoal,
+  SavingsGoalStatus,
+  SavingsSummary,
+  UpdateSavingsGoalPayload,
+} from "./types";
+
+const CACHE_KEY = "savings:summary:system";
+
+type BackendSavingsGoal = {
+  _id: string;
+  name: string;
+  status: SavingsGoalStatus;
+  currency: string;
+  targetAmount: number;
+  currentAmount: number;
+  monthlyContribution?: number;
+  targetDate?: number;
+  linkedAccountId?: string;
+  linkedRecurringId?: string;
+  categoryId?: string;
+  color?: string;
+  icon?: string;
+  priorityRank?: string;
+  notes?: string;
+  monthsUntilTarget?: number;
+  projectedCompletionDate?: number;
+  monthlyLedgerImpact: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+function mapSavingsGoal(row: BackendSavingsGoal): SavingsGoal {
+  return {
+    id: row._id,
+    name: row.name,
+    status: row.status,
+    currencyCode: row.currency,
+    targetAmount: row.targetAmount,
+    currentAmount: row.currentAmount,
+    monthlyContribution: row.monthlyContribution,
+    targetDate: row.targetDate ? new Date(row.targetDate).toISOString() : undefined,
+    linkedAccountId: row.linkedAccountId,
+    linkedRecurringId: row.linkedRecurringId,
+    categoryId: row.categoryId,
+    color: row.color,
+    icon: row.icon,
+    priorityRank: row.priorityRank,
+    notes: row.notes,
+    monthsUntilTarget: row.monthsUntilTarget,
+    projectedCompletionDate: row.projectedCompletionDate
+      ? new Date(row.projectedCompletionDate).toISOString()
+      : undefined,
+    monthlyLedgerImpact: row.monthlyLedgerImpact,
+    createdAt: new Date(row.createdAt).toISOString(),
+    updatedAt: new Date(row.updatedAt).toISOString(),
+  };
+}
+
+export async function getSavingsSummary(): Promise<SavingsSummary> {
+  try {
+    const result = await postJson<SavingsSummary>("/savings/summary", {});
+    await SecureStore.setItemAsync(CACHE_KEY, JSON.stringify(result));
+    return result;
+  } catch {
+    const cached = await SecureStore.getItemAsync(CACHE_KEY);
+    if (!cached) throw new Error("Unable to load savings summary");
+    return JSON.parse(cached) as SavingsSummary;
+  }
+}
+
+export async function listSavingsGoals(status?: SavingsGoalStatus): Promise<SavingsGoal[]> {
+  const cacheKey = "savings:list:system";
+  try {
+    const rows = await postJson<BackendSavingsGoal[]>("/savings/list", { status });
+    await SecureStore.setItemAsync(cacheKey, JSON.stringify(rows));
+    return rows.map(mapSavingsGoal);
+  } catch {
+    const cached = await SecureStore.getItemAsync(cacheKey);
+    if (!cached) {
+      throw new Error("Unable to load savings goals");
+    }
+    return (JSON.parse(cached) as BackendSavingsGoal[]).map(mapSavingsGoal);
+  }
+}
+
+export async function getSavingsGoalById(id: string): Promise<SavingsGoal> {
+  const row = await postJson<BackendSavingsGoal>("/savings/getById", { id });
+  return mapSavingsGoal(row);
+}
+
+export async function createSavingsGoal(payload: CreateSavingsGoalPayload): Promise<SavingsGoal> {
+  const result = await postJson<{ id: string }>("/savings/create", {
+    name: payload.name,
+    status: payload.status,
+    currency: payload.currencyCode,
+    targetAmount: payload.targetAmount,
+    currentAmount: payload.currentAmount,
+    monthlyContribution: payload.monthlyContribution,
+    targetDate: payload.targetDate ? new Date(payload.targetDate).getTime() : undefined,
+    linkedAccountId: payload.linkedAccountId,
+    categoryId: payload.categoryId,
+    color: payload.color,
+    icon: payload.icon,
+    notes: payload.notes,
+  });
+  return getSavingsGoalById(result.id);
+}
+
+export async function updateSavingsGoal(id: string, payload: UpdateSavingsGoalPayload): Promise<SavingsGoal> {
+  const row = await postJson<BackendSavingsGoal>("/savings/update", {
+    id,
+    name: payload.name,
+    status: payload.status,
+    currency: payload.currencyCode,
+    targetAmount: payload.targetAmount,
+    currentAmount: payload.currentAmount,
+    monthlyContribution: payload.monthlyContribution,
+    targetDate: payload.targetDate ? new Date(payload.targetDate).getTime() : undefined,
+    linkedAccountId: payload.linkedAccountId,
+    categoryId: payload.categoryId,
+    color: payload.color,
+    icon: payload.icon,
+    notes: payload.notes,
+  });
+  return mapSavingsGoal(row);
+}
+
+export async function archiveSavingsGoal(id: string): Promise<boolean> {
+  return postJson<boolean>("/savings/archive", { id });
+}

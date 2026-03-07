@@ -8,6 +8,7 @@ import {
   BudgetEnvelopesList,
   type BudgetEnvelope,
   DebtSnapshotCard,
+  SavingsSummaryCard,
   type DebtItem,
 } from "@/components";
 import { Pressable, ScrollView } from "react-native";
@@ -19,72 +20,14 @@ import { NAV_THEME, Typography, CardTokens, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { listAccounts } from "@/lib/accounts";
 import { getTransactionSummary } from "@/lib/transactions";
+import { listDebtPlans } from "@/lib/debt";
+import { getSavingsSummary } from "@/lib/savings";
+import { getBudgetSummary } from "@/lib/budget";
 
 const OPACITY = {
   pressed: 0.84,
 };
 
-const sampleEnvelopes: BudgetEnvelope[] = [
-  {
-    id: "1",
-    name: "Groceries",
-    budgeted: 500,
-    spent: 320,
-    color: "#22c55e",
-    icon: "G",
-  },
-  {
-    id: "2",
-    name: "Dining Out",
-    budgeted: 200,
-    spent: 180,
-    color: "#f59e0b",
-    icon: "D",
-  },
-  {
-    id: "3",
-    name: "Transportation",
-    budgeted: 150,
-    spent: 90,
-    color: "#3b82f6",
-    icon: "T",
-  },
-];
-
-const sampleDebts: DebtItem[] = [
-  {
-    id: "db-1",
-    name: "Student Loan",
-    type: "installment",
-    originalBalance: 35000,
-    currentBalance: 21450,
-    monthlyDue: 1200,
-  },
-  {
-    id: "db-2",
-    name: "Car Loan",
-    type: "installment",
-    originalBalance: 18500,
-    currentBalance: 9600,
-    monthlyDue: 920,
-  },
-  {
-    id: "db-3",
-    name: "Credit Card",
-    type: "revolving",
-    originalBalance: 8200,
-    currentBalance: 5450,
-    monthlyDue: 650,
-  },
-  {
-    id: "db-4",
-    name: "Store Card",
-    type: "revolving",
-    originalBalance: 2600,
-    currentBalance: 1350,
-    monthlyDue: 220,
-  },
-];
 
 export default function Index() {
   const router = useRouter();
@@ -96,6 +39,28 @@ export default function Index() {
     moneyOutMtd: 6124.45,
     accountsCount: 0,
     periodLabel: "Mar 2026 · Month-to-date",
+  });
+
+  const [debtItems, setDebtItems] = useState<DebtItem[]>([]);
+  const [savingsSummary, setSavingsSummary] = useState({
+    totalTarget: 0,
+    totalCurrent: 0,
+    percentComplete: 0,
+    totalMonthlyCommitment: 0,
+    countByStatus: {} as Record<string, number>,
+  });
+
+  const [budgetSummary, setBudgetSummary] = useState({
+    activePeriod: null as null | {
+      id: string;
+      year: number;
+      month: number;
+      incomeTarget: number;
+      totalAllocated: number;
+      unallocated: number;
+    },
+    overspentCount: 0,
+    topEnvelopes: [] as BudgetEnvelope[],
   });
 
   useEffect(() => {
@@ -112,12 +77,45 @@ export default function Index() {
         const now = new Date();
         const periodLabel = `${now.toLocaleString("en-US", { month: "short" })} ${now.getFullYear()} · Month-to-date`;
 
+        const [debts, savings, budget] = await Promise.all([listDebtPlans(), getSavingsSummary(), getBudgetSummary()]);
+
         setAccountOverview({
           totalCash,
           moneyInMtd: summary.income,
           moneyOutMtd: summary.expense,
           accountsCount: accounts.length,
           periodLabel,
+        });
+        setDebtItems(debts.map((debt) => ({
+          id: debt.id,
+          name: debt.name,
+          type: debt.debtType,
+          originalBalance: debt.originalBalance,
+          currentBalance: debt.currentBalance,
+          monthlyDue: debt.monthlyDue,
+          apr: debt.apr,
+        })));
+        setSavingsSummary(savings);
+        setBudgetSummary({
+          activePeriod: budget.activePeriod
+            ? {
+                id: budget.activePeriod.id,
+                year: budget.activePeriod.year,
+                month: budget.activePeriod.month,
+                incomeTarget: budget.activePeriod.incomeTarget,
+                totalAllocated: budget.activePeriod.totalAllocated,
+                unallocated: budget.activePeriod.unallocated,
+              }
+            : null,
+          overspentCount: budget.overspentCount,
+          topEnvelopes: budget.topEnvelopes.map((envelope) => ({
+            id: envelope.id,
+            name: envelope.name,
+            budgeted: envelope.effectiveAllocation,
+            spent: envelope.actualSpend,
+            color: envelope.color ?? theme.chart2,
+            icon: envelope.icon,
+          })),
         });
       } catch {
         const accounts = await listAccounts();
@@ -146,7 +144,7 @@ export default function Index() {
       key: "recurring",
       badge: "RC",
       label: "Schedules",
-      meta: "Active: 0 · Subscriptions: 0",
+      meta: "Recurring flows and subscriptions",
       route: "/(tabs)/finance/recurring",
     },
     {
@@ -157,13 +155,6 @@ export default function Index() {
       route: "/(tabs)/finance/transactions",
     },
     {
-      key: "subscriptions",
-      badge: "SB",
-      label: "Subscriptions",
-      meta: "Renewals, trials, and monthly totals",
-      route: "/(tabs)/finance/subscriptions",
-    },
-    {
       key: "debt",
       badge: "DB",
       label: "Debt",
@@ -171,11 +162,13 @@ export default function Index() {
       route: "/(tabs)/finance/debt",
     },
     {
-      key: "investments",
-      badge: "IV",
-      label: "Investments",
-      meta: "Track portfolio value",
-      route: "/(tabs)/finance/planning/investments",
+      key: "budget",
+      badge: "BG",
+      label: "Budget",
+      meta: budgetSummary.activePeriod
+        ? `Active ${String(budgetSummary.activePeriod.month).padStart(2, "0")}/${budgetSummary.activePeriod.year}`
+        : "Plan envelopes and allocations",
+      route: "/(tabs)/finance/budget",
     },
   ];
 
@@ -198,9 +191,31 @@ export default function Index() {
       />
       <OverviewChartCard />
       <DebtSnapshotCard
-        debts={sampleDebts}
+        debts={debtItems}
         onViewAllPress={() => router.push("/(tabs)/finance/debt" as Href)}
       />
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <SectionHeader title="" subtitle="SAVINGS GOALS" />
+          <Pressable onPress={() => router.push("/(tabs)/finance/savings" as Href)}>
+            <Text style={[Typography.labelSM, { color: theme.chart4 }]}>
+              View All
+            </Text>
+          </Pressable>
+        </View>
+        <SavingsSummaryCard
+          totalTarget={savingsSummary.totalTarget}
+          totalCurrent={savingsSummary.totalCurrent}
+          percentComplete={savingsSummary.percentComplete}
+          goalsCount={Object.values(savingsSummary.countByStatus).reduce((sum, count) => sum + count, 0)}
+        />
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[Typography.bodyMD, { color: theme.text }]}>Total Monthly Commitment</Text>
+          <Text style={[Typography.labelSM, { color: theme.primary }]}>
+            {(debtItems.reduce((sum, debt) => sum + debt.monthlyDue, 0) + savingsSummary.totalMonthlyCommitment).toFixed(2)}
+          </Text>
+        </View>
+      </View>
 
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
@@ -213,7 +228,21 @@ export default function Index() {
             </Text>
           </Pressable>
         </View>
-        <BudgetEnvelopesList envelopes={sampleEnvelopes} />
+        {budgetSummary.activePeriod ? (
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>
+              {`Active period: ${budgetSummary.activePeriod.year}-${String(budgetSummary.activePeriod.month).padStart(2, "0")}`}
+            </Text>
+            {budgetSummary.overspentCount > 0 ? (
+              <Text style={[Typography.labelSM, { color: theme.destructive }]}>
+                {`${budgetSummary.overspentCount} overspent`}
+              </Text>
+            ) : null}
+          </View>
+        ) : (
+          <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>No active budget</Text>
+        )}
+        <BudgetEnvelopesList envelopes={budgetSummary.topEnvelopes} />
       </View>
 
       <View style={styles.actionsSection}>
