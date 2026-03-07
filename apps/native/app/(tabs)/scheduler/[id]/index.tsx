@@ -1,5 +1,9 @@
-import SchedulerScreen from "../index";
+import { useLocalSearchParams } from "expo-router";
+
+import { SchedulerTaskDetailScreen } from "@/components/scheduler/scheduler-task-detail-screen";
 
 export default function SchedulerTaskRoute() {
-  return <SchedulerScreen />;
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  return <SchedulerTaskDetailScreen taskId={id} />;
 }

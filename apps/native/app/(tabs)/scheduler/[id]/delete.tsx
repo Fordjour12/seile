@@ -1,5 +1,9 @@
-import SchedulerScreen from "../index";
+import { useLocalSearchParams } from "expo-router";
+
+import { SchedulerTaskDeleteScreen } from "@/components/scheduler/scheduler-task-delete-screen";
 
 export default function SchedulerTaskDeleteRoute() {
-  return <SchedulerScreen />;
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  return <SchedulerTaskDeleteScreen taskId={id} />;
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 
 import { Text } from "@/components/text";
 import { View } from "@/components/view";
@@ -15,6 +15,7 @@ type SchedulerAlertCardProps = {
   color: string;
   icon: string;
   subtitle: string;
+  onPress?: () => void;
 };
 
 export function SchedulerAlertCard({
@@ -22,9 +23,11 @@ export function SchedulerAlertCard({
   color,
   icon,
   subtitle,
+  onPress,
 }: SchedulerAlertCardProps) {
   return (
-    <View
+    <Pressable
+      onPress={onPress}
       style={[
         styles.container,
         {
@@ -54,7 +57,7 @@ export function SchedulerAlertCard({
           ) : null}
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
