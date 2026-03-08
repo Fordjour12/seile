@@ -6,7 +6,7 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { Container } from "@/components/container";
 import { Badge, Button, Card, SectionHeader, Text as AppText } from "@/components";
 import { authClient, useSession } from "@/lib/auth-client";
-import { apiAny } from "@/lib/backend-api";
+import { api } from "@/lib/backend-api";
 import { bootstrapUserData } from "@/lib/bootstrap-user-data";
 
 function formatError(error: unknown): string {
@@ -27,7 +27,7 @@ export default function AuthSmokeScreen() {
     refetch: refetchPasskeys,
   } = authClient.useListPasskeys();
   const currentUser = useQuery(
-    apiAny.auth.getCurrentUser,
+    api.auth.getCurrentUser,
     isAuthenticated ? {} : "skip",
   );
 

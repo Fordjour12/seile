@@ -1,4 +1,4 @@
-import { apiAny } from "@/lib/backend-api";
+import { api } from "@/lib/backend-api";
 import { convex } from "@/lib/convex-client";
 
 import type {
@@ -79,7 +79,7 @@ function mapRecurring(item: BackendRecurring): RecurringTransaction {
 }
 
 export async function listRecurringTransactions(includeInactive: boolean = false): Promise<RecurringTransaction[]> {
-  const rows = await convex.query(apiAny["recurring/queries"].listRecurringTransactions, {
+  const rows = await convex.query(api["recurring/queries"].listRecurringTransactions, {
     includeInactive,
   });
 
@@ -92,7 +92,7 @@ export async function getRecurringTransaction(id: string): Promise<RecurringTran
 }
 
 export async function listUpcomingRecurring(withinDays: number): Promise<RecurringTransaction[]> {
-  const rows = await convex.query(apiAny["recurring/queries"].getUpcomingRecurring, {
+  const rows = await convex.query(api["recurring/queries"].getUpcomingRecurring, {
     withinDays,
   });
 
@@ -100,7 +100,7 @@ export async function listUpcomingRecurring(withinDays: number): Promise<Recurri
 }
 
 export async function createRecurringTransaction(payload: CreateRecurringPayload): Promise<RecurringTransaction> {
-  const row = await convex.mutation(apiAny["recurring/mutations"].createRecurringTransaction, {
+  const row = await convex.mutation(api["recurring/mutations"].createRecurringTransaction, {
     kind: payload.kind,
     amount: payload.amount,
     currency: payload.currencyCode ?? "GHS",
@@ -136,7 +136,7 @@ export async function updateRecurringTransaction(
   id: string,
   payload: UpdateRecurringPayload,
 ): Promise<RecurringTransaction> {
-  const row = await convex.mutation(apiAny["recurring/mutations"].updateRecurringTransaction, {
+  const row = await convex.mutation(api["recurring/mutations"].updateRecurringTransaction, {
     id,
     amount: payload.amount,
     categoryId: payload.categoryId,
@@ -162,11 +162,11 @@ export async function updateRecurringTransaction(
 }
 
 export async function pauseRecurringTransaction(id: string): Promise<boolean> {
-  return convex.mutation(apiAny["recurring/mutations"].pauseRecurringTransaction, { id });
+  return convex.mutation(api["recurring/mutations"].pauseRecurringTransaction, { id });
 }
 
 export async function resumeRecurringTransaction(id: string): Promise<RecurringTransaction> {
-  const row = await convex.mutation(apiAny["recurring/mutations"].resumeRecurringTransaction, { id });
+  const row = await convex.mutation(api["recurring/mutations"].resumeRecurringTransaction, { id });
   return mapRecurring(row);
 }
 
@@ -174,7 +174,7 @@ export async function deleteRecurringTransaction(
   id: string,
   deleteGeneratedTransactions: boolean = false,
 ): Promise<boolean> {
-  return convex.mutation(apiAny["recurring/mutations"].deleteRecurringTransaction, {
+  return convex.mutation(api["recurring/mutations"].deleteRecurringTransaction, {
     id,
     deleteGeneratedTransactions,
   });

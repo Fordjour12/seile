@@ -1,4 +1,4 @@
-import { apiAny } from "@/lib/backend-api";
+import { api } from "@/lib/backend-api";
 import { convex } from "@/lib/convex-client";
 
 import type {
@@ -61,7 +61,7 @@ function mapSavingsGoal(row: BackendSavingsGoal): SavingsGoal {
 
 export async function getSavingsSummary(): Promise<SavingsSummary> {
   try {
-    return await convex.query(apiAny["savings/queries"].getSavingsSummary, {});
+    return await convex.query(api["savings/queries"].getSavingsSummary, {});
   } catch {
     return {
       totalTarget: 0,
@@ -75,7 +75,7 @@ export async function getSavingsSummary(): Promise<SavingsSummary> {
 
 export async function listSavingsGoals(status?: SavingsGoalStatus): Promise<SavingsGoal[]> {
   try {
-    const rows = await convex.query(apiAny["savings/queries"].listSavingsGoals, { status });
+    const rows = await convex.query(api["savings/queries"].listSavingsGoals, { status });
     return rows.map(mapSavingsGoal);
   } catch {
     return [];
@@ -83,12 +83,12 @@ export async function listSavingsGoals(status?: SavingsGoalStatus): Promise<Savi
 }
 
 export async function getSavingsGoalById(id: string): Promise<SavingsGoal> {
-  const row = await convex.query(apiAny["savings/queries"].getSavingsGoalById, { id });
+  const row = await convex.query(api["savings/queries"].getSavingsGoalById, { id });
   return mapSavingsGoal(row);
 }
 
 export async function createSavingsGoal(payload: CreateSavingsGoalPayload): Promise<SavingsGoal> {
-  const result = await convex.mutation(apiAny["savings/mutations"].createSavingsGoal, {
+  const result = await convex.mutation(api["savings/mutations"].createSavingsGoal, {
     name: payload.name,
     status: payload.status,
     currency: payload.currencyCode,
@@ -106,7 +106,7 @@ export async function createSavingsGoal(payload: CreateSavingsGoalPayload): Prom
 }
 
 export async function updateSavingsGoal(id: string, payload: UpdateSavingsGoalPayload): Promise<SavingsGoal> {
-  const row = await convex.mutation(apiAny["savings/mutations"].updateSavingsGoal, {
+  const row = await convex.mutation(api["savings/mutations"].updateSavingsGoal, {
     id,
     name: payload.name,
     status: payload.status,
@@ -125,5 +125,5 @@ export async function updateSavingsGoal(id: string, payload: UpdateSavingsGoalPa
 }
 
 export async function archiveSavingsGoal(id: string): Promise<boolean> {
-  return convex.mutation(apiAny["savings/mutations"].archiveSavingsGoal, { id });
+  return convex.mutation(api["savings/mutations"].archiveSavingsGoal, { id });
 }

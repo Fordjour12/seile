@@ -6,14 +6,14 @@ import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { env } from "@seile/env/native";
 
-const scheme = Constants.expoConfig?.scheme ?? "seile";
+const scheme = Constants.expoConfig?.scheme;
 
 export const authClient = createAuthClient({
   baseURL: env.EXPO_PUBLIC_CONVEX_SITE_URL,
   plugins: [
     expoClient({
-      scheme,
-      storagePrefix: scheme,
+      scheme:scheme as string,
+      storagePrefix: scheme as string,
       storage: SecureStore,
     }),
     passkeyClient(),

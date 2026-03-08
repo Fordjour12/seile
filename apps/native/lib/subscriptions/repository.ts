@@ -1,4 +1,4 @@
-import { apiAny } from "@/lib/backend-api";
+import { api } from "@/lib/backend-api";
 import { convex } from "@/lib/convex-client";
 
 import type { RecurringTransaction } from "@/lib/recurring";
@@ -59,7 +59,7 @@ function mapRecurring(row: any): RecurringTransaction {
 }
 
 export async function listSubscriptions(includeInactive: boolean = false): Promise<Subscription[]> {
-  const rows = await convex.query(apiAny["subscriptions/queries"].listSubscriptions, {
+  const rows = await convex.query(api["subscriptions/queries"].listSubscriptions, {
     includeInactive,
   });
 
@@ -74,7 +74,7 @@ export async function getSubscription(id: string): Promise<Subscription | null> 
 export async function listSubscriptionsByStatus(
   status: "active" | "trial" | "paused" | "cancelled",
 ): Promise<Subscription[]> {
-  const rows = await convex.query(apiAny["subscriptions/queries"].getByStatus, {
+  const rows = await convex.query(api["subscriptions/queries"].getByStatus, {
     status,
   });
 
@@ -82,7 +82,7 @@ export async function listSubscriptionsByStatus(
 }
 
 export async function listUpcomingRenewals(withinDays: number): Promise<Subscription[]> {
-  const rows = await convex.query(apiAny["subscriptions/queries"].getUpcomingRenewals, {
+  const rows = await convex.query(api["subscriptions/queries"].getUpcomingRenewals, {
     withinDays,
   });
 
@@ -90,7 +90,7 @@ export async function listUpcomingRenewals(withinDays: number): Promise<Subscrip
 }
 
 export async function createSubscription(payload: CreateSubscriptionPayload): Promise<Subscription> {
-  const row = await convex.mutation(apiAny["subscriptions/mutations"].createSubscription, {
+  const row = await convex.mutation(api["subscriptions/mutations"].createSubscription, {
     serviceName: payload.serviceName,
     serviceUrl: payload.serviceUrl,
     logoUrl: payload.logoUrl,
@@ -111,9 +111,9 @@ export async function createSubscription(payload: CreateSubscriptionPayload): Pr
 }
 
 export async function cancelSubscription(id: string): Promise<boolean> {
-  return convex.mutation(apiAny["subscriptions/mutations"].cancelSubscription, { id });
+  return convex.mutation(api["subscriptions/mutations"].cancelSubscription, { id });
 }
 
 export async function getMonthlySubscriptionSpend(): Promise<MonthlySubscriptionSpend> {
-  return convex.query(apiAny["subscriptions/queries"].getMonthlySubscriptionSpend, {});
+  return convex.query(api["subscriptions/queries"].getMonthlySubscriptionSpend, {});
 }

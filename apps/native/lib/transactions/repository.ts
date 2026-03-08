@@ -1,4 +1,4 @@
-import { apiAny } from "@/lib/backend-api";
+import { api } from "@/lib/backend-api";
 import { convex } from "@/lib/convex-client";
 
 import type {
@@ -79,7 +79,7 @@ function mapBackendTransaction(transaction: BackendTransaction): TransactionReco
 
 export async function listTransactions(params: ListTransactionsParams = {}): Promise<TransactionRecord[]> {
   try {
-    const rows = await convex.query(apiAny["transactions/queries"].listTransactions, {
+    const rows = await convex.query(api["transactions/queries"].listTransactions, {
       limit: params.limit,
       before: params.before,
     });
@@ -92,7 +92,7 @@ export async function listTransactions(params: ListTransactionsParams = {}): Pro
 
 export async function getTransaction(transactionId: string): Promise<TransactionRecord | null> {
   try {
-    const row = await convex.query(apiAny["transactions/queries"].getTransactionById, {
+    const row = await convex.query(api["transactions/queries"].getTransactionById, {
       id: transactionId,
     });
 
@@ -103,7 +103,7 @@ export async function getTransaction(transactionId: string): Promise<Transaction
 }
 
 export async function createTransaction(payload: CreateTransactionPayload): Promise<TransactionRecord> {
-  const row = await convex.mutation(apiAny["transactions/mutations"].createTransaction, {
+  const row = await convex.mutation(api["transactions/mutations"].createTransaction, {
     kind: payload.kind,
     amount: payload.amount,
     currency: payload.currencyCode ?? "GHS",
@@ -122,7 +122,7 @@ export async function updateTransaction(
   transactionId: string,
   payload: UpdateTransactionPayload,
 ): Promise<TransactionRecord> {
-  const row = await convex.mutation(apiAny["transactions/mutations"].updateTransaction, {
+  const row = await convex.mutation(api["transactions/mutations"].updateTransaction, {
     id: transactionId,
     amount: payload.amount,
     categoryId: payload.categoryId,
@@ -134,7 +134,7 @@ export async function updateTransaction(
 }
 
 export async function deleteTransaction(transactionId: string, reverseAccountDelta: boolean = true): Promise<boolean> {
-  const response = await convex.mutation(apiAny["transactions/mutations"].deleteTransaction, {
+  const response = await convex.mutation(api["transactions/mutations"].deleteTransaction, {
     id: transactionId,
     reverseAccountDelta,
   });
@@ -143,7 +143,7 @@ export async function deleteTransaction(transactionId: string, reverseAccountDel
 }
 
 export async function reverseTransaction(transactionId: string): Promise<TransactionRecord> {
-  const row = await convex.mutation(apiAny["transactions/mutations"].reverseTransaction, {
+  const row = await convex.mutation(api["transactions/mutations"].reverseTransaction, {
     id: transactionId,
   });
 
@@ -151,7 +151,7 @@ export async function reverseTransaction(transactionId: string): Promise<Transac
 }
 
 export async function getTransactionSummary(from: string, to: string): Promise<SummaryResponse> {
-  return convex.query(apiAny["transactions/queries"].getTransactionSummary, {
+  return convex.query(api["transactions/queries"].getTransactionSummary, {
     from: new Date(from).getTime(),
     to: new Date(to).getTime(),
   });

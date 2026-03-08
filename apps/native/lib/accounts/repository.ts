@@ -1,4 +1,4 @@
-import { apiAny } from "@/lib/backend-api";
+import { api } from "@/lib/backend-api";
 import { convex } from "@/lib/convex-client";
 
 import type {
@@ -77,7 +77,7 @@ function mapOutgoingType(type: AccountType): BackendAccountType {
 
 export async function getAccount(accountId: string): Promise<Account | null> {
   try {
-    const response = await convex.query(apiAny.accounts.getAccountById, {
+    const response = await convex.query(api.accounts.getAccountById, {
       accountId,
     });
 
@@ -88,7 +88,7 @@ export async function getAccount(accountId: string): Promise<Account | null> {
 }
 
 export async function createAccount(payload: CreateAccountPayload): Promise<Account> {
-  const response = await convex.mutation(apiAny.accounts.createAccount, {
+  const response = await convex.mutation(api.accounts.createAccount, {
     name: payload.name,
     providerName: payload.providerName,
     type: mapOutgoingType(payload.type),
@@ -105,7 +105,7 @@ export async function updateAccount(
   payload: UpdateAccountPayload,
 ): Promise<Account | null> {
   try {
-    const response = await convex.mutation(apiAny.accounts.updateAccount, {
+    const response = await convex.mutation(api.accounts.updateAccount, {
       accountId,
       name: payload.name,
       providerName: payload.providerName,
@@ -123,14 +123,14 @@ export async function updateAccount(
 }
 
 export async function deleteAccount(payload: DeleteAccountPayload): Promise<boolean> {
-  const response = await convex.mutation(apiAny.accounts.deleteAccount, {
+  const response = await convex.mutation(api.accounts.deleteAccount, {
     accountId: payload.id,
   });
   return response;
 }
 
 export async function listAccounts(): Promise<Account[]> {
-  const response = await convex.query(apiAny.accounts.listAccounts, {
+  const response = await convex.query(api.accounts.listAccounts, {
     includeArchived: false,
     pagination: {
       limit: 50,

@@ -1,4 +1,4 @@
-import { apiAny } from "@/lib/backend-api";
+import { api } from "@/lib/backend-api";
 import { convex } from "@/lib/convex-client";
 
 import type {
@@ -47,7 +47,7 @@ function mapDebtPlan(item: BackendDebtPlan): DebtPlan {
 
 export async function listDebtPlans(status?: DebtPlanStatus): Promise<DebtPlan[]> {
   try {
-    const rows = await convex.query(apiAny["debt/queries"].listDebtPlans, { status });
+    const rows = await convex.query(api["debt/queries"].listDebtPlans, { status });
     return rows.map(mapDebtPlan);
   } catch {
     return [];
@@ -55,14 +55,14 @@ export async function listDebtPlans(status?: DebtPlanStatus): Promise<DebtPlan[]
 }
 
 export async function getDebtPlanById(id: string): Promise<DebtPlan> {
-  const row = await convex.query(apiAny["debt/queries"].getDebtPlanById, { id });
+  const row = await convex.query(api["debt/queries"].getDebtPlanById, { id });
   return mapDebtPlan(row);
 }
 
 export async function createDebtPlan(
   payload: CreateDebtPlanPayload & { status?: DebtPlanStatus },
 ): Promise<DebtPlan> {
-  const result = await convex.mutation(apiAny["debt/mutations"].createDebtPlan, {
+  const result = await convex.mutation(api["debt/mutations"].createDebtPlan, {
     name: payload.name,
     debtType: payload.debtType,
     currency: payload.currencyCode,
@@ -76,7 +76,7 @@ export async function createDebtPlan(
 }
 
 export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload): Promise<DebtPlan> {
-  const row = await convex.mutation(apiAny["debt/mutations"].updateDebtPlan, {
+  const row = await convex.mutation(api["debt/mutations"].updateDebtPlan, {
     id,
     ...payload,
     debtType: payload.debtType,
@@ -87,9 +87,9 @@ export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload)
 }
 
 export async function archiveDebtPlan(id: string): Promise<boolean> {
-  return convex.mutation(apiAny["debt/mutations"].archiveDebtPlan, { id });
+  return convex.mutation(api["debt/mutations"].archiveDebtPlan, { id });
 }
 
 export async function getDebtSnapshot(): Promise<DebtSnapshot> {
-  return convex.query(apiAny["debt/queries"].getDebtSnapshot, {});
+  return convex.query(api["debt/queries"].getDebtSnapshot, {});
 }
