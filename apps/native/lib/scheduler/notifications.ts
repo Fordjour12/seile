@@ -1,5 +1,3 @@
-import * as Notifications from "expo-notifications";
-
 import { buildLocalDueDateTime, toDateKey } from "./date";
 import { buildOverdueDigest, getUpcomingNotificationBody, shouldScheduleTaskNotification } from "./helpers";
 import type { SchedulerTask } from "./types";
@@ -8,7 +6,30 @@ const SCHEDULER_CHANNEL_ID = "scheduler-reminders";
 let hasConfiguredNotifications = false;
 let lastOverdueDigest = "";
 
+type NotificationsModule = typeof import("expo-notifications");
+
+let notificationsModule: NotificationsModule | null | undefined;
+
+function getNotificationsModule(): NotificationsModule | null {
+  if (notificationsModule !== undefined) {
+    return notificationsModule;
+  }
+
+  try {
+    notificationsModule = require("expo-notifications") as NotificationsModule;
+  } catch {
+    notificationsModule = null;
+  }
+
+  return notificationsModule;
+}
+
 function configureNotificationHandler() {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
   if (hasConfiguredNotifications) {
     return;
   }
@@ -26,6 +47,11 @@ function configureNotificationHandler() {
 }
 
 export async function ensureSchedulerNotificationAccess(): Promise<boolean> {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) {
+    return false;
+  }
+
   configureNotificationHandler();
 
   if (process.env.EXPO_OS === "android") {
@@ -47,6 +73,11 @@ export async function ensureSchedulerNotificationAccess(): Promise<boolean> {
 }
 
 async function cancelSchedulerNotifications(): Promise<void> {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   const schedulerNotifications = scheduled.filter(
     (item) => item.content.data?.scope === "scheduler",
@@ -58,6 +89,11 @@ async function cancelSchedulerNotifications(): Promise<void> {
 }
 
 export async function syncSchedulerNotifications(tasks: SchedulerTask[]): Promise<void> {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
   const granted = await ensureSchedulerNotificationAccess();
   if (!granted) {
     return;
@@ -90,6 +126,11 @@ export async function syncSchedulerNotifications(tasks: SchedulerTask[]): Promis
 }
 
 export async function notifyOverdueSummary(tasks: SchedulerTask[]): Promise<void> {
+  const Notifications = getNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
   const overdueTasks = tasks.filter((item) => item.status === "overdue");
   const digest = buildOverdueDigest(overdueTasks);
   if (!digest) {

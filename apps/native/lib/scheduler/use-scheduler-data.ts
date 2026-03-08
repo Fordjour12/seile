@@ -3,16 +3,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createSchedulerTask,
   deleteSchedulerTask,
-  getAlertBuckets,
-  getSchedulerStats,
-  synchronizeSchedulerState,
   toggleSchedulerSubtask,
   updateSchedulerTask,
-  type CreateSchedulerTaskPayload,
-  type SchedulerStats,
-  type SchedulerTask,
-  type UpdateSchedulerTaskPayload,
-} from "@/lib/scheduler";
+} from "./repository";
+import { getAlertBuckets, getSchedulerStats } from "./helpers";
+import { synchronizeSchedulerState } from "./service";
+import type {
+  CreateSchedulerTaskPayload,
+  SchedulerStats,
+  SchedulerTask,
+  UpdateSchedulerTaskPayload,
+} from "./types";
 
 export type UseSchedulerDataResult = {
   tasks: SchedulerTask[];
