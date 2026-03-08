@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { buildRanks } from "../lib/fractionalIndex";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { debtTypeValidator, payoffStrategyValidator } from "../schema/debt_plans";
 import { validateApr, validateDebtCurrency, validateDebtMoney, validateDebtName, validatePriorityRank } from "./validators";
 
@@ -32,7 +32,7 @@ export const createDebtPlan = mutation({
       throw new ConvexError("Validation: currentBalance cannot exceed originalBalance");
     }
     const id = await ctx.db.insert("debtPlans", {
-      userId: resolveSystemUserId(),
+      userId: await requireUserId(ctx),
       name: validateDebtName(args.name),
       debtType: args.debtType,
       status: args.status ?? "active",
@@ -116,7 +116,7 @@ export const reorderDebtPlans = mutation({
   args: { orderedIds: v.array(v.id("debtPlans")) },
   handler: async (ctx, args): Promise<boolean> => {
     const ranks = buildRanks(args.orderedIds.length);
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     for (const [index, id] of args.orderedIds.entries()) {
       const debt = await ctx.db.get(id);
       if (!debt || debt.userId !== userId) {
@@ -146,8 +146,9 @@ export const publishDebtPlan = mutation({
 });
 
 async function requireOwnedDebt(ctx: MutationCtx, id: Id<"debtPlans">): Promise<Doc<"debtPlans">> {
+  const userId = await requireUserId(ctx);
   const debt = await ctx.db.get(id);
-  if (!debt || debt.userId !== resolveSystemUserId()) {
+  if (!debt || debt.userId !== userId) {
     throw new ConvexError("Debt plan not found");
   }
   return debt;

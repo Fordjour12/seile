@@ -9,9 +9,6 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "infoPlist": {
-        "NSFaceIDUsageDescription": "Allow Seile to use Face ID to unlock the app"
-      },
       "bundleIdentifier": "com.anonymous.mybettertapp"
     },
     "android": {
@@ -22,11 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.mybettertapp",
-      "permissions": [
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
-      ]
+      "package": "com.anonymous.mybettertapp"
     },
     "web": {
       "output": "static",
@@ -132,13 +125,7 @@
         }
       ],
       "expo-image",
-      "expo-localization",
-      [
-        "expo-local-authentication",
-        {
-          "faceIDPermission": "Allow Seile to use Face ID to unlock the app"
-        }
-      ]
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

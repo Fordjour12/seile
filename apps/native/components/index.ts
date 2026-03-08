@@ -11,7 +11,6 @@ export { Switch } from "./switch";
 export { IconButton } from "./icon-button";
 export { Spinner } from "./spinner";
 export { Chip } from "./chip";
-export { LockScreen } from "./lock-screen";
 export { ListItem } from "./list-item";
 export { SectionHeader } from "./section-header";
 export { EmptyState } from "./empty-state";

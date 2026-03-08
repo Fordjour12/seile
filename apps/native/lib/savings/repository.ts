@@ -1,6 +1,5 @@
-import * as SecureStore from "expo-secure-store";
-
-import { postJson } from "@/lib/accounts/http-client";
+import { apiAny } from "@/lib/backend-api";
+import { convex } from "@/lib/convex-client";
 
 import type {
   CreateSavingsGoalPayload,
@@ -9,8 +8,6 @@ import type {
   SavingsSummary,
   UpdateSavingsGoalPayload,
 } from "./types";
-
-const CACHE_KEY = "savings:summary:system";
 
 type BackendSavingsGoal = {
   _id: string;
@@ -64,38 +61,34 @@ function mapSavingsGoal(row: BackendSavingsGoal): SavingsGoal {
 
 export async function getSavingsSummary(): Promise<SavingsSummary> {
   try {
-    const result = await postJson<SavingsSummary>("/savings/summary", {});
-    await SecureStore.setItemAsync(CACHE_KEY, JSON.stringify(result));
-    return result;
+    return await convex.query(apiAny["savings/queries"].getSavingsSummary, {});
   } catch {
-    const cached = await SecureStore.getItemAsync(CACHE_KEY);
-    if (!cached) throw new Error("Unable to load savings summary");
-    return JSON.parse(cached) as SavingsSummary;
+    return {
+      totalTarget: 0,
+      totalCurrent: 0,
+      percentComplete: 0,
+      totalMonthlyCommitment: 0,
+      countByStatus: {},
+    };
   }
 }
 
 export async function listSavingsGoals(status?: SavingsGoalStatus): Promise<SavingsGoal[]> {
-  const cacheKey = "savings:list:system";
   try {
-    const rows = await postJson<BackendSavingsGoal[]>("/savings/list", { status });
-    await SecureStore.setItemAsync(cacheKey, JSON.stringify(rows));
+    const rows = await convex.query(apiAny["savings/queries"].listSavingsGoals, { status });
     return rows.map(mapSavingsGoal);
   } catch {
-    const cached = await SecureStore.getItemAsync(cacheKey);
-    if (!cached) {
-      throw new Error("Unable to load savings goals");
-    }
-    return (JSON.parse(cached) as BackendSavingsGoal[]).map(mapSavingsGoal);
+    return [];
   }
 }
 
 export async function getSavingsGoalById(id: string): Promise<SavingsGoal> {
-  const row = await postJson<BackendSavingsGoal>("/savings/getById", { id });
+  const row = await convex.query(apiAny["savings/queries"].getSavingsGoalById, { id });
   return mapSavingsGoal(row);
 }
 
 export async function createSavingsGoal(payload: CreateSavingsGoalPayload): Promise<SavingsGoal> {
-  const result = await postJson<{ id: string }>("/savings/create", {
+  const result = await convex.mutation(apiAny["savings/mutations"].createSavingsGoal, {
     name: payload.name,
     status: payload.status,
     currency: payload.currencyCode,
@@ -113,7 +106,7 @@ export async function createSavingsGoal(payload: CreateSavingsGoalPayload): Prom
 }
 
 export async function updateSavingsGoal(id: string, payload: UpdateSavingsGoalPayload): Promise<SavingsGoal> {
-  const row = await postJson<BackendSavingsGoal>("/savings/update", {
+  const row = await convex.mutation(apiAny["savings/mutations"].updateSavingsGoal, {
     id,
     name: payload.name,
     status: payload.status,
@@ -132,5 +125,5 @@ export async function updateSavingsGoal(id: string, payload: UpdateSavingsGoalPa
 }
 
 export async function archiveSavingsGoal(id: string): Promise<boolean> {
-  return postJson<boolean>("/savings/archive", { id });
+  return convex.mutation(apiAny["savings/mutations"].archiveSavingsGoal, { id });
 }

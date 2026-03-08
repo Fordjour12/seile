@@ -12,6 +12,7 @@ export async function applyDelta(
     fromAccountId?: Id<"accounts">;
     toAccountId?: Id<"accounts">;
   },
+  expectedUserId?: string,
 ): Promise<void> {
   const now = Date.now();
   const amount = args.amount;
@@ -20,8 +21,8 @@ export async function applyDelta(
     if (!args.fromAccountId || !args.toAccountId) {
       throw new ConvexError("Transfer requires fromAccountId and toAccountId");
     }
-    await updateBalance(ctx, args.fromAccountId, -amount, now);
-    await updateBalance(ctx, args.toAccountId, amount, now);
+    await updateBalance(ctx, args.fromAccountId, -amount, now, expectedUserId);
+    await updateBalance(ctx, args.toAccountId, amount, now, expectedUserId);
     return;
   }
 
@@ -30,12 +31,19 @@ export async function applyDelta(
   }
 
   const delta = args.kind === "income" || args.kind === "adjustment" ? amount : -amount;
-  await updateBalance(ctx, args.accountId, delta, now);
+  await updateBalance(ctx, args.accountId, delta, now, expectedUserId);
 }
 
-export async function reverseDelta(ctx: MutationCtx, transactionId: Id<"transactions">): Promise<void> {
+export async function reverseDelta(
+  ctx: MutationCtx,
+  transactionId: Id<"transactions">,
+  expectedUserId?: string,
+): Promise<void> {
   const transaction = await ctx.db.get(transactionId);
   if (!transaction) {
+    throw new ConvexError("Transaction not found");
+  }
+  if (expectedUserId && transaction.userId !== expectedUserId) {
     throw new ConvexError("Transaction not found");
   }
 
@@ -52,12 +60,21 @@ export async function reverseDelta(ctx: MutationCtx, transactionId: Id<"transact
     accountId: transaction.accountId,
     fromAccountId: transaction.toAccountId,
     toAccountId: transaction.fromAccountId,
-  });
+  }, expectedUserId ?? transaction.userId);
 }
 
-async function updateBalance(ctx: MutationCtx, accountId: Id<"accounts">, delta: number, now: number): Promise<void> {
+async function updateBalance(
+  ctx: MutationCtx,
+  accountId: Id<"accounts">,
+  delta: number,
+  now: number,
+  expectedUserId?: string,
+): Promise<void> {
   const account = await ctx.db.get(accountId);
   if (!account) {
+    throw new ConvexError(`Account ${accountId} not found`);
+  }
+  if (expectedUserId && account.userId !== expectedUserId) {
     throw new ConvexError(`Account ${accountId} not found`);
   }
 

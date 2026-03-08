@@ -2,14 +2,14 @@ import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { budgetPeriodStatusValidator } from "../schema/budget_periods";
 import { computeActualSpend, computeEnvelopeComputed, periodDateRange } from "./helpers";
 
 export const listBudgetPeriods = query({
   args: { status: v.optional(budgetPeriodStatusValidator), year: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const periods = await ctx.db.query("budgetPeriods").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
     const filtered = periods
       .filter((period) => (args.status ? period.status === args.status : true))
@@ -23,9 +23,10 @@ export const listBudgetPeriods = query({
 export const getActivePeriod = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
     const active = await ctx.db
       .query("budgetPeriods")
-      .withIndex("by_userId_status", (q) => q.eq("userId", resolveSystemUserId()).eq("status", "active"))
+      .withIndex("by_userId_status", (q) => q.eq("userId", userId).eq("status", "active"))
       .first();
 
     if (!active) return null;
@@ -45,9 +46,10 @@ export const getBudgetPeriodById = query({
 export const getBudgetSummary = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
     const active = await ctx.db
       .query("budgetPeriods")
-      .withIndex("by_userId_status", (q) => q.eq("userId", resolveSystemUserId()).eq("status", "active"))
+      .withIndex("by_userId_status", (q) => q.eq("userId", userId).eq("status", "active"))
       .first();
 
     if (!active) {
@@ -78,8 +80,9 @@ export const listEnvelopes = query({
 export const getEnvelopeById = query({
   args: { id: v.id("budgetEnvelopes") },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     const envelope = await ctx.db.get(args.id);
-    if (!envelope || envelope.userId !== resolveSystemUserId()) {
+    if (!envelope || envelope.userId !== userId) {
       throw new ConvexError("Envelope not found");
     }
     const period = await requireOwnedPeriod(ctx, envelope.periodId);
@@ -90,7 +93,7 @@ export const getEnvelopeById = query({
 export const getEnvelopeHistory = query({
   args: { categoryId: v.id("categories"), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const limit = Math.min(Math.max(Math.floor(args.limit ?? 6), 1), 24);
     const rows = await ctx.db
       .query("budgetEnvelopes")
@@ -150,8 +153,9 @@ async function withComputedEnvelope(ctx: QueryCtx, period: Doc<"budgetPeriods">,
 }
 
 async function requireOwnedPeriod(ctx: QueryCtx, id: Id<"budgetPeriods">): Promise<Doc<"budgetPeriods">> {
+  const userId = await requireUserId(ctx);
   const period = await ctx.db.get(id);
-  if (!period || period.userId !== resolveSystemUserId()) {
+  if (!period || period.userId !== userId) {
     throw new ConvexError("Budget period not found");
   }
   return period;

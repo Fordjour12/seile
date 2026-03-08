@@ -5,13 +5,6 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 
 crons.interval(
-  "cleanup-expired-request-nonces",
-  { minutes: 5 },
-  internal.migrations.cleanupExpiredRequestNonces,
-  { limit: 500 },
-);
-
-crons.interval(
   "generate-recurring-transactions",
   { hours: 1 },
   internal.recurring.generate.generateDueRecurringTransactions,

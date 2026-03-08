@@ -2,15 +2,16 @@ import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { savingsStatusValidator } from "../schema/savings_goals";
 
 export const listSavingsGoals = query({
   args: { status: v.optional(savingsStatusValidator), includeArchived: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db
       .query("savingsGoals")
-      .withIndex("by_userId", (q) => q.eq("userId", resolveSystemUserId()))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     return rows
@@ -29,9 +30,10 @@ export const getSavingsGoalById = query({
 export const getSavingsSummary = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db
       .query("savingsGoals")
-      .withIndex("by_userId", (q) => q.eq("userId", resolveSystemUserId()))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     const totalTarget = rows.reduce((sum, row) => sum + row.targetAmount, 0);
@@ -65,8 +67,9 @@ function attachComputed(row: Doc<"savingsGoals">) {
 }
 
 async function requireOwnedGoal(ctx: QueryCtx, id: Id<"savingsGoals">): Promise<Doc<"savingsGoals">> {
+  const userId = await requireUserId(ctx);
   const row = await ctx.db.get(id);
-  if (!row || row.userId !== resolveSystemUserId()) {
+  if (!row || row.userId !== userId) {
     throw new ConvexError("Savings goal not found");
   }
   return row;
