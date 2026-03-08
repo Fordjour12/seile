@@ -1,5 +1,5 @@
-import { api } from "@/lib/backend-api";
-import { convex } from "@/lib/convex-client";
+import { api, asId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type {
   Account,
@@ -10,7 +10,13 @@ import type {
   UpdateAccountPayload,
 } from "./types";
 
-type BackendAccountType = "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
+type BackendAccountType =
+  | "checking"
+  | "savings"
+  | "cash"
+  | "credit"
+  | "investment"
+  | "bank";
 type BackendAccountStatus = "active" | "archived" | "closed";
 
 type BackendAccount = {
@@ -48,7 +54,9 @@ function mapBackendType(type: BackendAccountType): AccountType {
   }
 }
 
-function mapBackendStatus(input: Pick<BackendAccount, "status" | "isArchived">): AccountStatus {
+function mapBackendStatus(
+  input: Pick<BackendAccount, "status" | "isArchived">,
+): AccountStatus {
   if (input.status) {
     return input.status;
   }
@@ -75,38 +83,43 @@ function mapOutgoingType(type: AccountType): BackendAccountType {
   return type;
 }
 
-export async function getAccount(accountId: string): Promise<Account | null> {
-  try {
-    const response = await convex.query(api.accounts.getAccountById, {
-      accountId,
+export function useAccount(accountId?: string): Account | null | undefined {
+  const response = useQuery(
+    api.accounts.getAccountById,
+    accountId ? { accountId: asId<"accounts">(accountId) } : "skip",
+  );
+
+  return response ? mapAccount(response) : response;
+}
+
+export function useCreateAccount(): (
+  payload: CreateAccountPayload,
+) => Promise<Account> {
+  const createAccount = useMutation(api.accounts.createAccount);
+
+  return async (payload) => {
+    const response = await createAccount({
+      name: payload.name,
+      providerName: payload.providerName,
+      type: mapOutgoingType(payload.type),
+      currency: payload.currencyCode ?? "GHS",
+      openingBalance: payload.openingBalance ?? 0,
+      note: payload.note,
     });
 
     return mapAccount(response);
-  } catch {
-    return null;
-  }
+  };
 }
 
-export async function createAccount(payload: CreateAccountPayload): Promise<Account> {
-  const response = await convex.mutation(api.accounts.createAccount, {
-    name: payload.name,
-    providerName: payload.providerName,
-    type: mapOutgoingType(payload.type),
-    currency: payload.currencyCode ?? "GHS",
-    openingBalance: payload.openingBalance ?? 0,
-    note: payload.note,
-  });
-
-  return mapAccount(response);
-}
-
-export async function updateAccount(
+export function useUpdateAccount(): (
   accountId: string,
   payload: UpdateAccountPayload,
-): Promise<Account | null> {
-  try {
-    const response = await convex.mutation(api.accounts.updateAccount, {
-      accountId,
+) => Promise<Account> {
+  const updateAccount = useMutation(api.accounts.updateAccount);
+
+  return async (accountId, payload) => {
+    const response = await updateAccount({
+      accountId: asId<"accounts">(accountId),
       name: payload.name,
       providerName: payload.providerName,
       type: payload.type ? mapOutgoingType(payload.type) : undefined,
@@ -117,25 +130,27 @@ export async function updateAccount(
     });
 
     return mapAccount(response);
-  } catch {
-    return null;
-  }
+  };
 }
 
-export async function deleteAccount(payload: DeleteAccountPayload): Promise<boolean> {
-  const response = await convex.mutation(api.accounts.deleteAccount, {
-    accountId: payload.id,
-  });
-  return response;
+export function useDeleteAccount(): (
+  payload: DeleteAccountPayload,
+) => Promise<boolean> {
+  const deleteAccount = useMutation(api.accounts.deleteAccount);
+
+  return (payload) =>
+    deleteAccount({
+      accountId: asId<"accounts">(payload.id),
+    });
 }
 
-export async function listAccounts(): Promise<Account[]> {
-  const response = await convex.query(api.accounts.listAccounts, {
+export function useAccounts(): Account[] | undefined {
+  const response = useQuery(api.accounts.listAccounts, {
     includeArchived: false,
     pagination: {
       limit: 50,
     },
   });
 
-  return response.page.map(mapAccount);
+  return response?.page.map(mapAccount);
 }

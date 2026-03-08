@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 
-import { Banner, Button, Card, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
-import { formatTransactionAmount, formatTransactionTime, listTransactions, type TransactionRecord } from "@/lib/transactions";
+import { Button, Card, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
+import { formatTransactionAmount, formatTransactionTime, useTransactions } from "@/lib/transactions";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -16,44 +16,14 @@ export default function TransactionsIndexScreen() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
-  const [items, setItems] = useState<TransactionRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const refresh = useCallback(async () => {
-    setHasError(false);
-    setIsLoading(true);
-
-    try {
-      const next = await listTransactions({ limit: 40 });
-      setItems(next);
-    } catch {
-      setHasError(true);
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const items = useTransactions({ limit: 40 });
+  const isLoading = items === undefined;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <SectionHeader title="Transactions" subtitle="Latest activity across your accounts" />
 
       <Button title="Add transaction" onPress={() => router.push("/(tabs)/finance/transactions/create" as Href)} />
-
-      {hasError ? (
-        <Banner
-          variant="error"
-          title="Could not load transactions"
-          message="Please check your connection and try again."
-          actionLabel="Retry"
-          onActionPress={() => void refresh()}
-        />
-      ) : null}
 
       {isLoading ? (
         <View style={styles.loadingState}>
@@ -62,7 +32,7 @@ export default function TransactionsIndexScreen() {
         </View>
       ) : null}
 
-      {!isLoading && items.length === 0 ? (
+      {!isLoading && (items?.length ?? 0) === 0 ? (
         <EmptyState
           title="No transactions yet"
           message="Create your first transaction to start tracking account activity."
@@ -71,8 +41,8 @@ export default function TransactionsIndexScreen() {
         />
       ) : null}
 
-      {!isLoading && items.length > 0
-        ? items.map((transaction) => (
+      {!isLoading && (items?.length ?? 0) > 0
+        ? items?.map((transaction) => (
             <Pressable
               key={transaction.id}
               style={({ pressed }) => [styles.cardPressable, { opacity: pressed ? OPACITY.pressed : 1 }]}

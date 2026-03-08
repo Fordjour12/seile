@@ -1,22 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Banner, BudgetPeriodForm, Button, ListItem, SectionHeader, Spinner, Text, View, type BudgetPeriodFormValues } from "@/components";
 import {
-  activateBudgetPeriod,
-  archiveBudgetPeriod,
-  closeBudgetPeriod,
-  copyPreviousBudgetPeriod,
   formatBudgetAmount,
-  getBudgetPeriodById,
-  listEnvelopes,
   mapBudgetEnvelopeListItem,
-  updateBudgetPeriod,
-  type BudgetEnvelopeWithComputed,
-  type BudgetPeriodDetail,
   type UpdateBudgetPeriodPayload,
+  useActivateBudgetPeriod,
+  useArchiveBudgetPeriod,
+  useBudgetEnvelopes,
+  useBudgetPeriod,
+  useCloseBudgetPeriod,
+  useCopyPreviousBudgetPeriod,
+  useUpdateBudgetPeriod,
 } from "@/lib/budget";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
@@ -26,39 +24,23 @@ export default function UpdateBudgetPeriodScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [period, setPeriod] = useState<BudgetPeriodDetail | null>(null);
-  const [envelopes, setEnvelopes] = useState<BudgetEnvelopeWithComputed[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const period = useBudgetPeriod(id);
+  const envelopes = useBudgetEnvelopes(id);
+  const updateBudgetPeriod = useUpdateBudgetPeriod();
+  const activateBudgetPeriod = useActivateBudgetPeriod();
+  const copyPreviousBudgetPeriod = useCopyPreviousBudgetPeriod();
+  const closeBudgetPeriod = useCloseBudgetPeriod();
+  const archiveBudgetPeriod = useArchiveBudgetPeriod();
+  const isLoading = Boolean(id) && (period === undefined || envelopes === undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Budget period ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const found = await getBudgetPeriodById(id);
-        setPeriod(found);
-        setEnvelopes(await listEnvelopes(id));
-      } catch {
-        setError("Budget period not found.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    void load();
-  }, [id]);
-
-  const reload = async () => {
-    if (!id) return;
-    const found = await getBudgetPeriodById(id);
-    setPeriod(found);
-    setEnvelopes(await listEnvelopes(id));
-  };
+  const derivedError =
+    error ??
+    (!id
+      ? "Budget period ID is missing."
+      : !isLoading && !period
+        ? "Budget period not found."
+        : null);
 
   const handleUpdate = async (values: BudgetPeriodFormValues) => {
     if (!id) return;
@@ -69,8 +51,7 @@ export default function UpdateBudgetPeriodScreen() {
         incomeTarget: Number(values.incomeTarget),
         notes: values.notes || undefined,
       };
-      const updated = await updateBudgetPeriod(id, payload);
-      setPeriod(updated);
+      await updateBudgetPeriod(id, payload);
       toast.success("Budget period updated", { description: "Budget period changes have been saved." });
     } catch (updateError) {
       const message = updateError instanceof Error ? updateError.message : "That budget period could not be updated.";
@@ -85,7 +66,6 @@ export default function UpdateBudgetPeriodScreen() {
     if (!id) return;
     try {
       await activateBudgetPeriod(id);
-      await reload();
       toast.success("Budget period activated", { description: "This period is now active." });
     } catch (error) {
       toast.error("Activation failed", { description: error instanceof Error ? error.message : "Please try again." });
@@ -96,7 +76,6 @@ export default function UpdateBudgetPeriodScreen() {
     if (!id) return;
     try {
       const result = await copyPreviousBudgetPeriod(id);
-      await reload();
       toast.success("Copied previous period", {
         description: result.noPreviousPeriod ? "No previous period was available." : `${result.copiedCount} envelopes copied.`,
       });
@@ -109,7 +88,6 @@ export default function UpdateBudgetPeriodScreen() {
     if (!id) return;
     try {
       await closeBudgetPeriod(id);
-      await reload();
       toast.success("Budget period closed", { description: "The active period has been closed." });
     } catch (error) {
       toast.error("Close failed", { description: error instanceof Error ? error.message : "Please try again." });
@@ -130,7 +108,7 @@ export default function UpdateBudgetPeriodScreen() {
   return (
     <ScrollView style={[styles.screen, { backgroundColor: theme.background }]} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <SectionHeader title="Manage Budget Period" subtitle={period ? `${period.year}-${String(period.month).padStart(2, "0")}` : "Budget period"} />
-      {error ? <Banner variant="error" title="Budget issue" message={error} actionLabel="Back" onActionPress={() => router.replace("/(tabs)/finance/budget" as Href)} /> : null}
+      {derivedError ? <Banner variant="error" title="Budget issue" message={derivedError} actionLabel="Back" onActionPress={() => router.replace("/(tabs)/finance/budget" as Href)} /> : null}
       {isLoading ? (
         <View style={styles.loadingState}>
           <Spinner />
@@ -167,7 +145,7 @@ export default function UpdateBudgetPeriodScreen() {
           </View>
 
           <View style={styles.list}>
-            {envelopes.map((envelope) => {
+            {(envelopes ?? []).map((envelope) => {
               const item = mapBudgetEnvelopeListItem(envelope, period.currencyCode);
               return (
                 <ListItem

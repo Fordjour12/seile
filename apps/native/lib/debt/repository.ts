@@ -1,5 +1,5 @@
-import { api } from "@/lib/backend-api";
-import { convex } from "@/lib/convex-client";
+import { api, asId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type {
   CreateDebtPlanPayload,
@@ -45,51 +45,64 @@ function mapDebtPlan(item: BackendDebtPlan): DebtPlan {
   };
 }
 
-export async function listDebtPlans(status?: DebtPlanStatus): Promise<DebtPlan[]> {
-  try {
-    const rows = await convex.query(api["debt/queries"].listDebtPlans, { status });
-    return rows.map(mapDebtPlan);
-  } catch {
-    return [];
-  }
+export function useDebtPlans(status?: DebtPlanStatus): DebtPlan[] | undefined {
+  const rows = useQuery(api.debt.queries.listDebtPlans, { status });
+  return rows?.map(mapDebtPlan);
 }
 
-export async function getDebtPlanById(id: string): Promise<DebtPlan> {
-  const row = await convex.query(api["debt/queries"].getDebtPlanById, { id });
-  return mapDebtPlan(row);
+export function useDebtPlan(id?: string): DebtPlan | undefined {
+  const row = useQuery(
+    api.debt.queries.getDebtPlanById,
+    id ? { id: asId<"debtPlans">(id) } : "skip",
+  );
+  return row ? mapDebtPlan(row) : undefined;
 }
 
-export async function createDebtPlan(
+export function useCreateDebtPlan(): (
   payload: CreateDebtPlanPayload & { status?: DebtPlanStatus },
-): Promise<DebtPlan> {
-  const result = await convex.mutation(api["debt/mutations"].createDebtPlan, {
-    name: payload.name,
-    debtType: payload.debtType,
-    currency: payload.currencyCode,
-    originalBalance: payload.originalBalance,
-    currentBalance: payload.currentBalance,
-    monthlyDue: payload.monthlyDue,
-    apr: payload.apr,
-    status: payload.status,
-  });
-  return getDebtPlanById(result.id);
+  ) => Promise<void> {
+  const createDebtPlan = useMutation(api.debt.mutations.createDebtPlan);
+
+  return async (payload) => {
+    await createDebtPlan({
+      name: payload.name,
+      debtType: payload.debtType,
+      currency: payload.currencyCode,
+      originalBalance: payload.originalBalance,
+      currentBalance: payload.currentBalance,
+      monthlyDue: payload.monthlyDue,
+      apr: payload.apr,
+      status: payload.status,
+    });
+  };
 }
 
-export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload): Promise<DebtPlan> {
-  const row = await convex.mutation(api["debt/mutations"].updateDebtPlan, {
-    id,
-    ...payload,
-    debtType: payload.debtType,
-    originalBalance: payload.originalBalance,
-    currency: payload.currencyCode,
-  });
-  return mapDebtPlan(row);
+export function useUpdateDebtPlan(): (
+  id: string,
+  payload: UpdateDebtPlanPayload,
+) => Promise<void> {
+  const updateDebtPlan = useMutation(api.debt.mutations.updateDebtPlan);
+
+  return async (id, payload) => {
+    await updateDebtPlan({
+      id: asId<"debtPlans">(id),
+      ...payload,
+      debtType: payload.debtType,
+      originalBalance: payload.originalBalance,
+      currency: payload.currencyCode,
+    });
+  };
 }
 
-export async function archiveDebtPlan(id: string): Promise<boolean> {
-  return convex.mutation(api["debt/mutations"].archiveDebtPlan, { id });
+export function useArchiveDebtPlan(): (id: string) => Promise<boolean> {
+  const archiveDebtPlan = useMutation(api.debt.mutations.archiveDebtPlan);
+
+  return (id) =>
+    archiveDebtPlan({
+      id: asId<"debtPlans">(id),
+    });
 }
 
-export async function getDebtSnapshot(): Promise<DebtSnapshot> {
-  return convex.query(api["debt/queries"].getDebtSnapshot, {});
+export function useDebtSnapshot(): DebtSnapshot | undefined {
+  return useQuery(api.debt.queries.getDebtSnapshot, {});
 }

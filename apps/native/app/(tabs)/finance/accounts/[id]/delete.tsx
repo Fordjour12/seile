@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 import {
-  deleteAccount,
+  useDeleteAccount,
   formatAccountBalance,
   formatAccountType,
-  getAccount,
-  type Account,
   type DeleteAccountPayload,
+  useAccount,
 } from "@/lib/accounts";
 import {
   Alert,
@@ -31,31 +30,12 @@ export default function DeleteAccountScreen() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
-  const [account, setAccount] = useState<Account | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const account = useAccount(id);
+  const deleteAccount = useDeleteAccount();
+  const isLoading = Boolean(id) && account === undefined;
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Account ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-
-      const found = await getAccount(id);
-      setAccount(found);
-      setIsLoading(false);
-
-      if (!found) {
-        setError("Account not found.");
-      }
-    }
-
-    void load();
-  }, [id]);
 
   const onDelete = async () => {
     if (!id) {

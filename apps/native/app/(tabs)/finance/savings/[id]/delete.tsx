@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Alert, Banner, Button, Card, Dialog, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
-import { archiveSavingsGoal, formatSavingsAmount, getSavingsGoalById, type SavingsGoal } from "@/lib/savings";
+import { formatSavingsAmount, useArchiveSavingsGoal, useSavingsGoal } from "@/lib/savings";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -13,31 +13,12 @@ export default function DeleteSavingsScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [goal, setGoal] = useState<SavingsGoal | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const goal = useSavingsGoal(id);
+  const archiveSavingsGoal = useArchiveSavingsGoal();
+  const isLoading = Boolean(id) && goal === undefined;
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Savings goal ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const found = await getSavingsGoalById(id);
-        setGoal(found);
-      } catch {
-        setError("Savings goal not found.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    void load();
-  }, [id]);
 
   const onDelete = async () => {
     if (!id) return;

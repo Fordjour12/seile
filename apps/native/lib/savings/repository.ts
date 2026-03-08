@@ -1,5 +1,5 @@
-import { api } from "@/lib/backend-api";
-import { convex } from "@/lib/convex-client";
+import { api, asId, asOptionalId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type {
   CreateSavingsGoalPayload,
@@ -59,71 +59,78 @@ function mapSavingsGoal(row: BackendSavingsGoal): SavingsGoal {
   };
 }
 
-export async function getSavingsSummary(): Promise<SavingsSummary> {
-  try {
-    return await convex.query(api["savings/queries"].getSavingsSummary, {});
-  } catch {
-    return {
-      totalTarget: 0,
-      totalCurrent: 0,
-      percentComplete: 0,
-      totalMonthlyCommitment: 0,
-      countByStatus: {},
-    };
-  }
+export function useSavingsSummary(): SavingsSummary | undefined {
+  return useQuery(api.savings.queries.getSavingsSummary, {});
 }
 
-export async function listSavingsGoals(status?: SavingsGoalStatus): Promise<SavingsGoal[]> {
-  try {
-    const rows = await convex.query(api["savings/queries"].listSavingsGoals, { status });
-    return rows.map(mapSavingsGoal);
-  } catch {
-    return [];
-  }
+export function useSavingsGoals(
+  status?: SavingsGoalStatus,
+): SavingsGoal[] | undefined {
+  const rows = useQuery(api.savings.queries.listSavingsGoals, { status });
+  return rows?.map(mapSavingsGoal);
 }
 
-export async function getSavingsGoalById(id: string): Promise<SavingsGoal> {
-  const row = await convex.query(api["savings/queries"].getSavingsGoalById, { id });
-  return mapSavingsGoal(row);
+export function useSavingsGoal(id?: string): SavingsGoal | undefined {
+  const row = useQuery(
+    api.savings.queries.getSavingsGoalById,
+    id ? { id: asId<"savingsGoals">(id) } : "skip",
+  );
+  return row ? mapSavingsGoal(row) : undefined;
 }
 
-export async function createSavingsGoal(payload: CreateSavingsGoalPayload): Promise<SavingsGoal> {
-  const result = await convex.mutation(api["savings/mutations"].createSavingsGoal, {
-    name: payload.name,
-    status: payload.status,
-    currency: payload.currencyCode,
-    targetAmount: payload.targetAmount,
-    currentAmount: payload.currentAmount,
-    monthlyContribution: payload.monthlyContribution,
-    targetDate: payload.targetDate ? new Date(payload.targetDate).getTime() : undefined,
-    linkedAccountId: payload.linkedAccountId,
-    categoryId: payload.categoryId,
-    color: payload.color,
-    icon: payload.icon,
-    notes: payload.notes,
-  });
-  return getSavingsGoalById(result.id);
+export function useCreateSavingsGoal(): (
+  payload: CreateSavingsGoalPayload,
+) => Promise<void> {
+  const createSavingsGoal = useMutation(api.savings.mutations.createSavingsGoal);
+
+  return async (payload) => {
+    await createSavingsGoal({
+      name: payload.name,
+      status: payload.status,
+      currency: payload.currencyCode,
+      targetAmount: payload.targetAmount,
+      currentAmount: payload.currentAmount,
+      monthlyContribution: payload.monthlyContribution,
+      targetDate: payload.targetDate ? new Date(payload.targetDate).getTime() : undefined,
+      linkedAccountId: asOptionalId<"accounts">(payload.linkedAccountId),
+      categoryId: asOptionalId<"categories">(payload.categoryId),
+      color: payload.color,
+      icon: payload.icon,
+      notes: payload.notes,
+    });
+  };
 }
 
-export async function updateSavingsGoal(id: string, payload: UpdateSavingsGoalPayload): Promise<SavingsGoal> {
-  const row = await convex.mutation(api["savings/mutations"].updateSavingsGoal, {
-    id,
-    name: payload.name,
-    status: payload.status,
-    currency: payload.currencyCode,
-    targetAmount: payload.targetAmount,
-    currentAmount: payload.currentAmount,
-    monthlyContribution: payload.monthlyContribution,
-    targetDate: payload.targetDate ? new Date(payload.targetDate).getTime() : undefined,
-    linkedAccountId: payload.linkedAccountId,
-    categoryId: payload.categoryId,
-    color: payload.color,
-    icon: payload.icon,
-    notes: payload.notes,
-  });
-  return mapSavingsGoal(row);
+export function useUpdateSavingsGoal(): (
+  id: string,
+  payload: UpdateSavingsGoalPayload,
+) => Promise<void> {
+  const updateSavingsGoal = useMutation(api.savings.mutations.updateSavingsGoal);
+
+  return async (id, payload) => {
+    await updateSavingsGoal({
+      id: asId<"savingsGoals">(id),
+      name: payload.name,
+      status: payload.status,
+      currency: payload.currencyCode,
+      targetAmount: payload.targetAmount,
+      currentAmount: payload.currentAmount,
+      monthlyContribution: payload.monthlyContribution,
+      targetDate: payload.targetDate ? new Date(payload.targetDate).getTime() : undefined,
+      linkedAccountId: asOptionalId<"accounts">(payload.linkedAccountId),
+      categoryId: asOptionalId<"categories">(payload.categoryId),
+      color: payload.color,
+      icon: payload.icon,
+      notes: payload.notes,
+    });
+  };
 }
 
-export async function archiveSavingsGoal(id: string): Promise<boolean> {
-  return convex.mutation(api["savings/mutations"].archiveSavingsGoal, { id });
+export function useArchiveSavingsGoal(): (id: string) => Promise<boolean> {
+  const archiveSavingsGoal = useMutation(api.savings.mutations.archiveSavingsGoal);
+
+  return (id) =>
+    archiveSavingsGoal({
+      id: asId<"savingsGoals">(id),
+    });
 }

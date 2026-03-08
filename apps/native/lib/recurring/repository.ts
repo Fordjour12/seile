@@ -1,5 +1,5 @@
-import { api } from "@/lib/backend-api";
-import { convex } from "@/lib/convex-client";
+import { api, asId, asOptionalId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type {
   CreateRecurringPayload,
@@ -78,104 +78,133 @@ function mapRecurring(item: BackendRecurring): RecurringTransaction {
   };
 }
 
-export async function listRecurringTransactions(includeInactive: boolean = false): Promise<RecurringTransaction[]> {
-  const rows = await convex.query(api["recurring/queries"].listRecurringTransactions, {
+export function useRecurringTransactions(
+  includeInactive: boolean = false,
+): RecurringTransaction[] | undefined {
+  const rows = useQuery(api.recurring.queries.listRecurringTransactions, {
     includeInactive,
   });
 
-  return rows.map(mapRecurring);
+  return rows?.map(mapRecurring);
 }
 
-export async function getRecurringTransaction(id: string): Promise<RecurringTransaction | null> {
-  const rows = await listRecurringTransactions(true);
+export function useRecurringTransaction(
+  id?: string,
+): RecurringTransaction | null | undefined {
+  const rows = useRecurringTransactions(true);
+  if (rows === undefined) {
+    return undefined;
+  }
+
   return rows.find((item) => item.id === id) ?? null;
 }
 
-export async function listUpcomingRecurring(withinDays: number): Promise<RecurringTransaction[]> {
-  const rows = await convex.query(api["recurring/queries"].getUpcomingRecurring, {
+export function useUpcomingRecurring(
+  withinDays: number,
+): RecurringTransaction[] | undefined {
+  const rows = useQuery(api.recurring.queries.getUpcomingRecurring, {
     withinDays,
   });
 
-  return rows.map(mapRecurring);
+  return rows?.map(mapRecurring);
 }
 
-export async function createRecurringTransaction(payload: CreateRecurringPayload): Promise<RecurringTransaction> {
-  const row = await convex.mutation(api["recurring/mutations"].createRecurringTransaction, {
-    kind: payload.kind,
-    amount: payload.amount,
-    currency: payload.currencyCode ?? "GHS",
-    scheduleType: payload.scheduleType,
-    interval: payload.interval,
-    dayOfMonth: payload.dayOfMonth,
-    dayOfWeek: payload.dayOfWeek,
-    startAt: new Date(payload.startAt).getTime(),
-    endAt: payload.endAt ? new Date(payload.endAt).getTime() : undefined,
-    accountId: payload.accountId,
-    fromAccountId: payload.fromAccountId,
-    toAccountId: payload.toAccountId,
-    categoryId: payload.categoryId,
-    note: payload.note,
-    isSubscription: payload.isSubscription,
-    subscriptionMeta: payload.subscriptionMeta
-      ? {
-          ...payload.subscriptionMeta,
-          trialEndsAt: payload.subscriptionMeta.trialEndsAt
-            ? new Date(payload.subscriptionMeta.trialEndsAt).getTime()
-            : undefined,
-          cancelledAt: payload.subscriptionMeta.cancelledAt
-            ? new Date(payload.subscriptionMeta.cancelledAt).getTime()
-            : undefined,
-        }
-      : undefined,
-  });
+export function useCreateRecurringTransaction(): (
+  payload: CreateRecurringPayload,
+) => Promise<void> {
+  const createRecurringTransaction = useMutation(api.recurring.mutations.createRecurringTransaction);
 
-  return mapRecurring(row);
+  return async (payload) => {
+    await createRecurringTransaction({
+      kind: payload.kind,
+      amount: payload.amount,
+      currency: payload.currencyCode ?? "GHS",
+      scheduleType: payload.scheduleType,
+      interval: payload.interval,
+      dayOfMonth: payload.dayOfMonth,
+      dayOfWeek: payload.dayOfWeek,
+      startAt: new Date(payload.startAt).getTime(),
+      endAt: payload.endAt ? new Date(payload.endAt).getTime() : undefined,
+      accountId: asOptionalId<"accounts">(payload.accountId),
+      fromAccountId: asOptionalId<"accounts">(payload.fromAccountId),
+      toAccountId: asOptionalId<"accounts">(payload.toAccountId),
+      categoryId: asOptionalId<"categories">(payload.categoryId),
+      note: payload.note,
+      isSubscription: payload.isSubscription,
+      subscriptionMeta: payload.subscriptionMeta
+        ? {
+            ...payload.subscriptionMeta,
+            trialEndsAt: payload.subscriptionMeta.trialEndsAt
+              ? new Date(payload.subscriptionMeta.trialEndsAt).getTime()
+              : undefined,
+            cancelledAt: payload.subscriptionMeta.cancelledAt
+              ? new Date(payload.subscriptionMeta.cancelledAt).getTime()
+              : undefined,
+          }
+        : undefined,
+    });
+  };
 }
 
-export async function updateRecurringTransaction(
+export function useUpdateRecurringTransaction(): (
   id: string,
   payload: UpdateRecurringPayload,
-): Promise<RecurringTransaction> {
-  const row = await convex.mutation(api["recurring/mutations"].updateRecurringTransaction, {
-    id,
-    amount: payload.amount,
-    categoryId: payload.categoryId,
-    note: payload.note,
-    endAt: payload.endAt ? new Date(payload.endAt).getTime() : undefined,
-    dayOfMonth: payload.dayOfMonth,
-    dayOfWeek: payload.dayOfWeek,
-    interval: payload.interval,
-    subscriptionMeta: payload.subscriptionMeta
-      ? {
-          ...payload.subscriptionMeta,
-          trialEndsAt: payload.subscriptionMeta.trialEndsAt
-            ? new Date(payload.subscriptionMeta.trialEndsAt).getTime()
-            : undefined,
-          cancelledAt: payload.subscriptionMeta.cancelledAt
-            ? new Date(payload.subscriptionMeta.cancelledAt).getTime()
-            : undefined,
-        }
-      : undefined,
-  });
+  ) => Promise<void> {
+  const updateRecurringTransaction = useMutation(api.recurring.mutations.updateRecurringTransaction);
 
-  return mapRecurring(row);
+  return async (id, payload) => {
+    await updateRecurringTransaction({
+      id: asId<"recurringTransactions">(id),
+      amount: payload.amount,
+      categoryId: asOptionalId<"categories">(payload.categoryId),
+      note: payload.note,
+      endAt: payload.endAt ? new Date(payload.endAt).getTime() : undefined,
+      dayOfMonth: payload.dayOfMonth,
+      dayOfWeek: payload.dayOfWeek,
+      interval: payload.interval,
+      subscriptionMeta: payload.subscriptionMeta
+        ? {
+            ...payload.subscriptionMeta,
+            trialEndsAt: payload.subscriptionMeta.trialEndsAt
+              ? new Date(payload.subscriptionMeta.trialEndsAt).getTime()
+              : undefined,
+            cancelledAt: payload.subscriptionMeta.cancelledAt
+              ? new Date(payload.subscriptionMeta.cancelledAt).getTime()
+              : undefined,
+          }
+        : undefined,
+    });
+  };
 }
 
-export async function pauseRecurringTransaction(id: string): Promise<boolean> {
-  return convex.mutation(api["recurring/mutations"].pauseRecurringTransaction, { id });
+export function usePauseRecurringTransaction(): (id: string) => Promise<boolean> {
+  const pauseRecurringTransaction = useMutation(api.recurring.mutations.pauseRecurringTransaction);
+
+  return (id) =>
+    pauseRecurringTransaction({
+      id: asId<"recurringTransactions">(id),
+    });
 }
 
-export async function resumeRecurringTransaction(id: string): Promise<RecurringTransaction> {
-  const row = await convex.mutation(api["recurring/mutations"].resumeRecurringTransaction, { id });
-  return mapRecurring(row);
+export function useResumeRecurringTransaction(): (id: string) => Promise<void> {
+  const resumeRecurringTransaction = useMutation(api.recurring.mutations.resumeRecurringTransaction);
+
+  return async (id) => {
+    await resumeRecurringTransaction({
+      id: asId<"recurringTransactions">(id),
+    });
+  };
 }
 
-export async function deleteRecurringTransaction(
+export function useDeleteRecurringTransaction(): (
   id: string,
-  deleteGeneratedTransactions: boolean = false,
-): Promise<boolean> {
-  return convex.mutation(api["recurring/mutations"].deleteRecurringTransaction, {
-    id,
-    deleteGeneratedTransactions,
-  });
+  deleteGeneratedTransactions?: boolean,
+) => Promise<boolean> {
+  const deleteRecurringTransaction = useMutation(api.recurring.mutations.deleteRecurringTransaction);
+
+  return (id, deleteGeneratedTransactions = false) =>
+    deleteRecurringTransaction({
+      id: asId<"recurringTransactions">(id),
+      deleteGeneratedTransactions,
+    });
 }
