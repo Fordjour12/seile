@@ -1,12 +1,23 @@
 import React from "react";
 import { StyleSheet, View, ViewProps } from "react-native";
 import { CardTokens, NAV_THEME, UI_ELEMENT_THEME } from "@/lib/constants";
+import { resolveThemeShadow } from "@/lib/constants/theme";
+import type { ShadowLevel } from "@/lib/constants/types";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 interface SurfaceProps extends ViewProps {
   elevation?: "flat" | "sm" | "md" | "lg";
   tone?: "default" | "muted" | "card";
 }
+
+type SurfaceElevation = NonNullable<SurfaceProps["elevation"]>;
+type SurfaceTone = NonNullable<SurfaceProps["tone"]>;
+
+const ELEVATION_TO_SHADOW_LEVEL = {
+  sm: CardTokens.filled.shadowLevel,
+  md: CardTokens.elevated.shadowLevel,
+  lg: "shadowLg",
+} as const satisfies Record<Exclude<SurfaceElevation, "flat">, ShadowLevel>;
 
 export function Surface({
   elevation = "sm",
@@ -18,18 +29,14 @@ export function Surface({
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const palette = colorScheme === "dark" ? UI_ELEMENT_THEME.dark : UI_ELEMENT_THEME.light;
 
-  const tones = {
+  const tones: Record<SurfaceTone, string> = {
     default: palette.surface.background,
     muted: palette.surface.muted,
     card: palette.surface.card,
   };
 
-  const boxShadow = {
-    flat: "none",
-    sm: theme.shadowSm,
-    md: theme.shadowMd,
-    lg: theme.shadowLg,
-  }[elevation];
+  const boxShadow =
+    elevation === "flat" ? "none" : resolveThemeShadow(theme, ELEVATION_TO_SHADOW_LEVEL[elevation]);
 
   return (
     <View

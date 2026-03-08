@@ -1,26 +1,39 @@
 import React from "react";
-import { Pressable, StyleSheet, ViewStyle } from "react-native";
+import { Pressable, PressableProps, StyleProp, StyleSheet, ViewStyle } from "react-native";
 import { NAV_THEME, ButtonTokens } from "@/lib/constants";
+import type { ThemeScale } from "@/lib/constants/types";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
-interface IconButtonProps {
+interface IconButtonProps extends Omit<PressableProps, "style"> {
   icon: React.ReactNode;
-  onPress?: () => void;
   variant?: "default" | "outline" | "ghost";
   size?: "sm" | "md" | "lg";
-  disabled?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
-const SIZE_KEYS = {
-  sm: "sm" as const,
-  md: "md" as const,
-  lg: "lg" as const,
-};
+type IconButtonVariant = NonNullable<IconButtonProps["variant"]>;
+type IconButtonSize = NonNullable<IconButtonProps["size"]>;
 
-const OPACITY = {
-  pressed: 0.84,
-  disabled: 0.45,
+const SIZE_TO_ICON_TOKEN = {
+  sm: "sm",
+  md: "md",
+  lg: "lg",
+} as const satisfies Record<IconButtonSize, keyof typeof ButtonTokens.icon>;
+
+const ICON_BUTTON_VARIANTS: Record<IconButtonVariant, (theme: ThemeScale) => ViewStyle> = {
+  default: (theme) => ({
+    backgroundColor: theme.primary,
+    borderWidth: 0,
+  }),
+  outline: (theme) => ({
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: theme.border,
+  }),
+  ghost: () => ({
+    backgroundColor: "transparent",
+    borderWidth: 0,
+  }),
 };
 
 export function IconButton({
@@ -30,26 +43,11 @@ export function IconButton({
   size = "md",
   disabled,
   style,
+  ...props
 }: IconButtonProps) {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-  const iconSize = ButtonTokens.icon[SIZE_KEYS[size]];
-
-  const variantStyles = {
-    default: {
-      backgroundColor: theme.primary,
-      borderWidth: 0,
-    },
-    outline: {
-      backgroundColor: "transparent",
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    ghost: {
-      backgroundColor: "transparent",
-      borderWidth: 0,
-    },
-  };
+  const iconSize = ButtonTokens.icon[SIZE_TO_ICON_TOKEN[size]];
 
   return (
     <Pressable
@@ -61,12 +59,13 @@ export function IconButton({
           width: iconSize.width,
           height: iconSize.height,
           borderRadius: iconSize.borderRadius,
-          ...variantStyles[variant],
+          ...ICON_BUTTON_VARIANTS[variant](theme),
         },
-        pressed && { opacity: OPACITY.pressed },
-        disabled && { opacity: OPACITY.disabled },
+        pressed && { opacity: ButtonTokens.state.pressedOpacity },
+        disabled && { opacity: ButtonTokens.state.disabledOpacity },
         style,
       ]}
+      {...props}
     >
       {icon}
     </Pressable>

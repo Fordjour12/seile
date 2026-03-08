@@ -5,9 +5,11 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  StyleProp,
   ViewStyle,
 } from "react-native";
 import { NAV_THEME, ButtonTokens } from "@/lib/constants";
+import type { ButtonVariantToken, ThemeScale } from "@/lib/constants/types";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 interface ButtonProps extends Omit<PressableProps, "style"> {
@@ -15,13 +17,48 @@ interface ButtonProps extends Omit<PressableProps, "style"> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
-const SIZE_KEYS = {
-  sm: "ghost" as const,
-  md: "secondary" as const,
-  lg: "primary" as const,
+type ButtonVariant = NonNullable<ButtonProps["variant"]>;
+type ButtonSize = NonNullable<ButtonProps["size"]>;
+
+const SIZE_TO_TOKEN_KEY = {
+  sm: "ghost",
+  md: "secondary",
+  lg: "primary",
+} as const satisfies Record<ButtonSize, "ghost" | "secondary" | "primary">;
+
+const BUTTON_VARIANT_STYLES: Record<ButtonVariant, (theme: ThemeScale) => ViewStyle> = {
+  primary: (theme) => ({
+    backgroundColor: theme.primary,
+    borderWidth: 0,
+  }),
+  secondary: (theme) => ({
+    backgroundColor: theme.secondary,
+    borderWidth: 0,
+  }),
+  outline: (theme) => ({
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: theme.border,
+  }),
+  ghost: () => ({
+    backgroundColor: "transparent",
+    borderWidth: 0,
+  }),
+  destructive: (theme) => ({
+    backgroundColor: theme.destructive,
+    borderWidth: 0,
+  }),
+};
+
+const BUTTON_TEXT_COLORS: Record<ButtonVariant, (theme: ThemeScale) => string> = {
+  primary: (theme) => theme.primaryForeground,
+  secondary: (theme) => theme.secondaryForeground,
+  outline: (theme) => theme.foreground,
+  ghost: (theme) => theme.foreground,
+  destructive: (theme) => theme.destructiveForeground,
 };
 
 export function Button({
@@ -35,40 +72,8 @@ export function Button({
 }: ButtonProps) {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-  const buttonToken = ButtonTokens[SIZE_KEYS[size]];
-
-  const variantStyles = {
-    primary: {
-      backgroundColor: theme.primary,
-      borderWidth: 0,
-    },
-    secondary: {
-      backgroundColor: theme.secondary,
-      borderWidth: 0,
-    },
-    outline: {
-      backgroundColor: "transparent",
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    ghost: {
-      backgroundColor: "transparent",
-      borderWidth: 0,
-    },
-    destructive: {
-      backgroundColor: theme.destructive,
-      borderWidth: 0,
-    },
-  };
-
-  const getTextColor = () => {
-    if (variant === "primary") return theme.primaryForeground;
-    if (variant === "secondary") return theme.secondaryForeground;
-    if (variant === "outline") return theme.foreground;
-    if (variant === "ghost") return theme.foreground;
-    if (variant === "destructive") return theme.destructiveForeground;
-    return theme.foreground;
-  };
+  const buttonToken: ButtonVariantToken = ButtonTokens[SIZE_TO_TOKEN_KEY[size]];
+  const textColor = BUTTON_TEXT_COLORS[variant](theme);
 
   return (
     <Pressable
@@ -80,7 +85,7 @@ export function Button({
           paddingHorizontal: buttonToken.paddingHorizontal,
           paddingVertical: buttonToken.paddingVertical,
         },
-        variantStyles[variant],
+        BUTTON_VARIANT_STYLES[variant](theme),
         pressed && { opacity: ButtonTokens.state.pressedOpacity },
         disabled && { opacity: ButtonTokens.state.disabledOpacity },
         style,
@@ -89,16 +94,13 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={getTextColor()} size="small" />
+        <ActivityIndicator color={textColor} size="small" />
       ) : (
         <Text
           style={[
             styles.text,
-            {
-              color: getTextColor(),
-              fontSize: buttonToken.text.fontSize,
-              lineHeight: buttonToken.text.lineHeight,
-            },
+            buttonToken.text,
+            { color: textColor },
           ]}
         >
           {title}
@@ -116,6 +118,6 @@ const styles = StyleSheet.create({
     gap: ButtonTokens.base.gap,
   },
   text: {
-    fontWeight: "600",
+    textAlign: "center",
   },
 });
