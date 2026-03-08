@@ -1,4 +1,5 @@
 import { expoClient } from "@better-auth/expo/client";
+import { passkeyClient } from "@better-auth/passkey/client";
 import { convexClient } from "@convex-dev/better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import Constants from "expo-constants";
@@ -15,6 +16,7 @@ export const authClient = createAuthClient({
       storagePrefix: scheme,
       storage: SecureStore,
     }),
+    passkeyClient(),
     convexClient(),
   ],
 });

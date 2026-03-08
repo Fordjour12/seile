@@ -21,6 +21,11 @@ export default function AuthSmokeScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { data: session, isPending: isSessionPending } = useSession();
+  const {
+    data: passkeys,
+    isPending: isPasskeysPending,
+    refetch: refetchPasskeys,
+  } = authClient.useListPasskeys();
   const currentUser = useQuery(
     apiAny.auth.getCurrentUser,
     isAuthenticated ? {} : "skip",
@@ -28,6 +33,27 @@ export default function AuthSmokeScreen() {
 
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string>("No action yet.");
+
+  const runAddPasskey = async () => {
+    if (busy) return;
+    setBusy(true);
+    setResult("Registering passkey...");
+
+    const response = await authClient.passkey.addPasskey({
+      name: session?.user?.email ?? "Seile passkey",
+      authenticatorAttachment: "platform",
+    });
+
+    if (response.error) {
+      setResult(`Passkey failed: ${response.error.message || "Request failed"}`);
+      setBusy(false);
+      return;
+    }
+
+    await refetchPasskeys().catch(() => undefined);
+    setResult("Passkey registered");
+    setBusy(false);
+  };
 
   const runBootstrap = async () => {
     if (busy) return;
@@ -93,10 +119,21 @@ export default function AuthSmokeScreen() {
           <AppText variant="small">
             Convex user id: {currentUser?.id ?? "none"}
           </AppText>
+          <AppText variant="small">
+            Passkeys: {isPasskeysPending ? "loading" : String(passkeys?.length ?? 0)}
+          </AppText>
         </Card>
 
         <Card>
           <AppText variant="h3">Actions</AppText>
+          <View style={styles.row}>
+            <Button
+              title="Add passkey"
+              onPress={runAddPasskey}
+              style={styles.flex}
+              disabled={!isAuthenticated}
+            />
+          </View>
           <View style={styles.row}>
             <Button
               title="Run bootstrap"
@@ -116,6 +153,22 @@ export default function AuthSmokeScreen() {
           </View>
           <AppText variant="muted">{result}</AppText>
         </Card>
+
+        {isAuthenticated ? (
+          <Card variant="outline">
+            <AppText variant="h3">Registered Passkeys</AppText>
+            {passkeys && passkeys.length > 0 ? (
+              passkeys.map((passkey) => (
+                <View key={passkey.id} style={styles.passkeyRow}>
+                  <AppText variant="small">{passkey.name || passkey.id}</AppText>
+                  <AppText variant="muted">{passkey.deviceType}</AppText>
+                </View>
+              ))
+            ) : (
+              <AppText variant="small">No passkeys registered yet.</AppText>
+            )}
+          </Card>
+        ) : null}
       </ScrollView>
     </Container>
   );
@@ -134,5 +187,8 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  passkeyRow: {
+    gap: 4,
   },
 });

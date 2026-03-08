@@ -1,4 +1,5 @@
 import { expo } from "@better-auth/expo";
+import { passkey } from "@better-auth/passkey";
 import { convexAdapter, createClient } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth";
@@ -10,6 +11,8 @@ import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 
 const componentsAny = components as any;
+const authOrigin = env.SITE_URL.replace(/\/$/, "");
+const rpID = new URL(authOrigin).hostname;
 
 export const authComponent = createClient<DataModel>(componentsAny.betterAuth);
 
@@ -27,7 +30,7 @@ function isRuntimeCtx(
 export function createAuth(ctx: unknown) {
   return betterAuth({
     secret: env.BETTER_AUTH_SECRET,
-    baseURL: env.SITE_URL,
+    baseURL: authOrigin,
     database: isRuntimeCtx(ctx)
       ? authComponent.adapter(ctx)
       : convexAdapter({} as any, componentsAny.betterAuth),
@@ -35,9 +38,14 @@ export function createAuth(ctx: unknown) {
       enabled: true,
       requireEmailVerification: false,
     },
-    trustedOrigins: [env.SITE_URL, "seile://"],
+    trustedOrigins: [authOrigin, "seile://"],
     plugins: [
       expo(),
+      passkey({
+        rpID,
+        rpName: "Seile",
+        origin: authOrigin,
+      }),
       convex({
         authConfig,
       }),

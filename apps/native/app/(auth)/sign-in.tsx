@@ -25,6 +25,25 @@ export default function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handlePasskeySignIn = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+
+    const result = await authClient.signIn.passkey({
+      autoFill: false,
+    });
+
+    if (result.error) {
+      setError(result.error.message || "Unable to sign in with passkey");
+      setBusy(false);
+      return;
+    }
+
+    router.replace("/(tabs)/finance");
+    setBusy(false);
+  };
+
   const handleSubmit = async () => {
     if (busy) return;
     setBusy(true);
@@ -86,6 +105,15 @@ export default function SignInScreen() {
               loading={busy}
               disabled={!email.trim() || password.length === 0}
             />
+            <Button
+              title="Sign In With Passkey"
+              onPress={handlePasskeySignIn}
+              variant="secondary"
+              disabled={busy}
+            />
+            <Text variant="muted">
+              Register a passkey after your first email sign-in from the session diagnostics screen.
+            </Text>
           </View>
         </Card>
 
