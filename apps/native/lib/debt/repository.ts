@@ -1,6 +1,5 @@
-import * as SecureStore from "expo-secure-store";
-
-import { postJson } from "@/lib/accounts/http-client";
+import { api } from "@/lib/backend-api";
+import { convex } from "@/lib/convex-client";
 
 import type {
   CreateDebtPlanPayload,
@@ -27,8 +26,6 @@ type BackendDebtPlan = {
   updatedAt: number;
 };
 
-const CACHE_KEY = "debt:list:system";
-
 function mapDebtPlan(item: BackendDebtPlan): DebtPlan {
   return {
     id: item._id,
@@ -50,25 +47,22 @@ function mapDebtPlan(item: BackendDebtPlan): DebtPlan {
 
 export async function listDebtPlans(status?: DebtPlanStatus): Promise<DebtPlan[]> {
   try {
-    const rows = await postJson<BackendDebtPlan[]>("/debt/list", { status });
-    await SecureStore.setItemAsync(CACHE_KEY, JSON.stringify({ at: Date.now(), rows }));
+    const rows = await convex.query(api["debt/queries"].listDebtPlans, { status });
     return rows.map(mapDebtPlan);
   } catch {
-    const cached = await SecureStore.getItemAsync(CACHE_KEY);
-    if (!cached) throw new Error("Unable to load debt plans");
-    return (JSON.parse(cached).rows as BackendDebtPlan[]).map(mapDebtPlan);
+    return [];
   }
 }
 
 export async function getDebtPlanById(id: string): Promise<DebtPlan> {
-  const row = await postJson<BackendDebtPlan>("/debt/getById", { id });
+  const row = await convex.query(api["debt/queries"].getDebtPlanById, { id });
   return mapDebtPlan(row);
 }
 
 export async function createDebtPlan(
   payload: CreateDebtPlanPayload & { status?: DebtPlanStatus },
 ): Promise<DebtPlan> {
-  const result = await postJson<{ id: string }>("/debt/create", {
+  const result = await convex.mutation(api["debt/mutations"].createDebtPlan, {
     name: payload.name,
     debtType: payload.debtType,
     currency: payload.currencyCode,
@@ -82,7 +76,7 @@ export async function createDebtPlan(
 }
 
 export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload): Promise<DebtPlan> {
-  const row = await postJson<BackendDebtPlan>("/debt/update", {
+  const row = await convex.mutation(api["debt/mutations"].updateDebtPlan, {
     id,
     ...payload,
     debtType: payload.debtType,
@@ -93,9 +87,9 @@ export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload)
 }
 
 export async function archiveDebtPlan(id: string): Promise<boolean> {
-  return postJson<boolean>("/debt/archive", { id });
+  return convex.mutation(api["debt/mutations"].archiveDebtPlan, { id });
 }
 
 export async function getDebtSnapshot(): Promise<DebtSnapshot> {
-  return postJson<DebtSnapshot>("/debt/snapshot", {});
+  return convex.query(api["debt/queries"].getDebtSnapshot, {});
 }

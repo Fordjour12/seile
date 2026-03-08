@@ -63,8 +63,13 @@ export default function CreateTransactionScreen() {
 
   useEffect(() => {
     async function loadCategories() {
-      const rows = await listCategories();
-      setCategories(rows);
+      try {
+        setCategories(await listCategories());
+      } catch (error) {
+        toast.error("Could not load categories", {
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
+      }
     }
 
     void loadCategories();

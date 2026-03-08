@@ -50,7 +50,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="finance"
         options={{
-          title: "Auth",
+          title: "Finance",
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <TabBarIcon2 color={color}>
@@ -62,7 +62,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="auth-smoke"
         options={{
-          title: "Auth",
+          title: "Session",
           tabBarIcon: ({ color }) => <TabBarIcon name="shield" color={color} />,
         }}
       />

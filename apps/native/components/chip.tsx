@@ -1,23 +1,18 @@
 import React from "react";
-import { Pressable, Text, PressableProps, StyleSheet, ViewStyle } from "react-native";
-import { NAV_THEME, ChipTokens } from "@/lib/constants";
+import { Pressable, Text, PressableProps, StyleProp, StyleSheet, ViewStyle } from "react-native";
+import { ChipTokens, UI_ELEMENT_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 interface ChipProps extends Omit<PressableProps, "style"> {
   label: string;
   selected?: boolean;
   onSelect?: (selected: boolean) => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
-
-const OPACITY = {
-  pressed: 0.84,
-  disabled: 0.45,
-};
 
 export function Chip({ label, selected = false, onSelect, disabled, style, ...props }: ChipProps) {
   const { colorScheme } = useColorScheme();
-  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const palette = colorScheme === "dark" ? UI_ELEMENT_THEME.dark : UI_ELEMENT_THEME.light;
 
   const handlePress = () => {
     if (onSelect) {
@@ -32,15 +27,16 @@ export function Chip({ label, selected = false, onSelect, disabled, style, ...pr
       style={({ pressed }) => [
         styles.chip,
         {
-          backgroundColor: selected ? theme.primary : theme.muted,
-          borderColor: selected ? theme.primary : theme.border,
+          backgroundColor: selected ? palette.chip.selectedBg : palette.chip.bg,
+          borderColor: selected ? palette.chip.selectedBg : palette.chip.border,
+          borderWidth: selected ? ChipTokens.selected.borderWidth : ChipTokens.unselected.borderWidth,
           paddingHorizontal: ChipTokens.base.paddingHorizontal,
           paddingVertical: ChipTokens.base.paddingVertical,
           minHeight: ChipTokens.base.minHeight,
           borderRadius: ChipTokens.base.borderRadius,
         },
-        pressed && { opacity: OPACITY.pressed },
-        disabled && { opacity: OPACITY.disabled },
+        pressed && { opacity: UI_PRESETS.opacity.pressed },
+        disabled && { opacity: UI_PRESETS.opacity.disabled },
         style,
       ]}
       {...props}
@@ -49,9 +45,9 @@ export function Chip({ label, selected = false, onSelect, disabled, style, ...pr
         style={[
           styles.label,
           {
-            color: selected ? theme.primaryForeground : theme.foreground,
-            fontSize: ChipTokens.text.fontSize,
+            color: selected ? palette.chip.selectedText : palette.chip.text,
           },
+          ChipTokens.text,
         ]}
       >
         {label}
@@ -67,6 +63,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   label: {
-    fontWeight: "500",
+    textAlign: "center",
   },
 });

@@ -1,9 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
-import { Button, Chip, Input, Text, View } from "@/components";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
+import { Button } from "./button";
+import { Chip } from "./chip";
+import { Input } from "./input";
+import { Text } from "./text";
+import { View } from "./view";
 
 export type DebtFormMode = "create" | "update";
 export type DebtType = "installment" | "revolving";

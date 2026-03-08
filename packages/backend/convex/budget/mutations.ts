@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { buildRanks } from "../lib/fractionalIndex";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { budgetPeriodStatusValidator } from "../schema/budget_periods";
 import { computeActualSpend, periodDateRange } from "./helpers";
 import {
@@ -24,7 +24,7 @@ export const createBudgetPeriod = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ id: Id<"budgetPeriods"> }> => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const year = validateYear(args.year);
     const month = validateMonth(args.month);
 
@@ -81,7 +81,7 @@ export const activateBudgetPeriod = mutation({
       throw new ConvexError("Validation: only draft periods can be activated");
     }
 
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const active = await ctx.db
       .query("budgetPeriods")
       .withIndex("by_userId_status", (q) => q.eq("userId", userId).eq("status", "active"))
@@ -108,7 +108,7 @@ export const closeBudgetPeriod = mutation({
 
     const nextYear = period.month === 12 ? period.year + 1 : period.year;
     const nextMonth = period.month === 12 ? 1 : period.month + 1;
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
 
     const nextPeriod = await ctx.db
       .query("budgetPeriods")
@@ -154,7 +154,7 @@ export const copyPreviousPeriod = mutation({
   args: { toPeriodId: v.id("budgetPeriods") },
   handler: async (ctx, args): Promise<{ copiedCount: number; noPreviousPeriod?: boolean }> => {
     const toPeriod = await requireOwnedPeriod(ctx, args.toPeriodId);
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const periods = await ctx.db.query("budgetPeriods").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
     const previous = periods
       .filter((item) => item._id !== toPeriod._id && (item.status === "active" || item.status === "closed"))
@@ -206,7 +206,7 @@ export const createEnvelope = mutation({
   },
   handler: async (ctx, args): Promise<{ id: Id<"budgetEnvelopes"> }> => {
     const period = await requireOwnedPeriod(ctx, args.periodId);
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
 
     const category = await ctx.db.get(args.categoryId);
     if (!category || category.userId !== userId) {
@@ -275,7 +275,7 @@ export const reorderEnvelopes = mutation({
   args: { orderedIds: v.array(v.id("budgetEnvelopes")) },
   handler: async (ctx, args): Promise<boolean> => {
     const ranks = buildRanks(args.orderedIds.length);
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
 
     for (const [index, id] of args.orderedIds.entries()) {
       const envelope = await ctx.db.get(id);
@@ -308,16 +308,18 @@ export const deleteEnvelope = mutation({
 });
 
 async function requireOwnedPeriod(ctx: MutationCtx, id: Id<"budgetPeriods">): Promise<Doc<"budgetPeriods">> {
+  const userId = await requireUserId(ctx);
   const period = await ctx.db.get(id);
-  if (!period || period.userId !== resolveSystemUserId()) {
+  if (!period || period.userId !== userId) {
     throw new ConvexError("Budget period not found");
   }
   return period;
 }
 
 async function requireOwnedEnvelope(ctx: MutationCtx, id: Id<"budgetEnvelopes">): Promise<Doc<"budgetEnvelopes">> {
+  const userId = await requireUserId(ctx);
   const envelope = await ctx.db.get(id);
-  if (!envelope || envelope.userId !== resolveSystemUserId()) {
+  if (!envelope || envelope.userId !== userId) {
     throw new ConvexError("Envelope not found");
   }
   return envelope;

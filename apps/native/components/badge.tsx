@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ViewProps, StyleSheet } from "react-native";
-import { NAV_THEME, BadgeTokens } from "@/lib/constants";
+import { NAV_THEME, BadgeTokens, UI_ELEMENT_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 interface BadgeProps extends ViewProps {
@@ -8,6 +8,9 @@ interface BadgeProps extends ViewProps {
   variant?: "solid" | "subtle" | "outline";
   color?: "default" | "primary" | "secondary" | "destructive" | "success" | "warning";
 }
+
+type BadgeVariant = NonNullable<BadgeProps["variant"]>;
+type BadgeColor = NonNullable<BadgeProps["color"]>;
 
 export function Badge({
   children,
@@ -18,61 +21,74 @@ export function Badge({
 }: BadgeProps) {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const palette = colorScheme === "dark" ? UI_ELEMENT_THEME.dark : UI_ELEMENT_THEME.light;
 
-  const colorMap = {
-    default: theme.primary,
-    primary: theme.primary,
-    secondary: theme.secondary,
-    destructive: theme.destructive,
-    success: theme.chart2,
-    warning: theme.chart4,
+  const colorStyles: Record<BadgeColor, { backgroundColor: string; foregroundColor: string }> = {
+    default: {
+      backgroundColor: palette.badge.solidBg,
+      foregroundColor: palette.badge.solidText,
+    },
+    primary: {
+      backgroundColor: palette.badge.solidBg,
+      foregroundColor: palette.badge.solidText,
+    },
+    secondary: {
+      backgroundColor: theme.secondary,
+      foregroundColor: theme.secondaryForeground,
+    },
+    destructive: {
+      backgroundColor: palette.badge.dangerBg,
+      foregroundColor: theme.destructiveForeground,
+    },
+    success: {
+      backgroundColor: palette.badge.successBg,
+      foregroundColor: "#fff",
+    },
+    warning: {
+      backgroundColor: palette.badge.warningBg,
+      foregroundColor: "#000",
+    },
   };
 
-  const textColorMap = {
-    default: theme.primaryForeground,
-    primary: theme.primaryForeground,
-    secondary: theme.secondaryForeground,
-    destructive: theme.destructiveForeground,
-    success: "#fff",
-    warning: "#000",
-  };
-
-  const bgColor = colorMap[color];
-  const text = textColorMap[color];
-
-  const getVariantStyles = () => {
-    if (variant === "solid") {
-      return {
-        backgroundColor: bgColor,
-        borderWidth: 0,
-        color: text,
-      };
+  const variantStyles: Record<
+    BadgeVariant,
+    (tone: { backgroundColor: string; foregroundColor: string }) => {
+      backgroundColor: string;
+      borderWidth: number;
+      borderColor?: string;
+      color: string;
     }
-    if (variant === "subtle") {
-      return {
-        backgroundColor: `${bgColor}20`,
-        borderWidth: 0,
-        color: text,
-      };
-    }
-    return {
+  > = {
+    solid: (tone) => ({
+      backgroundColor: tone.backgroundColor,
+      borderWidth: 0,
+      color: tone.foregroundColor,
+    }),
+    subtle: (tone) => ({
+      backgroundColor: palette.badge.subtleBg,
+      borderWidth: 0,
+      color: palette.badge.subtleText,
+    }),
+    outline: (tone) => ({
       backgroundColor: "transparent",
-      borderWidth: 1,
-      borderColor: bgColor,
-      color: bgColor,
-    };
+      borderWidth: BadgeTokens.outline.borderWidth,
+      borderColor: tone.backgroundColor,
+      color: tone.backgroundColor,
+    }),
   };
 
-  const variantStyles = getVariantStyles();
+  const tone = colorStyles[color];
+  const badgeTextToken = BadgeTokens[variant].text;
+  const resolvedVariantStyle = variantStyles[variant](tone);
 
   return (
     <View
       style={[
         styles.badge,
         {
-          backgroundColor: variantStyles.backgroundColor,
-          borderColor: variantStyles.borderColor,
-          borderWidth: variantStyles.borderWidth,
+          backgroundColor: resolvedVariantStyle.backgroundColor,
+          borderColor: resolvedVariantStyle.borderColor,
+          borderWidth: resolvedVariantStyle.borderWidth,
           paddingHorizontal: BadgeTokens.base.paddingHorizontal,
           paddingVertical: BadgeTokens.base.paddingVertical,
           minHeight: BadgeTokens.base.minHeight,
@@ -82,7 +98,9 @@ export function Badge({
       ]}
       {...props}
     >
-      <Text style={[styles.text, { color: variantStyles.color }]}>{children}</Text>
+      <Text style={[styles.text, badgeTextToken, { color: resolvedVariantStyle.color }]}>
+        {children}
+      </Text>
     </View>
   );
 }
@@ -92,6 +110,6 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   text: {
-    fontWeight: "500",
+    textAlign: "center",
   },
 });

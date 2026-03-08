@@ -1,14 +1,12 @@
 import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "./_generated/dataModel";
-import type { MutationCtx } from "./_generated/server";
-import { mutation } from "./_generated/server";
-import { requireSignedRequest } from "./lib/auth";
-import { resolveSystemUserId } from "./lib/security";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
+import { requireUserId } from "./lib/identity";
 import {
   accountNameValidator,
   accountTypeValidator,
-  authPayloadValidator,
   currencyValidator,
   normalizeAccountName,
   normalizeCurrency,
@@ -32,12 +30,9 @@ export const createAccount = mutation({
     currency: currencyValidator,
     openingBalance: v.optional(v.number()),
     note: v.optional(v.string()),
-    auth: authPayloadValidator,
   },
   handler: async (ctx, args): Promise<Doc<"accounts">> => {
-    await requireSignedRequest(ctx, args, "accounts:createAccount");
-
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const existingCount = await countUserAccounts(ctx, userId);
     if (existingCount >= MAX_ACCOUNT_COUNT) {
       throw new ConvexError("Validation: account limit reached");
@@ -71,9 +66,7 @@ export const createAccount = mutation({
 export const updateAccount = mutation({
   args: updateAccountValidator,
   handler: async (ctx, args): Promise<Doc<"accounts">> => {
-    await requireSignedRequest(ctx, args, "accounts:updateAccount");
-
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const account = await requireOwnedAccount(ctx, args.accountId, userId);
     const patch = buildAccountPatch(args);
     const hasProviderNameUpdate = Object.prototype.hasOwnProperty.call(args, "providerName");
@@ -103,12 +96,9 @@ export const updateAccount = mutation({
 export const deleteAccount = mutation({
   args: {
     accountId: v.id("accounts"),
-    auth: authPayloadValidator,
   },
   handler: async (ctx, args): Promise<boolean> => {
-    await requireSignedRequest(ctx, args, "accounts:deleteAccount");
-
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const account = await requireOwnedAccount(ctx, args.accountId, userId);
     await ctx.db.patch(account._id, {
       status: ARCHIVED_STATUS,
@@ -119,16 +109,13 @@ export const deleteAccount = mutation({
   },
 });
 
-export const listAccounts = mutation({
+export const listAccounts = query({
   args: {
     includeArchived: v.optional(v.boolean()),
     pagination: paginationValidator,
-    auth: authPayloadValidator,
   },
   handler: async (ctx, args) => {
-    await requireSignedRequest(ctx, args, "accounts:listAccounts");
-
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const cursor = args.pagination?.cursor ?? null;
     const limit = Math.min(args.pagination?.limit ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
 
@@ -145,19 +132,17 @@ export const listAccounts = mutation({
   },
 });
 
-export const getAccountById = mutation({
+export const getAccountById = query({
   args: {
     accountId: v.id("accounts"),
-    auth: authPayloadValidator,
   },
   handler: async (ctx, args): Promise<Doc<"accounts">> => {
-    await requireSignedRequest(ctx, args, "accounts:getAccountById");
-    return requireOwnedAccount(ctx, args.accountId, resolveSystemUserId());
+    return requireOwnedAccount(ctx, args.accountId, await requireUserId(ctx));
   },
 });
 
 async function requireOwnedAccount(
-  ctx: MutationCtx,
+  ctx: MutationCtx | QueryCtx,
   accountId: Id<"accounts">,
   expectedUserId: string
 ): Promise<Doc<"accounts">> {

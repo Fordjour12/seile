@@ -4,20 +4,22 @@ import {
   type Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { env } from "@seile/env/native";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { Toaster } from "sonner-native";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexProvider, useConvexAuth } from "convex/react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useEffect } from "react";
 
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
-import { AuthProvider, useAuth } from "@/lib/auth-context";
-import { LockScreen } from "@/components/lock-screen";
+import { authClient, useSession } from "@/lib/auth-client";
+import { bootstrapUserData } from "@/lib/bootstrap-user-data";
+import { convex } from "@/lib/convex-client";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -28,45 +30,95 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 };
 
-const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL, {
-  unsavedChangesWarning: false,
-});
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  loading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
 
-function AppContent() {
-  const { isLocked, isLoading } = useAuth();
+function SessionBootstrapper() {
+  const { isAuthenticated } = useConvexAuth();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!isAuthenticated || !session?.session?.id) {
+      return;
+    }
+
+    void bootstrapUserData().catch(() => {
+      // Keep startup resilient; the auth screens and diagnostics surface manual retry.
+    });
+  }, [isAuthenticated, session?.session?.id]);
+
+  return null;
+}
+
+function RootNavigator() {
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const { isDarkColorScheme } = useColorScheme();
 
   if (isLoading) {
-    return null;
+    return (
+      <View
+        style={[
+          styles.loading,
+          {
+            backgroundColor: isDarkColorScheme
+              ? NAV_THEME.dark.background
+              : NAV_THEME.light.background,
+          },
+        ]}
+      >
+        <ActivityIndicator
+          color={isDarkColorScheme ? NAV_THEME.dark.primary : NAV_THEME.light.primary}
+          size="large"
+        />
+      </View>
+    );
   }
 
   return (
-    <>
-      <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-        <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-        <GestureHandlerRootView style={styles.container}>
-          <BottomSheetModalProvider>
-            <Stack>
-              <Stack.Screen
-                name="(tabs)"
-                options={{ title: "Tabs", headerShown: false }}
-              />
-              <Stack.Screen
-                name="modal"
-                options={{ title: "Modal", presentation: "modal" }}
-              />
-            </Stack>
-          </BottomSheetModalProvider>
-          <Toaster />
-        </GestureHandlerRootView>
-      </ThemeProvider>
-    </>
+    <Stack>
+      {isAuthenticated ? (
+        <>
+          <Stack.Screen
+            name="(tabs)"
+            options={{ title: "Tabs", headerShown: false }}
+          />
+          <Stack.Screen
+            name="modal"
+            options={{ title: "Modal", presentation: "modal" }}
+          />
+        </>
+      ) : (
+        <Stack.Screen
+          name="(auth)"
+          options={{ title: "Auth", headerShown: false }}
+        />
+      )}
+    </Stack>
+  );
+}
+
+function AppContent() {
+  const { isDarkColorScheme } = useColorScheme();
+
+  return (
+    <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+      <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+      <GestureHandlerRootView style={styles.container}>
+        <BottomSheetModalProvider>
+          <SessionBootstrapper />
+          <RootNavigator />
+        </BottomSheetModalProvider>
+        <Toaster />
+      </GestureHandlerRootView>
+    </ThemeProvider>
   );
 }
 
@@ -96,37 +148,9 @@ export default function RootLayout() {
 
   return (
     <ConvexProvider client={convex}>
-      <AuthProvider>
-        <View style={StyleSheet.absoluteFill}>
-          <AppContent />
-          <AuthGate />
-        </View>
-      </AuthProvider>
+      <ConvexBetterAuthProvider authClient={authClient} client={convex}>
+        <AppContent />
+      </ConvexBetterAuthProvider>
     </ConvexProvider>
-  );
-}
-
-function AuthGate() {
-  const { isLocked } = useAuth();
-  const { isDarkColorScheme } = useColorScheme();
-
-  if (!isLocked) {
-    return null;
-  }
-
-  const overlayStyle = StyleSheet.flatten([
-    StyleSheet.absoluteFill,
-    {
-      backgroundColor: isDarkColorScheme
-        ? NAV_THEME.dark.background
-        : NAV_THEME.light.background,
-      zIndex: 9999,
-    },
-  ]);
-
-  return (
-    <View style={overlayStyle}>
-      <LockScreen />
-    </View>
   );
 }

@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation, mutation } from "../_generated/server";
 import { assertValidAmount, assertValidCurrency } from "../lib/money";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { scheduleTypeValidator, subscriptionStatusValidator } from "../schema/recurring_transactions";
 
 export const createSubscription = mutation({
@@ -33,7 +33,7 @@ export const createSubscription = mutation({
 
     const now = Date.now();
     const id = await ctx.db.insert("recurringTransactions", {
-      userId: resolveSystemUserId(),
+      userId: await requireUserId(ctx),
       kind: "expense",
       amount: args.amount,
       currency,
@@ -73,8 +73,9 @@ export const cancelSubscription = mutation({
     id: v.id("recurringTransactions"),
   },
   handler: async (ctx, args): Promise<boolean> => {
+    const userId = await requireUserId(ctx);
     const recurring = await ctx.db.get(args.id);
-    if (!recurring || recurring.userId !== resolveSystemUserId() || !recurring.isSubscription) {
+    if (!recurring || recurring.userId !== userId || !recurring.isSubscription) {
       throw new ConvexError("Subscription not found");
     }
 

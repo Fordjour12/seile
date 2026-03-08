@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { buildRanks } from "../lib/fractionalIndex";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { savingsStatusValidator } from "../schema/savings_goals";
 import {
   validateCurrentAmount,
@@ -38,7 +38,7 @@ export const createSavingsGoal = mutation({
       throw new ConvexError("Validation: targetDate must be in the future");
     }
     const id = await ctx.db.insert("savingsGoals", {
-      userId: resolveSystemUserId(),
+      userId: await requireUserId(ctx),
       name: validateSavingsName(args.name),
       status: args.status ?? "active",
       currency: validateSavingsCurrency(args.currency ?? "GHS"),
@@ -114,7 +114,7 @@ export const reorderSavingsGoals = mutation({
   args: { orderedIds: v.array(v.id("savingsGoals")) },
   handler: async (ctx, args): Promise<boolean> => {
     const ranks = buildRanks(args.orderedIds.length);
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     for (const [index, id] of args.orderedIds.entries()) {
       const row = await ctx.db.get(id);
       if (!row || row.userId !== userId) throw new ConvexError("Savings goal not found");
@@ -142,8 +142,9 @@ export const publishSavingsGoal = mutation({
 });
 
 async function requireOwnedGoal(ctx: MutationCtx, id: Id<"savingsGoals">): Promise<Doc<"savingsGoals">> {
+  const userId = await requireUserId(ctx);
   const row = await ctx.db.get(id);
-  if (!row || row.userId !== resolveSystemUserId()) {
+  if (!row || row.userId !== userId) {
     throw new ConvexError("Savings goal not found");
   }
   return row;

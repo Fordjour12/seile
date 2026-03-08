@@ -1,4 +1,5 @@
-import { postJson } from "@/lib/accounts/http-client";
+import { api } from "@/lib/backend-api";
+import { convex } from "@/lib/convex-client";
 
 import type {
   CreateTransactionPayload,
@@ -32,37 +33,6 @@ type SummaryResponse = {
   transfer: number;
   net: number;
 };
-
-const FALLBACK_TRANSACTIONS: TransactionRecord[] = [
-  {
-    id: "txn-1",
-    kind: "income",
-    accountName: "Main Checking",
-    accountId: "acc-1",
-    title: "Salary Deposit",
-    category: "Income",
-    direction: "in",
-    amount: 5200,
-    currencyCode: "GHS",
-    createdAt: "2026-03-03T09:50:00.000Z",
-    updatedAt: "2026-03-03T09:50:00.000Z",
-    occurredAt: "2026-03-03T09:50:00.000Z",
-  },
-  {
-    id: "txn-2",
-    kind: "expense",
-    accountName: "Main Checking",
-    accountId: "acc-1",
-    title: "Groceries",
-    category: "Food",
-    direction: "out",
-    amount: 289.3,
-    currencyCode: "GHS",
-    createdAt: "2026-03-03T08:40:00.000Z",
-    updatedAt: "2026-03-03T08:40:00.000Z",
-    occurredAt: "2026-03-03T08:40:00.000Z",
-  },
-];
 
 function toDirection(kind: TransactionKind): TransactionDirection {
   return kind === "income" || kind === "adjustment" ? "in" : "out";
@@ -109,31 +79,31 @@ function mapBackendTransaction(transaction: BackendTransaction): TransactionReco
 
 export async function listTransactions(params: ListTransactionsParams = {}): Promise<TransactionRecord[]> {
   try {
-    const rows = await postJson<BackendTransaction[]>("/transactions/list", {
+    const rows = await convex.query(api["transactions/queries"].listTransactions, {
       limit: params.limit,
       before: params.before,
     });
 
     return rows.map(mapBackendTransaction);
   } catch {
-    return FALLBACK_TRANSACTIONS;
+    return [];
   }
 }
 
 export async function getTransaction(transactionId: string): Promise<TransactionRecord | null> {
   try {
-    const row = await postJson<BackendTransaction | null>("/transactions/getById", {
+    const row = await convex.query(api["transactions/queries"].getTransactionById, {
       id: transactionId,
     });
 
     return row ? mapBackendTransaction(row) : null;
   } catch {
-    return FALLBACK_TRANSACTIONS.find((item) => item.id === transactionId) ?? null;
+    return null;
   }
 }
 
 export async function createTransaction(payload: CreateTransactionPayload): Promise<TransactionRecord> {
-  const row = await postJson<BackendTransaction>("/transactions/create", {
+  const row = await convex.mutation(api["transactions/mutations"].createTransaction, {
     kind: payload.kind,
     amount: payload.amount,
     currency: payload.currencyCode ?? "GHS",
@@ -152,7 +122,7 @@ export async function updateTransaction(
   transactionId: string,
   payload: UpdateTransactionPayload,
 ): Promise<TransactionRecord> {
-  const row = await postJson<BackendTransaction>("/transactions/update", {
+  const row = await convex.mutation(api["transactions/mutations"].updateTransaction, {
     id: transactionId,
     amount: payload.amount,
     categoryId: payload.categoryId,
@@ -164,7 +134,7 @@ export async function updateTransaction(
 }
 
 export async function deleteTransaction(transactionId: string, reverseAccountDelta: boolean = true): Promise<boolean> {
-  const response = await postJson<boolean>("/transactions/delete", {
+  const response = await convex.mutation(api["transactions/mutations"].deleteTransaction, {
     id: transactionId,
     reverseAccountDelta,
   });
@@ -173,7 +143,7 @@ export async function deleteTransaction(transactionId: string, reverseAccountDel
 }
 
 export async function reverseTransaction(transactionId: string): Promise<TransactionRecord> {
-  const row = await postJson<BackendTransaction>("/transactions/reverse", {
+  const row = await convex.mutation(api["transactions/mutations"].reverseTransaction, {
     id: transactionId,
   });
 
@@ -181,7 +151,7 @@ export async function reverseTransaction(transactionId: string): Promise<Transac
 }
 
 export async function getTransactionSummary(from: string, to: string): Promise<SummaryResponse> {
-  return postJson<SummaryResponse>("/transactions/summary", {
+  return convex.query(api["transactions/queries"].getTransactionSummary, {
     from: new Date(from).getTime(),
     to: new Date(to).getTime(),
   });

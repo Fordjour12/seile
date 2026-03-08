@@ -31,12 +31,6 @@ export const accountStatusValidator = v.union(
 export const currencyValidator = v.string();
 export const balanceValidator = v.number();
 
-export const authPayloadValidator = v.object({
-  ts: v.number(),
-  nonce: v.string(),
-  sig: v.string(),
-});
-
 export const paginationValidator = v.optional(
   v.object({
     cursor: v.optional(v.union(v.string(), v.null())),
@@ -53,7 +47,6 @@ export const updateAccountValidator = v.object({
   balance: v.optional(balanceValidator),
   status: v.optional(accountStatusValidator),
   note: v.optional(v.string()),
-  auth: authPayloadValidator,
 });
 
 export function normalizeAccountName(name: string): string {

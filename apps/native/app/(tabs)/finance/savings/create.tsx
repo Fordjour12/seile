@@ -19,10 +19,19 @@ export default function CreateSavingsScreen() {
   const [categories, setCategories] = useState([] as Awaited<ReturnType<typeof listCategories>>);
 
   useEffect(() => {
-    void Promise.all([listAccounts(), listCategories()]).then(([nextAccounts, nextCategories]) => {
-      setAccounts(nextAccounts);
-      setCategories(nextCategories);
-    });
+    async function loadOptions() {
+      try {
+        const [nextAccounts, nextCategories] = await Promise.all([listAccounts(), listCategories()]);
+        setAccounts(nextAccounts);
+        setCategories(nextCategories);
+      } catch (error) {
+        toast.error("Could not load savings options", {
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
+      }
+    }
+
+    void loadOptions();
   }, []);
 
   const handleCreate = async (values: SavingsFormValues) => {

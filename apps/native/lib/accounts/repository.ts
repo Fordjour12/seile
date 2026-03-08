@@ -1,5 +1,6 @@
-import { postJson } from "./http-client";
-import { signPayload } from "./signing";
+import { api } from "@/lib/backend-api";
+import { convex } from "@/lib/convex-client";
+
 import type {
   Account,
   AccountStatus,
@@ -74,27 +75,11 @@ function mapOutgoingType(type: AccountType): BackendAccountType {
   return type;
 }
 
-async function accountRequest<TResponse>(
-  path: string,
-  functionName: string,
-  payload: Record<string, unknown>,
-): Promise<TResponse> {
-  const signed = await signPayload(functionName, payload);
-  return postJson<TResponse>(path, {
-    ...signed.payload,
-    auth: signed.auth,
-  });
-}
-
 export async function getAccount(accountId: string): Promise<Account | null> {
   try {
-    const response = await accountRequest<BackendAccount>(
-      "/accounts/getById",
-      "accounts:getAccountById",
-      {
-        accountId,
-      },
-    );
+    const response = await convex.query(api.accounts.getAccountById, {
+      accountId,
+    });
 
     return mapAccount(response);
   } catch {
@@ -103,7 +88,7 @@ export async function getAccount(accountId: string): Promise<Account | null> {
 }
 
 export async function createAccount(payload: CreateAccountPayload): Promise<Account> {
-  const response = await accountRequest<BackendAccount>("/accounts/create", "accounts:createAccount", {
+  const response = await convex.mutation(api.accounts.createAccount, {
     name: payload.name,
     providerName: payload.providerName,
     type: mapOutgoingType(payload.type),
@@ -120,7 +105,7 @@ export async function updateAccount(
   payload: UpdateAccountPayload,
 ): Promise<Account | null> {
   try {
-    const response = await accountRequest<BackendAccount>("/accounts/update", "accounts:updateAccount", {
+    const response = await convex.mutation(api.accounts.updateAccount, {
       accountId,
       name: payload.name,
       providerName: payload.providerName,
@@ -138,15 +123,14 @@ export async function updateAccount(
 }
 
 export async function deleteAccount(payload: DeleteAccountPayload): Promise<boolean> {
-  const response = await accountRequest<ArchiveResponse>("/accounts/archive", "accounts:deleteAccount", {
+  const response = await convex.mutation(api.accounts.deleteAccount, {
     accountId: payload.id,
   });
-
-  return response.success;
+  return response;
 }
 
 export async function listAccounts(): Promise<Account[]> {
-  const response = await accountRequest<PaginatedAccounts>("/accounts/list", "accounts:listAccounts", {
+  const response = await convex.query(api.accounts.listAccounts, {
     includeArchived: false,
     pagination: {
       limit: 50,

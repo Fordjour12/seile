@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 
 export const listTransactions = query({
   args: {
@@ -10,7 +10,7 @@ export const listTransactions = query({
     before: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<Doc<"transactions">[]> => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const limit = Math.min(Math.max(Math.floor(args.limit ?? 50), 1), 200);
     const before = args.before;
 
@@ -31,8 +31,9 @@ export const getTransactionById = query({
     id: v.id("transactions"),
   },
   handler: async (ctx, args): Promise<Doc<"transactions"> | null> => {
+    const userId = await requireUserId(ctx);
     const tx = await ctx.db.get(args.id);
-    if (!tx || tx.userId !== resolveSystemUserId()) {
+    if (!tx || tx.userId !== userId) {
       return null;
     }
     return tx;
@@ -45,9 +46,10 @@ export const getTransactionSummary = query({
     to: v.number(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db
       .query("transactions")
-      .withIndex("by_userId_occurredAt", (q) => q.eq("userId", resolveSystemUserId()))
+      .withIndex("by_userId_occurredAt", (q) => q.eq("userId", userId))
       .filter((q) => q.and(q.gte(q.field("occurredAt"), args.from), q.lte(q.field("occurredAt"), args.to)))
       .collect();
 
