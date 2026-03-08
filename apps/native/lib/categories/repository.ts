@@ -11,15 +11,11 @@ type BackendCategory = {
 };
 
 export async function listCategories(): Promise<CategoryOption[]> {
-  try {
-    const rows = await convex.query(api["categories/queries"].listCategories, {});
-    return rows.map((row) => ({
-      id: row._id,
-      name: row.name,
-      color: row.color,
-      icon: row.icon,
-    }));
-  } catch {
-    return [];
-  }
+  const rows = await convex.query(api["categories/queries"].listCategories, {});
+  return rows.map((row) => ({
+    id: row._id,
+    name: row.name,
+    color: row.color,
+    icon: row.icon,
+  }));
 }

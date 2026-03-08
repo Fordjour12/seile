@@ -65,9 +65,9 @@ export function Badge({
       color: tone.foregroundColor,
     }),
     subtle: (tone) => ({
-      backgroundColor: `${tone.backgroundColor}20`,
+      backgroundColor: palette.badge.subtleBg,
       borderWidth: 0,
-      color: tone.foregroundColor,
+      color: palette.badge.subtleText,
     }),
     outline: (tone) => ({
       backgroundColor: "transparent",

@@ -31,33 +31,36 @@ export default function AuthSmokeScreen() {
     isAuthenticated ? {} : "skip",
   );
 
-  const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<"passkey" | "bootstrap" | "signout" | null>(null);
   const [result, setResult] = useState<string>("No action yet.");
+  const busy = busyAction !== null;
 
   const runAddPasskey = async () => {
     if (busy) return;
-    setBusy(true);
+    setBusyAction("passkey");
     setResult("Registering passkey...");
 
-    const response = await authClient.passkey.addPasskey({
-      name: session?.user?.email ?? "Seile passkey",
-      authenticatorAttachment: "platform",
-    });
+    try {
+      const response = await authClient.passkey.addPasskey({
+        name: session?.user?.email ?? "Seile passkey",
+        authenticatorAttachment: "platform",
+      });
 
-    if (response.error) {
-      setResult(`Passkey failed: ${response.error.message || "Request failed"}`);
-      setBusy(false);
-      return;
+      if (response.error) {
+        setResult(`Passkey failed: ${response.error.message || "Request failed"}`);
+        return;
+      }
+
+      await refetchPasskeys().catch(() => undefined);
+      setResult("Passkey registered");
+    } finally {
+      setBusyAction(null);
     }
-
-    await refetchPasskeys().catch(() => undefined);
-    setResult("Passkey registered");
-    setBusy(false);
   };
 
   const runBootstrap = async () => {
     if (busy) return;
-    setBusy(true);
+    setBusyAction("bootstrap");
     setResult("Bootstrapping...");
     try {
       const response = await bootstrapUserData();
@@ -69,13 +72,13 @@ export default function AuthSmokeScreen() {
     } catch (error) {
       setResult(`Bootstrap failed: ${formatError(error)}`);
     } finally {
-      setBusy(false);
+      setBusyAction(null);
     }
   };
 
   const runSignOut = async () => {
     if (busy) return;
-    setBusy(true);
+    setBusyAction("signout");
     setResult("Signing out...");
     try {
       await authClient.signOut({
@@ -88,7 +91,7 @@ export default function AuthSmokeScreen() {
     } catch (error) {
       setResult(`Sign out failed: ${formatError(error)}`);
     } finally {
-      setBusy(false);
+      setBusyAction(null);
     }
   };
 
@@ -131,7 +134,8 @@ export default function AuthSmokeScreen() {
               title="Add passkey"
               onPress={runAddPasskey}
               style={styles.flex}
-              disabled={!isAuthenticated}
+              disabled={!isAuthenticated || busy}
+              loading={busyAction === "passkey"}
             />
           </View>
           <View style={styles.row}>
@@ -140,15 +144,16 @@ export default function AuthSmokeScreen() {
               onPress={runBootstrap}
               variant="secondary"
               style={styles.flex}
-              disabled={!isAuthenticated}
-              loading={busy}
+              disabled={!isAuthenticated || busy}
+              loading={busyAction === "bootstrap"}
             />
             <Button
               title="Sign out"
               onPress={runSignOut}
               variant="destructive"
               style={styles.flex}
-              disabled={!isAuthenticated}
+              disabled={!isAuthenticated || busy}
+              loading={busyAction === "signout"}
             />
           </View>
           <AppText variant="muted">{result}</AppText>

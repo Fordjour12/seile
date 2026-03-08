@@ -18,7 +18,17 @@ export default function CreateBudgetEnvelopeScreen() {
   const [categories, setCategories] = useState([] as Awaited<ReturnType<typeof listCategories>>);
 
   useEffect(() => {
-    void listCategories().then(setCategories);
+    async function loadCategories() {
+      try {
+        setCategories(await listCategories());
+      } catch (error) {
+        toast.error("Could not load categories", {
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
+      }
+    }
+
+    void loadCategories();
   }, []);
 
   const handleCreate = async (values: BudgetEnvelopeFormValues) => {

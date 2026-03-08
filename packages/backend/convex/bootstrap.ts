@@ -23,9 +23,9 @@ export const bootstrapUserData = mutation({
     const existing = await ctx.db
       .query("categories")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .first();
+      .collect();
 
-    if (existing) {
+    if (existing.length >= DEFAULT_CATEGORIES.length) {
       return {
         created: false,
         seededCount: 0,
@@ -33,23 +33,33 @@ export const bootstrapUserData = mutation({
     }
 
     const createdAt = Date.now();
-    await Promise.all(
-      DEFAULT_CATEGORIES.map((name) =>
-        ctx.db.insert("categories", {
-          userId,
-          name,
-          icon: undefined,
-          color: undefined,
-          parentCategoryId: undefined,
-          isSystem: true,
-          createdAt,
-        }),
-      ),
-    );
+    let seededCount = 0;
+
+    for (const name of DEFAULT_CATEGORIES) {
+      const category = await ctx.db
+        .query("categories")
+        .withIndex("by_userId_and_name", (q) => q.eq("userId", userId).eq("name", name))
+        .first();
+
+      if (category) {
+        continue;
+      }
+
+      await ctx.db.insert("categories", {
+        userId,
+        name,
+        icon: undefined,
+        color: undefined,
+        parentCategoryId: undefined,
+        isSystem: true,
+        createdAt,
+      });
+      seededCount += 1;
+    }
 
     return {
-      created: true,
-      seededCount: DEFAULT_CATEGORIES.length,
+      created: seededCount > 0,
+      seededCount,
     };
   },
 });
