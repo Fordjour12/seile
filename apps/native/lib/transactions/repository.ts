@@ -1,153 +1,188 @@
-import type { ListTransactionsParams, TransactionRecord } from "./types";
+import { postJson } from "@/lib/accounts/http-client";
 
-let transactionsStore: TransactionRecord[] = [
+import type {
+  CreateTransactionPayload,
+  ListTransactionsParams,
+  TransactionDirection,
+  TransactionKind,
+  TransactionRecord,
+  UpdateTransactionPayload,
+} from "./types";
+
+type BackendTransaction = {
+  _id: string;
+  kind: TransactionKind;
+  amount: number;
+  currency: string;
+  accountName?: string;
+  accountId?: string;
+  fromAccountId?: string;
+  toAccountId?: string;
+  categoryId?: string;
+  note?: string;
+  occurredAt: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+type SummaryResponse = {
+  count: number;
+  income: number;
+  expense: number;
+  transfer: number;
+  net: number;
+};
+
+const FALLBACK_TRANSACTIONS: TransactionRecord[] = [
   {
     id: "txn-1",
-    accountId: "acc-1",
+    kind: "income",
     accountName: "Main Checking",
+    accountId: "acc-1",
     title: "Salary Deposit",
     category: "Income",
     direction: "in",
     amount: 5200,
     currencyCode: "GHS",
     createdAt: "2026-03-03T09:50:00.000Z",
+    updatedAt: "2026-03-03T09:50:00.000Z",
+    occurredAt: "2026-03-03T09:50:00.000Z",
   },
   {
     id: "txn-2",
-    accountId: "acc-1",
+    kind: "expense",
     accountName: "Main Checking",
+    accountId: "acc-1",
     title: "Groceries",
     category: "Food",
     direction: "out",
     amount: 289.3,
     currencyCode: "GHS",
     createdAt: "2026-03-03T08:40:00.000Z",
-  },
-  {
-    id: "txn-3",
-    accountId: "acc-2",
-    accountName: "Emergency Savings",
-    title: "Transfer to Savings",
-    category: "Transfer",
-    direction: "in",
-    amount: 800,
-    currencyCode: "GHS",
-    createdAt: "2026-03-02T19:20:00.000Z",
-  },
-  {
-    id: "txn-4",
-    accountId: "acc-1",
-    accountName: "Main Checking",
-    title: "Fuel",
-    category: "Transport",
-    direction: "out",
-    amount: 120,
-    currencyCode: "GHS",
-    createdAt: "2026-03-02T17:05:00.000Z",
-  },
-  {
-    id: "txn-5",
-    accountId: "acc-1",
-    accountName: "Main Checking",
-    title: "Restaurant",
-    category: "Dining",
-    direction: "out",
-    amount: 94,
-    currencyCode: "GHS",
-    createdAt: "2026-03-02T13:55:00.000Z",
-  },
-  {
-    id: "txn-6",
-    accountId: "acc-2",
-    accountName: "Emergency Savings",
-    title: "Interest Credit",
-    category: "Income",
-    direction: "in",
-    amount: 41.6,
-    currencyCode: "GHS",
-    createdAt: "2026-03-01T22:10:00.000Z",
-  },
-  {
-    id: "txn-7",
-    accountId: "acc-1",
-    accountName: "Main Checking",
-    title: "Internet Bill",
-    category: "Utilities",
-    direction: "out",
-    amount: 210,
-    currencyCode: "GHS",
-    createdAt: "2026-03-01T20:00:00.000Z",
-  },
-  {
-    id: "txn-8",
-    accountId: "acc-1",
-    accountName: "Main Checking",
-    title: "Taxi",
-    category: "Transport",
-    direction: "out",
-    amount: 58.5,
-    currencyCode: "GHS",
-    createdAt: "2026-03-01T09:18:00.000Z",
-  },
-  {
-    id: "txn-9",
-    accountId: "acc-2",
-    accountName: "Emergency Savings",
-    title: "Emergency Fund Top-Up",
-    category: "Transfer",
-    direction: "in",
-    amount: 500,
-    currencyCode: "GHS",
-    createdAt: "2026-02-28T16:40:00.000Z",
-  },
-  {
-    id: "txn-10",
-    accountId: "acc-1",
-    accountName: "Main Checking",
-    title: "Pharmacy",
-    category: "Health",
-    direction: "out",
-    amount: 73.45,
-    currencyCode: "GHS",
-    createdAt: "2026-02-28T12:15:00.000Z",
-  },
-  {
-    id: "txn-11",
-    accountId: "acc-1",
-    accountName: "Main Checking",
-    title: "Airtime",
-    category: "Mobile",
-    direction: "out",
-    amount: 30,
-    currencyCode: "GHS",
-    createdAt: "2026-02-27T18:30:00.000Z",
-  },
-  {
-    id: "txn-12",
-    accountId: "acc-2",
-    accountName: "Emergency Savings",
-    title: "Cash Deposit",
-    category: "Income",
-    direction: "in",
-    amount: 250,
-    currencyCode: "GHS",
-    createdAt: "2026-02-26T10:45:00.000Z",
+    updatedAt: "2026-03-03T08:40:00.000Z",
+    occurredAt: "2026-03-03T08:40:00.000Z",
   },
 ];
 
-function compareNewestFirst(left: TransactionRecord, right: TransactionRecord): number {
-  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+function toDirection(kind: TransactionKind): TransactionDirection {
+  return kind === "income" || kind === "adjustment" ? "in" : "out";
+}
+
+function toCategory(kind: TransactionKind, categoryId?: string): string {
+  if (categoryId) {
+    return categoryId;
+  }
+
+  switch (kind) {
+    case "income":
+      return "Income";
+    case "expense":
+      return "Expense";
+    case "transfer":
+      return "Transfer";
+    case "adjustment":
+      return "Adjustment";
+  }
+}
+
+function mapBackendTransaction(transaction: BackendTransaction): TransactionRecord {
+  const title = transaction.note?.trim() || toCategory(transaction.kind, transaction.categoryId);
+
+  return {
+    id: transaction._id,
+    kind: transaction.kind,
+    accountName: transaction.accountName,
+    accountId: transaction.accountId,
+    fromAccountId: transaction.fromAccountId,
+    toAccountId: transaction.toAccountId,
+    categoryId: transaction.categoryId,
+    title,
+    category: toCategory(transaction.kind, transaction.categoryId),
+    direction: toDirection(transaction.kind),
+    amount: transaction.amount,
+    currencyCode: transaction.currency,
+    createdAt: new Date(transaction.createdAt).toISOString(),
+    updatedAt: new Date(transaction.updatedAt).toISOString(),
+    occurredAt: new Date(transaction.occurredAt).toISOString(),
+  };
 }
 
 export async function listTransactions(params: ListTransactionsParams = {}): Promise<TransactionRecord[]> {
-  const limit = Math.max(1, Math.min(params.limit ?? 10, 10));
+  try {
+    const rows = await postJson<BackendTransaction[]>("/transactions/list", {
+      limit: params.limit,
+      before: params.before,
+    });
 
-  return transactionsStore
-    .filter((transaction) => (params.accountId ? transaction.accountId === params.accountId : true))
-    .sort(compareNewestFirst)
-    .slice(0, limit);
+    return rows.map(mapBackendTransaction);
+  } catch {
+    return FALLBACK_TRANSACTIONS;
+  }
 }
 
 export async function getTransaction(transactionId: string): Promise<TransactionRecord | null> {
-  return transactionsStore.find((transaction) => transaction.id === transactionId) ?? null;
+  try {
+    const row = await postJson<BackendTransaction | null>("/transactions/getById", {
+      id: transactionId,
+    });
+
+    return row ? mapBackendTransaction(row) : null;
+  } catch {
+    return FALLBACK_TRANSACTIONS.find((item) => item.id === transactionId) ?? null;
+  }
+}
+
+export async function createTransaction(payload: CreateTransactionPayload): Promise<TransactionRecord> {
+  const row = await postJson<BackendTransaction>("/transactions/create", {
+    kind: payload.kind,
+    amount: payload.amount,
+    currency: payload.currencyCode ?? "GHS",
+    accountId: payload.accountId,
+    fromAccountId: payload.fromAccountId,
+    toAccountId: payload.toAccountId,
+    categoryId: payload.categoryId,
+    note: payload.note,
+    occurredAt: payload.occurredAt ? new Date(payload.occurredAt).getTime() : undefined,
+  });
+
+  return mapBackendTransaction(row);
+}
+
+export async function updateTransaction(
+  transactionId: string,
+  payload: UpdateTransactionPayload,
+): Promise<TransactionRecord> {
+  const row = await postJson<BackendTransaction>("/transactions/update", {
+    id: transactionId,
+    amount: payload.amount,
+    categoryId: payload.categoryId,
+    note: payload.note,
+    occurredAt: payload.occurredAt ? new Date(payload.occurredAt).getTime() : undefined,
+  });
+
+  return mapBackendTransaction(row);
+}
+
+export async function deleteTransaction(transactionId: string, reverseAccountDelta: boolean = true): Promise<boolean> {
+  const response = await postJson<boolean>("/transactions/delete", {
+    id: transactionId,
+    reverseAccountDelta,
+  });
+
+  return response;
+}
+
+export async function reverseTransaction(transactionId: string): Promise<TransactionRecord> {
+  const row = await postJson<BackendTransaction>("/transactions/reverse", {
+    id: transactionId,
+  });
+
+  return mapBackendTransaction(row);
+}
+
+export async function getTransactionSummary(from: string, to: string): Promise<SummaryResponse> {
+  return postJson<SummaryResponse>("/transactions/summary", {
+    from: new Date(from).getTime(),
+    to: new Date(to).getTime(),
+  });
 }

@@ -1,104 +1,157 @@
+import { postJson } from "./http-client";
+import { signPayload } from "./signing";
 import type {
   Account,
+  AccountStatus,
+  AccountType,
   CreateAccountPayload,
   DeleteAccountPayload,
   UpdateAccountPayload,
 } from "./types";
 
-let accountsStore: Account[] = [
-  {
-    id: "acc-1",
-    name: "Main Checking",
-    type: "checking",
-    status: "active",
-    currencyCode: "GHS",
-    balance: 12450.75,
-    note: "Payroll and day-to-day spending",
-    createdAt: "2026-03-01T08:00:00.000Z",
-    updatedAt: "2026-03-01T08:00:00.000Z",
-  },
-  {
-    id: "acc-2",
-    name: "Emergency Savings",
-    type: "savings",
-    status: "active",
-    currencyCode: "GHS",
-    balance: 5895.04,
-    note: "3-month reserve",
-    createdAt: "2026-02-16T08:00:00.000Z",
-    updatedAt: "2026-02-16T08:00:00.000Z",
-  },
-];
+type BackendAccountType = "checking" | "savings" | "cash" | "credit" | "investment" | "bank";
+type BackendAccountStatus = "active" | "archived" | "closed";
 
-function nextAccountId(): string {
-  return `acc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+type BackendAccount = {
+  _id: string;
+  _creationTime: number;
+  userId: string;
+  name: string;
+  providerName?: string;
+  type: BackendAccountType;
+  status?: BackendAccountStatus;
+  currency: string;
+  balance: number;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+  isArchived?: boolean;
+};
+
+type PaginatedAccounts = {
+  page: BackendAccount[];
+};
+
+type ArchiveResponse = {
+  success: boolean;
+};
+
+function mapBackendType(type: BackendAccountType): AccountType {
+  switch (type) {
+    case "bank":
+      return "checking";
+    case "investment":
+      return "investment";
+    default:
+      return type;
+  }
 }
 
-export async function listAccounts(): Promise<Account[]> {
-  return [...accountsStore];
+function mapBackendStatus(input: Pick<BackendAccount, "status" | "isArchived">): AccountStatus {
+  if (input.status) {
+    return input.status;
+  }
+
+  return input.isArchived ? "archived" : "active";
+}
+
+function mapAccount(account: BackendAccount): Account {
+  return {
+    id: account._id,
+    name: account.name,
+    providerName: account.providerName,
+    type: mapBackendType(account.type),
+    status: mapBackendStatus(account),
+    currencyCode: account.currency,
+    balance: account.balance,
+    note: account.note,
+    createdAt: new Date(account.createdAt).toISOString(),
+    updatedAt: new Date(account.updatedAt).toISOString(),
+  };
+}
+
+function mapOutgoingType(type: AccountType): BackendAccountType {
+  return type;
+}
+
+async function accountRequest<TResponse>(
+  path: string,
+  functionName: string,
+  payload: Record<string, unknown>,
+): Promise<TResponse> {
+  const signed = await signPayload(functionName, payload);
+  return postJson<TResponse>(path, {
+    ...signed.payload,
+    auth: signed.auth,
+  });
 }
 
 export async function getAccount(accountId: string): Promise<Account | null> {
-  return accountsStore.find((account) => account.id === accountId) ?? null;
+  try {
+    const response = await accountRequest<BackendAccount>(
+      "/accounts/getById",
+      "accounts:getAccountById",
+      {
+        accountId,
+      },
+    );
+
+    return mapAccount(response);
+  } catch {
+    return null;
+  }
 }
 
 export async function createAccount(payload: CreateAccountPayload): Promise<Account> {
-  const now = new Date().toISOString();
-
-  const account: Account = {
-    id: nextAccountId(),
+  const response = await accountRequest<BackendAccount>("/accounts/create", "accounts:createAccount", {
     name: payload.name,
-    type: payload.type,
-    status: "active",
-    currencyCode: payload.currencyCode ?? "GHS",
-    balance: payload.openingBalance ?? 0,
+    providerName: payload.providerName,
+    type: mapOutgoingType(payload.type),
+    currency: payload.currencyCode ?? "GHS",
+    openingBalance: payload.openingBalance ?? 0,
     note: payload.note,
-    createdAt: now,
-    updatedAt: now,
-  };
+  });
 
-  accountsStore = [account, ...accountsStore];
-
-  return account;
+  return mapAccount(response);
 }
 
 export async function updateAccount(
   accountId: string,
-  payload: UpdateAccountPayload
+  payload: UpdateAccountPayload,
 ): Promise<Account | null> {
-  const currentAccount = accountsStore.find((account) => account.id === accountId);
-  if (!currentAccount) {
+  try {
+    const response = await accountRequest<BackendAccount>("/accounts/update", "accounts:updateAccount", {
+      accountId,
+      name: payload.name,
+      providerName: payload.providerName,
+      type: payload.type ? mapOutgoingType(payload.type) : undefined,
+      currency: payload.currencyCode,
+      balance: payload.balance,
+      status: payload.status,
+      note: payload.note,
+    });
+
+    return mapAccount(response);
+  } catch {
     return null;
   }
-
-  const updatedAccount: Account = {
-    ...currentAccount,
-    ...payload,
-    updatedAt: new Date().toISOString(),
-  };
-
-  accountsStore = accountsStore.map((account) => (account.id === accountId ? updatedAccount : account));
-
-  return updatedAccount;
 }
 
 export async function deleteAccount(payload: DeleteAccountPayload): Promise<boolean> {
-  const index = accountsStore.findIndex((account) => account.id === payload.id);
-  if (index < 0) {
-    return false;
-  }
+  const response = await accountRequest<ArchiveResponse>("/accounts/archive", "accounts:deleteAccount", {
+    accountId: payload.id,
+  });
 
-  if (payload.hardDelete) {
-    accountsStore = accountsStore.filter((account) => account.id !== payload.id);
-    return true;
-  }
+  return response.success;
+}
 
-  const account = accountsStore[index];
-  accountsStore[index] = {
-    ...account,
-    status: "archived",
-    updatedAt: new Date().toISOString(),
-  };
+export async function listAccounts(): Promise<Account[]> {
+  const response = await accountRequest<PaginatedAccounts>("/accounts/list", "accounts:listAccounts", {
+    includeArchived: false,
+    pagination: {
+      limit: 50,
+    },
+  });
 
-  return true;
+  return response.page.map(mapAccount);
 }

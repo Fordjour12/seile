@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 import { Banner, Button, Spinner, Text, View } from "@/components";
 import { AccountForm, type AccountFormValues } from "@/components/account-form";
@@ -51,6 +51,7 @@ export default function UpdateAccount() {
     try {
       const payload: UpdateAccountPayload = {
         name: values.name,
+        providerName: values.providerName || undefined,
         type: values.type,
         status: values.isActive ? "active" : "archived",
         balance: Number(values.balance),
@@ -90,7 +91,7 @@ export default function UpdateAccount() {
           title="Update issue"
           message={error}
           actionLabel="Back"
-          onActionPress={() => router.replace("/(tabs)/finance/accounts" as any)}
+          onActionPress={() => router.replace("/(tabs)/finance/accounts" as Href)}
         />
       ) : null}
 
@@ -107,6 +108,7 @@ export default function UpdateAccount() {
           submitLabel="Save changes"
           loading={loading}
           initialValues={{
+            providerName: account.providerName ?? "",
             name: account.name,
             balance: `${account.balance}`,
             type: account.type,
@@ -120,7 +122,7 @@ export default function UpdateAccount() {
         <Button
           title="Delete account"
           variant="destructive"
-          onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/delete` as any)}
+          onPress={() => router.push(`/(tabs)/finance/accounts/${account.id}/delete` as Href)}
           disabled={loading}
         />
       ) : null}
@@ -128,7 +130,7 @@ export default function UpdateAccount() {
       <Button
         title="Back to accounts"
         variant="outline"
-        onPress={() => router.replace("/(tabs)/finance/accounts" as any)}
+        onPress={() => router.replace("/(tabs)/finance/accounts" as Href)}
       />
     </View>
   );

@@ -5,6 +5,7 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   savings: "Savings",
   credit: "Credit",
   cash: "Cash",
+  investment: "Investment",
 };
 
 const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
@@ -50,10 +51,11 @@ export function mapAccountListItem(account: Account): {
   subtitle: string;
   balanceLabel: string;
 } {
+  const statusAndType = `${formatAccountType(account.type)} · ${formatAccountStatus(account.status)}`;
   return {
     id: account.id,
     title: account.name,
-    subtitle: `${formatAccountType(account.type)} · ${formatAccountStatus(account.status)}`,
+    subtitle: account.providerName ? `${account.providerName} · ${statusAndType}` : statusAndType,
     balanceLabel: formatAccountBalance(account.balance, account.currencyCode),
   };
 }

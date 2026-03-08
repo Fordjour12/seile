@@ -10,9 +10,10 @@ import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 export type AccountFormMode = "create" | "update";
-export type AccountType = "checking" | "savings" | "credit" | "cash";
+export type AccountType = "checking" | "savings" | "credit" | "cash" | "investment";
 
 export interface AccountFormValues {
+  providerName: string;
   name: string;
   balance: string;
   type: AccountType;
@@ -28,6 +29,7 @@ interface AccountFormProps {
 }
 
 const DEFAULT_VALUES: AccountFormValues = {
+  providerName: "",
   name: "",
   balance: "",
   type: "checking",
@@ -52,14 +54,20 @@ export function AccountForm({
     [initialValues],
   );
 
+  const [providerName, setProviderName] = useState(seededValues.providerName);
   const [name, setName] = useState(seededValues.name);
   const [balance, setBalance] = useState(seededValues.balance);
   const [type, setType] = useState<AccountType>(seededValues.type);
   const [isActive, setIsActive] = useState(seededValues.isActive);
-  const [errors, setErrors] = useState<Partial<Record<"name" | "balance", string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<"providerName" | "name" | "balance", string>>>({});
+  const isProviderRequired = type !== "cash";
 
   const validate = () => {
-    const nextErrors: Partial<Record<"name" | "balance", string>> = {};
+    const nextErrors: Partial<Record<"providerName" | "name" | "balance", string>> = {};
+
+    if (isProviderRequired && !providerName.trim()) {
+      nextErrors.providerName = "Provider name is required for this account type.";
+    }
 
     if (!name.trim()) {
       nextErrors.name = "Account name is required.";
@@ -83,6 +91,7 @@ export function AccountForm({
     }
 
     await onSubmit({
+      providerName: providerName.trim(),
       name: name.trim(),
       balance: balance.trim(),
       type,
@@ -93,7 +102,30 @@ export function AccountForm({
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.fieldGroup}>
-        <Text style={[styles.label, { color: theme.foreground }]}>Account Name</Text>
+        <Text style={[styles.label, { color: theme.foreground }]}>Provider Name</Text>
+        <Input
+          value={providerName}
+          onChangeText={(value) => {
+            setProviderName(value);
+            if (errors.providerName) {
+              setErrors((prev) => ({ ...prev, providerName: undefined }));
+            }
+          }}
+          placeholder={type === "cash" ? "e.g. Wallet (optional for cash)" : "e.g. Ecobank"}
+          returnKeyType="next"
+        />
+        <Text style={[styles.helperText, { color: theme.mutedForeground }]}>
+          {type === "cash"
+            ? "Optional for cash accounts."
+            : "Required for checking, savings, credit, and investment accounts."}
+        </Text>
+        {errors.providerName ? (
+          <Text style={[styles.errorText, { color: theme.destructive }]}>{errors.providerName}</Text>
+        ) : null}
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <Text style={[styles.label, { color: theme.foreground }]}>Account Nickname</Text>
         <Input
           value={name}
           onChangeText={(value) => {
@@ -102,7 +134,7 @@ export function AccountForm({
               setErrors((prev) => ({ ...prev, name: undefined }));
             }
           }}
-          placeholder={mode === "create" ? "e.g. Everyday Checking" : "Update account name"}
+          placeholder={mode === "create" ? "e.g. Bills Wallet" : "Update nickname"}
           returnKeyType="next"
         />
         {errors.name ? <Text style={[styles.errorText, { color: theme.destructive }]}>{errors.name}</Text> : null}
@@ -133,6 +165,7 @@ export function AccountForm({
           <Chip label="Savings" selected={type === "savings"} onSelect={() => setType("savings")} />
           <Chip label="Credit" selected={type === "credit"} onSelect={() => setType("credit")} />
           <Chip label="Cash" selected={type === "cash"} onSelect={() => setType("cash")} />
+          <Chip label="Investment" selected={type === "investment"} onSelect={() => setType("investment")} />
         </View>
       </View>
 
