@@ -11,7 +11,18 @@ export async function requireUserId(ctx: AuthCtx): Promise<string> {
     throw new ConvexError("Unauthenticated");
   }
 
-  return user.id;
+  const userId =
+    typeof user.userId === "string" && user.userId.length > 0
+      ? user.userId
+      : typeof user._id === "string" && user._id.length > 0
+        ? user._id
+        : null;
+
+  if (!userId) {
+    throw new ConvexError("Authenticated user is missing a userId");
+  }
+
+  return userId;
 }
 
 export async function getOptionalUser(ctx: AuthCtx) {

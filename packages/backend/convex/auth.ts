@@ -11,7 +11,7 @@ import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 
 const componentsAny = components as any;
-const authOrigin = env.SITE_URL.replace(/\/$/, "");
+const authOrigin = env.CONVEX_SITE_URL.replace(/\/$/, "");
 const rpID = new URL(authOrigin).hostname;
 
 export const authComponent = createClient<DataModel>(componentsAny.betterAuth);
@@ -20,10 +20,7 @@ function isRuntimeCtx(
   ctx: unknown,
 ): ctx is Parameters<typeof authComponent.adapter>[0] {
   return Boolean(
-    ctx &&
-      typeof ctx === "object" &&
-      "auth" in ctx &&
-      "runQuery" in ctx,
+    ctx && typeof ctx === "object" && "auth" in ctx && "runQuery" in ctx,
   );
 }
 

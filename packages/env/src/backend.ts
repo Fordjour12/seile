@@ -7,6 +7,7 @@ export const env = createEnv({
     SITE_URL: z.url(),
     OPENAI_API_KEY: z.string().min(1).optional(),
     PLANNER_AGENT_MODEL: z.string().min(1).optional(),
+    CONVEX_SITE_URL: z.url(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

@@ -4,7 +4,7 @@ import { useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { DebtForm, type DebtFormValues, SectionHeader } from "@/components";
-import { createDebtPlan, type CreateDebtPlanPayload, type DebtPlanStatus } from "@/lib/debt";
+import { type CreateDebtPlanPayload, type DebtPlanStatus, useCreateDebtPlan } from "@/lib/debt";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -12,6 +12,7 @@ export default function CreateDebtScreen() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const router = useRouter();
+  const createDebtPlan = useCreateDebtPlan();
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async (values: DebtFormValues) => {
@@ -29,9 +30,9 @@ export default function CreateDebtScreen() {
         status: values.isActive ? "active" : "draft",
       };
 
-      const debtPlan = await createDebtPlan(payload);
+      await createDebtPlan(payload);
       toast.success("Debt plan created", {
-        description: `${debtPlan.name} is ready to track.`,
+        description: `${payload.name} is ready to track.`,
       });
       router.replace("/(tabs)/finance/debt" as Href);
     } catch (error) {

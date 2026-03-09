@@ -1,1 +1,0 @@
-now the best migration for our application at the moment is to move from the current auth to use better-auth with convex-better-auth plugin. use the doc form this link https://labs.convex.dev/better-auth/framework-guides/expo to aid with the 

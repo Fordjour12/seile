@@ -1,13 +1,19 @@
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 
 import { Container } from "@/components/container";
-import { Badge, Button, Card, SectionHeader, Text as AppText } from "@/components";
+import {
+  Badge,
+  Button,
+  Card,
+  SectionHeader,
+  Text as AppText,
+} from "@/components";
 import { authClient, useSession } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/backend-api";
-import { bootstrapUserData } from "@/lib/bootstrap-user-data";
 
 function formatError(error: unknown): string {
   if (error instanceof Error && error.message) {
@@ -19,7 +25,9 @@ function formatError(error: unknown): string {
 
 export default function AuthSmokeScreen() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { user, hasHydrated, isLoading } = useAuth();
+  const isAuthenticated = Boolean(user);
+  const authStatus = !hasHydrated || isLoading ? "loading" : "ready";
   const { data: session, isPending: isSessionPending } = useSession();
   const {
     data: passkeys,
@@ -31,7 +39,9 @@ export default function AuthSmokeScreen() {
     isAuthenticated ? {} : "skip",
   );
 
-  const [busyAction, setBusyAction] = useState<"passkey" | "bootstrap" | "signout" | null>(null);
+  const [busyAction, setBusyAction] = useState<
+    "passkey" | "bootstrap" | "signout" | null
+  >(null);
   const [result, setResult] = useState<string>("No action yet.");
   const busy = busyAction !== null;
 
@@ -47,7 +57,9 @@ export default function AuthSmokeScreen() {
       });
 
       if (response.error) {
-        setResult(`Passkey failed: ${response.error.message || "Request failed"}`);
+        setResult(
+          `Passkey failed: ${response.error.message || "Request failed"}`,
+        );
         return;
       }
 
@@ -62,18 +74,6 @@ export default function AuthSmokeScreen() {
     if (busy) return;
     setBusyAction("bootstrap");
     setResult("Bootstrapping...");
-    try {
-      const response = await bootstrapUserData();
-      setResult(
-        response.created
-          ? `Bootstrap complete: ${response.seededCount} categories created`
-          : "Bootstrap skipped: user data already exists",
-      );
-    } catch (error) {
-      setResult(`Bootstrap failed: ${formatError(error)}`);
-    } finally {
-      setBusyAction(null);
-    }
   };
 
   const runSignOut = async () => {
@@ -97,8 +97,14 @@ export default function AuthSmokeScreen() {
 
   return (
     <Container>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-        <SectionHeader title="Auth Diagnostics" subtitle="BETTER AUTH + CONVEX" />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+      >
+        <SectionHeader
+          title="Auth Diagnostics"
+          subtitle="BETTER AUTH + CONVEX"
+        />
 
         <Card variant="outline">
           <AppText variant="h3">Current Status</AppText>
@@ -106,8 +112,8 @@ export default function AuthSmokeScreen() {
             <Badge color={isAuthenticated ? "success" : "warning"}>
               {isAuthenticated ? "Authenticated" : "Signed Out"}
             </Badge>
-            <Badge color={isLoading ? "warning" : "primary"}>
-              {isLoading ? "Convex Loading" : "Convex Ready"}
+            <Badge color={authStatus === "loading" ? "warning" : "primary"}>
+              {authStatus === "loading" ? "Auth Loading" : "Auth Ready"}
             </Badge>
             <Badge color={isSessionPending ? "warning" : "secondary"}>
               {isSessionPending ? "Session Pending" : "Session Ready"}
@@ -120,10 +126,11 @@ export default function AuthSmokeScreen() {
             Session id: {session?.session?.id ?? "none"}
           </AppText>
           <AppText variant="small">
-            Convex user id: {currentUser?.id ?? "none"}
+            Convex user id: {currentUser?._id ?? "none"}
           </AppText>
           <AppText variant="small">
-            Passkeys: {isPasskeysPending ? "loading" : String(passkeys?.length ?? 0)}
+            Passkeys:{" "}
+            {isPasskeysPending ? "loading" : String(passkeys?.length ?? 0)}
           </AppText>
         </Card>
 
@@ -165,7 +172,9 @@ export default function AuthSmokeScreen() {
             {passkeys && passkeys.length > 0 ? (
               passkeys.map((passkey) => (
                 <View key={passkey.id} style={styles.passkeyRow}>
-                  <AppText variant="small">{passkey.name || passkey.id}</AppText>
+                  <AppText variant="small">
+                    {passkey.name || passkey.id}
+                  </AppText>
                   <AppText variant="muted">{passkey.deviceType}</AppText>
                 </View>
               ))

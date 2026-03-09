@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Banner, Button, DebtForm, Spinner, Text, View, type DebtFormValues, SectionHeader } from "@/components";
-import { getDebtPlanById, updateDebtPlan, type DebtPlan, type UpdateDebtPlanPayload } from "@/lib/debt";
+import { type UpdateDebtPlanPayload, useDebtPlan, useUpdateDebtPlan } from "@/lib/debt";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -13,32 +13,11 @@ export default function UpdateDebtScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [debtPlan, setDebtPlan] = useState<DebtPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const debtPlan = useDebtPlan(id);
+  const updateDebtPlan = useUpdateDebtPlan();
+  const isLoading = Boolean(id) && debtPlan === undefined;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Debt plan ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const found = await getDebtPlanById(id);
-        setDebtPlan(found);
-      } catch {
-        setError("Debt plan not found.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void load();
-  }, [id]);
 
   const handleUpdate = async (values: DebtFormValues) => {
     if (!id) {
@@ -60,10 +39,9 @@ export default function UpdateDebtScreen() {
         status: values.isActive ? "active" : "draft",
       };
 
-      const updated = await updateDebtPlan(id, payload);
-      setDebtPlan(updated);
+      await updateDebtPlan(id, payload);
       toast.success("Debt plan updated", {
-        description: `${updated.name} has been saved.`,
+        description: `${values.name} has been saved.`,
       });
     } catch (updateError) {
       const message = updateError instanceof Error ? updateError.message : "That debt plan could not be updated.";

@@ -28,6 +28,12 @@ import {
 import { recurringTransactionsTable } from "./schema/recurring_transactions";
 import { debtPlansTable, debtStatusValidator, debtTypeValidator, payoffStrategyValidator } from "./schema/debt_plans";
 import { savingsGoalsTable, savingsStatusValidator } from "./schema/savings_goals";
+import {
+  schedulerTaskPriorityValidator,
+  schedulerTaskRecurrenceValidator,
+  schedulerTaskStatusValidator,
+  schedulerTasksTable,
+} from "./schema/scheduler_tasks";
 import { transactionsTable } from "./schema/transactions";
 
 export {
@@ -54,6 +60,9 @@ export {
   planItemStatusValidator,
   planItemTypeValidator,
   planStatusValidator,
+  schedulerTaskPriorityValidator,
+  schedulerTaskRecurrenceValidator,
+  schedulerTaskStatusValidator,
 };
 
 export default defineSchema({
@@ -73,4 +82,5 @@ export default defineSchema({
   planItems: planItemsTable,
   planningReviews: planningReviewsTable,
   plannerAgentState: plannerAgentStateTable,
+  schedulerTasks: schedulerTasksTable,
 });

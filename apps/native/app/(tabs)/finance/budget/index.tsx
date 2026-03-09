@@ -1,16 +1,14 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 
-import { Banner, Button, Card, EmptyState, ListItem, SectionHeader, Spinner, Text, View } from "@/components";
+import { Button, Card, EmptyState, ListItem, SectionHeader, Spinner, Text, View } from "@/components";
 import {
   formatBudgetAmount,
   formatBudgetStatus,
-  getActivePeriod,
-  listEnvelopes,
   mapBudgetEnvelopeListItem,
-  type BudgetEnvelopeWithComputed,
-  type BudgetPeriodWithComputed,
+  useActiveBudgetPeriod,
+  useBudgetEnvelopes,
 } from "@/lib/budget";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
@@ -19,35 +17,12 @@ export default function BudgetScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-  const [activePeriod, setActivePeriod] = useState<BudgetPeriodWithComputed | null>(null);
-  const [envelopes, setEnvelopes] = useState<BudgetEnvelopeWithComputed[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const refresh = useCallback(async () => {
-    setHasError(false);
-    setIsLoading(true);
-    try {
-      const period = await getActivePeriod();
-      setActivePeriod(period);
-      if (period) {
-        const rows = await listEnvelopes(period.id);
-        setEnvelopes(rows);
-      } else {
-        setEnvelopes([]);
-      }
-    } catch {
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const showEmptyState = !isLoading && !hasError && !activePeriod;
+  const activePeriod = useActiveBudgetPeriod();
+  const envelopes = useBudgetEnvelopes(activePeriod?.id);
+  const isLoading =
+    activePeriod === undefined ||
+    (activePeriod ? envelopes === undefined : false);
+  const showEmptyState = !isLoading && !activePeriod;
 
   return (
     <ScrollView style={styles.screen} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
@@ -57,18 +32,6 @@ export default function BudgetScreen() {
         actionLabel="New"
         onActionPress={() => router.push("/(tabs)/finance/budget/create" as Href)}
       />
-
-      {hasError ? (
-        <Banner
-          variant="error"
-          title="Unable to load budget"
-          message="Please check your connection and try again."
-          actionLabel="Retry"
-          onActionPress={() => {
-            void refresh();
-          }}
-        />
-      ) : null}
 
       {isLoading ? (
         <View style={styles.loadingState}>
@@ -119,7 +82,7 @@ export default function BudgetScreen() {
           <View style={styles.section}>
             <SectionHeader title="Envelopes" subtitle="ACTIVE PERIOD" />
             <View style={styles.list}>
-              {envelopes.map((envelope) => {
+              {(envelopes ?? []).map((envelope) => {
                 const item = mapBudgetEnvelopeListItem(envelope, activePeriod.currencyCode);
                 return (
                   <ListItem

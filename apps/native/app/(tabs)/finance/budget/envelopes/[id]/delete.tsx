@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Alert, Banner, Button, Card, Dialog, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
-import { deleteEnvelope, formatBudgetAmount, getEnvelopeById, type BudgetEnvelopeWithComputed } from "@/lib/budget";
+import {
+  formatBudgetAmount,
+  useBudgetEnvelope,
+  useDeleteEnvelope,
+} from "@/lib/budget";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -13,31 +17,19 @@ export default function DeleteBudgetEnvelopeScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [envelope, setEnvelope] = useState<BudgetEnvelopeWithComputed | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const envelope = useBudgetEnvelope(id);
+  const deleteEnvelope = useDeleteEnvelope();
+  const isLoading = Boolean(id) && envelope === undefined;
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Envelope ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const found = await getEnvelopeById(id);
-        setEnvelope(found);
-      } catch {
-        setError("Envelope not found.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    void load();
-  }, [id]);
+  const derivedError =
+    error ??
+    (!id
+      ? "Envelope ID is missing."
+      : !isLoading && !envelope
+        ? "Envelope not found."
+        : null);
 
   const onDelete = async () => {
     if (!id) return;
@@ -64,7 +56,7 @@ export default function DeleteBudgetEnvelopeScreen() {
   return (
     <ScrollView style={styles.screen} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <SectionHeader title="Delete Envelope" subtitle={`Envelope ID: ${id ?? "unknown"}`} />
-      {error ? <Banner variant="error" title="Delete failed" message={error} actionLabel="Dismiss" onActionPress={() => setError(null)} /> : null}
+      {derivedError ? <Banner variant="error" title="Delete failed" message={derivedError} actionLabel="Dismiss" onActionPress={() => setError(null)} /> : null}
       {isLoading ? (
         <View style={styles.stateRow}>
           <Spinner />

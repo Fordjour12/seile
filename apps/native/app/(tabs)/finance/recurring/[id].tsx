@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Banner, Button, Card, SectionHeader, Spinner, Text, View } from "@/components";
 import {
-  deleteRecurringTransaction,
-  getRecurringTransaction,
-  pauseRecurringTransaction,
-  resumeRecurringTransaction,
-  type RecurringTransaction,
+  useDeleteRecurringTransaction,
+  usePauseRecurringTransaction,
+  useRecurringTransaction,
+  useResumeRecurringTransaction,
 } from "@/lib/recurring";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
@@ -19,24 +18,12 @@ export default function RecurringDetailScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [item, setItem] = useState<RecurringTransaction | null>(null);
-  const [loading, setLoading] = useState(true);
+  const item = useRecurringTransaction(id);
+  const pauseRecurringTransaction = usePauseRecurringTransaction();
+  const resumeRecurringTransaction = useResumeRecurringTransaction();
+  const deleteRecurringTransaction = useDeleteRecurringTransaction();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-      const found = await getRecurringTransaction(id);
-      setItem(found);
-      setLoading(false);
-    }
-
-    void load();
-  }, [id]);
+  const loading = Boolean(id) && item === undefined;
 
   async function handlePauseResume() {
     if (!id || !item) return;
@@ -50,8 +37,6 @@ export default function RecurringDetailScreen() {
         await resumeRecurringTransaction(id);
         toast.success("Schedule resumed");
       }
-      const refreshed = await getRecurringTransaction(id);
-      setItem(refreshed);
     } catch (error) {
       toast.error("Could not update schedule", {
         description: error instanceof Error ? error.message : "Please try again.",

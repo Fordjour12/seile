@@ -1,5 +1,5 @@
 import { api } from "@/lib/backend-api";
-import { convex } from "@/lib/convex-client";
+import { useQuery } from "convex/react";
 
 import type { CategoryOption } from "./types";
 
@@ -10,12 +10,16 @@ type BackendCategory = {
   icon?: string;
 };
 
-export async function listCategories(): Promise<CategoryOption[]> {
-  const rows = await convex.query(api["categories/queries"].listCategories, {});
-  return rows.map((row) => ({
+function mapCategory(row: BackendCategory): CategoryOption {
+  return {
     id: row._id,
     name: row.name,
     color: row.color,
     icon: row.icon,
-  }));
+  };
+}
+
+export function useCategories(): CategoryOption[] | undefined {
+  const rows = useQuery(api.categories.queries.listCategories, {});
+  return rows?.map(mapCategory);
 }

@@ -1,13 +1,12 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 
-import { Banner, Button, Card, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
-import { listRecurringTransactions, type RecurringTransaction } from "@/lib/recurring";
+import { Button, Card, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
+import { useRecurringTransactions } from "@/lib/recurring";
 import {
-  getMonthlySubscriptionSpend,
-  listUpcomingRenewals,
-  type Subscription,
+  useMonthlySubscriptionSpend,
+  useUpcomingRenewals,
 } from "@/lib/subscriptions";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
@@ -23,41 +22,19 @@ export default function RecurringIndexScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const items = useRecurringTransactions(true);
+  const upcomingRenewals = useUpcomingRenewals(30);
+  const monthlySubscriptionSpend = useMonthlySubscriptionSpend();
+  const isLoading =
+    items === undefined ||
+    upcomingRenewals === undefined ||
+    monthlySubscriptionSpend === undefined;
+  const monthlySubscriptionTotal = monthlySubscriptionSpend?.monthlyTotal ?? 0;
 
-  const [items, setItems] = useState<RecurringTransaction[]>([]);
-  const [upcomingRenewals, setUpcomingRenewals] = useState<Subscription[]>([]);
-  const [monthlySubscriptionTotal, setMonthlySubscriptionTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setHasError(false);
-    try {
-      const [rows, upcoming, monthlySpend] = await Promise.all([
-        listRecurringTransactions(true),
-        listUpcomingRenewals(30),
-        getMonthlySubscriptionSpend(),
-      ]);
-      setItems(rows);
-      setUpcomingRenewals(upcoming);
-      setMonthlySubscriptionTotal(monthlySpend.monthlyTotal);
-    } catch {
-      setItems([]);
-      setUpcomingRenewals([]);
-      setMonthlySubscriptionTotal(0);
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const activeCount = items.filter((item) => item.isActive).length;
-  const subscriptionsCount = items.filter((item) => item.isSubscription).length;
+  const activeCount = (items ?? []).filter((item) => item.isActive).length;
+  const subscriptionsCount = (items ?? []).filter(
+    (item) => item.isSubscription,
+  ).length;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -116,16 +93,6 @@ export default function RecurringIndexScreen() {
         </Card>
       ) : null}
 
-      {hasError ? (
-        <Banner
-          variant="error"
-          title="Could not load schedules"
-          message="Please try again."
-          actionLabel="Retry"
-          onActionPress={() => void refresh()}
-        />
-      ) : null}
-
       {isLoading ? (
         <View style={styles.loadingState}>
           <Spinner />
@@ -133,7 +100,7 @@ export default function RecurringIndexScreen() {
         </View>
       ) : null}
 
-      {!isLoading && items.length === 0 ? (
+      {!isLoading && (items?.length ?? 0) === 0 ? (
         <EmptyState
           title="No schedules yet"
           message="Create a recurring schedule for automatic tracking."
@@ -143,7 +110,7 @@ export default function RecurringIndexScreen() {
       ) : null}
 
       {!isLoading
-        ? items.map((item) => (
+        ? items?.map((item) => (
             <Pressable
               key={item.id}
               onPress={() => router.push(`/(tabs)/finance/recurring/${item.id}` as Href)}
@@ -185,7 +152,7 @@ export default function RecurringIndexScreen() {
                 </Text>
               </Card>
             </Pressable>
-          ))
+          )) ?? null
         : null}
     </ScrollView>
   );
