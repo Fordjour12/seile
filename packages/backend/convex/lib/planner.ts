@@ -20,7 +20,7 @@ const DAY_NAMES = [
   "saturday",
 ] as const;
 
-type PlanningPriority = Doc<"planningGoals">["priority"];
+type PlanningPriority = Doc<"sharedGoals">["priority"];
 type PlanningCadence = Doc<"planningHabits">["cadence"];
 type EnergyPattern = Doc<"plannerProfiles">["energyPattern"];
 type PlanningMode = Doc<"plans">["mode"];
@@ -33,7 +33,7 @@ export type PlannerProfileLike = Pick<
 export type WeeklyPlanInput = {
   weekStart: string;
   mode: PlanningMode;
-  goals: Doc<"planningGoals">[];
+  goals: Doc<"sharedGoals">[];
   tasks: Doc<"planningTasks">[];
   habits: Doc<"planningHabits">[];
   latestReview: Doc<"planningReviews"> | null;
@@ -44,7 +44,7 @@ export type WeeklyPlanInput = {
 export type GeneratedTaskDraft = {
   title: string;
   priority: PlanningPriority;
-  linkedGoalId?: Id<"planningGoals">;
+  sharedGoalId?: Id<"sharedGoals">;
   dueDate: string;
 };
 
@@ -52,7 +52,7 @@ export type GeneratedHabitDraft = {
   name: string;
   cadence: PlanningCadence;
   targetValue: number;
-  linkedGoalId?: Id<"planningGoals">;
+  sharedGoalId?: Id<"sharedGoals">;
   scheduleDays?: string[];
 };
 
@@ -61,7 +61,7 @@ type TaskCandidate = {
   title: string;
   dueDate?: string;
   priority: PlanningPriority;
-  linkedGoalId?: Id<"planningGoals">;
+  sharedGoalId?: Id<"sharedGoals">;
   draftTask?: GeneratedTaskDraft;
 };
 
@@ -70,7 +70,7 @@ type HabitCandidate = {
   name: string;
   cadence: PlanningCadence;
   targetValue: number;
-  linkedGoalId?: Id<"planningGoals">;
+  sharedGoalId?: Id<"sharedGoals">;
   scheduleDays?: string[];
   draftHabit?: GeneratedHabitDraft;
 };
@@ -241,7 +241,7 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
       title: task.title,
       dueDate: task.dueDate,
       priority: task.priority,
-      linkedGoalId: task.linkedGoalId,
+      sharedGoalId: task.sharedGoalId,
     }));
 
   if (selectedTasks.length < Math.max(selectedGoals.length * 2, 4)) {
@@ -256,7 +256,7 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
         title: task.title,
         dueDate: task.dueDate,
         priority: task.priority,
-        linkedGoalId: task.linkedGoalId,
+        sharedGoalId: task.sharedGoalId,
         draftTask: task,
       });
     }
@@ -296,14 +296,14 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
           name: habit.name,
           cadence: habit.cadence,
           targetValue: habit.targetValue,
-          linkedGoalId: habit.linkedGoalId,
+          sharedGoalId: habit.sharedGoalId,
           scheduleDays: habit.scheduleDays,
         }))
       : createStarterHabits(selectedGoals).map((habit) => ({
           name: habit.name,
           cadence: habit.cadence,
           targetValue: habit.targetValue,
-          linkedGoalId: habit.linkedGoalId,
+          sharedGoalId: habit.sharedGoalId,
           scheduleDays: habit.scheduleDays,
           draftHabit: habit,
         }));
@@ -459,7 +459,7 @@ function allocateDate(input: {
 }
 
 function createGoalTasks(input: {
-  goals: Doc<"planningGoals">[];
+  goals: Doc<"sharedGoals">[];
   weekEnd: string;
   desiredCount: number;
 }): GeneratedTaskDraft[] {
@@ -469,19 +469,19 @@ function createGoalTasks(input: {
         title: "Run a life audit and capture top constraints",
         priority: "medium" as const,
         dueDate: input.weekEnd,
-        linkedGoalId: undefined,
+        sharedGoalId: undefined,
       },
       {
         title: "Choose one priority worth protecting this week",
         priority: "high" as const,
         dueDate: input.weekEnd,
-        linkedGoalId: undefined,
+        sharedGoalId: undefined,
       },
       {
         title: "Clear one admin task that reduces background stress",
         priority: "medium" as const,
         dueDate: input.weekEnd,
-        linkedGoalId: undefined,
+        sharedGoalId: undefined,
       },
     ].slice(0, Math.max(1, input.desiredCount));
   }
@@ -491,13 +491,13 @@ function createGoalTasks(input: {
     drafts.push({
       title: `Define the next concrete step for ${goal.title}`,
       priority: goal.priority,
-      linkedGoalId: goal._id,
+      sharedGoalId: goal._id,
       dueDate: input.weekEnd,
     });
     drafts.push({
       title: `Ship one visible progress update for ${goal.title}`,
       priority: goal.priority,
-      linkedGoalId: goal._id,
+      sharedGoalId: goal._id,
       dueDate: input.weekEnd,
     });
   }
@@ -505,20 +505,20 @@ function createGoalTasks(input: {
   return drafts.slice(0, input.desiredCount);
 }
 
-function createStarterHabits(goals: Doc<"planningGoals">[]) {
+function createStarterHabits(goals: Doc<"sharedGoals">[]) {
   return [
     {
       name: "Five-minute daily reset",
       cadence: "daily" as const,
       targetValue: 5,
-      linkedGoalId: goals[0]?._id,
+      sharedGoalId: goals[0]?._id,
       scheduleDays: undefined,
     },
     {
       name: "Three walks this week",
       cadence: "custom" as const,
       targetValue: 3,
-      linkedGoalId: undefined,
+      sharedGoalId: undefined,
       scheduleDays: ["monday", "wednesday", "friday"],
     },
   ];

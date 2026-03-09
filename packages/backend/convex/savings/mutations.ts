@@ -4,6 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { buildRanks } from "../lib/fractionalIndex";
 import { requireUserId } from "../lib/identity";
+import { syncSavingsGoalSharedGoal } from "../shared_goals/helpers";
 import { savingsStatusValidator } from "../schema/savings_goals";
 import {
   validateCurrentAmount,
@@ -31,6 +32,7 @@ export const createSavingsGoal = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ id: Id<"savingsGoals"> }> => {
+    const userId = await requireUserId(ctx);
     const targetAmount = validateTargetAmount(args.targetAmount);
     const currentAmount = validateCurrentAmount(args.currentAmount, targetAmount);
     const now = Date.now();
@@ -38,7 +40,7 @@ export const createSavingsGoal = mutation({
       throw new ConvexError("Validation: targetDate must be in the future");
     }
     const id = await ctx.db.insert("savingsGoals", {
-      userId: await requireUserId(ctx),
+      userId,
       name: validateSavingsName(args.name),
       status: args.status ?? "active",
       currency: validateSavingsCurrency(args.currency ?? "GHS"),
@@ -52,11 +54,29 @@ export const createSavingsGoal = mutation({
       color: args.color,
       icon: args.icon,
       priorityRank: args.priorityRank?.trim() || undefined,
+      sharedGoalId: undefined,
       notes: args.notes?.trim() || undefined,
       publishedAt: undefined,
       createdAt: now,
       updatedAt: now,
     });
+
+    const sharedGoal = await syncSavingsGoalSharedGoal(ctx, {
+      userId,
+      savingsGoalId: id,
+      name: validateSavingsName(args.name),
+      status: args.status ?? "active",
+      currency: validateSavingsCurrency(args.currency ?? "GHS"),
+      targetAmount,
+      currentAmount,
+      targetDate: args.targetDate,
+      notes: args.notes?.trim() || undefined,
+    });
+    await ctx.db.patch(id, {
+      sharedGoalId: sharedGoal._id,
+      updatedAt: Date.now(),
+    });
+
     return { id };
   },
 });
@@ -81,6 +101,7 @@ export const updateSavingsGoal = mutation({
   },
   handler: async (ctx, args): Promise<Doc<"savingsGoals">> => {
     const existing = await requireOwnedGoal(ctx, args.id);
+    const userId = await requireUserId(ctx);
     const patch: Partial<Doc<"savingsGoals">> = { updatedAt: Date.now() };
     const targetAmount = args.targetAmount ?? existing.targetAmount;
     const currentAmount = args.currentAmount ?? existing.currentAmount;
@@ -106,6 +127,25 @@ export const updateSavingsGoal = mutation({
     await ctx.db.patch(args.id, patch);
     const updated = await ctx.db.get(args.id);
     if (!updated) throw new ConvexError("Savings goal not found after update");
+    const sharedGoal = await syncSavingsGoalSharedGoal(ctx, {
+      userId,
+      savingsGoalId: updated._id,
+      sharedGoalId: updated.sharedGoalId,
+      name: updated.name,
+      status: updated.status,
+      currency: updated.currency,
+      targetAmount: updated.targetAmount,
+      currentAmount: updated.currentAmount,
+      targetDate: updated.targetDate,
+      notes: updated.notes,
+    });
+    if (updated.sharedGoalId !== sharedGoal._id) {
+      await ctx.db.patch(updated._id, {
+        sharedGoalId: sharedGoal._id,
+        updatedAt: Date.now(),
+      });
+      return (await ctx.db.get(updated._id))!;
+    }
     return updated;
   },
 });
@@ -130,6 +170,16 @@ export const archiveSavingsGoal = mutation({
     const row = await requireOwnedGoal(ctx, args.id);
     if (row.status === "archived") return true;
     await ctx.db.patch(args.id, { status: "archived", updatedAt: Date.now() });
+    if (row.sharedGoalId) {
+      const sharedGoal = await ctx.db.get(row.sharedGoalId);
+      if (sharedGoal) {
+        await ctx.db.patch(sharedGoal._id, {
+          status: "archived",
+          active: false,
+          updatedAt: Date.now(),
+        });
+      }
+    }
     return true;
   },
 });

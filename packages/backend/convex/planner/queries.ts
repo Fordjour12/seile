@@ -122,7 +122,10 @@ export const listGoals = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireUserId(ctx);
-    const goals = await ctx.db.query("planningGoals").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+    const goals = await ctx.db
+      .query("sharedGoals")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
     return goals.sort((left, right) => sortByPriority(left.priority, right.priority));
   },
 });
@@ -261,7 +264,7 @@ async function requireOwnedPlan(ctx: QueryCtx, userId: string, planId: Id<"plans
   return plan;
 }
 
-function sortByPriority(left: Doc<"planningGoals">["priority"], right: Doc<"planningGoals">["priority"]) {
+function sortByPriority(left: Doc<"sharedGoals">["priority"], right: Doc<"sharedGoals">["priority"]) {
   return priorityScore(right) - priorityScore(left);
 }
 
@@ -283,7 +286,7 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
     ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
     ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
     ctx.db
-      .query("planningGoals")
+      .query("sharedGoals")
       .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
       .collect(),
     ctx.db

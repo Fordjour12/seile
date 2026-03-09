@@ -121,6 +121,7 @@ export const planningTasksTable = defineTable({
   priority: planningPriorityValidator,
   status: planningTaskStatusValidator,
   linkedGoalId: v.optional(v.id("planningGoals")),
+  sharedGoalId: v.optional(v.id("sharedGoals")),
   createdAt: v.number(),
   updatedAt: v.number(),
 })
@@ -134,6 +135,7 @@ export const planningHabitsTable = defineTable({
   cadence: planningCadenceValidator,
   targetValue: v.number(),
   linkedGoalId: v.optional(v.id("planningGoals")),
+  sharedGoalId: v.optional(v.id("sharedGoals")),
   active: v.boolean(),
   scheduleDays: v.optional(v.array(v.string())),
   createdAt: v.number(),
