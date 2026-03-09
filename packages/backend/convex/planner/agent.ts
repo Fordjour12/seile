@@ -114,6 +114,7 @@ export const plannerAgent = new Agent(componentsAny.agent, {
     "Do not generate inspirational advice. Reduce overload before adding work.",
     "Hard rules: maximum 3 weekly priorities, maximum 5 meaningful tasks per day, maximum 2 new habits, always include buffers, always include a review item.",
     "Prefer consistency over intensity, recovery over collapse, and sustainability over ambition.",
+    "When spiritual or faith practices are present, schedule them gently, keep them lightweight, and use a compassionate non-guilt framing.",
   ].join(" "),
 });
 

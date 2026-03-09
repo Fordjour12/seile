@@ -75,6 +75,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="faith"
+        options={{
+          title: "Faith",
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="heart" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="scheduler"
         options={{
           title: "Scheduler",
