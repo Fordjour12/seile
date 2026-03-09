@@ -1,9 +1,9 @@
 import { ConvexError } from "convex/values";
 
-import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import { authComponent } from "../auth";
 
-type AuthCtx = QueryCtx | MutationCtx;
+type AuthCtx = QueryCtx | MutationCtx | ActionCtx;
 
 export async function requireUserId(ctx: AuthCtx): Promise<string> {
   const user = await authComponent.safeGetAuthUser(ctx);

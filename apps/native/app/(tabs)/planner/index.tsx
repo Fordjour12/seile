@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useEffect, useState } from "react";
 
@@ -27,9 +27,9 @@ const plannerApi = api as unknown as Record<string, Record<string, any>>;
 
 export default function PlannerScreen() {
   const dashboard = useQuery(plannerApi["planner/queries"].getPlannerDashboard, {});
-  const createWeeklyPlan = useMutation(plannerApi["planner/mutations"].createWeeklyPlanDraft);
-  const replanPeriod = useMutation(plannerApi["planner/mutations"].replanPeriod);
-  const createReview = useMutation(plannerApi["planner/mutations"].submitWeeklyReview);
+  const createWeeklyPlan = useAction(plannerApi["planner/actions"].draftWeeklyPlan);
+  const replanPeriod = useAction(plannerApi["planner/actions"].replanWeeklyPlan);
+  const createReview = useAction(plannerApi["planner/actions"].reviewWeeklyPlan);
   const upsertProfile = useMutation(plannerApi["planner/mutations"].upsertPlannerProfile);
   const createGoal = useMutation(plannerApi["planner/mutations"].createPlanningGoal);
   const setAgentEnabled = useMutation(plannerApi["planner/mutations"].setAgentEnabled);

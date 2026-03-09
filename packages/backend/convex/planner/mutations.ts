@@ -34,6 +34,39 @@ const DEFAULT_AGENT_STATE = {
   burnoutState: "stable" as const,
 };
 
+const internalPlanItemValidator = v.object({
+  itemType: v.union(
+    v.literal("priority"),
+    v.literal("task"),
+    v.literal("habit"),
+    v.literal("buffer"),
+    v.literal("review"),
+    v.literal("milestone"),
+  ),
+  title: v.string(),
+  date: v.string(),
+  startTime: v.optional(v.string()),
+  endTime: v.optional(v.string()),
+  priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+  effort: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+  notes: v.optional(v.string()),
+  draftTask: v.optional(
+    v.object({
+      title: v.string(),
+      priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+      dueDate: v.string(),
+    }),
+  ),
+  draftHabit: v.optional(
+    v.object({
+      name: v.string(),
+      cadence: v.union(v.literal("daily"), v.literal("weekdays"), v.literal("weekly"), v.literal("custom")),
+      targetValue: v.number(),
+      scheduleDays: v.optional(v.array(v.string())),
+    }),
+  ),
+});
+
 export const upsertPlannerProfile = mutation({
   args: {
     timezone: v.string(),
@@ -302,6 +335,136 @@ export const createWeeklyPlanDraft = mutation({
   },
 });
 
+export const storeAgentWeeklyPlan = internalMutation({
+  args: {
+    userId: v.string(),
+    weekStart: v.string(),
+    endDate: v.string(),
+    mode: v.union(v.literal("directed"), v.literal("discovery"), v.literal("zero_input"), v.literal("recovery")),
+    createdBy: v.union(v.literal("user"), v.literal("agent"), v.literal("system")),
+    title: v.string(),
+    summary: v.string(),
+    priorityTitles: v.array(v.string()),
+    warnings: v.array(v.string()),
+    burnoutRiskScore: v.number(),
+    recoverySuggested: v.boolean(),
+    agentThreadId: v.optional(v.string()),
+    reuseExisting: v.optional(v.boolean()),
+    items: v.array(internalPlanItemValidator),
+  },
+  handler: async (ctx, args) => {
+    const existingPlans = await ctx.db
+      .query("plans")
+      .withIndex("by_userId_type", (q) => q.eq("userId", args.userId).eq("type", "week"))
+      .collect();
+    const existing = existingPlans
+      .filter((plan) => plan.startDate === args.weekStart && plan.status !== "archived")
+      .sort((left, right) => right.createdAt - left.createdAt)[0];
+
+    if (existing && (args.reuseExisting ?? true)) {
+      return { id: existing._id, reused: true };
+    }
+
+    const now = Date.now();
+    const planId = await ctx.db.insert("plans", {
+      userId: args.userId,
+      type: "week",
+      mode: args.mode,
+      startDate: args.weekStart,
+      endDate: args.endDate,
+      title: args.title.trim(),
+      summary: args.summary.trim(),
+      status: args.weekStart === getWeekWindow(isoDateFromTimestamp(Date.now())).startDate ? "active" : "draft",
+      createdBy: args.createdBy,
+      warnings: args.warnings,
+      priorityTitles: args.priorityTitles.slice(0, 3),
+      burnoutRiskScore: Math.max(0, Math.min(100, Math.round(args.burnoutRiskScore))),
+      recoverySuggested: args.recoverySuggested,
+      agentThreadId: args.agentThreadId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const habitIdsByKey = new Map<string, Id<"planningHabits">>();
+    for (const item of args.items) {
+      let linkedTaskId: Id<"planningTasks"> | undefined;
+      let linkedHabitId: Id<"planningHabits"> | undefined;
+
+      if (item.itemType === "task") {
+        const draftTask = item.draftTask ?? {
+          title: item.title,
+          priority: item.priority,
+          dueDate: item.date,
+        };
+        linkedTaskId = await ctx.db.insert("planningTasks", {
+          userId: args.userId,
+          title: draftTask.title,
+          dueDate: draftTask.dueDate,
+          priority: draftTask.priority,
+          status: "pending",
+          linkedGoalId: undefined,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      if (item.itemType === "habit") {
+        const draftHabit = item.draftHabit ?? {
+          name: item.title,
+          cadence: "daily" as const,
+          targetValue: 1,
+          scheduleDays: undefined,
+        };
+        const habitKey = `${draftHabit.name.toLowerCase()}::${draftHabit.cadence}`;
+        linkedHabitId = habitIdsByKey.get(habitKey);
+        if (!linkedHabitId) {
+          linkedHabitId = await ctx.db.insert("planningHabits", {
+            userId: args.userId,
+            name: draftHabit.name,
+            cadence: draftHabit.cadence,
+            targetValue: Math.max(1, Math.round(draftHabit.targetValue)),
+            linkedGoalId: undefined,
+            active: true,
+            scheduleDays: draftHabit.scheduleDays,
+            createdAt: now,
+            updatedAt: now,
+          });
+          habitIdsByKey.set(habitKey, linkedHabitId);
+        }
+      }
+
+      await ctx.db.insert("planItems", {
+        userId: args.userId,
+        planId,
+        itemType: item.itemType,
+        status: "pending",
+        title: item.title,
+        date: item.date,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        priority: item.priority,
+        effort: item.effort,
+        linkedTaskId,
+        linkedHabitId,
+        notes: item.notes,
+        locked: item.itemType === "review" || item.itemType === "priority",
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    const agentState = await ensureAgentState(ctx, args.userId);
+    await ctx.db.patch(agentState._id, {
+      burnoutScore: Math.max(0, Math.min(100, Math.round(args.burnoutRiskScore))),
+      burnoutState: args.recoverySuggested ? "recovery" : args.burnoutRiskScore >= 45 ? "watch" : "stable",
+      lastWeeklyPlanAt: now,
+      updatedAt: now,
+    });
+
+    return { id: planId, reused: false };
+  },
+});
+
 export const replanPeriod = mutation({
   args: {
     planId: v.id("plans"),
@@ -361,132 +524,103 @@ export const submitWeeklyReview = mutation({
   },
 });
 
-export const runWeeklyReviewCycle = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const states = await ctx.db.query("plannerAgentState").collect();
-    let reviewedCount = 0;
-
-    for (const state of states.filter((entry) => entry.agentEnabled)) {
-      const plans = await ctx.db.query("plans").withIndex("by_userId_type", (q) => q.eq("userId", state.userId).eq("type", "week")).collect();
-      const latestPastPlan = plans
-        .filter((plan) => compareDateKeys(plan.endDate, isoDateFromTimestamp(Date.now())) < 0)
-        .sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
-      if (!latestPastPlan) continue;
-
-      const existingReview = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", latestPastPlan._id)).first();
-      if (existingReview) continue;
-
-      await createWeeklyReviewForPlan(ctx, {
-        userId: state.userId,
-        planId: latestPastPlan._id,
-        markAgentTimestamp: true,
-      });
-      reviewedCount += 1;
-    }
-
-    return { reviewedCount };
+export const saveAgentReview = internalMutation({
+  args: {
+    userId: v.string(),
+    planId: v.id("plans"),
+    agentThreadId: v.optional(v.string()),
+    completionRate: v.number(),
+    wins: v.array(v.string()),
+    blockers: v.array(v.string()),
+    misses: v.array(v.string()),
+    overloadIndicators: v.array(v.string()),
+    improvementSuggestions: v.array(v.string()),
+    stressRating: v.optional(v.number()),
+    satisfactionRating: v.optional(v.number()),
+    burnoutScore: v.number(),
+    burnoutState: v.union(v.literal("stable"), v.literal("watch"), v.literal("recovery")),
   },
-});
+  handler: async (ctx, args) => {
+    const plan = await requireOwnedPlan(ctx, args.userId, args.planId);
+    const existing = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
+    const now = Date.now();
 
-export const runWeeklyPlanningCycle = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const states = await ctx.db.query("plannerAgentState").collect();
-    let createdCount = 0;
-    const nextWeekStart = getWeekWindow(isoDateFromTimestamp(Date.now())).startDate;
-    const targetWeekStart = getWeekWindow(addDays(nextWeekStart, 7)).startDate;
-
-    for (const state of states.filter((entry) => entry.agentEnabled)) {
-      const result = await buildAndStoreWeeklyPlan(ctx, {
-        userId: state.userId,
-        weekStart: targetWeekStart,
-        mode: state.burnoutState === "recovery" ? "recovery" : "discovery",
-        createdBy: "agent",
-        reuseExisting: true,
+    let reviewId = existing?._id;
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        agentThreadId: args.agentThreadId,
+        completionRate: Math.max(0, Math.min(100, Math.round(args.completionRate))),
+        wins: args.wins,
+        blockers: args.blockers,
+        misses: args.misses,
+        overloadIndicators: args.overloadIndicators,
+        improvementSuggestions: args.improvementSuggestions,
+        stressRating: args.stressRating,
+        satisfactionRating: args.satisfactionRating,
+        updatedAt: now,
       });
-      if (!result.reused) {
-        createdCount += 1;
-      }
-    }
-
-    return { createdCount };
-  },
-});
-
-export const runMidweekAdjustmentCycle = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const states = await ctx.db.query("plannerAgentState").collect();
-    let adjustedCount = 0;
-    const week = getWeekWindow(isoDateFromTimestamp(Date.now()));
-
-    for (const state of states.filter((entry) => entry.agentEnabled)) {
-      const currentPlan = await ctx.db
-        .query("plans")
-        .withIndex("by_userId_type", (q) => q.eq("userId", state.userId).eq("type", "week"))
-        .collect();
-      const plan = currentPlan.find((entry) => entry.startDate === week.startDate && entry.status !== "archived");
-      if (!plan) continue;
-
-      const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
-      const pendingTasks = items.filter((item) => item.itemType === "task" && item.status === "pending");
-      if (pendingTasks.length <= 6) continue;
-
-      const result = await replanForUser(ctx, {
-        userId: state.userId,
+    } else {
+      reviewId = await ctx.db.insert("planningReviews", {
+        userId: args.userId,
         planId: plan._id,
-        reason: "Midweek drift detected",
-        preserveLockedItems: true,
-      });
-
-      if (result.movedCount > 0 || result.droppedCount > 0) {
-        adjustedCount += 1;
-      }
-      await ctx.db.patch(state._id, {
-        lastMidweekCheckAt: Date.now(),
-        updatedAt: Date.now(),
+        agentThreadId: args.agentThreadId,
+        completionRate: Math.max(0, Math.min(100, Math.round(args.completionRate))),
+        wins: args.wins,
+        blockers: args.blockers,
+        misses: args.misses,
+        overloadIndicators: args.overloadIndicators,
+        improvementSuggestions: args.improvementSuggestions,
+        stressRating: args.stressRating,
+        satisfactionRating: args.satisfactionRating,
+        createdAt: now,
+        updatedAt: now,
       });
     }
 
-    return { adjustedCount };
+    const agentState = await ensureAgentState(ctx, args.userId);
+    await ctx.db.patch(agentState._id, {
+      burnoutScore: Math.max(0, Math.min(100, Math.round(args.burnoutScore))),
+      burnoutState: args.burnoutState,
+      lastWeeklyReviewAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch(plan._id, {
+      status: "completed",
+      updatedAt: now,
+    });
+
+    return await ctx.db.get(reviewId!);
   },
 });
 
-export const runBurnoutMonitoringCycle = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const states = await ctx.db.query("plannerAgentState").collect();
-    let updatedCount = 0;
+export const performAgentReplan = internalMutation({
+  args: {
+    userId: v.string(),
+    planId: v.id("plans"),
+    reason: v.string(),
+    preserveLockedItems: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    return await performReplan(ctx, args);
+  },
+});
 
-    for (const state of states.filter((entry) => entry.agentEnabled)) {
-      const reviews = await ctx.db.query("planningReviews").withIndex("by_userId", (q) => q.eq("userId", state.userId)).collect();
-      const latestReview = reviews.sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
-      const tasks = await ctx.db.query("planningTasks").withIndex("by_userId_status", (q) => q.eq("userId", state.userId).eq("status", "pending")).collect();
-      const nextBurnoutScore = Math.max(
-        0,
-        Math.min(
-          100,
-          Math.round(
-            (state.burnoutScore * 0.55) +
-              ((latestReview ? Math.max(0, 65 - latestReview.completionRate) : 10) * 0.45) +
-              Math.max(0, tasks.length - 6) * 2,
-          ),
-        ),
-      );
-      const burnoutState =
-        nextBurnoutScore >= 70 ? "recovery" : nextBurnoutScore >= 45 ? "watch" : "stable";
-
-      await ctx.db.patch(state._id, {
-        burnoutScore: nextBurnoutScore,
-        burnoutState,
-        lastHabitOptimizationAt: Date.now(),
-        updatedAt: Date.now(),
-      });
-      updatedCount += 1;
-    }
-
-    return { updatedCount };
+export const updateAgentBurnoutState = internalMutation({
+  args: {
+    userId: v.string(),
+    burnoutScore: v.number(),
+    burnoutState: v.union(v.literal("stable"), v.literal("watch"), v.literal("recovery")),
+    touchedAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const state = await ensureAgentState(ctx, args.userId);
+    await ctx.db.patch(state._id, {
+      burnoutScore: Math.max(0, Math.min(100, Math.round(args.burnoutScore))),
+      burnoutState: args.burnoutState,
+      lastHabitOptimizationAt: args.touchedAt ?? Date.now(),
+      updatedAt: Date.now(),
+    });
+    return await ctx.db.get(state._id);
   },
 });
 
@@ -694,18 +828,6 @@ async function ensureAgentState(ctx: MutationCtx, userId: string) {
     updatedAt: now,
   });
   return (await ctx.db.get(id))!;
-}
-
-async function replanForUser(
-  ctx: MutationCtx,
-  input: {
-    userId: string;
-    planId: Id<"plans">;
-    reason: string;
-    preserveLockedItems: boolean;
-  },
-) {
-  return await performReplan(ctx, input);
 }
 
 async function requireOwnedPlan(ctx: MutationCtx, userId: string, planId: Id<"plans">) {

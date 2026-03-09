@@ -22,28 +22,28 @@ crons.daily(
 crons.cron(
   "planner-weekly-review",
   "0 18 * * 0",
-  plannerInternal["planner/mutations"].runWeeklyReviewCycle,
+  plannerInternal["planner/actions"].runWeeklyReviewCycle,
   {},
 );
 
 crons.cron(
   "planner-next-week-draft",
   "0 7 * * 1",
-  plannerInternal["planner/mutations"].runWeeklyPlanningCycle,
+  plannerInternal["planner/actions"].runWeeklyPlanningCycle,
   {},
 );
 
 crons.cron(
   "planner-midweek-adjustment",
   "0 12 * * 3",
-  plannerInternal["planner/mutations"].runMidweekAdjustmentCycle,
+  plannerInternal["planner/actions"].runMidweekAdjustmentCycle,
   {},
 );
 
 crons.interval(
   "planner-burnout-monitor",
   { hours: 6 },
-  plannerInternal["planner/mutations"].runBurnoutMonitoringCycle,
+  plannerInternal["planner/actions"].runBurnoutMonitoringCycle,
   {},
 );
 

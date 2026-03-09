@@ -11,8 +11,11 @@
   "dependencies": {
     "@better-auth/expo": "1.4.9",
     "@better-auth/passkey": "1.4.9",
+    "@ai-sdk/openai": "^2.0.0",
+    "@convex-dev/agent": "^0.1.8-alpha.2",
     "@convex-dev/better-auth": "^0.10.13",
     "@seile/env": "workspace:*",
+    "ai": "^5.0.0",
     "better-auth": "1.4.9",
     "convex": "catalog:",
     "dotenv": "catalog:",

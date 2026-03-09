@@ -156,6 +156,7 @@ export const plansTable = defineTable({
   priorityTitles: v.array(v.string()),
   burnoutRiskScore: v.optional(v.number()),
   recoverySuggested: v.optional(v.boolean()),
+  agentThreadId: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 })
@@ -188,6 +189,7 @@ export const planItemsTable = defineTable({
 export const planningReviewsTable = defineTable({
   userId: v.string(),
   planId: v.id("plans"),
+  agentThreadId: v.optional(v.string()),
   wins: v.array(v.string()),
   blockers: v.array(v.string()),
   misses: v.array(v.string()),

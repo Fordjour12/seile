@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
-import { query, type QueryCtx } from "../_generated/server";
+import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { getWeekWindow, isoDateFromTimestamp } from "../lib/planner";
 import { requireUserId } from "../lib/identity";
 
@@ -11,47 +11,63 @@ export const getPlannerDashboard = query({
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    const week = getWeekWindow(args.weekStart ?? isoDateFromTimestamp(Date.now()));
-    const [profile, agentState, goals, tasks, habits, plans, reviews] = await Promise.all([
-      ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
-      ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
-      ctx.db
-        .query("planningGoals")
-        .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
-        .collect(),
-      ctx.db
-        .query("planningTasks")
-        .withIndex("by_userId_status", (q) => q.eq("userId", userId).eq("status", "pending"))
-        .collect(),
-      ctx.db
-        .query("planningHabits")
-        .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
-        .collect(),
-      ctx.db.query("plans").withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week")).collect(),
-      ctx.db.query("planningReviews").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
-    ]);
+    return await buildPlannerContext(ctx, userId, args.weekStart);
+  },
+});
 
-    const currentPlan =
-      plans
-        .filter((plan) => plan.startDate === week.startDate)
-        .sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
-    const currentPlanItems = currentPlan
-      ? await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", currentPlan._id)).collect()
-      : [];
-    const latestReview =
-      reviews.sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
+export const getPlannerAgentContext = internalQuery({
+  args: {
+    userId: v.string(),
+    weekStart: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await buildPlannerContext(ctx, args.userId, args.weekStart);
+  },
+});
 
-    return {
-      week,
-      profile,
-      agentState,
-      goals: goals.sort((left, right) => sortByPriority(left.priority, right.priority)),
-      openTasks: tasks.sort((left, right) => sortTaskRows(left, right)),
-      habits,
-      currentPlan,
-      currentPlanItems,
-      latestReview,
-    };
+export const listAgentEnabledStates = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const states = await ctx.db.query("plannerAgentState").collect();
+    return states.filter((entry) => entry.agentEnabled);
+  },
+});
+
+export const getLatestPastWeeklyPlanWithoutReview = internalQuery({
+  args: {
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const today = isoDateFromTimestamp(Date.now());
+    const plans = await ctx.db
+      .query("plans")
+      .withIndex("by_userId_type", (q) => q.eq("userId", args.userId).eq("type", "week"))
+      .collect();
+    const latestPastPlan = plans
+      .filter((plan) => comparePlanEnd(plan.endDate, today) < 0)
+      .sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
+    if (!latestPastPlan) return null;
+
+    const review = await ctx.db
+      .query("planningReviews")
+      .withIndex("by_planId", (q) => q.eq("planId", latestPastPlan._id))
+      .first();
+
+    return review ? null : latestPastPlan;
+  },
+});
+
+export const getPlanByIdForUser = internalQuery({
+  args: {
+    userId: v.string(),
+    id: v.id("plans"),
+  },
+  handler: async (ctx, args) => {
+    const plan = await requireOwnedPlan(ctx, args.userId, args.id);
+    const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
+    const review = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
+
+    return { plan, items, review };
   },
 });
 
@@ -118,4 +134,53 @@ function priorityScore(priority: "low" | "medium" | "high") {
   if (priority === "high") return 3;
   if (priority === "medium") return 2;
   return 1;
+}
+
+async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: string) {
+  const week = getWeekWindow(weekStart ?? isoDateFromTimestamp(Date.now()));
+  const [profile, agentState, goals, tasks, habits, plans, reviews] = await Promise.all([
+    ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
+    ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
+    ctx.db
+      .query("planningGoals")
+      .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
+      .collect(),
+    ctx.db
+      .query("planningTasks")
+      .withIndex("by_userId_status", (q) => q.eq("userId", userId).eq("status", "pending"))
+      .collect(),
+    ctx.db
+      .query("planningHabits")
+      .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
+      .collect(),
+    ctx.db.query("plans").withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week")).collect(),
+    ctx.db.query("planningReviews").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
+  ]);
+
+  const currentPlan =
+    plans
+      .filter((plan) => plan.startDate === week.startDate)
+      .sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
+  const currentPlanItems = currentPlan
+    ? await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", currentPlan._id)).collect()
+    : [];
+  const latestReview =
+    reviews.sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
+
+  return {
+    week,
+    profile,
+    agentState,
+    goals: goals.sort((left, right) => sortByPriority(left.priority, right.priority)),
+    openTasks: tasks.sort((left, right) => sortTaskRows(left, right)),
+    habits,
+    currentPlan,
+    currentPlanItems,
+    latestReview,
+  };
+}
+
+function comparePlanEnd(left: string, right: string) {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
 }
