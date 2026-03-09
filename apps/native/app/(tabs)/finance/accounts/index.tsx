@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import {
   AccountOverviewCard,
-  Banner,
   Button,
   Card,
   EmptyState,
@@ -16,12 +15,11 @@ import {
   View,
   type AccountOverviewMetrics,
 } from "@/components";
-import { formatAccountStatus, listAccounts, mapAccountListItem, type Account } from "@/lib/accounts";
+import { formatAccountStatus, mapAccountListItem, useAccounts } from "@/lib/accounts";
 import {
   formatTransactionAmount,
   formatTransactionTime,
-  listTransactions,
-  type TransactionRecord,
+  useTransactions,
 } from "@/lib/transactions";
 import { CardTokens, NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
@@ -49,39 +47,10 @@ export default function AccountsIndexScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
-  const [flowTransactions, setFlowTransactions] = useState<TransactionRecord[]>([]);
-
-  const refreshAccounts = useCallback(async () => {
-    setHasError(false);
-    setIsLoading(true);
-
-    try {
-      const nextAccounts = await listAccounts();
-      setAccounts(nextAccounts);
-
-      try {
-        const backendTransactions = await listTransactions({ limit: 300 });
-        setFlowTransactions(backendTransactions);
-        setTransactions(backendTransactions.slice(0, 10));
-      } catch {
-        setTransactions([]);
-        setFlowTransactions([]);
-      }
-    } catch {
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refreshAccounts();
-  }, [refreshAccounts]);
+  const accounts = useAccounts();
+  const flowTransactions = useTransactions({ limit: 300 });
+  const isLoading = accounts === undefined || flowTransactions === undefined;
+  const transactions = flowTransactions?.slice(0, 10) ?? [];
 
   const monthBuckets = useMemo(() => {
     const now = new Date();
@@ -100,7 +69,7 @@ export default function AccountsIndexScreen() {
       return acc;
     }, {});
 
-    for (const transaction of flowTransactions) {
+    for (const transaction of flowTransactions ?? []) {
       const occurredAt = new Date(transaction.occurredAt);
       if (Number.isNaN(occurredAt.getTime())) {
         continue;
@@ -129,7 +98,7 @@ export default function AccountsIndexScreen() {
   }, [flowTransactions, monthBuckets]);
 
   const overviewMetrics: AccountOverviewMetrics = useMemo(() => {
-    const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
+    const totalCash = (accounts ?? []).reduce((sum, account) => sum + account.balance, 0);
     const currentMonthKey = monthBuckets.at(-1)?.monthKey;
     const latestFlow = trendData.find((flow) => flow.monthKey === currentMonthKey) ?? trendData.at(-1);
 
@@ -137,16 +106,16 @@ export default function AccountsIndexScreen() {
       totalCash,
       moneyInMtd: latestFlow?.in ?? 0,
       moneyOutMtd: latestFlow?.out ?? 0,
-      accountsCount: accounts.length,
+      accountsCount: accounts?.length ?? 0,
       periodLabel: latestFlow ? `${latestFlow.month} · Month-to-date` : "Current Month (MTD)",
     };
   }, [accounts, monthBuckets, trendData]);
 
   const totalBalance = overviewMetrics.totalCash;
-  const hasMonthlyTrend = flowTransactions.length > 0;
+  const hasMonthlyTrend = (flowTransactions?.length ?? 0) > 0;
 
   const balanceByType = useMemo(() => {
-    const grouped = accounts.reduce<Record<string, number>>((acc, account) => {
+    const grouped = (accounts ?? []).reduce<Record<string, number>>((acc, account) => {
       const key = account.type.toUpperCase();
       acc[key] = (acc[key] ?? 0) + Math.max(account.balance, 0);
       return acc;
@@ -159,7 +128,7 @@ export default function AccountsIndexScreen() {
     return { points, highlightedIndex: highlightedIndex < 0 ? 0 : highlightedIndex };
   }, [accounts]);
 
-  const showEmptyState = !isLoading && !hasError && accounts.length === 0;
+  const showEmptyState = !isLoading && (accounts?.length ?? 0) === 0;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -177,18 +146,6 @@ export default function AccountsIndexScreen() {
           {currencyFormatter.format(totalBalance)}
         </Text>
       </Card>
-
-      {hasError ? (
-        <Banner
-          variant="error"
-          title="Unable to load accounts"
-          message="Please check your connection and try again."
-          actionLabel="Retry"
-          onActionPress={() => {
-            void refreshAccounts();
-          }}
-        />
-      ) : null}
 
       {isLoading ? (
         <View style={styles.centeredState}>
@@ -239,7 +196,7 @@ export default function AccountsIndexScreen() {
         </View>
       ) : null}
 
-      {!isLoading && !hasError && balanceByType.points.length > 0 ? (
+      {!isLoading && balanceByType.points.length > 0 ? (
         <Card variant="outline" style={[styles.chartCard, { borderColor: theme.border }]}>
           <Text style={[Typography.titleSM, { color: theme.text }]}>Balance by Account Type</Text>
           <ThemedBarChart
@@ -252,7 +209,7 @@ export default function AccountsIndexScreen() {
         </Card>
       ) : null}
 
-      {!isLoading && !hasError ? (
+      {!isLoading ? (
         <View style={styles.quickActionsRow}>
           <Pressable
             style={({ pressed }) => [
@@ -271,22 +228,20 @@ export default function AccountsIndexScreen() {
               { backgroundColor: theme.card, borderColor: theme.border },
               pressed && styles.pressed,
             ]}
-            onPress={() => {
-              void refreshAccounts();
-            }}
+            onPress={() => router.push("/(tabs)/finance/transactions" as Href)}
           >
-            <Text style={[Typography.titleSM, { color: theme.text }]}>Refresh balances</Text>
-            <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>Reload account data</Text>
+            <Text style={[Typography.titleSM, { color: theme.text }]}>Review activity</Text>
+            <Text style={[Typography.captionSM, { color: theme.mutedForeground }]}>Open recent transactions</Text>
           </Pressable>
         </View>
       ) : null}
 
 
-      {!isLoading && !hasError && accounts.length > 0 ? (
+      {!isLoading && (accounts?.length ?? 0) > 0 ? (
         <Card variant="outline" style={[styles.listCard, { borderColor: theme.border }]}>
-          <SectionHeader title="Linked Accounts" subtitle={`${accounts.length} total`} />
+          <SectionHeader title="Linked Accounts" subtitle={`${accounts?.length ?? 0} total`} />
           <View style={styles.list}>
-            {accounts.map((account) => {
+            {accounts?.map((account) => {
               const mapped = mapAccountListItem(account);
 
               return (
@@ -309,7 +264,7 @@ export default function AccountsIndexScreen() {
         </Card>
       ) : null}
 
-      {!isLoading && !hasError && accounts[0] ? (
+      {!isLoading && accounts?.[0] ? (
         <View style={styles.actionsRow}>
           <Button
             title="Edit First Account"
@@ -326,13 +281,13 @@ export default function AccountsIndexScreen() {
         </View>
       ) : null}
 
-      {!isLoading && !hasError ? (
+      {!isLoading ? (
         <Button title="Create Account" onPress={() => router.push("/(tabs)/finance/accounts/create" as Href)} />
       ) : null}
 
 
 
-      {!isLoading && !hasError && transactions.length > 0 ? (
+      {!isLoading && transactions.length > 0 ? (
         <Card variant="outline" style={[styles.listCard, { borderColor: theme.border }]}>
           <SectionHeader title="Recent Transactions" subtitle="LATEST 10" />
           <View style={styles.list}>

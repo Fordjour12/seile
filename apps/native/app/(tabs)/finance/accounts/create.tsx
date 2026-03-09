@@ -5,7 +5,7 @@ import { useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 import { Text, View } from "@/components";
 import { AccountForm, type AccountFormValues } from "@/components/account-form";
-import { createAccount, type CreateAccountPayload } from "@/lib/accounts";
+import { type CreateAccountPayload, useCreateAccount } from "@/lib/accounts";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -13,6 +13,7 @@ export default function CreateAccount() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const router = useRouter();
+  const createAccount = useCreateAccount();
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async (values: AccountFormValues) => {

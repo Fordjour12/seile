@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Banner, BudgetEnvelopeForm, Button, SectionHeader, Spinner, Text, View, type BudgetEnvelopeFormValues } from "@/components";
-import { getEnvelopeById, updateEnvelope, type BudgetEnvelopeWithComputed, type UpdateBudgetEnvelopePayload } from "@/lib/budget";
-import { listCategories } from "@/lib/categories";
+import {
+  type UpdateBudgetEnvelopePayload,
+  useBudgetEnvelope,
+  useUpdateEnvelope,
+} from "@/lib/budget";
+import { useCategories } from "@/lib/categories";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -14,32 +18,19 @@ export default function UpdateBudgetEnvelopeScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [envelope, setEnvelope] = useState<BudgetEnvelopeWithComputed | null>(null);
-  const [categories, setCategories] = useState([] as Awaited<ReturnType<typeof listCategories>>);
-  const [isLoading, setIsLoading] = useState(true);
+  const categories = useCategories() ?? [];
+  const envelope = useBudgetEnvelope(id);
+  const updateEnvelope = useUpdateEnvelope();
+  const isLoading = Boolean(id) && envelope === undefined;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Envelope ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const [found, nextCategories] = await Promise.all([getEnvelopeById(id), listCategories()]);
-        setEnvelope(found);
-        setCategories(nextCategories);
-      } catch {
-        setError("Envelope not found.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    void load();
-  }, [id]);
+  const derivedError =
+    error ??
+    (!id
+      ? "Envelope ID is missing."
+      : !isLoading && !envelope
+        ? "Envelope not found."
+        : null);
 
   const handleUpdate = async (values: BudgetEnvelopeFormValues) => {
     if (!id) return;
@@ -51,9 +42,8 @@ export default function UpdateBudgetEnvelopeScreen() {
         rolloverEnabled: values.rolloverEnabled,
         notes: values.notes || undefined,
       };
-      const updated = await updateEnvelope(id, payload);
-      setEnvelope(updated);
-      toast.success("Envelope updated", { description: `${updated.name} has been saved.` });
+      await updateEnvelope(id, payload);
+      toast.success("Envelope updated", { description: `${envelope?.name ?? "Envelope"} has been saved.` });
     } catch (updateError) {
       const message = updateError instanceof Error ? updateError.message : "That envelope could not be updated.";
       setError(message);
@@ -66,7 +56,7 @@ export default function UpdateBudgetEnvelopeScreen() {
   return (
     <ScrollView style={[styles.screen, { backgroundColor: theme.background }]} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
       <SectionHeader title="Update Envelope" subtitle={id ? `Envelope ID: ${id}` : "Envelope"} />
-      {error ? <Banner variant="error" title="Envelope issue" message={error} actionLabel="Back" onActionPress={() => router.replace("/(tabs)/finance/budget" as Href)} /> : null}
+      {derivedError ? <Banner variant="error" title="Envelope issue" message={derivedError} actionLabel="Back" onActionPress={() => router.replace("/(tabs)/finance/budget" as Href)} /> : null}
       {isLoading ? (
         <View style={styles.loadingState}>
           <Spinner />

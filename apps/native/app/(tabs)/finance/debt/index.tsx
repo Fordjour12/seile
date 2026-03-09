@@ -1,73 +1,34 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 
-import {
-  Banner,
-  Button,
-  Card,
-  DebtSnapshotCard,
-  EmptyState,
-  ListItem,
-  SectionHeader,
-  Spinner,
-  Text,
-  View,
-} from "@/components";
+import { Button, Card, DebtSnapshotCard, EmptyState, ListItem, SectionHeader, Spinner, Text, View } from "@/components";
 import {
   formatDebtAmount,
   formatDebtApr,
   formatDebtStatus,
-  getDebtSnapshot,
-  listDebtPlans,
   mapDebtListItem,
-  type DebtPlan,
-  type DebtSnapshot,
+  useDebtPlans,
+  useDebtSnapshot,
 } from "@/lib/debt";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
-
-const EMPTY_SNAPSHOT: DebtSnapshot = {
-  totalCurrentBalance: 0,
-  totalMonthlyDue: 0,
-  countByStatus: {},
-};
 
 export default function DebtIndexScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
-  const [items, setItems] = useState<DebtPlan[]>([]);
-  const [snapshot, setSnapshot] = useState<DebtSnapshot>(EMPTY_SNAPSHOT);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const items = useDebtPlans();
+  const snapshot = useDebtSnapshot();
+  const isLoading = items === undefined || snapshot === undefined;
 
-  const refreshDebt = useCallback(async () => {
-    setHasError(false);
-    setIsLoading(true);
-
-    try {
-      const [plans, nextSnapshot] = await Promise.all([listDebtPlans(), getDebtSnapshot()]);
-      setItems(plans);
-      setSnapshot(nextSnapshot);
-    } catch {
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refreshDebt();
-  }, [refreshDebt]);
-
-  const draftCount = snapshot.countByStatus.draft ?? 0;
-  const activeCount = snapshot.countByStatus.active ?? 0;
-  const archivedCount = snapshot.countByStatus.archived ?? 0;
+  const draftCount = snapshot?.countByStatus.draft ?? 0;
+  const activeCount = snapshot?.countByStatus.active ?? 0;
+  const archivedCount = snapshot?.countByStatus.archived ?? 0;
 
   const averageApr = useMemo(() => {
-    const debtsWithApr = items.filter((item) => item.apr !== undefined);
+    const debtsWithApr = (items ?? []).filter((item) => item.apr !== undefined);
     if (debtsWithApr.length === 0) {
       return undefined;
     }
@@ -75,7 +36,7 @@ export default function DebtIndexScreen() {
     return debtsWithApr.reduce((sum, item) => sum + (item.apr ?? 0), 0) / debtsWithApr.length;
   }, [items]);
 
-  const showEmptyState = !isLoading && !hasError && items.length === 0;
+  const showEmptyState = !isLoading && (items?.length ?? 0) === 0;
 
   return (
     <ScrollView
@@ -91,7 +52,7 @@ export default function DebtIndexScreen() {
       />
 
       <DebtSnapshotCard
-        debts={items.map((item) => ({
+        debts={(items ?? []).map((item) => ({
           id: item.id,
           name: item.name,
           type: item.debtType,
@@ -106,13 +67,13 @@ export default function DebtIndexScreen() {
         <Card variant="outline" style={[styles.metricCard, { borderColor: theme.border }]}>
           <Text style={[Typography.labelSM, { color: theme.mutedForeground }]}>Current Balance</Text>
           <Text style={[Typography.titleSM, { color: theme.text }]}>
-            {formatDebtAmount(snapshot.totalCurrentBalance, "GHS")}
+            {formatDebtAmount(snapshot?.totalCurrentBalance ?? 0, "GHS")}
           </Text>
         </Card>
         <Card variant="outline" style={[styles.metricCard, { borderColor: theme.border }]}>
           <Text style={[Typography.labelSM, { color: theme.mutedForeground }]}>Monthly Due</Text>
           <Text style={[Typography.titleSM, { color: theme.text }]}>
-            {formatDebtAmount(snapshot.totalMonthlyDue, "GHS")}
+            {formatDebtAmount(snapshot?.totalMonthlyDue ?? 0, "GHS")}
           </Text>
         </Card>
       </View>
@@ -141,18 +102,6 @@ export default function DebtIndexScreen() {
         </View>
       </Card>
 
-      {hasError ? (
-        <Banner
-          variant="error"
-          title="Unable to load debt plans"
-          message="Please check your connection and try again."
-          actionLabel="Retry"
-          onActionPress={() => {
-            void refreshDebt();
-          }}
-        />
-      ) : null}
-
       {isLoading ? (
         <View style={styles.loadingState}>
           <Spinner size="large" />
@@ -169,11 +118,11 @@ export default function DebtIndexScreen() {
         />
       ) : null}
 
-      {!isLoading && !hasError && items.length > 0 ? (
+      {!isLoading && (items?.length ?? 0) > 0 ? (
         <View style={styles.section}>
           <SectionHeader title="Debt Plans" subtitle="CURRENT PORTFOLIO" />
           <View style={styles.list}>
-            {items.map((item) => {
+            {items?.map((item) => {
               const listItem = mapDebtListItem(item);
               return (
                 <ListItem
@@ -194,7 +143,7 @@ export default function DebtIndexScreen() {
         </View>
       ) : null}
 
-      {!isLoading && !hasError ? (
+      {!isLoading ? (
         <Button title="Create debt plan" onPress={() => router.push("/(tabs)/finance/debt/create" as Href)} />
       ) : null}
     </ScrollView>

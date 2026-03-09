@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 import { Banner, Button, Spinner, Text, View } from "@/components";
 import { AccountForm, type AccountFormValues } from "@/components/account-form";
-import { getAccount, updateAccount, type Account, type UpdateAccountPayload } from "@/lib/accounts";
+import { type UpdateAccountPayload, useAccount, useUpdateAccount } from "@/lib/accounts";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -14,30 +14,11 @@ export default function UpdateAccount() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
-  const [account, setAccount] = useState<Account | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const account = useAccount(id);
+  const updateAccount = useUpdateAccount();
+  const isLoading = Boolean(id) && account === undefined;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setIsLoading(false);
-        setError("Account ID is missing.");
-        return;
-      }
-
-      const found = await getAccount(id);
-      setAccount(found);
-      setIsLoading(false);
-
-      if (!found) {
-        setError("Account not found.");
-      }
-    }
-
-    void load();
-  }, [id]);
 
   const handleUpdate = async (values: AccountFormValues) => {
     if (!id) {
@@ -58,15 +39,6 @@ export default function UpdateAccount() {
       };
 
       const updated = await updateAccount(id, payload);
-      setAccount(updated);
-
-      if (!updated) {
-        setError("Unable to update account.");
-        toast.error("Update failed", {
-          description: "That account could not be updated.",
-        });
-        return;
-      }
 
       toast.success("Account updated", {
         description: `${updated.name} has been saved.`,
