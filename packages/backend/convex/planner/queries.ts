@@ -86,9 +86,16 @@ export const listPlans = query({
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    const rows = args.type
-      ? await ctx.db.query("plans").withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", args.type)).collect()
-      : await ctx.db.query("plans").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+    let rows;
+    if (args.type !== undefined) {
+      const planType = args.type;
+      rows = await ctx.db
+        .query("plans")
+        .withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", planType))
+        .collect();
+    } else {
+      rows = await ctx.db.query("plans").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+    }
     return rows.sort((left, right) => right.startDate.localeCompare(left.startDate));
   },
 });

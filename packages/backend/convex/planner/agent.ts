@@ -1,11 +1,12 @@
 import { Agent, createThread } from "@convex-dev/agent";
-import { openai } from "@ai-sdk/openai";
-import { z } from "zod/v3";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { z } from "zod";
 import type { ActionCtx } from "../_generated/server";
 import { components } from "../_generated/api";
 import { env } from "@seile/env/backend";
 
 const componentsAny = components as any;
+const DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o-mini";
 
 const planningPrioritySchema = z.enum(["low", "medium", "high"]);
 const planningEffortSchema = z.enum(["low", "medium", "high"]);
@@ -78,9 +79,18 @@ export const replanningAssessmentSchema = z.object({
   pressureLevel: z.enum(["low", "medium", "high"]),
 });
 
+const plannerProvider = createOpenRouter({
+  apiKey: env.OPENROUTER_API_KEY,
+  ...(env.PLANNER_AGENT_BASE_URL ? { baseURL: env.PLANNER_AGENT_BASE_URL } : {}),
+  headers: {
+    "HTTP-Referer": env.SITE_URL,
+    "X-OpenRouter-Title": env.OPENROUTER_APP_NAME ?? "Seile Planner",
+  },
+});
+
 export const plannerAgent = new Agent(componentsAny.agent, {
   name: "Planner Agent",
-  languageModel: openai.chat(env.PLANNER_AGENT_MODEL ?? "gpt-4o-mini"),
+  languageModel: plannerProvider.chat(env.PLANNER_AGENT_MODEL ?? DEFAULT_OPENROUTER_MODEL),
   instructions: [
     "You are the AI Planner Orchestrator for a life planning application.",
     "Generate structured, realistic plans grounded in goals, tasks, habits, constraints, and execution data.",
@@ -103,8 +113,8 @@ export async function createPlannerThread(
 }
 
 export function ensurePlannerAgentConfigured() {
-  if (!env.OPENAI_API_KEY) {
-    throw new Error("Planner agent is not configured. Set OPENAI_API_KEY in the backend environment.");
+  if (!env.OPENROUTER_API_KEY) {
+    throw new Error("Planner agent is not configured. Set OPENROUTER_API_KEY in the backend environment.");
   }
 }
 
