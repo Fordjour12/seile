@@ -80,7 +80,16 @@ function getNextDueDate(dueDate: string, recurrence: "none" | "daily" | "weekly"
   } else if (recurrence === "weekly") {
     next.setUTCDate(next.getUTCDate() + 7);
   } else {
-    next.setUTCMonth(next.getUTCMonth() + 1);
+    const currentDay = next.getUTCDate();
+    const targetMonthIndex = next.getUTCMonth() + 1;
+    const targetYear =
+      next.getUTCFullYear() + Math.floor(targetMonthIndex / 12);
+    const targetMonth = targetMonthIndex % 12;
+    const lastDayOfTargetMonth = new Date(
+      Date.UTC(targetYear, targetMonth + 1, 0, 12, 0, 0, 0),
+    ).getUTCDate();
+
+    next.setUTCFullYear(targetYear, targetMonth, Math.min(currentDay, lastDayOfTargetMonth));
   }
 
   return dateToDateKey(next);
