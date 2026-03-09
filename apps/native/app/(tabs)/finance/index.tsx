@@ -97,6 +97,7 @@ export default function Index() {
       label: "Accounts",
       meta: `Tracked accounts: ${accountOverview.accountsCount}`,
       route: "/(tabs)/finance/accounts",
+      navigationMode: "push",
     },
     {
       key: "recurring",
@@ -104,6 +105,15 @@ export default function Index() {
       label: "Schedules",
       meta: "Recurring flows and subscriptions",
       route: "/(tabs)/finance/recurring",
+      navigationMode: "push",
+    },
+    {
+      key: "scheduler",
+      badge: "SC",
+      label: "Scheduler",
+      meta: "Calendar, alerts, and task sessions",
+      route: "/(tabs)/scheduler",
+      navigationMode: "navigate",
     },
     {
       key: "transactions",
@@ -111,6 +121,7 @@ export default function Index() {
       label: "Transactions",
       meta: "Create, review, and reverse entries",
       route: "/(tabs)/finance/transactions",
+      navigationMode: "push",
     },
     {
       key: "debt",
@@ -118,6 +129,7 @@ export default function Index() {
       label: "Debt",
       meta: "Prioritize payoff strategy",
       route: "/(tabs)/finance/debt",
+      navigationMode: "push",
     },
     {
       key: "budget",
@@ -127,6 +139,7 @@ export default function Index() {
         ? `Active ${String(budgetSummary.activePeriod.month).padStart(2, "0")}/${budgetSummary.activePeriod.year}`
         : "Plan envelopes and allocations",
       route: "/(tabs)/finance/budget",
+      navigationMode: "push",
     },
   ];
 
@@ -289,7 +302,14 @@ export default function Index() {
                 },
                 pressed && { opacity: OPACITY.pressed },
               ]}
-              onPress={() => router.push(nav.route as Href)}
+              onPress={() => {
+                if (nav.navigationMode === "navigate") {
+                  router.navigate(nav.route as Href);
+                  return;
+                }
+
+                router.push(nav.route as Href);
+              }}
             >
               <View style={styles.cardHeader}>
                 <View

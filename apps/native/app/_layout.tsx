@@ -19,6 +19,7 @@ import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { convex } from "@/lib/convex-client";
 
 import { NAV_THEME } from "@/lib/constants";
+import { SchedulerAppSync } from "@/lib/scheduler/use-scheduler-app-sync";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 const LIGHT_THEME: Theme = {
@@ -68,6 +69,7 @@ export default function Layout() {
           <KeyboardProvider>
             <AuthProvider>
               <BottomSheetModalProvider>
+                <AuthenticatedAppEffects />
                 <StackLayout />
               </BottomSheetModalProvider>
               <Toaster />
@@ -183,4 +185,14 @@ function StackLayout() {
       </Stack.Protected>
     </Stack>
   );
+}
+
+function AuthenticatedAppEffects() {
+  const { user, hasHydrated, isLoading } = useAuth();
+
+  if (!hasHydrated || isLoading || !user) {
+    return null;
+  }
+
+  return <SchedulerAppSync />;
 }

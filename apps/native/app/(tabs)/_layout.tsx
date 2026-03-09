@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { PiggyBank } from "iconoir-react-native";
+import { PiggyBank, Calendar } from "iconoir-react-native";
 
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
@@ -55,6 +55,18 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <TabBarIcon2 color={color}>
               <PiggyBank />
+            </TabBarIcon2>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="scheduler"
+        options={{
+          title: "Scheduler",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon2 color={color}>
+              <Calendar />
             </TabBarIcon2>
           ),
         }}
