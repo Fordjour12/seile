@@ -21,12 +21,15 @@ export function SchedulerProgressBar({
 }: SchedulerProgressBarProps) {
   const [trackWidth, setTrackWidth] = useState(0);
   const widthValue = useSharedValue(0);
+  const clampedProgress = Number.isFinite(progress)
+    ? Math.min(100, Math.max(0, progress))
+    : 0;
 
   useEffect(() => {
-    widthValue.value = withTiming((trackWidth * progress) / 100, {
+    widthValue.value = withTiming((trackWidth * clampedProgress) / 100, {
       duration: 300,
     });
-  }, [progress, trackWidth, widthValue]);
+  }, [clampedProgress, trackWidth, widthValue]);
 
   const fillStyle = useAnimatedStyle(() => ({
     width: widthValue.value,
@@ -42,7 +45,7 @@ export function SchedulerProgressBar({
         <Animated.View style={[styles.fill, fillStyle, { backgroundColor: fillColor }]} />
       </View>
       <Text style={[Typography.captionSM, { color: textColor, fontVariant: ["tabular-nums"] }]} selectable>
-        {`${progress}%`}
+        {`${clampedProgress}%`}
       </Text>
     </View>
   );

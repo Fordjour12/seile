@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { FlatList, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Banner } from "@/components/banner";
@@ -37,83 +37,86 @@ export function SchedulerTasksScreen({
   const [taskFilter, setTaskFilter] = useState<SchedulerFilter>(initialFilter);
   const todayDate = toDateKey(new Date());
   const filteredTasks = filterSchedulerTasks(scheduler.tasks, taskFilter, todayDate);
+  const showLoadingState = scheduler.loading && scheduler.tasks.length === 0;
+  const showEmptyState = !scheduler.loading && filteredTasks.length === 0;
 
   return (
-    <ScrollView
+    <FlatList
       style={styles.screen}
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.content}
-    >
-      <View style={styles.topRow}>
-        <Text style={[Typography.bodyMD, { color: theme.mutedForeground }]} selectable>
-          Work through active tasks with focused filters.
-        </Text>
-        <Button
-          title="New Task"
-          size="sm"
-          onPress={() => router.push("/(tabs)/scheduler/tasks/create")}
+      data={filteredTasks}
+      keyExtractor={(task) => task.id}
+      renderItem={({ item }) => (
+        <SchedulerTaskRow
+          task={item}
+          theme={theme}
+          dependencyCount={getOutstandingDependencyCount(item, scheduler.tasksById)}
+          onPress={() => router.push(`/(tabs)/scheduler/${item.id}`)}
         />
-      </View>
-
-      {scheduler.error ? (
-        <Banner
-          variant="error"
-          title="Tasks may be stale"
-          message={scheduler.error}
-          actionLabel="Retry"
-          onActionPress={() => void scheduler.refresh()}
-        />
-      ) : null}
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-      >
-        {TASK_FILTERS.map((filter) => {
-          const label =
-            filter === "overdue"
-              ? `Overdue${scheduler.stats.overdue ? ` (${scheduler.stats.overdue})` : ""}`
-              : filter.charAt(0).toUpperCase() + filter.slice(1);
-          return (
-            <Chip
-              key={filter}
-              label={label}
-              selected={taskFilter === filter}
-              onSelect={() => setTaskFilter(filter)}
+      )}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      initialNumToRender={8}
+      windowSize={5}
+      ListHeaderComponent={
+        <>
+          <View style={styles.topRow}>
+            <Text style={[Typography.bodyMD, { color: theme.mutedForeground }]} selectable>
+              Work through active tasks with focused filters.
+            </Text>
+            <Button
+              title="New Task"
+              size="sm"
+              onPress={() => router.push("/(tabs)/scheduler/tasks/create")}
             />
-          );
-        })}
-      </ScrollView>
+          </View>
 
-      {scheduler.loading && scheduler.tasks.length === 0 ? (
-        <SchedulerLoadingState theme={theme} label="Loading tasks..." />
-      ) : null}
-
-      {!scheduler.loading && filteredTasks.length === 0 ? (
-        <EmptyState
-          title="No tasks here"
-          message="Try another filter or add a fresh task."
-          actionLabel="Create task"
-          onActionPress={() => router.push("/(tabs)/scheduler/tasks/create")}
-          icon={<Text style={Typography.displaySM}>🎉</Text>}
-        />
-      ) : null}
-
-      {filteredTasks.length > 0 ? (
-        <View style={styles.listGroup}>
-          {filteredTasks.map((task) => (
-            <SchedulerTaskRow
-              key={task.id}
-              task={task}
-              theme={theme}
-              dependencyCount={getOutstandingDependencyCount(task, scheduler.tasksById)}
-              onPress={() => router.push(`/(tabs)/scheduler/${task.id}`)}
+          {scheduler.error ? (
+            <Banner
+              variant="error"
+              title="Tasks may be stale"
+              message={scheduler.error}
+              actionLabel="Retry"
+              onActionPress={() => void scheduler.refresh()}
             />
-          ))}
-        </View>
-      ) : null}
-    </ScrollView>
+          ) : null}
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+          >
+            {TASK_FILTERS.map((filter) => {
+              const label =
+                filter === "overdue"
+                  ? `Overdue${scheduler.stats.overdue ? ` (${scheduler.stats.overdue})` : ""}`
+                  : filter.charAt(0).toUpperCase() + filter.slice(1);
+              return (
+                <Chip
+                  key={filter}
+                  label={label}
+                  selected={taskFilter === filter}
+                  onSelect={() => setTaskFilter(filter)}
+                />
+              );
+            })}
+          </ScrollView>
+        </>
+      }
+      ListEmptyComponent={
+        showLoadingState ? (
+          <SchedulerLoadingState theme={theme} label="Loading tasks..." />
+        ) : showEmptyState ? (
+          <EmptyState
+            title="No tasks here"
+            message="Try another filter or add a fresh task."
+            actionLabel="Create task"
+            onActionPress={() => router.push("/(tabs)/scheduler/tasks/create")}
+            icon={<Text style={Typography.displaySM}>🎉</Text>}
+          />
+        ) : null
+      }
+    />
   );
 }
 
@@ -136,7 +139,7 @@ const styles = StyleSheet.create({
   filterRow: {
     gap: UI_PRESETS.spacing.xs,
   },
-  listGroup: {
-    gap: UI_PRESETS.spacing.sm,
+  separator: {
+    height: UI_PRESETS.spacing.sm,
   },
 });

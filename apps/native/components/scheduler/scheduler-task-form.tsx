@@ -69,6 +69,8 @@ export function SchedulerTaskForm({
     DEFAULT_VALUES.recurrence ?? "none",
   );
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const nextValues = initialValues ?? DEFAULT_VALUES;
@@ -78,9 +80,11 @@ export function SchedulerTaskForm({
     setTime(nextValues.time ?? "");
     setPriority(nextValues.priority);
     setRecurrence(nextValues.recurrence ?? "none");
+    setSubmitError(null);
   }, [initialValues]);
 
   const pickerValue = buildLocalDueDateTime(dueDate, time || null);
+  const isBusy = loading || isSubmitting;
 
   function handleDateChange(event: DateTimePickerEvent, selectedDate?: Date) {
     if (process.env.EXPO_OS === "android") {
@@ -113,14 +117,27 @@ export function SchedulerTaskForm({
       return;
     }
 
-    await onSubmit({
-      title: title.trim(),
-      notes: notes.trim() || null,
-      dueDate: dueDate.trim(),
-      time: time.trim() || null,
-      priority,
-      recurrence,
-    });
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit({
+        title: title.trim(),
+        notes: notes.trim() || null,
+        dueDate: dueDate.trim(),
+        time: time.trim() || null,
+        priority,
+        recurrence,
+      });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error && error.message.length > 0
+          ? error.message
+          : "Could not save task. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -293,14 +310,19 @@ export function SchedulerTaskForm({
 
       <View style={styles.actions}>
         {onCancel ? (
-          <Button title="Cancel" variant="outline" onPress={onCancel} />
+          <Button title="Cancel" variant="outline" onPress={onCancel} disabled={isBusy} />
         ) : null}
         <Button
-          title={loading ? "Saving..." : submitLabel}
+          title={isBusy ? "Saving..." : submitLabel}
           onPress={() => void handleSubmit()}
-          disabled={!title.trim() || !dueDate.trim() || loading}
+          disabled={!title.trim() || !dueDate.trim() || isBusy}
         />
       </View>
+      {submitError ? (
+        <Text style={[Typography.captionSM, { color: theme.destructive }]} selectable>
+          {submitError}
+        </Text>
+      ) : null}
     </View>
   );
 }

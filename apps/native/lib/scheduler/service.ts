@@ -7,10 +7,18 @@ export async function synchronizeSchedulerState(options?: {
   notifyOverdueSummary?: boolean;
 }): Promise<SchedulerTask[]> {
   const tasks = await reconcileSchedulerTasks(toDateKey(new Date()));
-  await syncSchedulerNotifications(tasks);
+  try {
+    await syncSchedulerNotifications(tasks);
+  } catch (error) {
+    console.warn("Failed to sync scheduler notifications", error);
+  }
 
   if (options?.notifyOverdueSummary) {
-    await notifyOverdueSummary(tasks);
+    try {
+      await notifyOverdueSummary(tasks);
+    } catch (error) {
+      console.warn("Failed to send scheduler overdue summary", error);
+    }
   }
 
   return tasks;

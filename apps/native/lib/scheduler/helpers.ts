@@ -159,5 +159,9 @@ export function shouldScheduleTaskNotification(task: SchedulerTask): boolean {
     return false;
   }
 
+  if (!task.time || task.time.trim().length === 0) {
+    return false;
+  }
+
   return buildLocalDueDateTime(task.dueDate, task.time).getTime() > Date.now();
 }

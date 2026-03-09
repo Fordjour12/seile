@@ -24,7 +24,7 @@ const AGENDA_LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-export const SCHEDULER_TIMELINE_HOURS = Array.from({ length: 13 }, (_, index) => 8 + index);
+export const SCHEDULER_TIMELINE_HOURS = Array.from({ length: 24 }, (_, index) => index);
 
 export function toDateKey(input: Date): string {
   const year = input.getFullYear();

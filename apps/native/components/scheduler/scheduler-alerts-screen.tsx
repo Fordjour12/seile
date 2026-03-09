@@ -76,7 +76,7 @@ export function SchedulerAlertsScreen() {
                 task={task}
                 color={theme.destructive}
                 icon="⚠️"
-                subtitle={`Was due ${task.dueDate}`}
+                subtitle={`Was due ${formatShortDate(task.dueDate)}`}
                 onPress={() => router.push(`/(tabs)/scheduler/${task.id}`)}
               />
             ))}

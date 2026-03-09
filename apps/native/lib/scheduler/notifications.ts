@@ -1,12 +1,15 @@
 import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
 
 import { buildLocalDueDateTime, toDateKey } from "./date";
 import { buildOverdueDigest, getUpcomingNotificationBody, shouldScheduleTaskNotification } from "./helpers";
 import type { SchedulerTask } from "./types";
 
 const SCHEDULER_CHANNEL_ID = "scheduler-reminders";
+const OVERDUE_DIGEST_STORAGE_KEY = "scheduler-overdue-digest";
 let hasConfiguredNotifications = false;
 let lastOverdueDigest = "";
+let overdueDigestLoaded = false;
 
 function configureNotificationHandler() {
   if (hasConfiguredNotifications) {
@@ -57,6 +60,38 @@ async function cancelSchedulerNotifications(): Promise<void> {
   );
 }
 
+async function loadPersistedOverdueDigest(): Promise<string> {
+  if (overdueDigestLoaded) {
+    return lastOverdueDigest;
+  }
+
+  try {
+    lastOverdueDigest =
+      (await SecureStore.getItemAsync(OVERDUE_DIGEST_STORAGE_KEY)) ?? "";
+  } catch {
+    lastOverdueDigest = "";
+  }
+
+  overdueDigestLoaded = true;
+  return lastOverdueDigest;
+}
+
+async function persistOverdueDigest(digest: string): Promise<void> {
+  lastOverdueDigest = digest;
+  overdueDigestLoaded = true;
+
+  try {
+    if (digest) {
+      await SecureStore.setItemAsync(OVERDUE_DIGEST_STORAGE_KEY, digest);
+      return;
+    }
+
+    await SecureStore.deleteItemAsync(OVERDUE_DIGEST_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures and fall back to in-memory digest tracking.
+  }
+}
+
 export async function syncSchedulerNotifications(tasks: SchedulerTask[]): Promise<void> {
   const granted = await ensureSchedulerNotificationAccess();
   if (!granted) {
@@ -93,11 +128,12 @@ export async function notifyOverdueSummary(tasks: SchedulerTask[]): Promise<void
   const overdueTasks = tasks.filter((item) => item.status === "overdue");
   const digest = buildOverdueDigest(overdueTasks);
   if (!digest) {
-    lastOverdueDigest = "";
+    await persistOverdueDigest("");
     return;
   }
 
-  if (digest === lastOverdueDigest) {
+  const previousDigest = await loadPersistedOverdueDigest();
+  if (digest === previousDigest) {
     return;
   }
 
@@ -106,7 +142,6 @@ export async function notifyOverdueSummary(tasks: SchedulerTask[]): Promise<void
     return;
   }
 
-  lastOverdueDigest = digest;
   const preview = overdueTasks
     .slice(0, 3)
     .map((item) => item.title)
@@ -123,4 +158,6 @@ export async function notifyOverdueSummary(tasks: SchedulerTask[]): Promise<void
     },
     trigger: null,
   });
+
+  await persistOverdueDigest(digest);
 }

@@ -62,6 +62,25 @@ export function SchedulerTaskUpdateScreen({
     );
   }
 
+  if (!scheduler.loading && !task && scheduler.error) {
+    return (
+      <ScrollView style={styles.screen} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+        <Banner
+          variant="error"
+          title="Could not load task"
+          message={scheduler.error}
+          actionLabel="Retry"
+          onActionPress={() => void scheduler.refresh()}
+        />
+        <Button
+          title="Retry"
+          variant="outline"
+          onPress={() => void scheduler.refresh()}
+        />
+      </ScrollView>
+    );
+  }
+
   if (!task) {
     return (
       <ScrollView style={styles.screen} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
