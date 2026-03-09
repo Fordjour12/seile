@@ -4,7 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { assertValidAmount, assertValidCurrency } from "../lib/money";
 import { computeNextRun, type ScheduleConfig } from "../lib/recurring";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import {
   recurringKindValidator,
   scheduleTypeValidator,
@@ -63,7 +63,7 @@ export const createRecurringTransaction = mutation({
     }
 
     const id = await ctx.db.insert("recurringTransactions", {
-      userId: resolveSystemUserId(),
+      userId: await requireUserId(ctx),
       kind: args.kind,
       amount: args.amount,
       currency,
@@ -109,8 +109,9 @@ export const updateRecurringTransaction = mutation({
     subscriptionMeta: v.optional(subscriptionMetaValidator),
   },
   handler: async (ctx, args): Promise<Doc<"recurringTransactions">> => {
+    const userId = await requireUserId(ctx);
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== resolveSystemUserId()) {
+    if (!existing || existing.userId !== userId) {
       throw new ConvexError("Recurring transaction not found");
     }
 
@@ -145,8 +146,9 @@ export const updateRecurringTransaction = mutation({
 export const pauseRecurringTransaction = mutation({
   args: { id: v.id("recurringTransactions") },
   handler: async (ctx, args): Promise<boolean> => {
+    const userId = await requireUserId(ctx);
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== resolveSystemUserId()) {
+    if (!existing || existing.userId !== userId) {
       throw new ConvexError("Recurring transaction not found");
     }
 
@@ -162,8 +164,9 @@ export const pauseRecurringTransaction = mutation({
 export const resumeRecurringTransaction = mutation({
   args: { id: v.id("recurringTransactions") },
   handler: async (ctx, args): Promise<Doc<"recurringTransactions">> => {
+    const userId = await requireUserId(ctx);
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== resolveSystemUserId()) {
+    if (!existing || existing.userId !== userId) {
       throw new ConvexError("Recurring transaction not found");
     }
 
@@ -190,8 +193,9 @@ export const deleteRecurringTransaction = mutation({
     deleteGeneratedTransactions: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<boolean> => {
+    const userId = await requireUserId(ctx);
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== resolveSystemUserId()) {
+    if (!existing || existing.userId !== userId) {
       throw new ConvexError("Recurring transaction not found");
     }
 

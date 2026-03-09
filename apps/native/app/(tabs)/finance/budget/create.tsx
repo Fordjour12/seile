@@ -4,7 +4,11 @@ import { useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { BudgetPeriodForm, SectionHeader, type BudgetPeriodFormValues } from "@/components";
-import { activateBudgetPeriod, createBudgetPeriod, type CreateBudgetPeriodPayload } from "@/lib/budget";
+import {
+  type CreateBudgetPeriodPayload,
+  useActivateBudgetPeriod,
+  useCreateBudgetPeriod,
+} from "@/lib/budget";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -12,6 +16,8 @@ export default function CreateBudgetPeriodScreen() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const router = useRouter();
+  const createBudgetPeriod = useCreateBudgetPeriod();
+  const activateBudgetPeriod = useActivateBudgetPeriod();
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async (values: BudgetPeriodFormValues) => {
@@ -26,7 +32,9 @@ export default function CreateBudgetPeriodScreen() {
       };
       const period = await createBudgetPeriod(payload);
       await activateBudgetPeriod(period.id);
-      toast.success("Budget period created", { description: `${period.year}-${String(period.month).padStart(2, "0")} is now active.` });
+      toast.success("Budget period created", {
+        description: `${payload.year}-${String(payload.month).padStart(2, "0")} is now active.`,
+      });
       router.replace("/(tabs)/finance/budget" as Href);
     } catch (error) {
       toast.error("Could not create budget period", {

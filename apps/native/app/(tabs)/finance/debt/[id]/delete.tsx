@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Alert, Banner, Button, Card, Dialog, EmptyState, SectionHeader, Spinner, Text, View } from "@/components";
-import { archiveDebtPlan, formatDebtAmount, formatDebtType, getDebtPlanById, type DebtPlan } from "@/lib/debt";
+import { formatDebtAmount, formatDebtType, useArchiveDebtPlan, useDebtPlan } from "@/lib/debt";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -13,33 +13,12 @@ export default function DeleteDebtScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [debtPlan, setDebtPlan] = useState<DebtPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const debtPlan = useDebtPlan(id);
+  const archiveDebtPlan = useArchiveDebtPlan();
+  const isLoading = Boolean(id) && debtPlan === undefined;
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Debt plan ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const found = await getDebtPlanById(id);
-        setDebtPlan(found);
-      } catch {
-        setError("Debt plan not found.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void load();
-  }, [id]);
 
   const onDelete = async () => {
     if (!id) {

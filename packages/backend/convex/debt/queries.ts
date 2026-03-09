@@ -2,13 +2,13 @@ import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { debtStatusValidator } from "../schema/debt_plans";
 
 export const listDebtPlans = query({
   args: { status: v.optional(debtStatusValidator), includeArchived: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db.query("debtPlans").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
     return rows
       .filter((row) => (args.status ? row.status === args.status : true))
@@ -26,9 +26,10 @@ export const getDebtPlanById = query({
 export const getDebtSnapshot = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db
       .query("debtPlans")
-      .withIndex("by_userId", (q) => q.eq("userId", resolveSystemUserId()))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     return {
@@ -51,8 +52,9 @@ function attachComputed(row: Doc<"debtPlans">) {
 }
 
 async function requireOwnedDebt(ctx: QueryCtx, id: Id<"debtPlans">): Promise<Doc<"debtPlans">> {
+  const userId = await requireUserId(ctx);
   const debt = await ctx.db.get(id);
-  if (!debt || debt.userId !== resolveSystemUserId()) {
+  if (!debt || debt.userId !== userId) {
     throw new ConvexError("Debt plan not found");
   }
   return debt;

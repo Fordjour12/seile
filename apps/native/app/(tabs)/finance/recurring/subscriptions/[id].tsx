@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Banner, Button, Card, SectionHeader, Spinner, Text, View } from "@/components";
-import { cancelSubscription, getSubscription, type Subscription } from "@/lib/subscriptions";
+import {
+  useCancelSubscription,
+  useSubscription,
+} from "@/lib/subscriptions";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -13,24 +16,10 @@ export default function SubscriptionDetailScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [item, setItem] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
+  const item = useSubscription(id);
+  const cancelSubscription = useCancelSubscription();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-      const found = await getSubscription(id);
-      setItem(found);
-      setLoading(false);
-    }
-
-    void load();
-  }, [id]);
+  const loading = Boolean(id) && item === undefined;
 
   async function onCancel() {
     if (!id) {

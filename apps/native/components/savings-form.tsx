@@ -1,21 +1,19 @@
 import React, { useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
-import {
-  Button,
-  Chip,
-  FinanceAccountPicker,
-  FinanceAmountField,
-  FinanceCategoryPicker,
-  FinanceDateTimePickerField,
-  Input,
-  Text,
-  View,
-} from "@/components";
 import type { Account } from "@/lib/accounts";
 import type { CategoryOption } from "@/lib/categories";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
+import { Button } from "./button";
+import { Chip } from "./chip";
+import { FinanceAccountPicker } from "./finance-account-picker";
+import { FinanceAmountField } from "./finance-amount-field";
+import { FinanceCategoryPicker } from "./finance-category-picker";
+import { FinanceDateTimePickerField } from "./finance-datetime-picker-field";
+import { Input } from "./input";
+import { Text } from "./text";
+import { View } from "./view";
 
 export type SavingsFormMode = "create" | "update";
 

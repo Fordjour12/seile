@@ -7,7 +7,6 @@ import { budgetPeriodStatusValidator, budgetPeriodsTable } from "./schema/budget
 import { recurringTransactionsTable } from "./schema/recurring_transactions";
 import { debtPlansTable, debtStatusValidator, debtTypeValidator, payoffStrategyValidator } from "./schema/debt_plans";
 import { savingsGoalsTable, savingsStatusValidator } from "./schema/savings_goals";
-import { requestNoncesTable } from "./schema/request_nonces";
 import {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
@@ -39,7 +38,6 @@ export default defineSchema({
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,
   categories: categoriesTable,
-  requestNonces: requestNoncesTable,
   transactions: transactionsTable,
   recurringTransactions: recurringTransactionsTable,
   debtPlans: debtPlansTable,

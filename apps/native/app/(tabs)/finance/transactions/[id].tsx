@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 
 import { toast } from "sonner-native";
 import { Banner, Button, Card, SectionHeader, Spinner, Text, View } from "@/components";
 import {
-  deleteTransaction,
   formatTransactionAmount,
   formatTransactionTime,
-  getTransaction,
-  reverseTransaction,
-  type TransactionRecord,
+  useDeleteTransaction,
+  useReverseTransaction,
+  useTransaction,
 } from "@/lib/transactions";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
@@ -21,24 +20,11 @@ export default function TransactionDetailScreen() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
-  const [transaction, setTransaction] = useState<TransactionRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  const transaction = useTransaction(id);
+  const deleteTransaction = useDeleteTransaction();
+  const reverseTransaction = useReverseTransaction();
+  const loading = Boolean(id) && transaction === undefined;
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-
-      const found = await getTransaction(id);
-      setTransaction(found);
-      setLoading(false);
-    }
-
-    void load();
-  }, [id]);
 
   async function handleReverse() {
     if (!id) {

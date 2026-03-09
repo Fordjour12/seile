@@ -108,7 +108,7 @@ async function generateOneEntryInternal(
     accountId: recurring.accountId,
     fromAccountId: recurring.fromAccountId,
     toAccountId: recurring.toAccountId,
-  });
+  }, recurring.userId);
 
   const nextRunAt = computeNextRun(recurring, runAt);
   await ctx.db.patch(recurring._id, {

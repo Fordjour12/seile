@@ -1,4 +1,5 @@
-import { postJson } from "@/lib/accounts/http-client";
+import { api, asId, asOptionalId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type {
   CreateTransactionPayload,
@@ -32,37 +33,6 @@ type SummaryResponse = {
   transfer: number;
   net: number;
 };
-
-const FALLBACK_TRANSACTIONS: TransactionRecord[] = [
-  {
-    id: "txn-1",
-    kind: "income",
-    accountName: "Main Checking",
-    accountId: "acc-1",
-    title: "Salary Deposit",
-    category: "Income",
-    direction: "in",
-    amount: 5200,
-    currencyCode: "GHS",
-    createdAt: "2026-03-03T09:50:00.000Z",
-    updatedAt: "2026-03-03T09:50:00.000Z",
-    occurredAt: "2026-03-03T09:50:00.000Z",
-  },
-  {
-    id: "txn-2",
-    kind: "expense",
-    accountName: "Main Checking",
-    accountId: "acc-1",
-    title: "Groceries",
-    category: "Food",
-    direction: "out",
-    amount: 289.3,
-    currencyCode: "GHS",
-    createdAt: "2026-03-03T08:40:00.000Z",
-    updatedAt: "2026-03-03T08:40:00.000Z",
-    occurredAt: "2026-03-03T08:40:00.000Z",
-  },
-];
 
 function toDirection(kind: TransactionKind): TransactionDirection {
   return kind === "income" || kind === "adjustment" ? "in" : "out";
@@ -107,82 +77,107 @@ function mapBackendTransaction(transaction: BackendTransaction): TransactionReco
   };
 }
 
-export async function listTransactions(params: ListTransactionsParams = {}): Promise<TransactionRecord[]> {
-  try {
-    const rows = await postJson<BackendTransaction[]>("/transactions/list", {
-      limit: params.limit,
-      before: params.before,
-    });
-
-    return rows.map(mapBackendTransaction);
-  } catch {
-    return FALLBACK_TRANSACTIONS;
-  }
-}
-
-export async function getTransaction(transactionId: string): Promise<TransactionRecord | null> {
-  try {
-    const row = await postJson<BackendTransaction | null>("/transactions/getById", {
-      id: transactionId,
-    });
-
-    return row ? mapBackendTransaction(row) : null;
-  } catch {
-    return FALLBACK_TRANSACTIONS.find((item) => item.id === transactionId) ?? null;
-  }
-}
-
-export async function createTransaction(payload: CreateTransactionPayload): Promise<TransactionRecord> {
-  const row = await postJson<BackendTransaction>("/transactions/create", {
-    kind: payload.kind,
-    amount: payload.amount,
-    currency: payload.currencyCode ?? "GHS",
-    accountId: payload.accountId,
-    fromAccountId: payload.fromAccountId,
-    toAccountId: payload.toAccountId,
-    categoryId: payload.categoryId,
-    note: payload.note,
-    occurredAt: payload.occurredAt ? new Date(payload.occurredAt).getTime() : undefined,
+export function useTransactions(
+  params: ListTransactionsParams = {},
+): TransactionRecord[] | undefined {
+  const rows = useQuery(api.transactions.queries.listTransactions, {
+    limit: params.limit,
+    before: params.before,
   });
 
-  return mapBackendTransaction(row);
+  return rows?.map(mapBackendTransaction);
 }
 
-export async function updateTransaction(
+export function useTransaction(
+  transactionId?: string,
+): TransactionRecord | null | undefined {
+  const row = useQuery(
+    api.transactions.queries.getTransactionById,
+    transactionId ? { id: asId<"transactions">(transactionId) } : "skip",
+  );
+
+  return row ? mapBackendTransaction(row) : row;
+}
+
+export function useCreateTransaction(): (
+  payload: CreateTransactionPayload,
+) => Promise<TransactionRecord> {
+  const createTransaction = useMutation(api.transactions.mutations.createTransaction);
+
+  return async (payload) => {
+    const row = await createTransaction({
+      kind: payload.kind,
+      amount: payload.amount,
+      currency: payload.currencyCode ?? "GHS",
+      accountId: asOptionalId<"accounts">(payload.accountId),
+      fromAccountId: asOptionalId<"accounts">(payload.fromAccountId),
+      toAccountId: asOptionalId<"accounts">(payload.toAccountId),
+      categoryId: asOptionalId<"categories">(payload.categoryId),
+      note: payload.note,
+      occurredAt: payload.occurredAt ? new Date(payload.occurredAt).getTime() : undefined,
+    });
+
+    return mapBackendTransaction(row);
+  };
+}
+
+export function useUpdateTransaction(): (
   transactionId: string,
   payload: UpdateTransactionPayload,
-): Promise<TransactionRecord> {
-  const row = await postJson<BackendTransaction>("/transactions/update", {
-    id: transactionId,
-    amount: payload.amount,
-    categoryId: payload.categoryId,
-    note: payload.note,
-    occurredAt: payload.occurredAt ? new Date(payload.occurredAt).getTime() : undefined,
-  });
+) => Promise<TransactionRecord> {
+  const updateTransaction = useMutation(api.transactions.mutations.updateTransaction);
 
-  return mapBackendTransaction(row);
+  return async (transactionId, payload) => {
+    const row = await updateTransaction({
+      id: asId<"transactions">(transactionId),
+      amount: payload.amount,
+      categoryId: asOptionalId<"categories">(payload.categoryId),
+      note: payload.note,
+      occurredAt: payload.occurredAt ? new Date(payload.occurredAt).getTime() : undefined,
+    });
+
+    return mapBackendTransaction(row);
+  };
 }
 
-export async function deleteTransaction(transactionId: string, reverseAccountDelta: boolean = true): Promise<boolean> {
-  const response = await postJson<boolean>("/transactions/delete", {
-    id: transactionId,
-    reverseAccountDelta,
-  });
+export function useDeleteTransaction(): (
+  transactionId: string,
+  reverseAccountDelta?: boolean,
+) => Promise<boolean> {
+  const deleteTransaction = useMutation(api.transactions.mutations.deleteTransaction);
 
-  return response;
+  return (transactionId, reverseAccountDelta = true) =>
+    deleteTransaction({
+      id: asId<"transactions">(transactionId),
+      reverseAccountDelta,
+    });
 }
 
-export async function reverseTransaction(transactionId: string): Promise<TransactionRecord> {
-  const row = await postJson<BackendTransaction>("/transactions/reverse", {
-    id: transactionId,
-  });
+export function useReverseTransaction(): (
+  transactionId: string,
+) => Promise<TransactionRecord> {
+  const reverseTransaction = useMutation(api.transactions.mutations.reverseTransaction);
 
-  return mapBackendTransaction(row);
+  return async (transactionId) => {
+    const row = await reverseTransaction({
+      id: asId<"transactions">(transactionId),
+    });
+
+    return mapBackendTransaction(row);
+  };
 }
 
-export async function getTransactionSummary(from: string, to: string): Promise<SummaryResponse> {
-  return postJson<SummaryResponse>("/transactions/summary", {
-    from: new Date(from).getTime(),
-    to: new Date(to).getTime(),
-  });
+export function useTransactionSummary(
+  from?: string,
+  to?: string,
+): SummaryResponse | undefined {
+  return useQuery(
+    api.transactions.queries.getTransactionSummary,
+    from && to
+      ? {
+          from: new Date(from).getTime(),
+          to: new Date(to).getTime(),
+        }
+      : "skip",
+  );
 }

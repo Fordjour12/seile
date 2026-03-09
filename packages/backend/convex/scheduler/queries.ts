@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 
 function sortTasks(tasks: Doc<"schedulerTasks">[]): Doc<"schedulerTasks">[] {
   return [...tasks].sort((left, right) => {
@@ -27,7 +27,7 @@ export const listSchedulerTasks = query({
     includeCompleted: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Doc<"schedulerTasks">[]> => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db
       .query("schedulerTasks")
       .withIndex("by_userId_dueDate", (q) => q.eq("userId", userId))
@@ -46,8 +46,9 @@ export const getSchedulerTaskById = query({
     id: v.id("schedulerTasks"),
   },
   handler: async (ctx, args): Promise<Doc<"schedulerTasks"> | null> => {
+    const userId = await requireUserId(ctx);
     const task = await ctx.db.get(args.id);
-    if (!task || task.userId !== resolveSystemUserId()) {
+    if (!task || task.userId !== userId) {
       return null;
     }
 
@@ -58,7 +59,7 @@ export const getSchedulerTaskById = query({
 export const getSchedulerSummary = query({
   args: {},
   handler: async (ctx) => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db
       .query("schedulerTasks")
       .withIndex("by_userId", (q) => q.eq("userId", userId))

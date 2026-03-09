@@ -1,4 +1,5 @@
-import { postJson } from "@/lib/accounts/http-client";
+import { api } from "@/lib/backend-api";
+import { useQuery } from "convex/react";
 
 import type { CategoryOption } from "./types";
 
@@ -9,28 +10,16 @@ type BackendCategory = {
   icon?: string;
 };
 
-const FALLBACK_CATEGORIES: CategoryOption[] = [
-  { id: "fallback-food", name: "Food" },
-  { id: "fallback-transport", name: "Transport" },
-  { id: "fallback-bills", name: "Bills" },
-  { id: "fallback-income", name: "Income" },
-  { id: "fallback-savings", name: "Savings" },
-];
+function mapCategory(row: BackendCategory): CategoryOption {
+  return {
+    id: row._id,
+    name: row.name,
+    color: row.color,
+    icon: row.icon,
+  };
+}
 
-export async function listCategories(): Promise<CategoryOption[]> {
-  try {
-    const rows = await postJson<BackendCategory[]>("/categories/list", {});
-    if (rows.length === 0) {
-      return FALLBACK_CATEGORIES;
-    }
-
-    return rows.map((row) => ({
-      id: row._id,
-      name: row.name,
-      color: row.color,
-      icon: row.icon,
-    }));
-  } catch {
-    return FALLBACK_CATEGORIES;
-  }
+export function useCategories(): CategoryOption[] | undefined {
+  const rows = useQuery(api.categories.queries.listCategories, {});
+  return rows?.map(mapCategory);
 }

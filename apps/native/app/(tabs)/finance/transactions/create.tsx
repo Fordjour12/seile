@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
@@ -15,9 +15,9 @@ import {
   Text,
   View,
 } from "@/components";
-import { listAccounts, type Account } from "@/lib/accounts";
-import { listCategories, type CategoryOption } from "@/lib/categories";
-import { createTransaction, type TransactionKind } from "@/lib/transactions";
+import { useAccounts } from "@/lib/accounts";
+import { useCategories } from "@/lib/categories";
+import { type TransactionKind, useCreateTransaction } from "@/lib/transactions";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -34,6 +34,9 @@ export default function CreateTransactionScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const createTransaction = useCreateTransaction();
+  const accounts = useAccounts();
+  const categories = useCategories() ?? [];
 
   const [kind, setKind] = useState<TransactionKind>("expense");
   const [amount, setAmount] = useState("");
@@ -45,30 +48,7 @@ export default function CreateTransactionScreen() {
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [occurredAt, setOccurredAt] = useState<string | undefined>(new Date().toISOString());
   const [loading, setLoading] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
-
-  useEffect(() => {
-    async function loadAccounts() {
-      try {
-        const rows = await listAccounts();
-        setAccounts(rows.filter((item) => item.status === "active"));
-      } catch {
-        setAccounts([]);
-      }
-    }
-
-    void loadAccounts();
-  }, []);
-
-  useEffect(() => {
-    async function loadCategories() {
-      const rows = await listCategories();
-      setCategories(rows);
-    }
-
-    void loadCategories();
-  }, []);
+  const activeAccounts = accounts?.filter((item) => item.status === "active") ?? [];
 
   const amountError = useMemo(() => {
     if (!amount.length) return "Amount is required";
@@ -164,7 +144,7 @@ export default function CreateTransactionScreen() {
           <>
             <FinanceAccountPicker
               label="From account"
-              accounts={accounts}
+              accounts={activeAccounts}
               selectedAccountId={fromAccountId}
               onSelectAccount={(id) => {
                 setFromAccountId(id);
@@ -175,7 +155,7 @@ export default function CreateTransactionScreen() {
             />
             <FinanceAccountPicker
               label="To account"
-              accounts={accounts}
+              accounts={activeAccounts}
               excludedAccountIds={fromAccountId ? [fromAccountId] : []}
               selectedAccountId={toAccountId}
               onSelectAccount={setToAccountId}
@@ -184,7 +164,7 @@ export default function CreateTransactionScreen() {
         ) : (
           <FinanceAccountPicker
             label="Account"
-            accounts={accounts}
+            accounts={activeAccounts}
             selectedAccountId={accountId}
             onSelectAccount={setAccountId}
           />

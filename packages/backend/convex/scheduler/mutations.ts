@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
@@ -99,7 +99,7 @@ async function assertDependenciesOwnedByUser(
   dependencyIds: Id<"schedulerTasks">[],
   currentTaskId?: Id<"schedulerTasks">,
 ): Promise<void> {
-  const userId = resolveSystemUserId();
+  const userId = await requireUserId(ctx);
 
   for (const dependencyId of dependencyIds) {
     if (currentTaskId && dependencyId === currentTaskId) {
@@ -117,8 +117,9 @@ async function getOwnedTask(
   ctx: MutationCtx,
   id: Id<"schedulerTasks">,
 ): Promise<Doc<"schedulerTasks">> {
+  const userId = await requireUserId(ctx);
   const task = await ctx.db.get(id);
-  if (!task || task.userId !== resolveSystemUserId()) {
+  if (!task || task.userId !== userId) {
     throw new ConvexError("Scheduler task not found");
   }
 
@@ -139,10 +140,11 @@ export const createSchedulerTask = mutation({
   handler: async (ctx, args): Promise<Doc<"schedulerTasks">> => {
     const dependencyIds = args.dependencyIds ?? [];
     await assertDependenciesOwnedByUser(ctx, dependencyIds);
+    const userId = await requireUserId(ctx);
 
     const now = Date.now();
     const id = await ctx.db.insert("schedulerTasks", {
-      userId: resolveSystemUserId(),
+      userId,
       title: normalizeTitle(args.title),
       notes: normalizeNotes(args.notes),
       status: "todo",
@@ -322,7 +324,7 @@ export const reconcileSchedulerTasks = mutation({
     todayDate: v.string(),
   },
   handler: async (ctx, args): Promise<Doc<"schedulerTasks">[]> => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const todayDate = normalizeDueDate(args.todayDate);
     const rows = await ctx.db
       .query("schedulerTasks")

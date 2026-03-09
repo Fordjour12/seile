@@ -1,133 +1,192 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { AppState, AppStateStatus } from "react-native";
-import * as SecureStore from "expo-secure-store";
-import { useLocalAuth } from "@/lib/use-local-auth";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from "react";
 
-interface AuthContextType {
-  isLocked: boolean;
-  isBiometricEnabled: boolean;
+import { authClient } from "@/lib/auth-client";
+
+export type AuthUser = {
+  id?: string;
+  userId?: string;
+  name?: string;
+  email?: string;
+  image?: string;
+};
+
+type AuthContextValue = {
+  user: AuthUser | null;
   isLoading: boolean;
-  lock: () => void;
-  unlock: () => Promise<{ success: boolean; error?: string }>;
-  enableBiometric: () => Promise<{ success: boolean; error?: string }>;
-  disableBiometric: () => Promise<void>;
+  error: string | null;
+  hasHydrated: boolean;
+  signIn: (credentials: { email: string; password: string }) => Promise<void>;
+  signInWithPasskey: () => Promise<void>;
+  signUp: (credentials: { name: string; email: string; password: string }) => Promise<void>;
+  signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+  clearError: () => void;
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+function toAuthUser(raw: unknown): AuthUser | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const user = raw as Record<string, unknown>;
+  const canonicalId =
+    typeof user.id === "string"
+      ? user.id
+      : typeof user.userId === "string"
+        ? user.userId
+        : undefined;
+
+  return {
+    id: canonicalId,
+    userId:
+      typeof user.userId === "string"
+        ? user.userId
+        : canonicalId,
+    name: typeof user.name === "string" ? user.name : undefined,
+    email: typeof user.email === "string" ? user.email : undefined,
+    image: typeof user.image === "string" ? user.image : undefined,
+  };
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export function AuthProvider({ children }: PropsWithChildren) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
-const BIOMETRIC_KEY = "biometric_enabled";
-const AUTO_LOCK_DELAY = 0;
+  const clearError = useCallback(() => setError(null), []);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLocked, setIsLocked] = useState(true);
-  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const appState = useRef(AppState.currentState);
-  const backgroundTime = useRef<number | null>(null);
-  const { isReady, isSupported, isEnrolled, authenticateAsync } = useLocalAuth();
+  const refreshSession = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const session = await authClient.getSession();
+      setUser(toAuthUser(session.data?.user));
+    } catch {
+      setUser(null);
+      setError("Failed to refresh session");
+    } finally {
+      setIsLoading(false);
+      setHasHydrated(true);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!isReady) {
-      return;
-    }
+    void refreshSession();
+  }, [refreshSession]);
 
-    const init = async () => {
+  const signIn = useCallback(
+    async (credentials: { email: string; password: string }) => {
+      setIsLoading(true);
+      setError(null);
       try {
-        const enabled = await SecureStore.getItemAsync(BIOMETRIC_KEY);
-        if (enabled === "true") {
-          setIsBiometricEnabled(true);
-        } else if (enabled === null && isSupported && isEnrolled) {
-          await SecureStore.setItemAsync(BIOMETRIC_KEY, "true");
-          setIsBiometricEnabled(true);
+        const result = await authClient.signIn.email(credentials);
+        if (result.error) {
+          setError(result.error.message ?? "Failed to sign in");
+          return;
         }
-      } catch (error) {
-        console.error("Failed to load biometric setting:", error);
+
+        setUser(toAuthUser(result.data?.user));
+        await refreshSession();
+      } catch {
+        setError("Failed to sign in");
       } finally {
         setIsLoading(false);
       }
-    };
-    init();
-  }, [isReady, isSupported, isEnrolled]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
-      if (appState.current === "active" && nextAppState.match(/inactive|background/)) {
-        backgroundTime.current = Date.now();
-      }
-
-      if (appState.current.match(/inactive|background/) && nextAppState === "active") {
-        if (isBiometricEnabled && backgroundTime.current) {
-          setIsLocked(true);
-        }
-        backgroundTime.current = null;
-      }
-
-      appState.current = nextAppState;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [isBiometricEnabled]);
-
-  const lock = useCallback(() => {
-    setIsLocked(true);
-  }, []);
-
-  const unlock = useCallback(async () => {
-    if (!isBiometricEnabled) {
-      setIsLocked(false);
-      return { success: true };
-    }
-
-    const result = await authenticateAsync({ 
-      promptMessage: "Unlock Seile",
-      disableDeviceFallback: false,
-    });
-    if (result.success) {
-      setIsLocked(false);
-    }
-    return result;
-  }, [isBiometricEnabled, isSupported, isEnrolled, authenticateAsync]);
-
-  const enableBiometric = useCallback(async () => {
-    const result = await authenticateAsync({ 
-      promptMessage: "Enable biometric authentication",
-      disableDeviceFallback: false,
-    });
-    if (result.success) {
-      await SecureStore.setItemAsync(BIOMETRIC_KEY, "true");
-      setIsBiometricEnabled(true);
-    }
-    return result;
-  }, [authenticateAsync]);
-
-  const disableBiometric = useCallback(async () => {
-    await SecureStore.setItemAsync(BIOMETRIC_KEY, "false");
-    setIsBiometricEnabled(false);
-  }, []);
-
-  return (
-    <AuthContext.Provider
-      value={{
-        isLocked,
-        isBiometricEnabled,
-        isLoading,
-        lock,
-        unlock,
-        enableBiometric,
-        disableBiometric,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    },
+    [refreshSession],
   );
+
+  const signInWithPasskey = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await authClient.signIn.passkey({
+        autoFill: false,
+      });
+      if (result.error) {
+        setError(result.error.message ?? "Failed to sign in with passkey");
+        return;
+      }
+
+      setUser(toAuthUser(result.data?.user));
+      await refreshSession();
+    } catch {
+      setError("Failed to sign in with passkey");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refreshSession]);
+
+  const signUp = useCallback(
+    async (credentials: { name: string; email: string; password: string }) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const result = await authClient.signUp.email(credentials);
+        if (result.error) {
+          setError(result.error.message ?? "Failed to sign up");
+          return;
+        }
+
+        setUser(toAuthUser(result.data?.user));
+        await refreshSession();
+      } catch {
+        setError("Failed to sign up");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshSession],
+  );
+
+  const signOut = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await authClient.signOut();
+    } catch {
+      setError("Failed to sign out");
+    } finally {
+      setUser(null);
+      setIsLoading(false);
+    }
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      isLoading,
+      error,
+      hasHydrated,
+      signIn,
+      signInWithPasskey,
+      signUp,
+      signOut,
+      refreshSession,
+      clearError,
+    }),
+    [clearError, error, hasHydrated, isLoading, refreshSession, signIn, signInWithPasskey, signOut, signUp, user],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used within AuthProvider");
   }
-  return context;
+
+  return ctx;
 }

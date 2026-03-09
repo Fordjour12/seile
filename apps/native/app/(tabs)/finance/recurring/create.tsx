@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
@@ -16,9 +16,13 @@ import {
   Text,
   View,
 } from "@/components";
-import { listAccounts, type Account } from "@/lib/accounts";
-import { listCategories, type CategoryOption } from "@/lib/categories";
-import { createRecurringTransaction, type RecurringKind, type ScheduleType } from "@/lib/recurring";
+import { useAccounts } from "@/lib/accounts";
+import { useCategories } from "@/lib/categories";
+import {
+  type RecurringKind,
+  type ScheduleType,
+  useCreateRecurringTransaction,
+} from "@/lib/recurring";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -35,6 +39,9 @@ export default function CreateRecurringScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const accounts = useAccounts();
+  const categories = useCategories() ?? [];
+  const createRecurringTransaction = useCreateRecurringTransaction();
 
   const [kind, setKind] = useState<RecurringKind>("expense");
   const [amount, setAmount] = useState("");
@@ -51,30 +58,7 @@ export default function CreateRecurringScreen() {
   const [endAt, setEndAt] = useState<string | undefined>(undefined);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
-
-  useEffect(() => {
-    async function loadAccounts() {
-      try {
-        const rows = await listAccounts();
-        setAccounts(rows.filter((item) => item.status === "active"));
-      } catch {
-        setAccounts([]);
-      }
-    }
-
-    void loadAccounts();
-  }, []);
-
-  useEffect(() => {
-    async function loadCategories() {
-      const rows = await listCategories();
-      setCategories(rows);
-    }
-
-    void loadCategories();
-  }, []);
+  const activeAccounts = accounts?.filter((item) => item.status === "active") ?? [];
 
   const amountError = useMemo(() => {
     const parsed = Number(amount);
@@ -181,7 +165,7 @@ export default function CreateRecurringScreen() {
           <>
             <FinanceAccountPicker
               label="From account"
-              accounts={accounts}
+              accounts={activeAccounts}
               selectedAccountId={fromAccountId}
               onSelectAccount={(id) => {
                 setFromAccountId(id);
@@ -192,7 +176,7 @@ export default function CreateRecurringScreen() {
             />
             <FinanceAccountPicker
               label="To account"
-              accounts={accounts}
+              accounts={activeAccounts}
               excludedAccountIds={fromAccountId ? [fromAccountId] : []}
               selectedAccountId={toAccountId}
               onSelectAccount={setToAccountId}
@@ -201,7 +185,7 @@ export default function CreateRecurringScreen() {
         ) : (
           <FinanceAccountPicker
             label="Account"
-            accounts={accounts}
+            accounts={activeAccounts}
             selectedAccountId={accountId}
             onSelectAccount={setAccountId}
           />

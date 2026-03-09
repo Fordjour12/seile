@@ -2,14 +2,14 @@ import { v } from "convex/values";
 
 import type { Doc } from "../_generated/dataModel";
 import { internalQuery, query } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 
 export const listRecurringTransactions = query({
   args: {
     includeInactive: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Doc<"recurringTransactions">[]> => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     if (args.includeInactive) {
       return ctx.db
         .query("recurringTransactions")
@@ -52,7 +52,7 @@ export const getUpcomingRecurring = query({
     withinDays: v.number(),
   },
   handler: async (ctx, args): Promise<Doc<"recurringTransactions">[]> => {
-    const userId = resolveSystemUserId();
+    const userId = await requireUserId(ctx);
     const horizon = Date.now() + args.withinDays * 24 * 60 * 60 * 1000;
 
     return ctx.db

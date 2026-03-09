@@ -4,21 +4,23 @@ import {
   type Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { env } from "@seile/env/native";
+import { ConvexProviderWithAuth } from "convex/react";
+import { Stack, useRouter } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Toaster } from "sonner-native";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { StyleSheet, View } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { authClient } from "@/lib/auth-client";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { convex } from "@/lib/convex-client";
 
 import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/use-color-scheme";
-import { AuthProvider, useAuth } from "@/lib/auth-context";
-import { LockScreen } from "@/components/lock-screen";
 import { SchedulerAppSync } from "@/lib/scheduler/use-scheduler-app-sync";
+import { useColorScheme } from "@/lib/use-color-scheme";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -29,49 +31,13 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 };
 
-const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL, {
-  unsavedChangesWarning: false,
-});
+export const unstable_settings = {
+  initialRouteName: "(tabs)",
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
-
-function AppContent() {
-  const { isLocked, isLoading } = useAuth();
+export default function Layout() {
   const { isDarkColorScheme } = useColorScheme();
 
-  if (isLoading) {
-    return null;
-  }
-
-  return (
-    <>
-      <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-        <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-        <GestureHandlerRootView style={styles.container}>
-          <BottomSheetModalProvider>
-            <Stack>
-              <Stack.Screen
-                name="(tabs)"
-                options={{ title: "Tabs", headerShown: false }}
-              />
-              <Stack.Screen
-                name="modal"
-                options={{ title: "Modal", presentation: "modal" }}
-              />
-            </Stack>
-          </BottomSheetModalProvider>
-          <Toaster />
-        </GestureHandlerRootView>
-      </ThemeProvider>
-    </>
-  );
-}
-
-export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Geist: require("../assets/fonts/Geist/Geist-Regular.ttf"),
     "Geist-Medium": require("../assets/fonts/Geist/Geist-Medium.ttf"),
@@ -96,39 +62,137 @@ export default function RootLayout() {
   }
 
   return (
-    <ConvexProvider client={convex}>
-      <AuthProvider>
-        <View style={StyleSheet.absoluteFill}>
-          <SchedulerAppSync />
-          <AppContent />
-          <AuthGate />
-        </View>
-      </AuthProvider>
-    </ConvexProvider>
+    <ConvexProviderWithAuth client={convex} useAuth={useBetterAuthForConvex}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+          <KeyboardProvider>
+            <AuthProvider>
+              <BottomSheetModalProvider>
+                <AuthenticatedAppEffects />
+                <StackLayout />
+              </BottomSheetModalProvider>
+              <Toaster />
+            </AuthProvider>
+          </KeyboardProvider>
+        </ThemeProvider>
+      </GestureHandlerRootView>
+    </ConvexProviderWithAuth>
   );
 }
 
-function AuthGate() {
-  const { isLocked } = useAuth();
-  const { isDarkColorScheme } = useColorScheme();
+function useBetterAuthForConvex() {
+  const { data: session, isPending } = authClient.useSession();
+  const sessionId = session?.session?.id;
+  const [cachedToken, setCachedToken] = useState<string | null>(null);
+  const pendingTokenRef = useRef<Promise<string | null> | null>(null);
 
-  if (!isLocked) {
+  useEffect(() => {
+    if (!session && !isPending && cachedToken) {
+      setCachedToken(null);
+    }
+  }, [cachedToken, isPending, session]);
+
+  const fetchAccessToken = useCallback(
+    async ({
+      forceRefreshToken = false,
+    }: {
+      forceRefreshToken?: boolean;
+    } = {}) => {
+      if (cachedToken && !forceRefreshToken) {
+        return cachedToken;
+      }
+
+      if (!forceRefreshToken && pendingTokenRef.current) {
+        return pendingTokenRef.current;
+      }
+
+      pendingTokenRef.current = authClient.convex
+        .token({ fetchOptions: { throw: false } })
+        .then(({ data }) => {
+          const token = data?.token ?? null;
+          setCachedToken(token);
+          return token;
+        })
+        .catch(() => {
+          setCachedToken(null);
+          return null;
+        })
+        .finally(() => {
+          pendingTokenRef.current = null;
+        });
+
+      return pendingTokenRef.current;
+    },
+    [cachedToken, sessionId],
+  );
+
+  return useMemo(
+    () => ({
+      isLoading: isPending && !cachedToken,
+      isAuthenticated: Boolean(session?.session) || cachedToken !== null,
+      fetchAccessToken,
+    }),
+    [cachedToken, fetchAccessToken, isPending, session?.session],
+  );
+}
+
+function StackLayout() {
+  const router = useRouter();
+  const { user, hasHydrated, isLoading } = useAuth();
+  const isReady = hasHydrated && !isLoading;
+  const isLoggedIn = Boolean(user);
+  const wasAuthenticatedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
+    if (isLoggedIn) {
+      wasAuthenticatedRef.current = true;
+      return;
+    }
+
+    if (wasAuthenticatedRef.current) {
+      router.replace("/(auth)/sign-in");
+      wasAuthenticatedRef.current = false;
+    }
+  }, [isLoggedIn, isReady, router]);
+
+  if (!isReady) {
     return null;
   }
 
-  const overlayStyle = StyleSheet.flatten([
-    StyleSheet.absoluteFill,
-    {
-      backgroundColor: isDarkColorScheme
-        ? NAV_THEME.dark.background
-        : NAV_THEME.light.background,
-      zIndex: 9999,
-    },
-  ]);
-
   return (
-    <View style={overlayStyle}>
-      <LockScreen />
-    </View>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={isLoggedIn}>
+        <Stack.Screen
+          name="(tabs)"
+          options={{ title: "Tabs", headerShown: false }}
+        />
+        <Stack.Screen
+          name="modal"
+          options={{ title: "Modal", presentation: "modal" }}
+        />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!isLoggedIn}>
+        <Stack.Screen
+          name="(auth)"
+          options={{ title: "Auth", headerShown: false }}
+        />
+      </Stack.Protected>
+    </Stack>
   );
+}
+
+function AuthenticatedAppEffects() {
+  const { user, hasHydrated, isLoading } = useAuth();
+
+  if (!hasHydrated || isLoading || !user) {
+    return null;
+  }
+
+  return <SchedulerAppSync />;
 }

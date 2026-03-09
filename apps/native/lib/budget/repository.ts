@@ -1,6 +1,5 @@
-import * as SecureStore from "expo-secure-store";
-
-import { postJson } from "@/lib/accounts/http-client";
+import { api, asId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type {
   BudgetEnvelopeHistoryItem,
@@ -62,7 +61,9 @@ function mapPeriod(row: BackendPeriod): BudgetPeriodWithComputed {
   };
 }
 
-function mapPeriodDetail(row: BackendPeriod & { envelopeCount: number }): BudgetPeriodDetail {
+function mapPeriodDetail(
+  row: BackendPeriod & { envelopeCount: number },
+): BudgetPeriodDetail {
   return {
     ...mapPeriod(row),
     notes: row.notes,
@@ -91,125 +92,199 @@ function mapEnvelope(row: BackendEnvelope): BudgetEnvelopeWithComputed {
   };
 }
 
-export async function getBudgetSummary(): Promise<BudgetSummary> {
-  const cacheKey = "budget:activePeriod:system";
-  try {
-    const payload = await postJson<{ activePeriod: BackendPeriod | null; overspentCount: number; topEnvelopes: BackendEnvelope[] }>(
-      "/budget/periods/summary",
-      {},
-    );
-    await SecureStore.setItemAsync(cacheKey, JSON.stringify(payload));
-    return {
-      activePeriod: payload.activePeriod ? mapPeriod(payload.activePeriod) : null,
-      overspentCount: payload.overspentCount,
-      topEnvelopes: payload.topEnvelopes.map(mapEnvelope),
-    };
-  } catch {
-    const cached = await SecureStore.getItemAsync(cacheKey);
-    if (!cached) throw new Error("Unable to load budget summary");
-    const payload = JSON.parse(cached) as { activePeriod: BackendPeriod | null; overspentCount: number; topEnvelopes: BackendEnvelope[] };
-    return {
-      activePeriod: payload.activePeriod ? mapPeriod(payload.activePeriod) : null,
-      overspentCount: payload.overspentCount,
-      topEnvelopes: payload.topEnvelopes.map(mapEnvelope),
-    };
+export function useBudgetSummary(): BudgetSummary | undefined {
+  const payload = useQuery(api.budget.queries.getBudgetSummary, {});
+  if (payload === undefined) {
+    return undefined;
   }
+
+  return {
+    activePeriod: payload.activePeriod ? mapPeriod(payload.activePeriod) : null,
+    overspentCount: payload.overspentCount,
+    topEnvelopes: payload.topEnvelopes.map(mapEnvelope),
+  };
 }
 
-export async function getActivePeriod(): Promise<BudgetPeriodWithComputed | null> {
-  const row = await postJson<BackendPeriod | null>("/budget/periods/active", {});
-  return row ? mapPeriod(row) : null;
+export function useActiveBudgetPeriod():
+  | BudgetPeriodWithComputed
+  | null
+  | undefined {
+  const row = useQuery(api.budget.queries.getActivePeriod, {});
+  return row ? mapPeriod(row) : row;
 }
 
-export async function listEnvelopes(periodId: string): Promise<BudgetEnvelopeWithComputed[]> {
-  const cacheKey = `budget:envelopes:${periodId}:system`;
-  try {
-    const rows = await postJson<BackendEnvelope[]>("/budget/envelopes/list", { periodId });
-    await SecureStore.setItemAsync(cacheKey, JSON.stringify(rows));
-    return rows.map(mapEnvelope);
-  } catch {
-    const cached = await SecureStore.getItemAsync(cacheKey);
-    if (!cached) throw new Error("Unable to load envelopes");
-    return (JSON.parse(cached) as BackendEnvelope[]).map(mapEnvelope);
-  }
+export function useBudgetEnvelopes(
+  periodId?: string,
+): BudgetEnvelopeWithComputed[] | undefined {
+  const rows = useQuery(
+    api.budget.queries.listEnvelopes,
+    periodId ? { periodId: asId<"budgetPeriods">(periodId) } : "skip",
+  );
+
+  return rows?.map(mapEnvelope);
 }
 
-export async function listBudgetPeriods(status?: BudgetPeriodWithComputed["status"]): Promise<BudgetPeriodWithComputed[]> {
-  const rows = await postJson<BackendPeriod[]>("/budget/periods/list", { status });
-  return rows.map(mapPeriod);
+export function useBudgetPeriods(
+  status?: BudgetPeriodWithComputed["status"],
+): BudgetPeriodWithComputed[] | undefined {
+  const rows = useQuery(api.budget.queries.listBudgetPeriods, { status });
+  return rows?.map(mapPeriod);
 }
 
-export async function getBudgetPeriodById(id: string): Promise<BudgetPeriodDetail> {
-  const row = await postJson<BackendPeriod & { envelopeCount: number }>("/budget/periods/getById", { id });
-  return mapPeriodDetail(row);
+export function useBudgetPeriod(
+  id?: string,
+): BudgetPeriodDetail | undefined {
+  const row = useQuery(
+    api.budget.queries.getBudgetPeriodById,
+    id ? { id: asId<"budgetPeriods">(id) } : "skip",
+  );
+
+  return row ? mapPeriodDetail(row) : undefined;
 }
 
-export async function createBudgetPeriod(payload: CreateBudgetPeriodPayload): Promise<BudgetPeriodDetail> {
-  const result = await postJson<{ id: string }>("/budget/periods/create", {
-    year: payload.year,
-    month: payload.month,
-    currency: payload.currencyCode,
-    incomeTarget: payload.incomeTarget,
-    notes: payload.notes,
-  });
-  return getBudgetPeriodById(result.id);
+export function useCreateBudgetPeriod(): (
+  payload: CreateBudgetPeriodPayload,
+) => Promise<{ id: string }> {
+  const createBudgetPeriod = useMutation(api.budget.mutations.createBudgetPeriod);
+
+  return async (payload) => {
+    const result = await createBudgetPeriod({
+      year: payload.year,
+      month: payload.month,
+      currency: payload.currencyCode,
+      incomeTarget: payload.incomeTarget,
+      notes: payload.notes,
+    });
+
+    return { id: result.id };
+  };
 }
 
-export async function updateBudgetPeriod(id: string, payload: UpdateBudgetPeriodPayload): Promise<BudgetPeriodDetail> {
-  await postJson<BackendPeriod>("/budget/periods/update", {
-    id,
-    incomeTarget: payload.incomeTarget,
-    notes: payload.notes,
-  });
-  return getBudgetPeriodById(id);
+export function useUpdateBudgetPeriod(): (
+  id: string,
+  payload: UpdateBudgetPeriodPayload,
+) => Promise<void> {
+  const updateBudgetPeriod = useMutation(api.budget.mutations.updateBudgetPeriod);
+
+  return async (id, payload) => {
+    await updateBudgetPeriod({
+      id: asId<"budgetPeriods">(id),
+      incomeTarget: payload.incomeTarget,
+      notes: payload.notes,
+    });
+  };
 }
 
-export async function activateBudgetPeriod(id: string): Promise<boolean> {
-  return postJson<boolean>("/budget/periods/activate", { id });
+export function useActivateBudgetPeriod(): (
+  id: string,
+) => Promise<boolean> {
+  const activateBudgetPeriod = useMutation(
+    api.budget.mutations.activateBudgetPeriod,
+  );
+
+  return (id) =>
+    activateBudgetPeriod({
+      id: asId<"budgetPeriods">(id),
+    });
 }
 
-export async function closeBudgetPeriod(id: string): Promise<boolean> {
-  return postJson<boolean>("/budget/periods/close", { id });
+export function useCloseBudgetPeriod(): (
+  id: string,
+) => Promise<boolean> {
+  const closeBudgetPeriod = useMutation(api.budget.mutations.closeBudgetPeriod);
+
+  return (id) =>
+    closeBudgetPeriod({
+      id: asId<"budgetPeriods">(id),
+    });
 }
 
-export async function archiveBudgetPeriod(id: string): Promise<boolean> {
-  return postJson<boolean>("/budget/periods/archive", { id });
+export function useArchiveBudgetPeriod(): (
+  id: string,
+) => Promise<boolean> {
+  const archiveBudgetPeriod = useMutation(
+    api.budget.mutations.archiveBudgetPeriod,
+  );
+
+  return (id) =>
+    archiveBudgetPeriod({
+      id: asId<"budgetPeriods">(id),
+    });
 }
 
-export async function copyPreviousBudgetPeriod(toPeriodId: string): Promise<{ copiedCount: number; noPreviousPeriod?: boolean }> {
-  return postJson<{ copiedCount: number; noPreviousPeriod?: boolean }>("/budget/periods/copy", { toPeriodId });
+export function useCopyPreviousBudgetPeriod(): (
+  toPeriodId: string,
+) => Promise<{ copiedCount: number; noPreviousPeriod?: boolean }> {
+  const copyPreviousPeriod = useMutation(api.budget.mutations.copyPreviousPeriod);
+
+  return (toPeriodId) =>
+    copyPreviousPeriod({
+      toPeriodId: asId<"budgetPeriods">(toPeriodId),
+    });
 }
 
-export async function getEnvelopeById(id: string): Promise<BudgetEnvelopeWithComputed> {
-  const row = await postJson<BackendEnvelope>("/budget/envelopes/getById", { id });
-  return mapEnvelope(row);
+export function useBudgetEnvelope(
+  id?: string,
+): BudgetEnvelopeWithComputed | undefined {
+  const row = useQuery(
+    api.budget.queries.getEnvelopeById,
+    id ? { id: asId<"budgetEnvelopes">(id) } : "skip",
+  );
+
+  return row ? mapEnvelope(row) : undefined;
 }
 
-export async function createEnvelope(payload: CreateBudgetEnvelopePayload): Promise<BudgetEnvelopeWithComputed> {
-  const result = await postJson<{ id: string }>("/budget/envelopes/create", {
-    periodId: payload.periodId,
-    categoryId: payload.categoryId,
-    allocatedAmount: payload.allocatedAmount,
-    rolloverEnabled: payload.rolloverEnabled,
-    color: payload.color,
-    icon: payload.icon,
-    notes: payload.notes,
-  });
-  return getEnvelopeById(result.id);
+export function useCreateEnvelope(): (
+  payload: CreateBudgetEnvelopePayload,
+) => Promise<{ id: string }> {
+  const createEnvelope = useMutation(api.budget.mutations.createEnvelope);
+
+  return async (payload) => {
+    const result = await createEnvelope({
+      periodId: asId<"budgetPeriods">(payload.periodId),
+      categoryId: asId<"categories">(payload.categoryId),
+      allocatedAmount: payload.allocatedAmount,
+      rolloverEnabled: payload.rolloverEnabled,
+      color: payload.color,
+      icon: payload.icon,
+      notes: payload.notes,
+    });
+
+    return { id: result.id };
+  };
 }
 
-export async function updateEnvelope(id: string, payload: UpdateBudgetEnvelopePayload): Promise<BudgetEnvelopeWithComputed> {
-  const row = await postJson<BackendEnvelope>("/budget/envelopes/update", {
-    id,
-    ...payload,
-  });
-  return mapEnvelope(row);
+export function useUpdateEnvelope(): (
+  id: string,
+  payload: UpdateBudgetEnvelopePayload,
+) => Promise<void> {
+  const updateEnvelope = useMutation(api.budget.mutations.updateEnvelope);
+
+  return async (id, payload) => {
+    await updateEnvelope({
+      id: asId<"budgetEnvelopes">(id),
+      ...payload,
+    });
+  };
 }
 
-export async function deleteEnvelope(id: string): Promise<{ deleted: boolean; softArchived: boolean }> {
-  return postJson<{ deleted: boolean; softArchived: boolean }>("/budget/envelopes/delete", { id });
+export function useDeleteEnvelope(): (
+  id: string,
+) => Promise<{ deleted: boolean; softArchived: boolean }> {
+  const deleteEnvelope = useMutation(api.budget.mutations.deleteEnvelope);
+
+  return (id) =>
+    deleteEnvelope({
+      id: asId<"budgetEnvelopes">(id),
+    });
 }
 
-export async function getEnvelopeHistory(categoryId: string, limit = 6): Promise<BudgetEnvelopeHistoryItem[]> {
-  return postJson<BudgetEnvelopeHistoryItem[]>("/budget/envelopes/history", { categoryId, limit });
+export function useEnvelopeHistory(
+  categoryId?: string,
+  limit = 6,
+): BudgetEnvelopeHistoryItem[] | undefined {
+  return useQuery(
+    api.budget.queries.getEnvelopeHistory,
+    categoryId ? { categoryId: asId<"categories">(categoryId), limit } : "skip",
+  );
 }

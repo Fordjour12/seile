@@ -1,6 +1,5 @@
-import * as SecureStore from "expo-secure-store";
-
-import { postJson } from "@/lib/accounts/http-client";
+import { api, asId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type {
   CreateDebtPlanPayload,
@@ -27,8 +26,6 @@ type BackendDebtPlan = {
   updatedAt: number;
 };
 
-const CACHE_KEY = "debt:list:system";
-
 function mapDebtPlan(item: BackendDebtPlan): DebtPlan {
   return {
     id: item._id,
@@ -48,54 +45,64 @@ function mapDebtPlan(item: BackendDebtPlan): DebtPlan {
   };
 }
 
-export async function listDebtPlans(status?: DebtPlanStatus): Promise<DebtPlan[]> {
-  try {
-    const rows = await postJson<BackendDebtPlan[]>("/debt/list", { status });
-    await SecureStore.setItemAsync(CACHE_KEY, JSON.stringify({ at: Date.now(), rows }));
-    return rows.map(mapDebtPlan);
-  } catch {
-    const cached = await SecureStore.getItemAsync(CACHE_KEY);
-    if (!cached) throw new Error("Unable to load debt plans");
-    return (JSON.parse(cached).rows as BackendDebtPlan[]).map(mapDebtPlan);
-  }
+export function useDebtPlans(status?: DebtPlanStatus): DebtPlan[] | undefined {
+  const rows = useQuery(api.debt.queries.listDebtPlans, { status });
+  return rows?.map(mapDebtPlan);
 }
 
-export async function getDebtPlanById(id: string): Promise<DebtPlan> {
-  const row = await postJson<BackendDebtPlan>("/debt/getById", { id });
-  return mapDebtPlan(row);
+export function useDebtPlan(id?: string): DebtPlan | undefined {
+  const row = useQuery(
+    api.debt.queries.getDebtPlanById,
+    id ? { id: asId<"debtPlans">(id) } : "skip",
+  );
+  return row ? mapDebtPlan(row) : undefined;
 }
 
-export async function createDebtPlan(
+export function useCreateDebtPlan(): (
   payload: CreateDebtPlanPayload & { status?: DebtPlanStatus },
-): Promise<DebtPlan> {
-  const result = await postJson<{ id: string }>("/debt/create", {
-    name: payload.name,
-    debtType: payload.debtType,
-    currency: payload.currencyCode,
-    originalBalance: payload.originalBalance,
-    currentBalance: payload.currentBalance,
-    monthlyDue: payload.monthlyDue,
-    apr: payload.apr,
-    status: payload.status,
-  });
-  return getDebtPlanById(result.id);
+  ) => Promise<void> {
+  const createDebtPlan = useMutation(api.debt.mutations.createDebtPlan);
+
+  return async (payload) => {
+    await createDebtPlan({
+      name: payload.name,
+      debtType: payload.debtType,
+      currency: payload.currencyCode,
+      originalBalance: payload.originalBalance,
+      currentBalance: payload.currentBalance,
+      monthlyDue: payload.monthlyDue,
+      apr: payload.apr,
+      status: payload.status,
+    });
+  };
 }
 
-export async function updateDebtPlan(id: string, payload: UpdateDebtPlanPayload): Promise<DebtPlan> {
-  const row = await postJson<BackendDebtPlan>("/debt/update", {
-    id,
-    ...payload,
-    debtType: payload.debtType,
-    originalBalance: payload.originalBalance,
-    currency: payload.currencyCode,
-  });
-  return mapDebtPlan(row);
+export function useUpdateDebtPlan(): (
+  id: string,
+  payload: UpdateDebtPlanPayload,
+) => Promise<void> {
+  const updateDebtPlan = useMutation(api.debt.mutations.updateDebtPlan);
+
+  return async (id, payload) => {
+    await updateDebtPlan({
+      id: asId<"debtPlans">(id),
+      ...payload,
+      debtType: payload.debtType,
+      originalBalance: payload.originalBalance,
+      currency: payload.currencyCode,
+    });
+  };
 }
 
-export async function archiveDebtPlan(id: string): Promise<boolean> {
-  return postJson<boolean>("/debt/archive", { id });
+export function useArchiveDebtPlan(): (id: string) => Promise<boolean> {
+  const archiveDebtPlan = useMutation(api.debt.mutations.archiveDebtPlan);
+
+  return (id) =>
+    archiveDebtPlan({
+      id: asId<"debtPlans">(id),
+    });
 }
 
-export async function getDebtSnapshot(): Promise<DebtSnapshot> {
-  return postJson<DebtSnapshot>("/debt/snapshot", {});
+export function useDebtSnapshot(): DebtSnapshot | undefined {
+  return useQuery(api.debt.queries.getDebtSnapshot, {});
 }

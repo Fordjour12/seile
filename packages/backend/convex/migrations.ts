@@ -1,11 +1,5 @@
-import { v } from "convex/values";
-
-import { internalMutation, mutation } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
-import { REQUEST_NONCE_RETENTION_MS } from "./lib/security";
-
-const DEFAULT_NONCE_CLEANUP_LIMIT = 500;
-const MAX_NONCE_CLEANUP_LIMIT = 2000;
 
 export const backfillAccountsV2 = mutation({
   args: {},
@@ -38,33 +32,6 @@ export const backfillAccountsV2 = mutation({
     return {
       scannedCount: accounts.length,
       updatedCount,
-    };
-  },
-});
-
-export const cleanupExpiredRequestNonces = internalMutation({
-  args: {
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const requestedLimit = Math.floor(args.limit ?? DEFAULT_NONCE_CLEANUP_LIMIT);
-    const limit = Math.min(Math.max(requestedLimit, 1), MAX_NONCE_CLEANUP_LIMIT);
-    const cutoff = Date.now() - REQUEST_NONCE_RETENTION_MS;
-
-    const expired = await ctx.db
-      .query("requestNonces")
-      .withIndex("by_createdAt", (query) => query.lt("createdAt", cutoff))
-      .order("asc")
-      .take(limit);
-
-    for (const nonce of expired) {
-      await ctx.db.delete(nonce._id);
-    }
-
-    return {
-      deletedCount: expired.length,
-      cutoff,
-      hasMore: expired.length === limit,
     };
   },
 });

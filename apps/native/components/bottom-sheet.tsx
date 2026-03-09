@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { AnimationTokens, BottomSheetTokens, NAV_THEME, UI_ELEMENT_THEME } from "@/lib/constants";
+import { resolveThemeShadow } from "@/lib/constants/theme";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 interface AppBottomSheetProps
@@ -34,6 +35,8 @@ export function BottomSheet({
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const palette = colorScheme === "dark" ? UI_ELEMENT_THEME.dark : UI_ELEMENT_THEME.light;
+  const modalToken = BottomSheetTokens.modal;
+  const handleToken = BottomSheetTokens.handle;
 
   const springConfig = useBottomSheetSpringConfigs(AnimationTokens.spring.standard);
   const normalizedSnapPoints = useMemo(() => [...snapPoints], [snapPoints]);
@@ -73,11 +76,11 @@ export function BottomSheet({
       onDismiss={handleDismiss}
       handleIndicatorStyle={{
         backgroundColor: palette.bottomSheet.handle,
-        width: BottomSheetTokens.handle.width,
-        height: BottomSheetTokens.handle.height,
-        borderRadius: BottomSheetTokens.handle.borderRadius,
-        marginTop: BottomSheetTokens.handle.marginTop,
-        marginBottom: BottomSheetTokens.handle.marginBottom,
+        width: handleToken.width,
+        height: handleToken.height,
+        borderRadius: handleToken.borderRadius,
+        marginTop: handleToken.marginTop,
+        marginBottom: handleToken.marginBottom,
       }}
       backgroundStyle={{
         backgroundColor: palette.bottomSheet.background,
@@ -85,7 +88,7 @@ export function BottomSheet({
         borderWidth: 1,
       }}
       style={{
-        boxShadow: theme.shadowXl,
+        boxShadow: resolveThemeShadow(theme, modalToken.shadowLevel),
       }}
       {...props}
     >
@@ -93,10 +96,10 @@ export function BottomSheet({
         style={[
           styles.content,
           {
-            paddingHorizontal: BottomSheetTokens.modal.paddingHorizontal,
-            paddingTop: BottomSheetTokens.modal.paddingTop,
-            paddingBottom: BottomSheetTokens.modal.paddingBottom,
-            gap: BottomSheetTokens.modal.gap,
+            paddingHorizontal: modalToken.paddingHorizontal,
+            paddingTop: modalToken.paddingTop,
+            paddingBottom: modalToken.paddingBottom,
+            gap: modalToken.gap,
           },
         ]}
       >

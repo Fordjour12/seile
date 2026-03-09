@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
@@ -15,9 +15,9 @@ import {
   Text,
   View,
 } from "@/components";
-import { listAccounts, type Account } from "@/lib/accounts";
-import { listCategories, type CategoryOption } from "@/lib/categories";
-import { createSubscription } from "@/lib/subscriptions";
+import { useAccounts } from "@/lib/accounts";
+import { useCategories } from "@/lib/categories";
+import { useCreateSubscription } from "@/lib/subscriptions";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -40,6 +40,9 @@ export default function CreateSubscriptionScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const accounts = useAccounts();
+  const categories = useCategories() ?? [];
+  const createSubscription = useCreateSubscription();
 
   const [serviceName, setServiceName] = useState("");
   const [amount, setAmount] = useState("");
@@ -51,30 +54,7 @@ export default function CreateSubscriptionScreen() {
   const [startAt, setStartAt] = useState<string | undefined>(new Date().toISOString());
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
-
-  useEffect(() => {
-    async function loadAccounts() {
-      try {
-        const rows = await listAccounts();
-        setAccounts(rows.filter((item) => item.status === "active"));
-      } catch {
-        setAccounts([]);
-      }
-    }
-
-    void loadAccounts();
-  }, []);
-
-  useEffect(() => {
-    async function loadCategories() {
-      const rows = await listCategories();
-      setCategories(rows);
-    }
-
-    void loadCategories();
-  }, []);
+  const activeAccounts = accounts?.filter((item) => item.status === "active") ?? [];
 
   const amountError = useMemo(() => {
     const parsed = Number(amount);
@@ -152,7 +132,7 @@ export default function CreateSubscriptionScreen() {
         <View style={styles.fieldGroup}>
           <FinanceAccountPicker
             label="Billing account"
-            accounts={accounts}
+            accounts={activeAccounts}
             selectedAccountId={accountId}
             onSelectAccount={setAccountId}
           />

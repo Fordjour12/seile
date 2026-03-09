@@ -1,4 +1,5 @@
-import { postJson } from "@/lib/accounts/http-client";
+import { api, asId } from "@/lib/backend-api";
+import { convex } from "@/lib/convex-client";
 
 import type {
   CreateSchedulerTaskPayload,
@@ -57,8 +58,12 @@ function mapSubtasks(subtasks: SchedulerTaskDraftSubtask[] | undefined) {
   }));
 }
 
+function mapDependencyIds(ids: string[] | undefined) {
+  return ids?.map((id) => asId<"schedulerTasks">(id));
+}
+
 export async function listSchedulerTasks(includeCompleted: boolean = true): Promise<SchedulerTask[]> {
-  const rows = await postJson<BackendSchedulerTask[]>("/scheduler/tasks/list", {
+  const rows = await convex.query(api.scheduler.queries.listSchedulerTasks, {
     includeCompleted,
   });
 
@@ -66,19 +71,21 @@ export async function listSchedulerTasks(includeCompleted: boolean = true): Prom
 }
 
 export async function getSchedulerTask(id: string): Promise<SchedulerTask | null> {
-  const row = await postJson<BackendSchedulerTask | null>("/scheduler/tasks/getById", { id });
+  const row = await convex.query(api.scheduler.queries.getSchedulerTaskById, {
+    id: asId<"schedulerTasks">(id),
+  });
   return row ? mapSchedulerTask(row) : null;
 }
 
 export async function createSchedulerTask(payload: CreateSchedulerTaskPayload): Promise<SchedulerTask> {
-  const row = await postJson<BackendSchedulerTask>("/scheduler/tasks/create", {
+  const row = await convex.mutation(api.scheduler.mutations.createSchedulerTask, {
     title: payload.title,
     notes: payload.notes,
     priority: payload.priority,
     dueDate: payload.dueDate,
     time: payload.time,
     recurrence: payload.recurrence ?? "none",
-    dependencyIds: payload.dependencyIds,
+    dependencyIds: mapDependencyIds(payload.dependencyIds),
     subtasks: mapSubtasks(payload.subtasks),
   });
 
@@ -89,15 +96,15 @@ export async function updateSchedulerTask(
   id: string,
   payload: UpdateSchedulerTaskPayload,
 ): Promise<SchedulerTask> {
-  const row = await postJson<BackendSchedulerTask>("/scheduler/tasks/update", {
-    id,
+  const row = await convex.mutation(api.scheduler.mutations.updateSchedulerTask, {
+    id: asId<"schedulerTasks">(id),
     title: payload.title,
     notes: payload.notes,
     priority: payload.priority,
     dueDate: payload.dueDate,
     time: payload.time,
     recurrence: payload.recurrence,
-    dependencyIds: payload.dependencyIds,
+    dependencyIds: mapDependencyIds(payload.dependencyIds),
     subtasks: mapSubtasks(payload.subtasks),
     status: payload.status,
   });
@@ -110,8 +117,8 @@ export async function toggleSchedulerSubtask(
   subtaskId: string,
   done: boolean,
 ): Promise<SchedulerTask> {
-  const row = await postJson<BackendSchedulerTask>("/scheduler/tasks/toggle-subtask", {
-    id,
+  const row = await convex.mutation(api.scheduler.mutations.toggleSchedulerSubtask, {
+    id: asId<"schedulerTasks">(id),
     subtaskId,
     done,
   });
@@ -120,11 +127,13 @@ export async function toggleSchedulerSubtask(
 }
 
 export async function deleteSchedulerTask(id: string): Promise<boolean> {
-  return postJson<boolean>("/scheduler/tasks/delete", { id });
+  return convex.mutation(api.scheduler.mutations.deleteSchedulerTask, {
+    id: asId<"schedulerTasks">(id),
+  });
 }
 
 export async function reconcileSchedulerTasks(todayDate: string): Promise<SchedulerTask[]> {
-  const rows = await postJson<BackendSchedulerTask[]>("/scheduler/tasks/reconcile", {
+  const rows = await convex.mutation(api.scheduler.mutations.reconcileSchedulerTasks, {
     todayDate,
   });
 

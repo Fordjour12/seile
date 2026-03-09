@@ -1,4 +1,5 @@
-import { postJson } from "@/lib/accounts/http-client";
+import { api, asId, asOptionalId } from "@/lib/backend-api";
+import { useMutation, useQuery } from "convex/react";
 
 import type { RecurringTransaction } from "@/lib/recurring";
 
@@ -57,62 +58,77 @@ function mapRecurring(row: any): RecurringTransaction {
   };
 }
 
-export async function listSubscriptions(includeInactive: boolean = false): Promise<Subscription[]> {
-  const rows = await postJson<any[]>("/subscriptions/list", {
+export function useSubscriptions(
+  includeInactive: boolean = false,
+): Subscription[] | undefined {
+  const rows = useQuery(api.subscriptions.queries.listSubscriptions, {
     includeInactive,
   });
 
-  return rows.map((item) => toSubscription(mapRecurring(item)));
+  return rows?.map((item) => toSubscription(mapRecurring(item)));
 }
 
-export async function getSubscription(id: string): Promise<Subscription | null> {
-  const rows = await listSubscriptions(true);
+export function useSubscription(id?: string): Subscription | null | undefined {
+  const rows = useSubscriptions(true);
+  if (rows === undefined) {
+    return undefined;
+  }
+
   return rows.find((item) => item.id === id) ?? null;
 }
 
-export async function listSubscriptionsByStatus(
+export function useSubscriptionsByStatus(
   status: "active" | "trial" | "paused" | "cancelled",
-): Promise<Subscription[]> {
-  const rows = await postJson<any[]>("/subscriptions/by-status", {
+): Subscription[] | undefined {
+  const rows = useQuery(api.subscriptions.queries.getByStatus, {
     status,
   });
 
-  return rows.map((item) => toSubscription(mapRecurring(item)));
+  return rows?.map((item) => toSubscription(mapRecurring(item)));
 }
 
-export async function listUpcomingRenewals(withinDays: number): Promise<Subscription[]> {
-  const rows = await postJson<any[]>("/subscriptions/upcoming", {
+export function useUpcomingRenewals(withinDays: number): Subscription[] | undefined {
+  const rows = useQuery(api.subscriptions.queries.getUpcomingRenewals, {
     withinDays,
   });
 
-  return rows.map((item) => toSubscription(mapRecurring(item)));
+  return rows?.map((item) => toSubscription(mapRecurring(item)));
 }
 
-export async function createSubscription(payload: CreateSubscriptionPayload): Promise<Subscription> {
-  const row = await postJson<any>("/subscriptions/create", {
-    serviceName: payload.serviceName,
-    serviceUrl: payload.serviceUrl,
-    logoUrl: payload.logoUrl,
-    amount: payload.amount,
-    currency: payload.currencyCode ?? "GHS",
-    accountId: payload.accountId,
-    categoryId: payload.categoryId,
-    scheduleType: payload.scheduleType,
-    startAt: new Date(payload.startAt).getTime(),
-    endAt: payload.endAt ? new Date(payload.endAt).getTime() : undefined,
-    status: payload.status,
-    trialEndsAt: payload.trialEndsAt ? new Date(payload.trialEndsAt).getTime() : undefined,
-    billingProvider: payload.billingProvider,
-    externalSubscriptionId: payload.externalSubscriptionId,
-  });
+export function useCreateSubscription(): (
+  payload: CreateSubscriptionPayload,
+) => Promise<void> {
+  const createSubscription = useMutation(api.subscriptions.mutations.createSubscription);
 
-  return toSubscription(mapRecurring(row));
+  return async (payload) => {
+    await createSubscription({
+      serviceName: payload.serviceName,
+      serviceUrl: payload.serviceUrl,
+      logoUrl: payload.logoUrl,
+      amount: payload.amount,
+      currency: payload.currencyCode ?? "GHS",
+      accountId: asId<"accounts">(payload.accountId),
+      categoryId: asOptionalId<"categories">(payload.categoryId),
+      scheduleType: payload.scheduleType,
+      startAt: new Date(payload.startAt).getTime(),
+      endAt: payload.endAt ? new Date(payload.endAt).getTime() : undefined,
+      status: payload.status,
+      trialEndsAt: payload.trialEndsAt ? new Date(payload.trialEndsAt).getTime() : undefined,
+      billingProvider: payload.billingProvider,
+      externalSubscriptionId: payload.externalSubscriptionId,
+    });
+  };
 }
 
-export async function cancelSubscription(id: string): Promise<boolean> {
-  return postJson<boolean>("/subscriptions/cancel", { id });
+export function useCancelSubscription(): (id: string) => Promise<boolean> {
+  const cancelSubscription = useMutation(api.subscriptions.mutations.cancelSubscription);
+
+  return (id) =>
+    cancelSubscription({
+      id: asId<"recurringTransactions">(id),
+    });
 }
 
-export async function getMonthlySubscriptionSpend(): Promise<MonthlySubscriptionSpend> {
-  return postJson<MonthlySubscriptionSpend>("/subscriptions/monthly-spend", {});
+export function useMonthlySubscriptionSpend(): MonthlySubscriptionSpend | undefined {
+  return useQuery(api.subscriptions.queries.getMonthlySubscriptionSpend, {});
 }

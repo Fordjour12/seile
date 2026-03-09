@@ -9,4 +9,6 @@ export const categoriesTable = defineTable({
   parentCategoryId: v.optional(v.id("categories")),
   isSystem: v.boolean(),
   createdAt: v.number(),
-}).index("by_userId", ["userId"]);
+})
+  .index("by_userId", ["userId"])
+  .index("by_userId_and_name", ["userId", "name"]);

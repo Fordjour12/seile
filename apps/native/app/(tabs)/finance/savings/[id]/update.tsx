@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { toast } from "sonner-native";
 
 import { Banner, Button, SavingsForm, SectionHeader, Spinner, Text, View, type SavingsFormValues } from "@/components";
-import { listAccounts } from "@/lib/accounts";
-import { listCategories } from "@/lib/categories";
-import { getSavingsGoalById, updateSavingsGoal, type SavingsGoal, type UpdateSavingsGoalPayload } from "@/lib/savings";
+import { useAccounts } from "@/lib/accounts";
+import { useCategories } from "@/lib/categories";
+import { type UpdateSavingsGoalPayload, useSavingsGoal, useUpdateSavingsGoal } from "@/lib/savings";
 import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -15,38 +15,13 @@ export default function UpdateSavingsScreen() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
-  const [goal, setGoal] = useState<SavingsGoal | null>(null);
-  const [accounts, setAccounts] = useState([] as Awaited<ReturnType<typeof listAccounts>>);
-  const [categories, setCategories] = useState([] as Awaited<ReturnType<typeof listCategories>>);
-  const [isLoading, setIsLoading] = useState(true);
+  const accounts = useAccounts() ?? [];
+  const categories = useCategories() ?? [];
+  const goal = useSavingsGoal(id);
+  const updateSavingsGoal = useUpdateSavingsGoal();
+  const isLoading = Boolean(id) && goal === undefined;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!id) {
-        setError("Savings goal ID is missing.");
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const [found, nextAccounts, nextCategories] = await Promise.all([
-          getSavingsGoalById(id),
-          listAccounts(),
-          listCategories(),
-        ]);
-        setGoal(found);
-        setAccounts(nextAccounts);
-        setCategories(nextCategories);
-      } catch {
-        setError("Savings goal not found.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    void load();
-  }, [id]);
 
   const handleUpdate = async (values: SavingsFormValues) => {
     if (!id) return;
@@ -64,9 +39,8 @@ export default function UpdateSavingsScreen() {
         categoryId: values.categoryId,
         notes: values.notes || undefined,
       };
-      const updated = await updateSavingsGoal(id, payload);
-      setGoal(updated);
-      toast.success("Savings goal updated", { description: `${updated.name} has been saved.` });
+      await updateSavingsGoal(id, payload);
+      toast.success("Savings goal updated", { description: `${values.name} has been saved.` });
     } catch (updateError) {
       const message = updateError instanceof Error ? updateError.message : "That savings goal could not be updated.";
       setError(message);

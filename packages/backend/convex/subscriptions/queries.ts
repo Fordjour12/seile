@@ -2,17 +2,18 @@ import { v } from "convex/values";
 
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 
 export const listSubscriptions = query({
   args: {
     includeInactive: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Doc<"recurringTransactions">[]> => {
+    const userId = await requireUserId(ctx);
     const base = ctx.db
       .query("recurringTransactions")
       .withIndex("by_userId_isSubscription", (q) =>
-        q.eq("userId", resolveSystemUserId()).eq("isSubscription", true),
+        q.eq("userId", userId).eq("isSubscription", true),
       );
 
     if (args.includeInactive) {
@@ -33,10 +34,11 @@ export const getByStatus = query({
     ),
   },
   handler: async (ctx, args): Promise<Doc<"recurringTransactions">[]> => {
+    const userId = await requireUserId(ctx);
     const rows = await ctx.db
       .query("recurringTransactions")
       .withIndex("by_userId_isSubscription", (q) =>
-        q.eq("userId", resolveSystemUserId()).eq("isSubscription", true),
+        q.eq("userId", userId).eq("isSubscription", true),
       )
       .collect();
 
@@ -49,11 +51,12 @@ export const getUpcomingRenewals = query({
     withinDays: v.number(),
   },
   handler: async (ctx, args): Promise<Doc<"recurringTransactions">[]> => {
+    const userId = await requireUserId(ctx);
     const horizon = Date.now() + args.withinDays * 24 * 60 * 60 * 1000;
 
     return ctx.db
       .query("recurringTransactions")
-      .withIndex("by_userId_nextRunAt", (q) => q.eq("userId", resolveSystemUserId()).lte("nextRunAt", horizon))
+      .withIndex("by_userId_nextRunAt", (q) => q.eq("userId", userId).lte("nextRunAt", horizon))
       .filter((q) =>
         q.and(
           q.eq(q.field("isSubscription"), true),
@@ -67,10 +70,11 @@ export const getUpcomingRenewals = query({
 export const getMonthlySubscriptionSpend = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
     const subscriptions = await ctx.db
       .query("recurringTransactions")
       .withIndex("by_userId_isSubscription", (q) =>
-        q.eq("userId", resolveSystemUserId()).eq("isSubscription", true),
+        q.eq("userId", userId).eq("isSubscription", true),
       )
       .filter((q) => q.eq(q.field("isActive"), true))
       .collect();

@@ -14,15 +14,15 @@ import {
 import { Pressable, ScrollView } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { StyleSheet } from "react-native";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 import { NAV_THEME, Typography, CardTokens, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
-import { listAccounts } from "@/lib/accounts";
-import { getTransactionSummary } from "@/lib/transactions";
-import { listDebtPlans } from "@/lib/debt";
-import { getSavingsSummary } from "@/lib/savings";
-import { getBudgetSummary } from "@/lib/budget";
+import { useAccounts } from "@/lib/accounts";
+import { useTransactionSummary } from "@/lib/transactions";
+import { useDebtPlans } from "@/lib/debt";
+import { useSavingsSummary } from "@/lib/savings";
+import { useBudgetSummary } from "@/lib/budget";
 
 const OPACITY = {
   pressed: 0.84,
@@ -33,104 +33,62 @@ export default function Index() {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-  const [accountOverview, setAccountOverview] = useState<AccountOverviewMetrics>({
-    totalCash: 0,
-    moneyInMtd: 8950,
-    moneyOutMtd: 6124.45,
-    accountsCount: 0,
-    periodLabel: "Mar 2026 · Month-to-date",
-  });
-
-  const [debtItems, setDebtItems] = useState<DebtItem[]>([]);
-  const [savingsSummary, setSavingsSummary] = useState({
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  const accounts = useAccounts();
+  const transactionSummary = useTransactionSummary(monthStart, new Date().toISOString());
+  const debts = useDebtPlans();
+  const savings = useSavingsSummary();
+  const budgetSummaryQuery = useBudgetSummary();
+  const totalCash = (accounts ?? []).reduce(
+    (sum, account) => sum + account.balance,
+    0,
+  );
+  const now = new Date();
+  const periodLabel = `${now.toLocaleString("en-US", { month: "short" })} ${now.getFullYear()} · Month-to-date`;
+  const accountOverview: AccountOverviewMetrics = {
+    totalCash,
+    moneyInMtd: transactionSummary?.income ?? 0,
+    moneyOutMtd: transactionSummary?.expense ?? 0,
+    accountsCount: accounts?.length ?? 0,
+    periodLabel,
+  };
+  const debtItems: DebtItem[] = (debts ?? []).map((debt) => ({
+    id: debt.id,
+    name: debt.name,
+    type: debt.debtType,
+    originalBalance: debt.originalBalance,
+    currentBalance: debt.currentBalance,
+    monthlyDue: debt.monthlyDue,
+    apr: debt.apr,
+  }));
+  const savingsSummary = savings ?? {
     totalTarget: 0,
     totalCurrent: 0,
     percentComplete: 0,
     totalMonthlyCommitment: 0,
     countByStatus: {} as Record<string, number>,
-  });
-
-  const [budgetSummary, setBudgetSummary] = useState({
-    activePeriod: null as null | {
-      id: string;
-      year: number;
-      month: number;
-      incomeTarget: number;
-      totalAllocated: number;
-      unallocated: number;
-    },
-    overspentCount: 0,
-    topEnvelopes: [] as BudgetEnvelope[],
-  });
-
-  useEffect(() => {
-    async function loadAccountOverview() {
-      try {
-        const [accounts, summary] = await Promise.all([
-          listAccounts(),
-          getTransactionSummary(
-            new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
-            new Date().toISOString(),
-          ),
-        ]);
-        const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
-        const now = new Date();
-        const periodLabel = `${now.toLocaleString("en-US", { month: "short" })} ${now.getFullYear()} · Month-to-date`;
-
-        const [debts, savings, budget] = await Promise.all([listDebtPlans(), getSavingsSummary(), getBudgetSummary()]);
-
-        setAccountOverview({
-          totalCash,
-          moneyInMtd: summary.income,
-          moneyOutMtd: summary.expense,
-          accountsCount: accounts.length,
-          periodLabel,
-        });
-        setDebtItems(debts.map((debt) => ({
-          id: debt.id,
-          name: debt.name,
-          type: debt.debtType,
-          originalBalance: debt.originalBalance,
-          currentBalance: debt.currentBalance,
-          monthlyDue: debt.monthlyDue,
-          apr: debt.apr,
-        })));
-        setSavingsSummary(savings);
-        setBudgetSummary({
-          activePeriod: budget.activePeriod
-            ? {
-                id: budget.activePeriod.id,
-                year: budget.activePeriod.year,
-                month: budget.activePeriod.month,
-                incomeTarget: budget.activePeriod.incomeTarget,
-                totalAllocated: budget.activePeriod.totalAllocated,
-                unallocated: budget.activePeriod.unallocated,
-              }
-            : null,
-          overspentCount: budget.overspentCount,
-          topEnvelopes: budget.topEnvelopes.map((envelope) => ({
-            id: envelope.id,
-            name: envelope.name,
-            budgeted: envelope.effectiveAllocation,
-            spent: envelope.actualSpend,
-            color: envelope.color ?? theme.chart2,
-            icon: envelope.icon,
-          })),
-        });
-      } catch {
-        const accounts = await listAccounts();
-        const totalCash = accounts.reduce((sum, account) => sum + account.balance, 0);
-
-        setAccountOverview((previous) => ({
-          ...previous,
-          totalCash,
-          accountsCount: accounts.length,
-        }));
-      }
-    }
-
-    void loadAccountOverview();
-  }, []);
+  };
+  const budgetSummary = {
+    activePeriod: budgetSummaryQuery?.activePeriod
+      ? {
+          id: budgetSummaryQuery.activePeriod.id,
+          year: budgetSummaryQuery.activePeriod.year,
+          month: budgetSummaryQuery.activePeriod.month,
+          incomeTarget: budgetSummaryQuery.activePeriod.incomeTarget,
+          totalAllocated: budgetSummaryQuery.activePeriod.totalAllocated,
+          unallocated: budgetSummaryQuery.activePeriod.unallocated,
+        }
+      : null,
+    overspentCount: budgetSummaryQuery?.overspentCount ?? 0,
+    topEnvelopes: (budgetSummaryQuery?.topEnvelopes ?? []).map((envelope) => ({
+      id: envelope.id,
+      name: envelope.name,
+      budgeted: envelope.effectiveAllocation,
+      spent: envelope.actualSpend,
+      color: envelope.color ?? theme.chart2,
+      icon: envelope.icon,
+    })) as BudgetEnvelope[],
+  };
 
   const navItems = [
     {

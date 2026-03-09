@@ -74,7 +74,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="auth-smoke"
         options={{
-          title: "Auth",
+          title: "Session",
           tabBarIcon: ({ color }) => <TabBarIcon name="shield" color={color} />,
         }}
       />

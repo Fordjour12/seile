@@ -5,7 +5,7 @@ import type { MutationCtx } from "../_generated/server";
 import { mutation } from "../_generated/server";
 import { applyDelta, reverseDelta } from "../lib/ledger";
 import { assertValidAmount, assertValidCurrency } from "../lib/money";
-import { resolveSystemUserId } from "../lib/security";
+import { requireUserId } from "../lib/identity";
 import { transactionKindValidator } from "../schema/transactions";
 
 const updateTransactionArgs = v.object({
@@ -39,8 +39,9 @@ export const createTransaction = mutation({
     });
 
     const now = Date.now();
+    const userId = await requireUserId(ctx);
     const id = await ctx.db.insert("transactions", {
-      userId: resolveSystemUserId(),
+      userId,
       kind: args.kind,
       amount: args.amount,
       currency,
@@ -60,7 +61,7 @@ export const createTransaction = mutation({
       accountId: args.accountId,
       fromAccountId: args.fromAccountId,
       toAccountId: args.toAccountId,
-    });
+    }, userId);
 
     const inserted = await ctx.db.get(id);
     if (!inserted) {
@@ -74,7 +75,7 @@ export const createTransaction = mutation({
 export const updateTransaction = mutation({
   args: updateTransactionArgs,
   handler: async (ctx, args): Promise<Doc<"transactions">> => {
-    const existing = await requireOwnedTransaction(ctx, args.id, resolveSystemUserId());
+    const existing = await requireOwnedTransaction(ctx, args.id, await requireUserId(ctx));
 
     if (args.amount !== undefined) {
       assertValidAmount(args.amount);
@@ -114,10 +115,11 @@ export const deleteTransaction = mutation({
     reverseAccountDelta: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<boolean> => {
-    await requireOwnedTransaction(ctx, args.id, resolveSystemUserId());
+    const userId = await requireUserId(ctx);
+    await requireOwnedTransaction(ctx, args.id, userId);
 
     if (args.reverseAccountDelta ?? true) {
-      await reverseDelta(ctx, args.id);
+      await reverseDelta(ctx, args.id, userId);
     }
 
     await ctx.db.delete(args.id);
@@ -130,7 +132,7 @@ export const reverseTransaction = mutation({
     id: v.id("transactions"),
   },
   handler: async (ctx, args): Promise<Doc<"transactions">> => {
-    const existing = await requireOwnedTransaction(ctx, args.id, resolveSystemUserId());
+    const existing = await requireOwnedTransaction(ctx, args.id, await requireUserId(ctx));
     const now = Date.now();
 
     const oppositeKind =
@@ -161,7 +163,7 @@ export const reverseTransaction = mutation({
       accountId: existing.accountId,
       fromAccountId: existing.toAccountId,
       toAccountId: existing.fromAccountId,
-    });
+    }, existing.userId);
 
     const reversed = await ctx.db.get(id);
     if (!reversed) {
