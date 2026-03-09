@@ -4,7 +4,7 @@ import {
   type Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ConvexProviderWithAuth } from "convex/react";
 import { Stack, useRouter } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -12,7 +12,7 @@ import { Toaster } from "sonner-native";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
@@ -61,7 +61,7 @@ export default function Layout() {
   }
 
   return (
-    <ConvexBetterAuthProvider client={convex} authClient={authClient}>
+    <ConvexProviderWithAuth client={convex} useAuth={useBetterAuthForConvex}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
           <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
@@ -75,7 +75,63 @@ export default function Layout() {
           </KeyboardProvider>
         </ThemeProvider>
       </GestureHandlerRootView>
-    </ConvexBetterAuthProvider>
+    </ConvexProviderWithAuth>
+  );
+}
+
+function useBetterAuthForConvex() {
+  const { data: session, isPending } = authClient.useSession();
+  const sessionId = session?.session?.id;
+  const [cachedToken, setCachedToken] = useState<string | null>(null);
+  const pendingTokenRef = useRef<Promise<string | null> | null>(null);
+
+  useEffect(() => {
+    if (!session && !isPending && cachedToken) {
+      setCachedToken(null);
+    }
+  }, [cachedToken, isPending, session]);
+
+  const fetchAccessToken = useCallback(
+    async ({
+      forceRefreshToken = false,
+    }: {
+      forceRefreshToken?: boolean;
+    } = {}) => {
+      if (cachedToken && !forceRefreshToken) {
+        return cachedToken;
+      }
+
+      if (!forceRefreshToken && pendingTokenRef.current) {
+        return pendingTokenRef.current;
+      }
+
+      pendingTokenRef.current = authClient.convex
+        .token({ fetchOptions: { throw: false } })
+        .then(({ data }) => {
+          const token = data?.token ?? null;
+          setCachedToken(token);
+          return token;
+        })
+        .catch(() => {
+          setCachedToken(null);
+          return null;
+        })
+        .finally(() => {
+          pendingTokenRef.current = null;
+        });
+
+      return pendingTokenRef.current;
+    },
+    [cachedToken, sessionId],
+  );
+
+  return useMemo(
+    () => ({
+      isLoading: isPending && !cachedToken,
+      isAuthenticated: Boolean(session?.session) || cachedToken !== null,
+      fetchAccessToken,
+    }),
+    [cachedToken, fetchAccessToken, isPending, session?.session],
   );
 }
 

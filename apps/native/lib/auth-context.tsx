@@ -24,6 +24,7 @@ type AuthContextValue = {
   error: string | null;
   hasHydrated: boolean;
   signIn: (credentials: { email: string; password: string }) => Promise<void>;
+  signInWithPasskey: () => Promise<void>;
   signUp: (credentials: { name: string; email: string; password: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
@@ -106,6 +107,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [refreshSession],
   );
 
+  const signInWithPasskey = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await authClient.signIn.passkey({
+        autoFill: false,
+      });
+      if (result.error) {
+        setError(result.error.message ?? "Failed to sign in with passkey");
+        return;
+      }
+
+      setUser(toAuthUser(result.data?.user));
+      await refreshSession();
+    } catch {
+      setError("Failed to sign in with passkey");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refreshSession]);
+
   const signUp = useCallback(
     async (credentials: { name: string; email: string; password: string }) => {
       setIsLoading(true);
@@ -148,12 +170,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
       error,
       hasHydrated,
       signIn,
+      signInWithPasskey,
       signUp,
       signOut,
       refreshSession,
       clearError,
     }),
-    [clearError, error, hasHydrated, isLoading, refreshSession, signIn, signOut, signUp, user],
+    [clearError, error, hasHydrated, isLoading, refreshSession, signIn, signInWithPasskey, signOut, signUp, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -74,18 +74,6 @@ export default function AuthSmokeScreen() {
     if (busy) return;
     setBusyAction("bootstrap");
     setResult("Bootstrapping...");
-    try {
-      const response = await bootstrapUserData();
-      setResult(
-        response.created
-          ? `Bootstrap complete: ${response.seededCount} categories created`
-          : "Bootstrap skipped: user data already exists",
-      );
-    } catch (error) {
-      setResult(`Bootstrap failed: ${formatError(error)}`);
-    } finally {
-      setBusyAction(null);
-    }
   };
 
   const runSignOut = async () => {
