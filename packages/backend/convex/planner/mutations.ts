@@ -32,6 +32,7 @@ const DEFAULT_AGENT_STATE = {
   reviewSchedule: "sunday-18:00",
   burnoutScore: 20,
   burnoutState: "stable" as const,
+  activeThreadId: undefined,
 };
 
 const internalPlanItemValidator = v.object({
@@ -618,6 +619,21 @@ export const updateAgentBurnoutState = internalMutation({
       burnoutScore: Math.max(0, Math.min(100, Math.round(args.burnoutScore))),
       burnoutState: args.burnoutState,
       lastHabitOptimizationAt: args.touchedAt ?? Date.now(),
+      updatedAt: Date.now(),
+    });
+    return await ctx.db.get(state._id);
+  },
+});
+
+export const setActivePlannerThread = internalMutation({
+  args: {
+    userId: v.string(),
+    activeThreadId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const state = await ensureAgentState(ctx, args.userId);
+    await ctx.db.patch(state._id, {
+      activeThreadId: args.activeThreadId,
       updatedAt: Date.now(),
     });
     return await ctx.db.get(state._id);

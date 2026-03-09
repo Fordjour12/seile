@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { PiggyBank, Calendar } from "iconoir-react-native";
+import { PiggyBank, Calendar, Erase } from "iconoir-react-native";
 
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
@@ -52,8 +52,8 @@ export default function TabLayout() {
         options={{
           title: "Finance",
           headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon2 color={color}>
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
               <PiggyBank />
             </TabBarIcon2>
           ),
@@ -64,7 +64,14 @@ export default function TabLayout() {
         options={{
           title: "Planner",
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="calendar" color={color} />,
+          tabBarStyle: {
+            display: "none",
+          },
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <Erase />
+            </TabBarIcon2>
+          ),
         }}
       />
       <Tabs.Screen

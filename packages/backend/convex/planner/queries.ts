@@ -1,9 +1,17 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
+import { components } from "../_generated/api";
 import { getWeekWindow, isoDateFromTimestamp } from "../lib/planner";
 import { requireUserId } from "../lib/identity";
+import { env } from "@seile/env/backend";
+
+const componentsAny = components as any;
+const plannerMessagePaginationValidator = v.object({
+  cursor: v.union(v.string(), v.null()),
+  numItems: v.number(),
+});
 
 export const getPlannerDashboard = query({
   args: {
@@ -12,6 +20,45 @@ export const getPlannerDashboard = query({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     return await buildPlannerContext(ctx, userId, args.weekStart);
+  },
+});
+
+export const getPlannerChatHome = query({
+  args: {
+    weekStart: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const context = await buildPlannerContext(ctx, userId, args.weekStart);
+
+    return {
+      week: context.week,
+      currentPlan: context.currentPlan
+        ? {
+            _id: context.currentPlan._id,
+            title: context.currentPlan.title,
+            summary: context.currentPlan.summary,
+            mode: context.currentPlan.mode,
+            startDate: context.currentPlan.startDate,
+            endDate: context.currentPlan.endDate,
+            priorityTitles: context.currentPlan.priorityTitles,
+            warnings: context.currentPlan.warnings,
+            burnoutRiskScore: context.currentPlan.burnoutRiskScore ?? null,
+            recoverySuggested: context.currentPlan.recoverySuggested ?? false,
+          }
+        : null,
+      agentState: context.agentState
+        ? {
+            _id: context.agentState._id,
+            agentEnabled: context.agentState.agentEnabled,
+            burnoutScore: context.agentState.burnoutScore,
+            burnoutState: context.agentState.burnoutState,
+            activeThreadId: context.agentState.activeThreadId ?? null,
+          }
+        : null,
+      activeThreadId: context.agentState?.activeThreadId ?? null,
+      plannerModel: env.PLANNER_AGENT_MODEL ?? null,
+    };
   },
 });
 
@@ -77,6 +124,93 @@ export const listGoals = query({
     const userId = await requireUserId(ctx);
     const goals = await ctx.db.query("planningGoals").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
     return goals.sort((left, right) => sortByPriority(left.priority, right.priority));
+  },
+});
+
+export const listPlannerChatMessages = query({
+  args: {
+    threadId: v.string(),
+    paginationOpts: v.optional(plannerMessagePaginationValidator),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const thread = await ctx.runQuery(componentsAny.agent.threads.getThread, {
+      threadId: args.threadId,
+    });
+
+    if (!thread || thread.userId !== userId) {
+      throw new ConvexError("Planner chat thread not found");
+    }
+
+    const page = await ctx.runQuery(componentsAny.agent.messages.listMessagesByThreadId, {
+      threadId: args.threadId,
+      order: "asc",
+      excludeToolMessages: true,
+      paginationOpts: args.paginationOpts ?? { cursor: null, numItems: 80 },
+    });
+
+    return {
+      continueCursor: page.continueCursor,
+      isDone: page.isDone,
+      page: page.page
+        .map((entry: any) => normalizePlannerChatMessage(entry))
+        .filter(Boolean),
+    };
+  },
+});
+
+export const listPlannerChatThreads = query({
+  args: {
+    paginationOpts: v.optional(plannerMessagePaginationValidator),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const activeThreadId = (
+      await ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first()
+    )?.activeThreadId;
+
+    const page = await ctx.runQuery(componentsAny.agent.threads.listThreadsByUserId, {
+      userId,
+      order: "desc",
+      paginationOpts: args.paginationOpts ?? { cursor: null, numItems: 40 },
+    });
+
+    return {
+      continueCursor: page.continueCursor,
+      isDone: page.isDone,
+      page: page.page.map((thread: any) => ({
+        id: thread._id,
+        title: thread.title ?? "Planner chat",
+        summary: thread.summary ?? "",
+        status: thread.status ?? "active",
+        createdAt: thread._creationTime,
+        isActive: thread._id === activeThreadId,
+      })),
+    };
+  },
+});
+
+export const getPlannerChatThread = query({
+  args: {
+    threadId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const thread = await ctx.runQuery(componentsAny.agent.threads.getThread, {
+      threadId: args.threadId,
+    });
+
+    if (!thread || thread.userId !== userId) {
+      throw new ConvexError("Planner chat thread not found");
+    }
+
+    return {
+      id: thread._id,
+      title: thread.title ?? "Planner chat",
+      summary: thread.summary ?? "",
+      status: thread.status ?? "active",
+      createdAt: thread._creationTime,
+    };
   },
 });
 
@@ -190,4 +324,55 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
 function comparePlanEnd(left: string, right: string) {
   if (left === right) return 0;
   return left < right ? -1 : 1;
+}
+
+function normalizePlannerChatMessage(entry: any) {
+  const role = entry?.message?.role;
+  if (role !== "user" && role !== "assistant") {
+    return null;
+  }
+
+  const text = extractPlannerChatText(entry);
+  if (!text) {
+    return null;
+  }
+
+  return {
+    id: entry._id,
+    role,
+    text,
+    status: entry.status ?? "success",
+    createdAt: entry._creationTime,
+    error: entry.error,
+  };
+}
+
+function extractPlannerChatText(entry: { text?: string; message?: { content?: unknown } }) {
+  if (entry.text?.trim()) {
+    return entry.text.trim();
+  }
+
+  const content = entry.message?.content;
+  if (typeof content === "string") {
+    return content.trim();
+  }
+
+  if (!Array.isArray(content)) {
+    return "";
+  }
+
+  return content
+    .flatMap((part) => {
+      if (!part || typeof part !== "object" || !("type" in part)) {
+        return [];
+      }
+
+      if ((part.type === "text" || part.type === "reasoning") && "text" in part && typeof part.text === "string") {
+        return [part.text];
+      }
+
+      return [];
+    })
+    .join("\n")
+    .trim();
 }

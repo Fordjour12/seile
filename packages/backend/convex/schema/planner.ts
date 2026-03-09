@@ -208,6 +208,7 @@ export const planningReviewsTable = defineTable({
 export const plannerAgentStateTable = defineTable({
   userId: v.string(),
   agentEnabled: v.boolean(),
+  activeThreadId: v.optional(v.string()),
   reviewSchedule: v.string(),
   burnoutScore: v.number(),
   burnoutState: burnoutStateValidator,

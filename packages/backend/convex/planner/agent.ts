@@ -7,12 +7,25 @@ import { env } from "@seile/env/backend";
 
 const componentsAny = components as any;
 const DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o-mini";
+// google/gemini-2.5-flash
 
 const planningPrioritySchema = z.enum(["low", "medium", "high"]);
 const planningEffortSchema = z.enum(["low", "medium", "high"]);
-const planItemTypeSchema = z.enum(["priority", "task", "habit", "buffer", "review", "milestone"]);
+const planItemTypeSchema = z.enum([
+  "priority",
+  "task",
+  "habit",
+  "buffer",
+  "review",
+  "milestone",
+]);
 const planningCadenceSchema = z.enum(["daily", "weekdays", "weekly", "custom"]);
-const planningModeSchema = z.enum(["directed", "discovery", "zero_input", "recovery"]);
+const planningModeSchema = z.enum([
+  "directed",
+  "discovery",
+  "zero_input",
+  "recovery",
+]);
 const burnoutStateSchema = z.enum(["stable", "watch", "recovery"]);
 
 const draftTaskSchema = z.object({
@@ -81,7 +94,9 @@ export const replanningAssessmentSchema = z.object({
 
 const plannerProvider = createOpenRouter({
   apiKey: env.OPENROUTER_API_KEY,
-  ...(env.PLANNER_AGENT_BASE_URL ? { baseURL: env.PLANNER_AGENT_BASE_URL } : {}),
+  ...(env.PLANNER_AGENT_BASE_URL
+    ? { baseURL: env.PLANNER_AGENT_BASE_URL }
+    : {}),
   headers: {
     "HTTP-Referer": env.SITE_URL,
     "X-OpenRouter-Title": env.OPENROUTER_APP_NAME ?? "Seile Planner",
@@ -90,7 +105,9 @@ const plannerProvider = createOpenRouter({
 
 export const plannerAgent = new Agent(componentsAny.agent, {
   name: "Planner Agent",
-  languageModel: plannerProvider.chat(env.PLANNER_AGENT_MODEL ?? DEFAULT_OPENROUTER_MODEL),
+  languageModel: plannerProvider.chat(
+    env.PLANNER_AGENT_MODEL ?? DEFAULT_OPENROUTER_MODEL,
+  ),
   instructions: [
     "You are the AI Planner Orchestrator for a life planning application.",
     "Generate structured, realistic plans grounded in goals, tasks, habits, constraints, and execution data.",
@@ -114,7 +131,9 @@ export async function createPlannerThread(
 
 export function ensurePlannerAgentConfigured() {
   if (!env.OPENROUTER_API_KEY) {
-    throw new Error("Planner agent is not configured. Set OPENROUTER_API_KEY in the backend environment.");
+    throw new Error(
+      "Planner agent is not configured. Set OPENROUTER_API_KEY in the backend environment.",
+    );
   }
 }
 
