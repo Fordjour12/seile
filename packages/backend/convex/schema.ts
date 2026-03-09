@@ -2,6 +2,20 @@ import { defineSchema } from "convex/server";
 
 import { accountsTable } from "./schema/accounts";
 import { categoriesTable } from "./schema/categories";
+import {
+  energyLogsTable,
+  healthCadenceValidator,
+  healthDifficultyValidator,
+  healthGoalStatusValidator,
+  healthGoalTypeValidator,
+  healthGoalsTable,
+  healthHabitsTable,
+  healthIntensityValidator,
+  healthMetricsTable,
+  healthSignalLevelValidator,
+  healthWorkoutTypeValidator,
+  workoutsTable,
+} from "./schema/health";
 import { budgetEnvelopesTable } from "./schema/budget_envelopes";
 import { budgetPeriodStatusValidator, budgetPeriodsTable } from "./schema/budget_periods";
 import {
@@ -51,6 +65,13 @@ export { budgetPeriodStatusValidator };
 export { debtStatusValidator, debtTypeValidator, payoffStrategyValidator, savingsStatusValidator };
 export {
   burnoutStateValidator,
+  healthCadenceValidator,
+  healthDifficultyValidator,
+  healthGoalStatusValidator,
+  healthGoalTypeValidator,
+  healthIntensityValidator,
+  healthSignalLevelValidator,
+  healthWorkoutTypeValidator,
   planningCadenceValidator,
   planningEffortValidator,
   planningEnergyPatternValidator,
@@ -71,6 +92,11 @@ export default defineSchema({
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,
   categories: categoriesTable,
+  workouts: workoutsTable,
+  healthHabits: healthHabitsTable,
+  healthGoals: healthGoalsTable,
+  healthMetrics: healthMetricsTable,
+  energyLogs: energyLogsTable,
   transactions: transactionsTable,
   recurringTransactions: recurringTransactionsTable,
   debtPlans: debtPlansTable,

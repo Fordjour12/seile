@@ -288,6 +288,7 @@ export const runMidweekAdjustmentCycle = internalAction({
                 title: context.currentPlan.title,
                 warnings: context.currentPlan.warnings,
                 burnoutRiskScore: context.currentPlan.burnoutRiskScore,
+                healthSignals: context.health?.signals,
                 pendingTasks: pendingTasks.map((item: { title: string; date: string; priority: string }) => ({
                   title: item.title,
                   date: item.date,
@@ -344,7 +345,8 @@ export const runBurnoutMonitoringCycle = internalAction({
           openTasksCount: context.openTasks.length,
           missedHabitsCount: context.latestReview?.missedHabitsCount ?? 0,
           mode: "discovery",
-        });
+        health: context.health,
+      });
 
         const threadId = await createPlannerThread(ctx, {
           userId: state.userId,
@@ -364,6 +366,7 @@ export const runBurnoutMonitoringCycle = internalAction({
                 latestReview: context.latestReview,
                 openTasks: context.openTasks.length,
                 currentPlanWarnings: context.currentPlan?.warnings ?? [],
+                healthSignals: context.health?.signals,
               })}`,
             ].join("\n\n"),
             schema: burnoutAssessmentSchema,
@@ -416,6 +419,7 @@ async function draftWeeklyPlanForUser(
     latestReview: context.latestReview,
     agentState: context.agentState,
     profile,
+    health: context.health,
   });
 
   const threadId = await createPlannerThread(ctx, {
@@ -433,6 +437,7 @@ async function draftWeeklyPlanForUser(
         `Planning mode: ${input.mode}.`,
         "Keep the baseline structure unless you have a clear reason to reduce pressure further.",
         "Do not exceed 3 priorities. Do not overload any day. Include buffer space and a weekly review moment.",
+        "Use health goals and energy signals. Include recovery days and avoid consecutive intense workouts.",
         `Context: ${JSON.stringify({
           week: context.week,
           profile,
@@ -453,6 +458,54 @@ async function draftWeeklyPlanForUser(
             cadence: habit.cadence,
             targetValue: habit.targetValue,
           })),
+          health: context.health
+            ? {
+                goals: context.health.activeGoals.map(
+                  (goal: {
+                    title: string;
+                    goalType: string;
+                    targetValue: number;
+                    unit: string;
+                    deadline?: string;
+                  }) => ({
+                    title: goal.title,
+                    goalType: goal.goalType,
+                    targetValue: goal.targetValue,
+                    unit: goal.unit,
+                    deadline: goal.deadline,
+                  }),
+                ),
+                habits: context.health.activeHabits.map(
+                  (habit: {
+                    name: string;
+                    cadence: string;
+                    targetValue: number;
+                    unit: string;
+                    difficulty: string;
+                  }) => ({
+                    name: habit.name,
+                    cadence: habit.cadence,
+                    targetValue: habit.targetValue,
+                    unit: habit.unit,
+                    difficulty: habit.difficulty,
+                  }),
+                ),
+                recentWorkouts: context.health.recentWorkouts.map(
+                  (workout: {
+                    workoutType: string;
+                    date: string;
+                    durationMinutes: number;
+                    intensity: string;
+                  }) => ({
+                    workoutType: workout.workoutType,
+                    date: workout.date,
+                    durationMinutes: workout.durationMinutes,
+                    intensity: workout.intensity,
+                  }),
+                ),
+                signals: context.health.signals,
+              }
+            : null,
           latestReview: context.latestReview,
         })}`,
         `Baseline draft: ${JSON.stringify(baselineDraft)}`,

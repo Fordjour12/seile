@@ -3,6 +3,10 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, mutation, type MutationCtx } from "../_generated/server";
 import {
+  inferWorkoutIntensityFromTitle,
+  inferWorkoutTypeFromTitle,
+} from "../lib/health";
+import {
   addDays,
   buildReviewSummary,
   buildWeeklyPlanDraft,
@@ -40,6 +44,7 @@ const internalPlanItemValidator = v.object({
     v.literal("priority"),
     v.literal("task"),
     v.literal("habit"),
+    v.literal("workout"),
     v.literal("buffer"),
     v.literal("review"),
     v.literal("milestone"),
@@ -270,6 +275,7 @@ export const addPlanItem = mutation({
       v.literal("priority"),
       v.literal("task"),
       v.literal("habit"),
+      v.literal("workout"),
       v.literal("buffer"),
       v.literal("review"),
       v.literal("milestone"),
@@ -507,6 +513,27 @@ export const setPlanItemStatus = mutation({
         status: args.status === "done" ? "done" : args.status === "dropped" ? "dropped" : "pending",
         updatedAt: Date.now(),
       });
+    }
+
+    if (item.itemType === "workout" && args.status === "done") {
+      const existingWorkout = await ctx.db
+        .query("workouts")
+        .withIndex("by_userId_and_linkedPlanItemId", (q) => q.eq("userId", userId).eq("linkedPlanItemId", item._id))
+        .first();
+
+      if (!existingWorkout) {
+        await ctx.db.insert("workouts", {
+          userId,
+          workoutType: inferWorkoutTypeFromTitle(item.title),
+          durationMinutes: getPlanItemDurationMinutes(item),
+          intensity: inferWorkoutIntensityFromTitle(item.title),
+          caloriesBurned: undefined,
+          date: item.date,
+          linkedPlanItemId: item._id,
+          notes: mergeNotes(item.notes, "Completed from planner workout block."),
+          createdAt: Date.now(),
+        });
+      }
     }
 
     return await ctx.db.get(item._id);
@@ -989,6 +1016,27 @@ function appendUnique(items: string[], nextItems: string[]) {
 
 function mergeNotes(current: string | undefined, next: string) {
   return current ? `${current} ${next}` : next;
+}
+
+function getPlanItemDurationMinutes(item: Pick<Doc<"planItems">, "startTime" | "endTime" | "title">) {
+  if (item.startTime && item.endTime) {
+    const start = timeToMinutes(item.startTime);
+    const end = timeToMinutes(item.endTime);
+    if (end > start) {
+      return Math.max(10, Math.min(240, end - start));
+    }
+  }
+
+  const inferredIntensity = inferWorkoutIntensityFromTitle(item.title);
+  if (inferredIntensity === "high") return 50;
+  if (inferredIntensity === "medium") return 35;
+  return 20;
+}
+
+function timeToMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return 0;
+  return hours * 60 + minutes;
 }
 
 function uniqueStrings(values: string[]) {

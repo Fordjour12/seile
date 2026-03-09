@@ -38,6 +38,7 @@ export const planItemTypeValidator = v.union(
   v.literal("priority"),
   v.literal("task"),
   v.literal("habit"),
+  v.literal("workout"),
   v.literal("buffer"),
   v.literal("review"),
   v.literal("milestone"),

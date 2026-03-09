@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { components } from "../_generated/api";
+import { derivePlannerHealthContext } from "../lib/health";
 import { getWeekWindow, isoDateFromTimestamp } from "../lib/planner";
 import { requireUserId } from "../lib/identity";
 import { env } from "@seile/env/backend";
@@ -286,7 +287,8 @@ function priorityScore(priority: "low" | "medium" | "high") {
 
 async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: string) {
   const week = getWeekWindow(weekStart ?? isoDateFromTimestamp(Date.now()));
-  const [profile, agentState, goals, tasks, habits, plans, reviews] = await Promise.all([
+  const [profile, agentState, goals, tasks, habits, plans, reviews, healthGoals, healthHabits, workouts, metrics, energyLogs] =
+    await Promise.all([
     ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
     ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
     ctx.db
@@ -303,6 +305,17 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
       .collect(),
     ctx.db.query("plans").withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week")).collect(),
     ctx.db.query("planningReviews").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
+    ctx.db
+      .query("healthGoals")
+      .withIndex("by_userId_and_status", (q) => q.eq("userId", userId).eq("status", "active"))
+      .collect(),
+    ctx.db
+      .query("healthHabits")
+      .withIndex("by_userId_and_active", (q) => q.eq("userId", userId).eq("active", true))
+      .collect(),
+    ctx.db.query("workouts").withIndex("by_userId_and_date", (q) => q.eq("userId", userId)).collect(),
+    ctx.db.query("healthMetrics").withIndex("by_userId_and_date", (q) => q.eq("userId", userId)).collect(),
+    ctx.db.query("energyLogs").withIndex("by_userId_and_timestamp", (q) => q.eq("userId", userId)).collect(),
   ]);
 
   const currentPlan =
@@ -314,6 +327,14 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
     : [];
   const latestReview =
     reviews.sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
+  const health = derivePlannerHealthContext({
+    goals: healthGoals,
+    habits: healthHabits,
+    workouts,
+    metrics,
+    energyLogs,
+    plannerEnergyPattern: profile?.energyPattern,
+  });
 
   return {
     week,
@@ -325,6 +346,7 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
     currentPlan,
     currentPlanItems,
     latestReview,
+    health,
   };
 }
 
