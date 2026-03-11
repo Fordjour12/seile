@@ -1,12 +1,5 @@
 import { Tabs } from "expo-router";
-import {
-  PiggyBank,
-  Calendar,
-  Erase,
-  HospitalCircle,
-  HealthShield,
-  HomeTable,
-} from "iconoir-react-native";
+import { PiggyBank, Calendar, Erase, HealthShield, HomeTable } from "iconoir-react-native";
 
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
@@ -86,6 +79,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="faith"
+        options={{
+          title: "Faith",
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="heart" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="scheduler"
         options={{
           title: "Scheduler",
@@ -95,13 +96,6 @@ export default function TabLayout() {
               <Calendar />
             </TabBarIcon2>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="auth-smoke"
-        options={{
-          title: "Session",
-          tabBarIcon: ({ color }) => <TabBarIcon name="shield" color={color} />,
         }}
       />
       <Tabs.Screen
