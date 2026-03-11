@@ -12,6 +12,16 @@ import {
   healthWorkoutTypeValidator,
 } from "../schema";
 
+const VALID_WEEKDAYS = new Set([
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+]);
+
 export const createWorkout = mutation({
   args: {
     type: healthWorkoutTypeValidator,
@@ -63,6 +73,7 @@ export const createHealthHabit = mutation({
     const userId = await requireUserId(ctx);
     const name = normalizeRequiredString(args.name, "name");
     const unit = normalizeRequiredString(args.unit, "unit");
+    const scheduleDays = normalizeScheduleDays(args.scheduleDays);
     const now = Date.now();
     const id = await ctx.db.insert("healthHabits", {
       userId,
@@ -72,7 +83,7 @@ export const createHealthHabit = mutation({
       unit,
       difficulty: args.difficulty,
       active: true,
-      scheduleDays: args.scheduleDays?.map((value) => value.trim().toLowerCase()).filter(Boolean),
+      scheduleDays,
       createdAt: now,
       updatedAt: now,
     });
@@ -200,11 +211,7 @@ export const logEnergy = mutation({
   },
 });
 
-async function requireOwnedPlanItem(
-  ctx: MutationCtx,
-  userId: string,
-  id: Id<"planItems">,
-) {
+async function requireOwnedPlanItem(ctx: MutationCtx, userId: string, id: Id<"planItems">) {
   const item = await ctx.db.get(id);
   if (!item || item.userId !== userId) {
     throw new ConvexError("Plan item not found");
@@ -225,32 +232,52 @@ function normalizeDateKey(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
     throw new ConvexError("Validation: date must use YYYY-MM-DD");
   }
+
+  const [year, month, day] = normalized.split("-").map(Number);
+  const candidate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+  if (
+    candidate.getUTCFullYear() !== year ||
+    candidate.getUTCMonth() !== month - 1 ||
+    candidate.getUTCDate() !== day
+  ) {
+    throw new ConvexError("Validation: date must use YYYY-MM-DD");
+  }
+
   return normalized;
 }
 
 function normalizePositiveInt(value: number, fieldName: string, max: number) {
-  if (!Number.isFinite(value)) {
-    throw new ConvexError(`Validation: ${fieldName} must be a valid number`);
+  if (!Number.isFinite(value) || !Number.isInteger(value) || value < 1 || value > max) {
+    throw new ConvexError(`Validation: ${fieldName} must be an integer between 1 and ${max}`);
   }
-  return Math.max(1, Math.min(max, Math.round(value)));
+  return value;
 }
 
 function normalizePositiveNumber(value: number, fieldName: string, max: number) {
-  if (!Number.isFinite(value)) {
-    throw new ConvexError(`Validation: ${fieldName} must be a valid number`);
+  if (!Number.isFinite(value) || value <= 0 || value > max) {
+    throw new ConvexError(`Validation: ${fieldName} must be greater than zero and at most ${max}`);
   }
-  if (value <= 0) {
-    throw new ConvexError(`Validation: ${fieldName} must be greater than zero`);
-  }
-  return Math.min(max, value);
+  return value;
 }
 
 function normalizeOptionalNumber(value: number | undefined, min: number, max: number) {
   if (value === undefined) return undefined;
-  if (!Number.isFinite(value)) {
-    throw new ConvexError("Validation: numeric input must be valid");
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new ConvexError(`Validation: numeric input must be between ${min} and ${max}`);
   }
-  return Math.max(min, Math.min(max, value));
+  return value;
+}
+
+function normalizeScheduleDays(values: string[] | undefined) {
+  if (!values) return undefined;
+
+  const normalized = values.map((value) => value.trim().toLowerCase()).filter(Boolean);
+  const invalid = normalized.filter((value) => !VALID_WEEKDAYS.has(value));
+  if (invalid.length > 0) {
+    throw new ConvexError(`Validation: invalid scheduleDays values: ${invalid.join(", ")}`);
+  }
+
+  return Array.from(new Set(normalized));
 }
 
 function optionalTrim(value: string | undefined) {

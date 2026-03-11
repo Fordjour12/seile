@@ -78,7 +78,7 @@ export const listAgentEnabledStates = internalQuery({
   handler: async (ctx) => {
     return await ctx.db
       .query("plannerAgentState")
-      .withIndex("by_agentEnabled_userId", (q) => q.eq("agentEnabled", true))
+      .withIndex("by_agentEnabled", (q) => q.eq("agentEnabled", true))
       .collect();
   },
 });
@@ -287,7 +287,8 @@ function priorityScore(priority: "low" | "medium" | "high") {
 
 async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: string) {
   const week = getWeekWindow(weekStart ?? isoDateFromTimestamp(Date.now()));
-  const [profile, agentState, goals, tasks, habits, plans, reviews, healthGoals, healthHabits, workouts, metrics, energyLogs] =
+  const recentHealthWindowStart = addDays(week.endDate, -20);
+  const [profile, agentState, goals, tasks, habits, plans, latestReview, healthGoals, healthHabits, workouts, metrics, energyLogs] =
     await Promise.all([
     ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
     ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
@@ -303,8 +304,17 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
       .query("planningHabits")
       .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
       .collect(),
-    ctx.db.query("plans").withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week")).collect(),
-    ctx.db.query("planningReviews").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
+    ctx.db
+      .query("plans")
+      .withIndex("by_userId_type_and_startDate", (q) =>
+        q.eq("userId", userId).eq("type", "week").gte("startDate", week.startDate),
+      )
+      .collect(),
+    ctx.db
+      .query("planningReviews")
+      .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+      .order("desc")
+      .first(),
     ctx.db
       .query("healthGoals")
       .withIndex("by_userId_and_status", (q) => q.eq("userId", userId).eq("status", "active"))
@@ -313,9 +323,24 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
       .query("healthHabits")
       .withIndex("by_userId_and_active", (q) => q.eq("userId", userId).eq("active", true))
       .collect(),
-    ctx.db.query("workouts").withIndex("by_userId_and_date", (q) => q.eq("userId", userId)).collect(),
-    ctx.db.query("healthMetrics").withIndex("by_userId_and_date", (q) => q.eq("userId", userId)).collect(),
-    ctx.db.query("energyLogs").withIndex("by_userId_and_timestamp", (q) => q.eq("userId", userId)).collect(),
+    ctx.db
+      .query("workouts")
+      .withIndex("by_userId_and_date", (q) =>
+        q.eq("userId", userId).gte("date", recentHealthWindowStart),
+      )
+      .collect(),
+    ctx.db
+      .query("healthMetrics")
+      .withIndex("by_userId_and_date", (q) =>
+        q.eq("userId", userId).gte("date", recentHealthWindowStart),
+      )
+      .collect(),
+    ctx.db
+      .query("energyLogs")
+      .withIndex("by_userId_and_timestamp", (q) =>
+        q.eq("userId", userId).gte("timestamp", Date.now() - 1000 * 60 * 60 * 24 * 21),
+      )
+      .collect(),
   ]);
 
   const currentPlan =
@@ -325,14 +350,13 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
   const currentPlanItems = currentPlan
     ? await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", currentPlan._id)).collect()
     : [];
-  const latestReview =
-    reviews.sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
   const health = derivePlannerHealthContext({
     goals: healthGoals,
     habits: healthHabits,
     workouts,
     metrics,
     energyLogs,
+    timezone: profile?.timezone,
     plannerEnergyPattern: profile?.energyPattern,
   });
 

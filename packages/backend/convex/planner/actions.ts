@@ -190,12 +190,14 @@ export const runWeeklyReviewCycle = internalAction({
     let reviewedCount = 0;
 
     for (const state of states) {
+      let targetPlanId: string | undefined;
       try {
         const targetPlan = await ctx.runQuery(
           internalApi["planner/queries"].getLatestPastWeeklyPlanWithoutReview,
           { userId: state.userId },
         );
         if (!targetPlan) continue;
+        targetPlanId = targetPlan._id;
 
         await reviewWeeklyPlanForUser(ctx, {
           userId: state.userId,
@@ -203,9 +205,10 @@ export const runWeeklyReviewCycle = internalAction({
         });
         reviewedCount += 1;
       } catch (error) {
-        console.error("Planner weekly review cycle failed", {
+        console.error("planner-weekly-review failed", {
           userId: state.userId,
-          error,
+          planId: targetPlanId,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -236,9 +239,9 @@ export const runWeeklyPlanningCycle = internalAction({
           createdCount += 1;
         }
       } catch (error) {
-        console.error("Planner weekly planning cycle failed", {
+        console.error("planner-weekly-plan failed", {
           userId: state.userId,
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -288,7 +291,7 @@ export const runMidweekAdjustmentCycle = internalAction({
                 title: context.currentPlan.title,
                 warnings: context.currentPlan.warnings,
                 burnoutRiskScore: context.currentPlan.burnoutRiskScore,
-                healthSignals: context.health?.signals,
+                health: summarizeHealthForPrompt(context.health, context.profile),
                 pendingTasks: pendingTasks.map((item: { title: string; date: string; priority: string }) => ({
                   title: item.title,
                   date: item.date,
@@ -314,9 +317,9 @@ export const runMidweekAdjustmentCycle = internalAction({
           }
         }
       } catch (error) {
-        console.error("Planner midweek adjustment cycle failed", {
+        console.error("planner-midweek-adjustment failed", {
           userId: state.userId,
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -343,10 +346,10 @@ export const runBurnoutMonitoringCycle = internalAction({
           latestReview: context.latestReview,
           agentState: context.agentState,
           openTasksCount: context.openTasks.length,
-          missedHabitsCount: context.latestReview?.missedHabitsCount ?? 0,
+          missedHabitsCount: context.latestReview?.missedHabitsCount ?? context.latestReview?.misses.length ?? 0,
           mode: "discovery",
-        health: context.health,
-      });
+          health: context.health,
+        });
 
         const threadId = await createPlannerThread(ctx, {
           userId: state.userId,
@@ -366,7 +369,7 @@ export const runBurnoutMonitoringCycle = internalAction({
                 latestReview: context.latestReview,
                 openTasks: context.openTasks.length,
                 currentPlanWarnings: context.currentPlan?.warnings ?? [],
-                healthSignals: context.health?.signals,
+                health: summarizeHealthForPrompt(context.health, context.profile),
               })}`,
             ].join("\n\n"),
             schema: burnoutAssessmentSchema,
@@ -381,9 +384,9 @@ export const runBurnoutMonitoringCycle = internalAction({
         });
         updatedCount += 1;
       } catch (error) {
-        console.error("Planner burnout monitoring cycle failed", {
+        console.error("planner-burnout-monitor failed", {
           userId: state.userId,
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -458,54 +461,7 @@ async function draftWeeklyPlanForUser(
             cadence: habit.cadence,
             targetValue: habit.targetValue,
           })),
-          health: context.health
-            ? {
-                goals: context.health.activeGoals.map(
-                  (goal: {
-                    title: string;
-                    goalType: string;
-                    targetValue: number;
-                    unit: string;
-                    deadline?: string;
-                  }) => ({
-                    title: goal.title,
-                    goalType: goal.goalType,
-                    targetValue: goal.targetValue,
-                    unit: goal.unit,
-                    deadline: goal.deadline,
-                  }),
-                ),
-                habits: context.health.activeHabits.map(
-                  (habit: {
-                    name: string;
-                    cadence: string;
-                    targetValue: number;
-                    unit: string;
-                    difficulty: string;
-                  }) => ({
-                    name: habit.name,
-                    cadence: habit.cadence,
-                    targetValue: habit.targetValue,
-                    unit: habit.unit,
-                    difficulty: habit.difficulty,
-                  }),
-                ),
-                recentWorkouts: context.health.recentWorkouts.map(
-                  (workout: {
-                    workoutType: string;
-                    date: string;
-                    durationMinutes: number;
-                    intensity: string;
-                  }) => ({
-                    workoutType: workout.workoutType,
-                    date: workout.date,
-                    durationMinutes: workout.durationMinutes,
-                    intensity: workout.intensity,
-                  }),
-                ),
-                signals: context.health.signals,
-              }
-            : null,
+          health: summarizeHealthForPrompt(context.health, context.profile),
           latestReview: context.latestReview,
         })}`,
         `Baseline draft: ${JSON.stringify(baselineDraft)}`,
@@ -546,6 +502,9 @@ async function reviewWeeklyPlanForUser(
     userId: input.userId,
     id: input.planId,
   });
+  if (detail.plan.type !== "week") {
+    throw new Error("Weekly review is only supported for weekly plans.");
+  }
   const plannerContext = await ctx.runQuery(
     internalApi["planner/queries"].getPlannerAgentContext,
     { userId: input.userId, weekStart: detail.plan.startDate },
@@ -633,6 +592,9 @@ async function replanWeeklyPlanForUser(
     userId: input.userId,
     id: input.planId,
   });
+  if (detail.plan.type !== "week") {
+    throw new Error("Replanning is only supported for weekly plans.");
+  }
 
   const threadId = await createPlannerThread(ctx, {
     userId: input.userId,
@@ -928,4 +890,33 @@ function buildPlannerChatReplyPrompt(input: {
     "If a plan or review action was run, confirm what happened first, then give the user the most relevant next step.",
     "If no action was run, answer directly from the planner context.",
   ].join("\n\n");
+}
+
+function summarizeHealthForPrompt(
+  health:
+    | {
+        signals: {
+          capacityEstimate: string;
+          currentEnergyLevel: string;
+          recoveryRecommended: boolean;
+          recoveryScore: number;
+          fatigueScore: number;
+          burnoutSignals: string[];
+        };
+      }
+    | null
+    | undefined,
+  profile?: { restDays?: string[] } | null,
+) {
+  if (!health) return null;
+
+  return {
+    capacityEstimate: health.signals.capacityEstimate,
+    currentEnergyLevel: health.signals.currentEnergyLevel,
+    recoveryRecommended: health.signals.recoveryRecommended,
+    recoveryScore: health.signals.recoveryScore,
+    fatigueScore: health.signals.fatigueScore,
+    upcomingRestDays: profile?.restDays ?? [],
+    explicitRestrictions: health.signals.burnoutSignals,
+  };
 }

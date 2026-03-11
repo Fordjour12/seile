@@ -9,7 +9,7 @@ import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 const healthApi = api as unknown as Record<string, Record<string, any>>;
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = formatLocalDateKey(new Date());
 
 const LEVEL_OPTIONS = ["low", "medium", "high"] as const;
 const WORKOUT_TYPES = [
@@ -24,7 +24,15 @@ const WORKOUT_TYPES = [
 ] as const;
 const CADENCE_OPTIONS = ["daily", "weekdays", "weekly", "custom"] as const;
 const DIFFICULTY_OPTIONS = ["low", "medium", "high"] as const;
-const GOAL_TYPE_OPTIONS = ["exercise_frequency", "distance", "weight", "sleep", "steps", "recovery", "custom"] as const;
+const GOAL_TYPE_OPTIONS = [
+  "exercise_frequency",
+  "distance",
+  "weight",
+  "sleep",
+  "steps",
+  "recovery",
+  "custom",
+] as const;
 
 export function HealthDashboardScreen() {
   const dashboard = useQuery(healthApi["health/queries"].getHealthDashboard, {});
@@ -42,17 +50,20 @@ export function HealthDashboardScreen() {
 
   const [workoutType, setWorkoutType] = useState<(typeof WORKOUT_TYPES)[number]>("walking");
   const [workoutDuration, setWorkoutDuration] = useState("30");
-  const [workoutIntensity, setWorkoutIntensity] = useState<(typeof LEVEL_OPTIONS)[number]>("medium");
+  const [workoutIntensity, setWorkoutIntensity] =
+    useState<(typeof LEVEL_OPTIONS)[number]>("medium");
   const [workoutDate, setWorkoutDate] = useState(TODAY);
 
   const [habitName, setHabitName] = useState("Drink water");
   const [habitCadence, setHabitCadence] = useState<(typeof CADENCE_OPTIONS)[number]>("daily");
   const [habitTargetValue, setHabitTargetValue] = useState("8");
   const [habitUnit, setHabitUnit] = useState("glasses");
-  const [habitDifficulty, setHabitDifficulty] = useState<(typeof DIFFICULTY_OPTIONS)[number]>("low");
+  const [habitDifficulty, setHabitDifficulty] =
+    useState<(typeof DIFFICULTY_OPTIONS)[number]>("low");
 
   const [goalTitle, setGoalTitle] = useState("Exercise 3x this week");
-  const [goalType, setGoalType] = useState<(typeof GOAL_TYPE_OPTIONS)[number]>("exercise_frequency");
+  const [goalType, setGoalType] =
+    useState<(typeof GOAL_TYPE_OPTIONS)[number]>("exercise_frequency");
   const [goalTargetValue, setGoalTargetValue] = useState("3");
   const [goalUnit, setGoalUnit] = useState("sessions");
   const [goalDeadline, setGoalDeadline] = useState(TODAY);
@@ -60,7 +71,8 @@ export function HealthDashboardScreen() {
   const [metricsDate, setMetricsDate] = useState(TODAY);
   const [sleepHours, setSleepHours] = useState("7.5");
   const [steps, setSteps] = useState("8000");
-  const [metricsEnergyLevel, setMetricsEnergyLevel] = useState<(typeof LEVEL_OPTIONS)[number]>("medium");
+  const [metricsEnergyLevel, setMetricsEnergyLevel] =
+    useState<(typeof LEVEL_OPTIONS)[number]>("medium");
 
   const [energyLevel, setEnergyLevel] = useState<(typeof LEVEL_OPTIONS)[number]>("medium");
   const [stressLevel, setStressLevel] = useState<(typeof LEVEL_OPTIONS)[number]>("medium");
@@ -130,19 +142,34 @@ export function HealthDashboardScreen() {
           <Text variant="small">Energy</Text>
           <View style={styles.chipRow}>
             {LEVEL_OPTIONS.map((value) => (
-              <Chip key={`energy-${value}`} label={capitalize(value)} selected={energyLevel === value} onSelect={() => setEnergyLevel(value)} />
+              <Chip
+                key={`energy-${value}`}
+                label={capitalize(value)}
+                selected={energyLevel === value}
+                onSelect={() => setEnergyLevel(value)}
+              />
             ))}
           </View>
           <Text variant="small">Stress</Text>
           <View style={styles.chipRow}>
             {LEVEL_OPTIONS.map((value) => (
-              <Chip key={`stress-${value}`} label={capitalize(value)} selected={stressLevel === value} onSelect={() => setStressLevel(value)} />
+              <Chip
+                key={`stress-${value}`}
+                label={capitalize(value)}
+                selected={stressLevel === value}
+                onSelect={() => setStressLevel(value)}
+              />
             ))}
           </View>
           <Text variant="small">Fatigue</Text>
           <View style={styles.chipRow}>
             {LEVEL_OPTIONS.map((value) => (
-              <Chip key={`fatigue-${value}`} label={capitalize(value)} selected={fatigueLevel === value} onSelect={() => setFatigueLevel(value)} />
+              <Chip
+                key={`fatigue-${value}`}
+                label={capitalize(value)}
+                selected={fatigueLevel === value}
+                onSelect={() => setFatigueLevel(value)}
+              />
             ))}
           </View>
           <Button
@@ -167,8 +194,18 @@ export function HealthDashboardScreen() {
         <Card>
           <SectionHeader title="Health Metrics" subtitle="SLEEP, STEPS, READINESS" />
           <Input value={metricsDate} onChangeText={setMetricsDate} placeholder="YYYY-MM-DD" />
-          <Input value={sleepHours} onChangeText={setSleepHours} keyboardType="decimal-pad" placeholder="Sleep hours" />
-          <Input value={steps} onChangeText={setSteps} keyboardType="number-pad" placeholder="Steps" />
+          <Input
+            value={sleepHours}
+            onChangeText={setSleepHours}
+            keyboardType="decimal-pad"
+            placeholder="Sleep hours"
+          />
+          <Input
+            value={steps}
+            onChangeText={setSteps}
+            keyboardType="number-pad"
+            placeholder="Steps"
+          />
           <Text variant="small">Energy level</Text>
           <View style={styles.chipRow}>
             {LEVEL_OPTIONS.map((value) => (
@@ -203,11 +240,21 @@ export function HealthDashboardScreen() {
         <Card variant="outline">
           <SectionHeader title="Workout Log" subtitle="PLANNER-COMPATIBLE" />
           <Input value={workoutDate} onChangeText={setWorkoutDate} placeholder="YYYY-MM-DD" />
-          <Input value={workoutDuration} onChangeText={setWorkoutDuration} keyboardType="number-pad" placeholder="Duration in minutes" />
+          <Input
+            value={workoutDuration}
+            onChangeText={setWorkoutDuration}
+            keyboardType="number-pad"
+            placeholder="Duration in minutes"
+          />
           <Text variant="small">Workout type</Text>
           <View style={styles.chipRow}>
             {WORKOUT_TYPES.map((value) => (
-              <Chip key={value} label={capitalize(value)} selected={workoutType === value} onSelect={() => setWorkoutType(value)} />
+              <Chip
+                key={value}
+                label={capitalize(value)}
+                selected={workoutType === value}
+                onSelect={() => setWorkoutType(value)}
+              />
             ))}
           </View>
           <Text variant="small">Intensity</Text>
@@ -239,33 +286,45 @@ export function HealthDashboardScreen() {
             }
           />
           <View style={styles.listColumn}>
-            {(dashboard?.recentWorkouts ?? []).map((workout: {
-              _id: string;
-              workoutType: string;
-              durationMinutes: number;
-              intensity: string;
-              date: string;
-            }) => (
-              <ListItem
-                key={workout._id}
-                title={capitalize(workout.workoutType)}
-                subtitle={`${workout.durationMinutes} min · ${capitalize(workout.intensity)} intensity`}
-                meta={formatShortDate(workout.date)}
-              />
-            ))}
+            {(dashboard?.recentWorkouts ?? []).map(
+              (workout: {
+                _id: string;
+                workoutType: string;
+                durationMinutes: number;
+                intensity: string;
+                date: string;
+              }) => (
+                <ListItem
+                  key={workout._id}
+                  title={capitalize(workout.workoutType)}
+                  subtitle={`${workout.durationMinutes} min · ${capitalize(workout.intensity)} intensity`}
+                  meta={formatShortDate(workout.date)}
+                />
+              ),
+            )}
           </View>
         </Card>
 
         <Card>
           <SectionHeader title="Health Goals" subtitle="MEASURABLE OUTCOMES" />
           <Input value={goalTitle} onChangeText={setGoalTitle} placeholder="Goal title" />
-          <Input value={goalTargetValue} onChangeText={setGoalTargetValue} keyboardType="decimal-pad" placeholder="Target value" />
+          <Input
+            value={goalTargetValue}
+            onChangeText={setGoalTargetValue}
+            keyboardType="decimal-pad"
+            placeholder="Target value"
+          />
           <Input value={goalUnit} onChangeText={setGoalUnit} placeholder="Unit" />
           <Input value={goalDeadline} onChangeText={setGoalDeadline} placeholder="YYYY-MM-DD" />
           <Text variant="small">Goal type</Text>
           <View style={styles.chipRow}>
             {GOAL_TYPE_OPTIONS.map((value) => (
-              <Chip key={value} label={humanizeKey(value)} selected={goalType === value} onSelect={() => setGoalType(value)} />
+              <Chip
+                key={value}
+                label={humanizeKey(value)}
+                selected={goalType === value}
+                onSelect={() => setGoalType(value)}
+              />
             ))}
           </View>
           <Button
@@ -287,37 +346,49 @@ export function HealthDashboardScreen() {
             }
           />
           <View style={styles.listColumn}>
-            {(dashboard?.goals ?? []).map((goal: {
-              _id: string;
-              title: string;
-              goalType: string;
-              targetValue: number;
-              unit: string;
-              status: string;
-            }) => (
-              <ListItem
-                key={goal._id}
-                title={goal.title}
-                subtitle={`${humanizeKey(goal.goalType)} · ${goal.targetValue} ${goal.unit}`}
-                right={
-                  <Badge color={goal.status === "active" ? "success" : "secondary"}>
-                    {capitalize(goal.status)}
-                  </Badge>
-                }
-              />
-            ))}
+            {(dashboard?.goals ?? []).map(
+              (goal: {
+                _id: string;
+                title: string;
+                goalType: string;
+                targetValue: number;
+                unit: string;
+                status: string;
+              }) => (
+                <ListItem
+                  key={goal._id}
+                  title={goal.title}
+                  subtitle={`${humanizeKey(goal.goalType)} · ${goal.targetValue} ${goal.unit}`}
+                  right={
+                    <Badge color={goal.status === "active" ? "success" : "secondary"}>
+                      {capitalize(goal.status)}
+                    </Badge>
+                  }
+                />
+              ),
+            )}
           </View>
         </Card>
 
         <Card variant="outline">
           <SectionHeader title="Health Habits" subtitle="CONSISTENCY LAYER" />
           <Input value={habitName} onChangeText={setHabitName} placeholder="Habit name" />
-          <Input value={habitTargetValue} onChangeText={setHabitTargetValue} keyboardType="number-pad" placeholder="Target value" />
+          <Input
+            value={habitTargetValue}
+            onChangeText={setHabitTargetValue}
+            keyboardType="number-pad"
+            placeholder="Target value"
+          />
           <Input value={habitUnit} onChangeText={setHabitUnit} placeholder="Unit" />
           <Text variant="small">Cadence</Text>
           <View style={styles.chipRow}>
             {CADENCE_OPTIONS.map((value) => (
-              <Chip key={value} label={capitalize(value)} selected={habitCadence === value} onSelect={() => setHabitCadence(value)} />
+              <Chip
+                key={value}
+                label={capitalize(value)}
+                selected={habitCadence === value}
+                onSelect={() => setHabitCadence(value)}
+              />
             ))}
           </View>
           <Text variant="small">Difficulty</Text>
@@ -351,56 +422,57 @@ export function HealthDashboardScreen() {
             }
           />
           <View style={styles.listColumn}>
-            {(dashboard?.habits ?? []).map((habit: {
-              _id: string;
-              name: string;
-              cadence: string;
-              targetValue: number;
-              unit: string;
-              difficulty: string;
-            }) => (
-              <ListItem
-                key={habit._id}
-                title={habit.name}
-                subtitle={`${capitalize(habit.cadence)} · ${habit.targetValue} ${habit.unit}`}
-                right={<Badge color={habit.difficulty === "high" ? "warning" : "secondary"}>{capitalize(habit.difficulty)}</Badge>}
-              />
-            ))}
+            {(dashboard?.habits ?? []).map(
+              (habit: {
+                _id: string;
+                name: string;
+                cadence: string;
+                targetValue: number;
+                unit: string;
+                difficulty: string;
+              }) => (
+                <ListItem
+                  key={habit._id}
+                  title={habit.name}
+                  subtitle={`${capitalize(habit.cadence)} · ${habit.targetValue} ${habit.unit}`}
+                  right={
+                    <Badge color={habit.difficulty === "high" ? "warning" : "secondary"}>
+                      {capitalize(habit.difficulty)}
+                    </Badge>
+                  }
+                />
+              ),
+            )}
           </View>
         </Card>
 
         <Card>
           <SectionHeader title="Energy Models" subtitle="PLANNER INPUTS" />
           <View style={styles.modelSection}>
-            {signals?.dailyEnergyModel.map((zone: {
-              zone: string;
-              label: string;
-              energyLevel: string;
-              score: number;
-            }) => (
-              <ListItem
-                key={zone.zone}
-                compact
-                title={zone.label}
-                subtitle={`${capitalize(zone.energyLevel)} energy`}
-                meta={`${zone.score}`}
-              />
-            ))}
+            {signals?.dailyEnergyModel.map(
+              (zone: { zone: string; label: string; energyLevel: string; score: number }) => (
+                <ListItem
+                  key={zone.zone}
+                  compact
+                  title={zone.label}
+                  subtitle={`${capitalize(zone.energyLevel)} energy`}
+                  meta={`${zone.score}`}
+                />
+              ),
+            )}
           </View>
           <View style={styles.modelSection}>
-            {signals?.weeklyEnergyModel.map((day: {
-              day: string;
-              energyLevel: string;
-              score: number;
-            }) => (
-              <ListItem
-                key={day.day}
-                compact
-                title={capitalize(day.day)}
-                subtitle={`${capitalize(day.energyLevel)} energy`}
-                meta={`${day.score}`}
-              />
-            ))}
+            {signals?.weeklyEnergyModel.map(
+              (day: { day: string; energyLevel: string; score: number }) => (
+                <ListItem
+                  key={day.day}
+                  compact
+                  title={capitalize(day.day)}
+                  subtitle={`${capitalize(day.energyLevel)} energy`}
+                  meta={`${day.score}`}
+                />
+              ),
+            )}
           </View>
           {signals?.burnoutSignals.length ? (
             <View style={styles.signalList}>
@@ -429,10 +501,18 @@ function humanizeKey(value: string) {
 }
 
 function formatShortDate(value: string) {
-  return new Date(`${value}T00:00:00.000Z`).toLocaleDateString("en-US", {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });
+}
+
+function formatLocalDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatError(error: unknown) {

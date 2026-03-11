@@ -296,8 +296,19 @@ export const addPlanItem = mutation({
     const plan = await requireOwnedPlan(ctx, userId, args.planId);
     validateItemDateWithinPlan(plan, args.date);
 
-    if (args.linkedTaskId) await requireOwnedTask(ctx, userId, args.linkedTaskId);
-    if (args.linkedHabitId) await requireOwnedHabit(ctx, userId, args.linkedHabitId);
+    if (args.linkedTaskId && args.itemType !== "task") {
+      throw new ConvexError("Validation: linkedTaskId can only be used with task plan items");
+    }
+    if (args.linkedHabitId && args.itemType !== "habit") {
+      throw new ConvexError("Validation: linkedHabitId can only be used with habit plan items");
+    }
+
+    if (args.linkedTaskId && args.itemType === "task") {
+      await requireOwnedTask(ctx, userId, args.linkedTaskId);
+    }
+    if (args.linkedHabitId && args.itemType === "habit") {
+      await requireOwnedHabit(ctx, userId, args.linkedHabitId);
+    }
 
     const now = Date.now();
     const id = await ctx.db.insert("planItems", {
@@ -503,6 +514,16 @@ export const setPlanItemStatus = mutation({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     const item = await requireOwnedPlanItem(ctx, userId, args.itemId);
+    const existingWorkout =
+      item.itemType === "workout"
+        ? await ctx.db
+            .query("workouts")
+            .withIndex("by_userId_and_linkedPlanItemId", (q) =>
+              q.eq("userId", userId).eq("linkedPlanItemId", item._id),
+            )
+            .first()
+        : null;
+
     await ctx.db.patch(item._id, {
       status: args.status,
       updatedAt: Date.now(),
@@ -516,11 +537,6 @@ export const setPlanItemStatus = mutation({
     }
 
     if (item.itemType === "workout" && args.status === "done") {
-      const existingWorkout = await ctx.db
-        .query("workouts")
-        .withIndex("by_userId_and_linkedPlanItemId", (q) => q.eq("userId", userId).eq("linkedPlanItemId", item._id))
-        .first();
-
       if (!existingWorkout) {
         await ctx.db.insert("workouts", {
           userId,
@@ -534,6 +550,8 @@ export const setPlanItemStatus = mutation({
           createdAt: Date.now(),
         });
       }
+    } else if (existingWorkout) {
+      await ctx.db.delete(existingWorkout._id);
     }
 
     return await ctx.db.get(item._id);
@@ -577,6 +595,9 @@ export const saveAgentReview = internalMutation({
   },
   handler: async (ctx, args) => {
     const plan = await requireOwnedPlan(ctx, args.userId, args.planId);
+    if (plan.type !== "week") {
+      throw new ConvexError("Validation: only weekly plans can be saved as weekly reviews");
+    }
     const existing = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
     const now = Date.now();
 
@@ -880,6 +901,9 @@ async function createWeeklyReviewForPlan(
   },
 ) {
   const plan = await requireOwnedPlan(ctx, input.userId, input.planId);
+  if (plan.type !== "week") {
+    throw new ConvexError("Validation: only weekly plans can be reviewed");
+  }
   const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
   const profile = await ensureProfile(ctx, input.userId);
   const summary = buildReviewSummary(
@@ -1121,10 +1145,15 @@ async function performReplan(
       });
       droppedCount += 1;
       if (item.linkedTaskId) {
-        await ctx.db.patch(item.linkedTaskId, {
-          status: "dropped",
-          updatedAt: Date.now(),
-        });
+        const linkedTask = await ctx.db.get(item.linkedTaskId);
+        if (linkedTask) {
+          const { dueDate: _dueDate, ...taskWithoutDueDate } = linkedTask;
+          await ctx.db.replace(item.linkedTaskId, {
+            ...taskWithoutDueDate,
+            status: "dropped",
+            updatedAt: Date.now(),
+          });
+        }
       }
       continue;
     }
@@ -1141,6 +1170,7 @@ async function performReplan(
     });
     if (item.linkedTaskId && nextDate !== item.date) {
       await ctx.db.patch(item.linkedTaskId, {
+        status: "pending",
         dueDate: nextDate,
         updatedAt: Date.now(),
       });

@@ -224,7 +224,8 @@ export const plannerAgentStateTable = defineTable({
   updatedAt: v.number(),
 })
   .index("by_userId", ["userId"])
-  .index("by_agentEnabled_userId", ["agentEnabled", "userId"]);
+  .index("by_agentEnabled_userId", ["agentEnabled", "userId"])
+  .index("by_agentEnabled", ["agentEnabled"]);
 
 export const plannerChatCommandsTable = defineTable({
   userId: v.string(),

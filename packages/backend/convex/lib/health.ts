@@ -70,6 +70,7 @@ export function derivePlannerHealthContext(input: {
   workouts: Doc<"workouts">[];
   metrics: Doc<"healthMetrics">[];
   energyLogs: Doc<"energyLogs">[];
+  timezone?: string;
   plannerEnergyPattern?: "morning" | "midday" | "evening" | "mixed";
 }): PlannerHealthContext {
   const sortedGoals = [...input.goals].sort((left, right) => {
@@ -81,20 +82,30 @@ export function derivePlannerHealthContext(input: {
     return right.createdAt - left.createdAt;
   });
   const sortedHabits = [...input.habits].sort((left, right) => right.updatedAt - left.updatedAt);
-  const sortedWorkouts = [...input.workouts].sort((left, right) => right.date.localeCompare(left.date));
-  const sortedMetrics = [...input.metrics].sort((left, right) => right.date.localeCompare(left.date));
-  const sortedEnergyLogs = [...input.energyLogs].sort((left, right) => right.timestamp - left.timestamp);
+  const sortedWorkouts = [...input.workouts].sort((left, right) =>
+    right.date.localeCompare(left.date),
+  );
+  const sortedMetrics = [...input.metrics].sort((left, right) =>
+    right.date.localeCompare(left.date),
+  );
+  const sortedEnergyLogs = [...input.energyLogs].sort(
+    (left, right) => right.timestamp - left.timestamp,
+  );
+  const recentEnergyLogs = sortedEnergyLogs.filter(
+    (log) => log.timestamp >= Date.now() - 1000 * 60 * 60 * 24 * 21,
+  );
 
   return {
     activeGoals: sortedGoals.filter((goal) => goal.status === "active"),
     activeHabits: sortedHabits.filter((habit) => habit.active),
     recentWorkouts: sortedWorkouts.slice(0, 8),
     latestMetric: sortedMetrics[0] ?? null,
-    latestEnergyLog: sortedEnergyLogs[0] ?? null,
+    latestEnergyLog: recentEnergyLogs[0] ?? null,
     signals: deriveEnergySignals({
       workouts: sortedWorkouts,
       metrics: sortedMetrics,
       energyLogs: sortedEnergyLogs,
+      timezone: input.timezone,
       plannerEnergyPattern: input.plannerEnergyPattern,
     }),
   };
@@ -104,18 +115,23 @@ export function deriveEnergySignals(input: {
   workouts: Doc<"workouts">[];
   metrics: Doc<"healthMetrics">[];
   energyLogs: Doc<"energyLogs">[];
+  timezone?: string;
   plannerEnergyPattern?: "morning" | "midday" | "evening" | "mixed";
 }): DerivedEnergySignals {
-  const today = isoDateFromTimestamp(Date.now());
+  const timezone = input.timezone ?? "UTC";
+  const today = dateKeyFromTimestampInTimeZone(Date.now(), timezone);
   const weekStart = addDays(today, -6);
   const recentWorkouts = input.workouts.filter((workout) => workout.date >= weekStart);
   const recentMetrics = input.metrics.filter((metric) => metric.date >= weekStart);
-  const recentLogs = input.energyLogs.filter((log) => log.timestamp >= Date.now() - 1000 * 60 * 60 * 24 * 21);
+  const recentLogs = input.energyLogs.filter(
+    (log) => log.timestamp >= Date.now() - 1000 * 60 * 60 * 24 * 21,
+  );
 
   const latestMetric = input.metrics[0] ?? null;
-  const latestEnergyLog = input.energyLogs[0] ?? null;
-  const fallbackEnergyLevel = latestMetric?.energyLevel ?? preferredPatternFallback(input.plannerEnergyPattern);
-  const currentEnergyLevel = latestEnergyLog?.energyLevel ?? fallbackEnergyLevel;
+  const latestEnergyLogWithinWindow = recentLogs[0] ?? null;
+  const fallbackEnergyLevel =
+    latestMetric?.energyLevel ?? preferredPatternFallback(input.plannerEnergyPattern);
+  const currentEnergyLevel = latestEnergyLogWithinWindow?.energyLevel ?? fallbackEnergyLevel;
 
   const sleepHoursValues = recentMetrics
     .map((metric) => metric.sleepHours)
@@ -132,8 +148,8 @@ export function deriveEnergySignals(input: {
   );
   const workoutLoad = clamp(Math.round(workoutLoadRaw), 0, 100);
 
-  const stressLevel = latestEnergyLog?.stressLevel ?? "medium";
-  const fatigueLevel = latestEnergyLog?.fatigueLevel ?? "medium";
+  const stressLevel = latestEnergyLogWithinWindow?.stressLevel ?? "medium";
+  const fatigueLevel = latestEnergyLogWithinWindow?.fatigueLevel ?? "medium";
   const stressScore = levelToRiskScore(stressLevel);
   const fatigueSignalScore = levelToRiskScore(fatigueLevel);
   const fatigueScore = clamp(
@@ -149,7 +165,11 @@ export function deriveEnergySignals(input: {
   );
 
   const capacityScore = clamp(
-    Math.round(levelToEnergyScore(currentEnergyLevel) * 0.4 + recoveryScore * 0.4 + (100 - fatigueScore) * 0.2),
+    Math.round(
+      levelToEnergyScore(currentEnergyLevel) * 0.4 +
+        recoveryScore * 0.4 +
+        (100 - fatigueScore) * 0.2,
+    ),
     0,
     100,
   );
@@ -160,7 +180,9 @@ export function deriveEnergySignals(input: {
     ...(sleepScore < 60 ? ["Sleep debt is reducing daily capacity."] : []),
     ...(fatigueScore > 65 ? ["Fatigue is elevated relative to recent recovery."] : []),
     ...(stressScore > 65 ? ["Stress remains high in the latest check-in."] : []),
-    ...(workoutLoad > 75 ? ["Recent training load is heavy enough to justify extra recovery."] : []),
+    ...(workoutLoad > 75
+      ? ["Recent training load is heavy enough to justify extra recovery."]
+      : []),
   ].slice(0, 4);
 
   return {
@@ -173,12 +195,29 @@ export function deriveEnergySignals(input: {
     capacityScore,
     capacityEstimate,
     recoveryRecommended,
-    suggestedPlanningMode: recoveryRecommended ? "recovery" : capacityEstimate === "high" ? "directed" : "discovery",
-    workoutMinutesThisWeek: recentWorkouts.reduce((total, workout) => total + workout.durationMinutes, 0),
+    suggestedPlanningMode: recoveryRecommended
+      ? "recovery"
+      : capacityEstimate === "high"
+        ? "directed"
+        : "discovery",
+    workoutMinutesThisWeek: recentWorkouts.reduce(
+      (total, workout) => total + workout.durationMinutes,
+      0,
+    ),
     workoutsThisWeek: recentWorkouts.length,
     burnoutSignals,
-    dailyEnergyModel: buildDailyEnergyModel(recentLogs, currentEnergyLevel, input.plannerEnergyPattern),
-    weeklyEnergyModel: buildWeeklyEnergyModel(recentLogs, recentMetrics, currentEnergyLevel),
+    dailyEnergyModel: buildDailyEnergyModel(
+      recentLogs,
+      currentEnergyLevel,
+      timezone,
+      input.plannerEnergyPattern,
+    ),
+    weeklyEnergyModel: buildWeeklyEnergyModel(
+      recentLogs,
+      recentMetrics,
+      currentEnergyLevel,
+      timezone,
+    ),
   };
 }
 
@@ -197,14 +236,17 @@ export function inferWorkoutTypeFromTitle(title: string): Doc<"workouts">["worko
 
 export function inferWorkoutIntensityFromTitle(title: string): Doc<"workouts">["intensity"] {
   const value = title.toLowerCase();
-  if (value.includes("recovery") || value.includes("walk") || value.includes("stretch")) return "low";
-  if (value.includes("tempo") || value.includes("interval") || value.includes("strength")) return "high";
+  if (value.includes("recovery") || value.includes("walk") || value.includes("stretch"))
+    return "low";
+  if (value.includes("tempo") || value.includes("interval") || value.includes("strength"))
+    return "high";
   return "medium";
 }
 
 function buildDailyEnergyModel(
   logs: Doc<"energyLogs">[],
   fallbackLevel: HealthSignalLevel,
+  timezone: string,
   plannerEnergyPattern?: "morning" | "midday" | "evening" | "mixed",
 ) {
   const grouped = new Map<DailyEnergyZone, number[]>();
@@ -214,7 +256,7 @@ function buildDailyEnergyModel(
   }
 
   for (const log of logs) {
-    grouped.get(zoneFromTimestamp(log.timestamp))?.push(levelToOrdinal(log.energyLevel));
+    grouped.get(zoneFromTimestamp(log.timestamp, timezone))?.push(levelToOrdinal(log.energyLevel));
   }
 
   return DAILY_ZONES.map((zone) => {
@@ -237,6 +279,7 @@ function buildWeeklyEnergyModel(
   logs: Doc<"energyLogs">[],
   metrics: Doc<"healthMetrics">[],
   fallbackLevel: HealthSignalLevel,
+  timezone: string,
 ) {
   const grouped = new Map<WeeklyEnergyDay, number[]>();
 
@@ -245,19 +288,22 @@ function buildWeeklyEnergyModel(
   }
 
   for (const log of logs) {
-    const day = weekdayFromTimestamp(log.timestamp);
+    const day = weekdayFromTimestamp(log.timestamp, timezone);
     grouped.get(day)?.push(levelToOrdinal(log.energyLevel));
   }
 
   for (const metric of metrics) {
     if (!metric.energyLevel) continue;
-    const day = weekdayFromDateKey(metric.date);
+    const day = weekdayFromDateKey(metric.date, timezone);
     grouped.get(day)?.push(levelToOrdinal(metric.energyLevel));
   }
 
   return WEEK_DAYS.map((day) => {
     const values = grouped.get(day) ?? [];
-    const score = values.length > 0 ? Math.round((average(values) ?? 2) * 33.33) : levelToEnergyScore(fallbackLevel);
+    const score =
+      values.length > 0
+        ? Math.round((average(values) ?? 2) * 33.33)
+        : levelToEnergyScore(fallbackLevel);
     return {
       day,
       energyLevel: ordinalToLevel(score / 33.33),
@@ -266,7 +312,9 @@ function buildWeeklyEnergyModel(
   });
 }
 
-function preferredPatternFallback(pattern?: "morning" | "midday" | "evening" | "mixed"): HealthSignalLevel {
+function preferredPatternFallback(
+  pattern?: "morning" | "midday" | "evening" | "mixed",
+): HealthSignalLevel {
   if (pattern === "morning" || pattern === "midday") return "high";
   if (pattern === "evening") return "medium";
   return "medium";
@@ -295,20 +343,24 @@ function fallbackZoneScore(
   return base;
 }
 
-function zoneFromTimestamp(timestamp: number): DailyEnergyZone {
-  const hour = new Date(timestamp).getUTCHours();
+function zoneFromTimestamp(timestamp: number, timezone: string): DailyEnergyZone {
+  const hour = hourFromTimestampInTimeZone(timestamp, timezone);
   if (hour >= 5 && hour < 12) return "morning";
   if (hour >= 12 && hour < 16) return "afternoon";
   if (hour >= 16 && hour < 19) return "lateAfternoon";
   return "evening";
 }
 
-function weekdayFromTimestamp(timestamp: number): WeeklyEnergyDay {
-  return WEEK_DAYS[(new Date(timestamp).getUTCDay() + 6) % 7] ?? "monday";
+function weekdayFromTimestamp(timestamp: number, timezone: string): WeeklyEnergyDay {
+  const value = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "long",
+  }).format(new Date(timestamp));
+  return value.toLowerCase() as WeeklyEnergyDay;
 }
 
-function weekdayFromDateKey(dateKey: string): WeeklyEnergyDay {
-  return weekdayFromTimestamp(new Date(`${dateKey}T12:00:00.000Z`).getTime());
+function weekdayFromDateKey(dateKey: string, timezone: string): WeeklyEnergyDay {
+  return weekdayFromTimestamp(new Date(`${dateKey}T12:00:00.000Z`).getTime(), timezone);
 }
 
 function scoreToCapacity(score: number): "low" | "medium" | "high" {
@@ -356,12 +408,35 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function isoDateFromTimestamp(timestamp: number) {
-  return new Date(timestamp).toISOString().slice(0, 10);
-}
-
 function addDays(dateKey: string, days: number) {
   const date = new Date(`${dateKey}T12:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+function dateKeyFromTimestampInTimeZone(timestamp: number, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(timestamp));
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+  if (!year || !month || !day) {
+    return new Date(timestamp).toISOString().slice(0, 10);
+  }
+  return `${year}-${month}-${day}`;
+}
+
+function hourFromTimestampInTimeZone(timestamp: number, timezone: string) {
+  const value = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "2-digit",
+    hour12: false,
+  }).format(new Date(timestamp));
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 12;
 }

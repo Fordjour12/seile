@@ -330,7 +330,7 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
       desiredCount: desiredGeneratedTaskCount,
     });
 
-    for (const task of generatedTasks) {
+    for (const task of generatedTasks.slice(0, remainingTaskCapacity)) {
       selectedTasks.push({
         title: task.title,
         dueDate: task.dueDate,
@@ -833,12 +833,17 @@ function adjustedMaxTasksPerDay(
 }
 
 function evenlySpreadDates(dates: string[], count: number, allowThree: boolean) {
-  if (count <= 1) return dates.length > 0 ? [dates[0]] : [];
-  if (count === 2) return [dates[0], dates[Math.max(1, dates.length - 2)]].filter(Boolean);
-  if (!allowThree) {
-    return [dates[0], dates[Math.floor((dates.length - 1) / 2)], dates[dates.length - 1]];
-  }
-  return [dates[0], dates[Math.floor(dates.length / 2)], dates[dates.length - 1]];
+  const cappedCount = Math.min(Math.max(count, 0), dates.length);
+  if (cappedCount <= 0) return [];
+  if (cappedCount === 1) return [dates[0]];
+
+  const targetCount = allowThree ? cappedCount : Math.min(cappedCount, 3);
+  const positions = Array.from({ length: targetCount }, (_, index) =>
+    Math.round((index * (dates.length - 1)) / (targetCount - 1)),
+  );
+  const uniqueIndices = Array.from(new Set(positions));
+
+  return uniqueIndices.map((index) => dates[index]);
 }
 
 function workoutTypeFromHealthGoal(goalType?: Doc<"healthGoals">["goalType"]) {
