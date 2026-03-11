@@ -5,7 +5,8 @@ import { EmptyState } from "@/components/empty-state";
 import { Spinner } from "@/components/spinner";
 import { Text } from "@/components/text";
 import { View } from "@/components/view";
-import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
+import { Typography, UI_PRESETS } from "@/lib/constants";
+import type { ThemeScale } from "@/lib/constants/types";
 import {
   formatAgendaLabel,
   formatCalendarDay,
@@ -18,14 +19,12 @@ import {
   SCHEDULER_TIMELINE_HOURS,
   type SchedulerTask,
 } from "@/lib/scheduler";
-import {
-  getOutstandingDependencyCount,
-} from "@/lib/scheduler/helpers";
+import { getOutstandingDependencyCount } from "@/lib/scheduler/helpers";
 import { getSchedulerPriorityColor, withAlpha } from "@/lib/scheduler/palette";
 
 import { SchedulerTaskRow } from "@/components/scheduler-task-row";
 
-export type SchedulerTheme = typeof NAV_THEME.light;
+export type SchedulerTheme = ThemeScale;
 
 export function SchedulerStatsCard({
   label,
@@ -184,9 +183,7 @@ export function SchedulerTimelineView({
               style={[
                 styles.timelineHeaderCell,
                 {
-                  backgroundColor: isSelected
-                    ? withAlpha(theme.primary, 0.18)
-                    : "transparent",
+                  backgroundColor: isSelected ? withAlpha(theme.primary, 0.18) : "transparent",
                   borderColor: isSelected ? theme.primary : "transparent",
                 },
               ]}
@@ -342,7 +339,7 @@ export function SchedulerLoadingState({
 }
 
 export function SchedulerTaskNotFoundState({
-  theme,
+  theme: _theme,
   title = "Task not found",
   message = "This task may have been deleted or is unavailable.",
 }: {

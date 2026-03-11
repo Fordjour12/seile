@@ -2,6 +2,20 @@ import { defineSchema } from "convex/server";
 
 import { accountsTable } from "./schema/accounts";
 import { categoriesTable } from "./schema/categories";
+import {
+  energyLogsTable,
+  healthCadenceValidator,
+  healthDifficultyValidator,
+  healthGoalStatusValidator,
+  healthGoalTypeValidator,
+  healthGoalsTable,
+  healthHabitsTable,
+  healthIntensityValidator,
+  healthMetricsTable,
+  healthSignalLevelValidator,
+  healthWorkoutTypeValidator,
+  workoutsTable,
+} from "./schema/health";
 import { budgetEnvelopesTable } from "./schema/budget_envelopes";
 import { budgetPeriodStatusValidator, budgetPeriodsTable } from "./schema/budget_periods";
 import {
@@ -10,6 +24,7 @@ import {
 } from "./schema/finance_agent";
 import {
   burnoutStateValidator,
+  plannerChatCommandsTable,
   plannerAgentStateTable,
   plannerProfilesTable,
   planningCadenceValidator,
@@ -45,6 +60,15 @@ import {
   schedulerTaskStatusValidator,
   schedulerTasksTable,
 } from "./schema/scheduler_tasks";
+import {
+  prayerStatusValidator,
+  prayersTable,
+  spiritualGoalsTable,
+  spiritualGoalStatusValidator,
+  spiritualPracticesTable,
+  spiritualReadingsTable,
+  spiritualReflectionsTable,
+} from "./schema/spiritual";
 import { transactionsTable } from "./schema/transactions";
 
 export {
@@ -61,7 +85,13 @@ export { budgetPeriodStatusValidator };
 export { debtStatusValidator, debtTypeValidator, payoffStrategyValidator, savingsStatusValidator };
 export {
   burnoutStateValidator,
-  linkedFinanceEntityTypeValidator,
+  healthCadenceValidator,
+  healthDifficultyValidator,
+  healthGoalStatusValidator,
+  healthGoalTypeValidator,
+  healthIntensityValidator,
+  healthSignalLevelValidator,
+  healthWorkoutTypeValidator,
   planningCadenceValidator,
   planningEffortValidator,
   planningEnergyPatternValidator,
@@ -78,6 +108,8 @@ export {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
   schedulerTaskStatusValidator,
+  prayerStatusValidator,
+  spiritualGoalStatusValidator,
 };
 
 export default defineSchema({
@@ -85,6 +117,11 @@ export default defineSchema({
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,
   categories: categoriesTable,
+  workouts: workoutsTable,
+  healthHabits: healthHabitsTable,
+  healthGoals: healthGoalsTable,
+  healthMetrics: healthMetricsTable,
+  energyLogs: energyLogsTable,
   transactions: transactionsTable,
   recurringTransactions: recurringTransactionsTable,
   debtPlans: debtPlansTable,
@@ -98,7 +135,11 @@ export default defineSchema({
   planItems: planItemsTable,
   planningReviews: planningReviewsTable,
   plannerAgentState: plannerAgentStateTable,
-  financeAgentState: financeAgentStateTable,
-  financeAgentAuditLog: financeAgentAuditLogTable,
+  plannerChatCommands: plannerChatCommandsTable,
   schedulerTasks: schedulerTasksTable,
+  spiritualGoals: spiritualGoalsTable,
+  spiritualPractices: spiritualPracticesTable,
+  spiritualReadings: spiritualReadingsTable,
+  prayers: prayersTable,
+  spiritualReflections: spiritualReflectionsTable,
 });

@@ -1,25 +1,19 @@
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { Text } from "@/components/text";
 import { View } from "@/components/view";
-import { NAV_THEME, Typography, UI_PRESETS } from "@/lib/constants";
+import { Typography, UI_PRESETS } from "@/lib/constants";
 import { formatTimeLabel } from "@/lib/scheduler/date";
-import {
-  getTaskDateSummary,
-  getTaskProgress,
-} from "@/lib/scheduler/helpers";
+import { getTaskDateSummary, getTaskProgress } from "@/lib/scheduler/helpers";
 import {
   getSchedulerPriorityColor,
   getSchedulerStatusColor,
   withAlpha,
 } from "@/lib/scheduler/palette";
 import type { SchedulerTask } from "@/lib/scheduler/types";
+import type { ThemeScale } from "@/lib/constants/types";
 
 import { SchedulerPriorityBar } from "./scheduler-priority-bar";
 import { SchedulerProgressBar } from "./scheduler-progress-bar";
@@ -27,19 +21,14 @@ import { SchedulerTag } from "./scheduler-tag";
 
 type SchedulerTaskRowProps = {
   task: SchedulerTask;
-  theme: typeof NAV_THEME.light;
+  theme: ThemeScale;
   dependencyCount: number;
   onPress: () => void;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function SchedulerTaskRow({
-  task,
-  theme,
-  dependencyCount,
-  onPress,
-}: SchedulerTaskRowProps) {
+export function SchedulerTaskRow({ task, theme, dependencyCount, onPress }: SchedulerTaskRowProps) {
   const scale = useSharedValue(1);
   const priorityColor = getSchedulerPriorityColor(theme, task.priority);
   const statusColor = getSchedulerStatusColor(theme, task.status);
@@ -64,13 +53,9 @@ export function SchedulerTaskRow({
         animatedStyle,
         {
           backgroundColor:
-            task.status === "overdue"
-              ? withAlpha(theme.destructive, 0.12)
-              : theme.card,
+            task.status === "overdue" ? withAlpha(theme.destructive, 0.12) : theme.card,
           borderColor:
-            task.status === "overdue"
-              ? withAlpha(theme.destructive, 0.38)
-              : theme.border,
+            task.status === "overdue" ? withAlpha(theme.destructive, 0.38) : theme.border,
         },
       ]}
     >
@@ -85,10 +70,8 @@ export function SchedulerTaskRow({
           style={[
             Typography.labelMD,
             {
-              color:
-                task.status === "done" ? theme.mutedForeground : theme.foreground,
-              textDecorationLine:
-                task.status === "done" ? "line-through" : "none",
+              color: task.status === "done" ? theme.mutedForeground : theme.foreground,
+              textDecorationLine: task.status === "done" ? "line-through" : "none",
             },
           ]}
           numberOfLines={2}

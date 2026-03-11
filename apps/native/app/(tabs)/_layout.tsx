@@ -1,12 +1,22 @@
 import { Tabs } from "expo-router";
-import { PiggyBank, Calendar, Erase } from "iconoir-react-native";
+import {
+  PiggyBank,
+  Calendar,
+  Erase,
+  HealthShield,
+  HomeTable,
+  Safari,
+} from "iconoir-react-native";
 
+import { Avatar } from "@/components";
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
+import { useAuth } from "@/lib/auth-context";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 export default function TabLayout() {
   const { isDarkColorScheme } = useColorScheme();
+  const { user, hasHydrated, isLoading } = useAuth();
   const theme = isDarkColorScheme ? NAV_THEME.dark : NAV_THEME.light;
 
   return (
@@ -25,24 +35,28 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <HomeTable />
+            </TabBarIcon2>
+          ),
         }}
       />
       <Tabs.Screen
         name="two"
         options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="compass" color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
-        name="components"
+        name="health"
         options={{
-          title: "Components",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="th-large" color={color} />
+          title: "Health",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <HealthShield />
+            </TabBarIcon2>
           ),
         }}
       />
@@ -75,22 +89,50 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="scheduler"
+        name="faith"
         options={{
-          title: "Scheduler",
+          title: "Faith",
           headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon2 color={color}>
-              <Calendar />
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <Safari />
             </TabBarIcon2>
           ),
         }}
       />
       <Tabs.Screen
-        name="auth-smoke"
+        name="scheduler"
         options={{
-          title: "Session",
-          tabBarIcon: ({ color }) => <TabBarIcon name="shield" color={color} />,
+          title: "Scheduler",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <Calendar />
+            </TabBarIcon2>
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ focused, size }) => (
+            <Avatar
+              source={
+                hasHydrated && !isLoading && user?.image
+                  ? { uri: user.image }
+                  : undefined
+              }
+              fallback={user?.name ?? user?.email ?? "Settings"}
+              size="sm"
+              style={{
+                borderWidth: 2,
+                borderColor: focused ? theme.primary : theme.border,
+                transform: [{ scale: (size ?? 24) / 32 }],
+              }}
+            />
+          ),
         }}
       />
     </Tabs>

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   StyleProp,
+  TextStyle,
   ViewStyle,
 } from "react-native";
 import { NAV_THEME, ButtonTokens } from "@/lib/constants";
@@ -74,6 +75,7 @@ export function Button({
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const buttonToken: ButtonVariantToken = ButtonTokens[SIZE_TO_TOKEN_KEY[size]];
   const textColor = BUTTON_TEXT_COLORS[variant](theme);
+  const buttonTextStyle = buttonToken.text as TextStyle;
 
   return (
     <Pressable
@@ -96,15 +98,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={textColor} size="small" />
       ) : (
-        <Text
-          style={[
-            styles.text,
-            buttonToken.text,
-            { color: textColor },
-          ]}
-        >
-          {title}
-        </Text>
+        <Text style={[styles.text, buttonTextStyle, { color: textColor }]}>{title}</Text>
       )}
     </Pressable>
   );

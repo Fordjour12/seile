@@ -15,6 +15,7 @@ const planItemTypeSchema = z.enum([
   "priority",
   "task",
   "habit",
+  "workout",
   "buffer",
   "review",
   "milestone",
@@ -27,6 +28,12 @@ const planningModeSchema = z.enum([
   "recovery",
 ]);
 const burnoutStateSchema = z.enum(["stable", "watch", "recovery"]);
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD date");
+const isoTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Expected HH:MM time");
 
 const draftTaskSchema = z.object({
   title: z.string(),
@@ -52,9 +59,9 @@ export const weeklyPlanSchema = z.object({
     z.object({
       itemType: planItemTypeSchema,
       title: z.string(),
-      date: z.string(),
-      startTime: z.string().optional(),
-      endTime: z.string().optional(),
+      date: isoDateSchema,
+      startTime: isoTimeSchema.optional(),
+      endTime: isoTimeSchema.optional(),
       priority: planningPrioritySchema,
       effort: planningEffortSchema,
       notes: z.string().optional(),
@@ -92,6 +99,8 @@ export const replanningAssessmentSchema = z.object({
   pressureLevel: z.enum(["low", "medium", "high"]),
 });
 
+ensurePlannerAgentConfigured();
+
 const plannerProvider = createOpenRouter({
   apiKey: env.OPENROUTER_API_KEY,
   ...(env.PLANNER_AGENT_BASE_URL
@@ -110,9 +119,9 @@ export const plannerAgent = new Agent(componentsAny.agent, {
   ),
   instructions: [
     "You are the AI Planner Orchestrator for a life planning application.",
-    "Generate structured, realistic plans grounded in goals, tasks, habits, constraints, and execution data.",
+    "Generate structured, realistic plans grounded in goals, tasks, habits, health signals, constraints, and execution data.",
     "Do not generate inspirational advice. Reduce overload before adding work.",
-    "Hard rules: maximum 3 weekly priorities, maximum 5 meaningful tasks per day, maximum 2 new habits, always include buffers, always include a review item.",
+    "Hard rules: maximum 3 weekly priorities, maximum 5 meaningful tasks per day, maximum 2 new habits, include recovery days, avoid consecutive intense workouts, always include buffers, always include a review item.",
     "Prefer consistency over intensity, recovery over collapse, and sustainability over ambition.",
   ].join(" "),
 });
@@ -135,6 +144,10 @@ export function ensurePlannerAgentConfigured() {
       "Planner agent is not configured. Set OPENROUTER_API_KEY in the backend environment.",
     );
   }
+}
+
+export function isPlannerAgentConfigured() {
+  return Boolean(env.OPENROUTER_API_KEY);
 }
 
 export { planningModeSchema };

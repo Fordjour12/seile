@@ -18,11 +18,7 @@ type PlannerHome = {
   } | null;
 };
 
-export function PlannerCurrentPlanCard({
-  home,
-}: {
-  home: PlannerHome | undefined;
-}) {
+export function PlannerCurrentPlanCard({ home }: { home: PlannerHome | undefined }) {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
@@ -70,13 +66,20 @@ export function PlannerCurrentPlanCard({
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <Badge color="primary">Burnout {plan.burnoutRiskScore ?? 0}</Badge>
-        {plan.warnings.length ? <Badge color="warning">{plan.warnings.length} warnings</Badge> : null}
+        {plan.warnings.length ? (
+          <Badge color="warning">{plan.warnings.length} warnings</Badge>
+        ) : null}
       </View>
 
       <Button
         title="Open plan"
         variant="outline"
-        onPress={() => router.push(`/planner/plans/${plan._id}`)}
+        onPress={() =>
+          router.push({
+            pathname: "/(tabs)/planner/plans/[id]",
+            params: { id: plan._id },
+          } as never)
+        }
       />
     </Card>
   );

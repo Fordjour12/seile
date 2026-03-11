@@ -5,6 +5,22 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 const plannerInternal = internal as unknown as Record<string, Record<string, any>>;
 
+if (process.env.NODE_ENV !== "production") {
+  const requiredPlannerActions = [
+    "runWeeklyReviewCycle",
+    "runWeeklyPlanningCycle",
+    "runMidweekAdjustmentCycle",
+    "runBurnoutMonitoringCycle",
+  ] as const;
+  const plannerActions = plannerInternal["planner/actions"];
+
+  for (const actionName of requiredPlannerActions) {
+    if (!plannerActions?.[actionName]) {
+      throw new Error(`Missing planner internal action: planner/actions.${actionName}`);
+    }
+  }
+}
+
 crons.interval(
   "generate-recurring-transactions",
   { hours: 1 },

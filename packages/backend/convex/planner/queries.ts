@@ -3,7 +3,8 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { components } from "../_generated/api";
-import { getWeekWindow, isoDateFromTimestamp } from "../lib/planner";
+import { derivePlannerHealthContext } from "../lib/health";
+import { addDays, getWeekWindow, isoDateFromTimestamp } from "../lib/planner";
 import { requireUserId } from "../lib/identity";
 import { env } from "@seile/env/backend";
 
@@ -75,8 +76,10 @@ export const getPlannerAgentContext = internalQuery({
 export const listAgentEnabledStates = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const states = await ctx.db.query("plannerAgentState").collect();
-    return states.filter((entry) => entry.agentEnabled);
+    return await ctx.db
+      .query("plannerAgentState")
+      .withIndex("by_agentEnabled", (q) => q.eq("agentEnabled", true))
+      .collect();
   },
 });
 
@@ -90,17 +93,22 @@ export const getLatestPastWeeklyPlanWithoutReview = internalQuery({
       .query("plans")
       .withIndex("by_userId_type", (q) => q.eq("userId", args.userId).eq("type", "week"))
       .collect();
-    const latestPastPlan = plans
-      .filter((plan) => comparePlanEnd(plan.endDate, today) < 0)
-      .sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
-    if (!latestPastPlan) return null;
+    const candidates = plans
+      .filter((plan) => comparePlanEnd(plan.endDate, today) <= 0)
+      .sort((left, right) => right.endDate.localeCompare(left.endDate));
 
-    const review = await ctx.db
-      .query("planningReviews")
-      .withIndex("by_planId", (q) => q.eq("planId", latestPastPlan._id))
-      .first();
+    for (const latestPastPlan of candidates) {
+      const review = await ctx.db
+        .query("planningReviews")
+        .withIndex("by_planId", (q) => q.eq("planId", latestPastPlan._id))
+        .first();
 
-    return review ? null : latestPastPlan;
+      if (!review) {
+        return latestPastPlan;
+      }
+    }
+
+    return null;
   },
 });
 
@@ -111,8 +119,14 @@ export const getPlanByIdForUser = internalQuery({
   },
   handler: async (ctx, args) => {
     const plan = await requireOwnedPlan(ctx, args.userId, args.id);
-    const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
-    const review = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
+    const items = await ctx.db
+      .query("planItems")
+      .withIndex("by_planId_date", (q) => q.eq("planId", plan._id))
+      .collect();
+    const review = await ctx.db
+      .query("planningReviews")
+      .withIndex("by_planId", (q) => q.eq("planId", plan._id))
+      .first();
 
     return { plan, items, review };
   },
@@ -123,7 +137,7 @@ export const listGoals = query({
   handler: async (ctx) => {
     const userId = await requireUserId(ctx);
     const goals = await ctx.db
-      .query("sharedGoals")
+      .query("planningGoals")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
     return goals.sort((left, right) => sortByPriority(left.priority, right.priority));
@@ -155,9 +169,7 @@ export const listPlannerChatMessages = query({
     return {
       continueCursor: page.continueCursor,
       isDone: page.isDone,
-      page: page.page
-        .map((entry: any) => normalizePlannerChatMessage(entry))
-        .filter(Boolean),
+      page: page.page.map((entry: any) => normalizePlannerChatMessage(entry)).filter(Boolean),
     };
   },
 });
@@ -169,7 +181,10 @@ export const listPlannerChatThreads = query({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     const activeThreadId = (
-      await ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first()
+      await ctx.db
+        .query("plannerAgentState")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .first()
     )?.activeThreadId;
 
     const page = await ctx.runQuery(componentsAny.agent.threads.listThreadsByUserId, {
@@ -219,7 +234,9 @@ export const getPlannerChatThread = query({
 
 export const listPlans = query({
   args: {
-    type: v.optional(v.union(v.literal("year"), v.literal("month"), v.literal("week"), v.literal("day"))),
+    type: v.optional(
+      v.union(v.literal("year"), v.literal("month"), v.literal("week"), v.literal("day")),
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
@@ -231,7 +248,10 @@ export const listPlans = query({
         .withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", planType))
         .collect();
     } else {
-      rows = await ctx.db.query("plans").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+      rows = await ctx.db
+        .query("plans")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect();
     }
     return rows.sort((left, right) => right.startDate.localeCompare(left.startDate));
   },
@@ -244,8 +264,14 @@ export const getPlanById = query({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     const plan = await requireOwnedPlan(ctx, userId, args.id);
-    const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
-    const review = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
+    const items = await ctx.db
+      .query("planItems")
+      .withIndex("by_planId_date", (q) => q.eq("planId", plan._id))
+      .collect();
+    const review = await ctx.db
+      .query("planningReviews")
+      .withIndex("by_planId", (q) => q.eq("planId", plan._id))
+      .first();
 
     return {
       plan,
@@ -258,13 +284,16 @@ export const getPlanById = query({
 async function requireOwnedPlan(ctx: QueryCtx, userId: string, planId: Id<"plans">) {
   const plan = (await ctx.db.get(planId)) as Doc<"plans"> | null;
   if (!plan || plan.userId !== userId) {
-    throw new Error("Plan not found");
+    throw new ConvexError("Plan not found");
   }
 
   return plan;
 }
 
-function sortByPriority(left: Doc<"sharedGoals">["priority"], right: Doc<"sharedGoals">["priority"]) {
+function sortByPriority(
+  left: Doc<"planningGoals">["priority"],
+  right: Doc<"planningGoals">["priority"],
+) {
   return priorityScore(right) - priorityScore(left);
 }
 
@@ -282,9 +311,29 @@ function priorityScore(priority: "low" | "medium" | "high") {
 
 async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: string) {
   const week = getWeekWindow(weekStart ?? isoDateFromTimestamp(Date.now()));
-  const [profile, agentState, goals, tasks, habits, plans, reviews] = await Promise.all([
-    ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
-    ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
+  const recentHealthWindowStart = addDays(week.endDate, -20);
+  const [
+    profile,
+    agentState,
+    goals,
+    tasks,
+    habits,
+    plans,
+    latestReview,
+    healthGoals,
+    healthHabits,
+    workouts,
+    metrics,
+    energyLogs,
+  ] = await Promise.all([
+    ctx.db
+      .query("plannerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first(),
+    ctx.db
+      .query("plannerAgentState")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first(),
     ctx.db
       .query("sharedGoals")
       .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
@@ -297,19 +346,63 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
       .query("planningHabits")
       .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
       .collect(),
-    ctx.db.query("plans").withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week")).collect(),
-    ctx.db.query("planningReviews").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
+    ctx.db
+      .query("plans")
+      .withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week"))
+      .collect(),
+    ctx.db
+      .query("planningReviews")
+      .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+      .order("desc")
+      .first(),
+    ctx.db
+      .query("healthGoals")
+      .withIndex("by_userId_and_status", (q) => q.eq("userId", userId).eq("status", "active"))
+      .collect(),
+    ctx.db
+      .query("healthHabits")
+      .withIndex("by_userId_and_active", (q) => q.eq("userId", userId).eq("active", true))
+      .collect(),
+    ctx.db
+      .query("workouts")
+      .withIndex("by_userId_and_date", (q) =>
+        q.eq("userId", userId).gte("date", recentHealthWindowStart),
+      )
+      .collect(),
+    ctx.db
+      .query("healthMetrics")
+      .withIndex("by_userId_and_date", (q) =>
+        q.eq("userId", userId).gte("date", recentHealthWindowStart),
+      )
+      .collect(),
+    ctx.db
+      .query("energyLogs")
+      .withIndex("by_userId_and_timestamp", (q) =>
+        q.eq("userId", userId).gte("timestamp", Date.now() - 1000 * 60 * 60 * 24 * 21),
+      )
+      .collect(),
   ]);
 
   const currentPlan =
     plans
+      .filter((plan) => plan.startDate >= week.startDate)
       .filter((plan) => plan.startDate === week.startDate)
       .sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
   const currentPlanItems = currentPlan
-    ? await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", currentPlan._id)).collect()
+    ? await ctx.db
+        .query("planItems")
+        .withIndex("by_planId_date", (q) => q.eq("planId", currentPlan._id))
+        .collect()
     : [];
-  const latestReview =
-    reviews.sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
+  const health = derivePlannerHealthContext({
+    goals: healthGoals,
+    habits: healthHabits,
+    workouts,
+    metrics,
+    energyLogs,
+    timezone: profile?.timezone,
+    plannerEnergyPattern: profile?.energyPattern,
+  });
 
   return {
     week,
@@ -321,6 +414,7 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
     currentPlan,
     currentPlanItems,
     latestReview,
+    health,
   };
 }
 
@@ -370,7 +464,11 @@ function extractPlannerChatText(entry: { text?: string; message?: { content?: un
         return [];
       }
 
-      if ((part.type === "text" || part.type === "reasoning") && "text" in part && typeof part.text === "string") {
+      if (
+        (part.type === "text" || part.type === "reasoning") &&
+        "text" in part &&
+        typeof part.text === "string"
+      ) {
         return [part.text];
       }
 

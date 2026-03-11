@@ -1,9 +1,7 @@
 import { useAction, useQuery } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 
-import { api } from "@/lib/backend-api";
-
-const plannerApi = api as unknown as Record<string, Record<string, any>>;
+import { plannerApi } from "@/lib/planner/api";
 
 export type PlannerChatMessage = {
   id: string;
