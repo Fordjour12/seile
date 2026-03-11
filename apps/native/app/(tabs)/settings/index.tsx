@@ -6,7 +6,13 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Settings</Text>
+        <Text
+          style={styles.title}
+          accessibilityLabel="Settings coming soon"
+          testID="settings-coming-soon"
+        >
+          Settings
+        </Text>
       </View>
     </SafeAreaView>
   );

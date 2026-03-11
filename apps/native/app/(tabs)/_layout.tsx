@@ -31,10 +31,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="two"
         options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="compass" color={color} />
-          ),
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="health"
+        options={{
+          title: "Health",
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="heartbeat" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -84,6 +89,14 @@ export default function TabLayout() {
               <Calendar />
             </TabBarIcon2>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="planner"
+        options={{
+          title: "Planner",
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="calendar" color={color} />,
         }}
       />
       <Tabs.Screen

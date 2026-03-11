@@ -45,7 +45,14 @@ const DEFAULT_PROFILE = {
 export const draftWeeklyPlan = action({
   args: {
     weekStart: v.optional(v.string()),
-    mode: v.optional(v.union(v.literal("directed"), v.literal("discovery"), v.literal("zero_input"), v.literal("recovery"))),
+    mode: v.optional(
+      v.union(
+        v.literal("directed"),
+        v.literal("discovery"),
+        v.literal("zero_input"),
+        v.literal("recovery"),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
@@ -114,7 +121,10 @@ export const sendPlannerChatMessage = action({
       excludeToolMessages: true,
       paginationOpts: { cursor: null, numItems: 1 },
     });
-    const contextBefore = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
+    const contextBefore = await ctx.runQuery(
+      internalApi["planner/queries"].getPlannerAgentContext,
+      { userId },
+    );
     const intent = detectPlannerChatIntent(text);
     const latestMessageId = latestMessages.page[0]?._id ?? "empty";
     const messageKey = createHash("sha256")
@@ -150,7 +160,9 @@ export const sendPlannerChatMessage = action({
         actionSummary: actionResult.summary,
       });
     }
-    const contextAfter = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
+    const contextAfter = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, {
+      userId,
+    });
 
     const result = await threadState.thread.generateText({
       prompt: buildPlannerChatReplyPrompt({
@@ -190,12 +202,14 @@ export const runWeeklyReviewCycle = internalAction({
     let reviewedCount = 0;
 
     for (const state of states) {
+      let targetPlanId: string | undefined;
       try {
         const targetPlan = await ctx.runQuery(
           internalApi["planner/queries"].getLatestPastWeeklyPlanWithoutReview,
           { userId: state.userId },
         );
         if (!targetPlan) continue;
+        targetPlanId = targetPlan._id;
 
         await reviewWeeklyPlanForUser(ctx, {
           userId: state.userId,
@@ -203,9 +217,10 @@ export const runWeeklyReviewCycle = internalAction({
         });
         reviewedCount += 1;
       } catch (error) {
-        console.error("Planner weekly review cycle failed", {
+        console.error("planner-weekly-review failed", {
           userId: state.userId,
-          error,
+          planId: targetPlanId,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -236,9 +251,9 @@ export const runWeeklyPlanningCycle = internalAction({
           createdCount += 1;
         }
       } catch (error) {
-        console.error("Planner weekly planning cycle failed", {
+        console.error("planner-weekly-plan failed", {
           userId: state.userId,
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -264,10 +279,12 @@ export const runMidweekAdjustmentCycle = internalAction({
         if (!context.currentPlan) continue;
 
         const pendingTasks = context.currentPlanItems.filter(
-          (item: { itemType: string; status: string }) => item.itemType === "task" && item.status === "pending",
+          (item: { itemType: string; status: string }) =>
+            item.itemType === "task" && item.status === "pending",
         );
         const doneTasks = context.currentPlanItems.filter(
-          (item: { itemType: string; status: string }) => item.itemType === "task" && item.status === "done",
+          (item: { itemType: string; status: string }) =>
+            item.itemType === "task" && item.status === "done",
         );
 
         const threadId = await createPlannerThread(ctx, {
@@ -288,11 +305,14 @@ export const runMidweekAdjustmentCycle = internalAction({
                 title: context.currentPlan.title,
                 warnings: context.currentPlan.warnings,
                 burnoutRiskScore: context.currentPlan.burnoutRiskScore,
-                pendingTasks: pendingTasks.map((item: { title: string; date: string; priority: string }) => ({
-                  title: item.title,
-                  date: item.date,
-                  priority: item.priority,
-                })),
+                health: summarizeHealthForPrompt(context.health, context.profile),
+                pendingTasks: pendingTasks.map(
+                  (item: { title: string; date: string; priority: string }) => ({
+                    title: item.title,
+                    date: item.date,
+                    priority: item.priority,
+                  }),
+                ),
                 doneTaskCount: doneTasks.length,
                 latestReview: context.latestReview,
               })}`,
@@ -302,20 +322,23 @@ export const runMidweekAdjustmentCycle = internalAction({
         );
 
         if (result.object.shouldAdjust) {
-          const replanResult = await ctx.runMutation(internalApi["planner/mutations"].performAgentReplan, {
-            userId: state.userId,
-            planId: context.currentPlan._id,
-            reason: result.object.reason,
-            preserveLockedItems: result.object.preserveLockedItems,
-          });
+          const replanResult = await ctx.runMutation(
+            internalApi["planner/mutations"].performAgentReplan,
+            {
+              userId: state.userId,
+              planId: context.currentPlan._id,
+              reason: result.object.reason,
+              preserveLockedItems: result.object.preserveLockedItems,
+            },
+          );
           if (replanResult.movedCount > 0 || replanResult.droppedCount > 0) {
             adjustedCount += 1;
           }
         }
       } catch (error) {
-        console.error("Planner midweek adjustment cycle failed", {
+        console.error("planner-midweek-adjustment failed", {
           userId: state.userId,
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -342,8 +365,10 @@ export const runBurnoutMonitoringCycle = internalAction({
           latestReview: context.latestReview,
           agentState: context.agentState,
           openTasksCount: context.openTasks.length,
-          missedHabitsCount: context.latestReview?.missedHabitsCount ?? 0,
+          missedHabitsCount:
+            context.latestReview?.missedHabitsCount ?? context.latestReview?.misses.length ?? 0,
           mode: "discovery",
+          health: context.health,
         });
 
         const threadId = await createPlannerThread(ctx, {
@@ -364,6 +389,7 @@ export const runBurnoutMonitoringCycle = internalAction({
                 latestReview: context.latestReview,
                 openTasks: context.openTasks.length,
                 currentPlanWarnings: context.currentPlan?.warnings ?? [],
+                health: summarizeHealthForPrompt(context.health, context.profile),
               })}`,
             ].join("\n\n"),
             schema: burnoutAssessmentSchema,
@@ -378,9 +404,9 @@ export const runBurnoutMonitoringCycle = internalAction({
         });
         updatedCount += 1;
       } catch (error) {
-        console.error("Planner burnout monitoring cycle failed", {
+        console.error("planner-burnout-monitor failed", {
           userId: state.userId,
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -416,6 +442,7 @@ async function draftWeeklyPlanForUser(
     latestReview: context.latestReview,
     agentState: context.agentState,
     profile,
+    health: context.health,
   });
 
   const threadId = await createPlannerThread(ctx, {
@@ -433,26 +460,40 @@ async function draftWeeklyPlanForUser(
         `Planning mode: ${input.mode}.`,
         "Keep the baseline structure unless you have a clear reason to reduce pressure further.",
         "Do not exceed 3 priorities. Do not overload any day. Include buffer space and a weekly review moment.",
+        "Use health goals and energy signals. Include recovery days and avoid consecutive intense workouts.",
         `Context: ${JSON.stringify({
           week: context.week,
           profile,
-          goals: context.goals.map((goal: { title: string; domain: string; priority: string; horizon: string; targetDate?: string }) => ({
-            title: goal.title,
-            domain: goal.domain,
-            priority: goal.priority,
-            horizon: goal.horizon,
-            targetDate: goal.targetDate,
-          })),
-          openTasks: context.openTasks.map((task: { title: string; priority: string; dueDate?: string }) => ({
-            title: task.title,
-            priority: task.priority,
-            dueDate: task.dueDate,
-          })),
-          habits: context.habits.map((habit: { name: string; cadence: string; targetValue: number }) => ({
-            name: habit.name,
-            cadence: habit.cadence,
-            targetValue: habit.targetValue,
-          })),
+          goals: context.goals.map(
+            (goal: {
+              title: string;
+              domain: string;
+              priority: string;
+              horizon: string;
+              targetDate?: string;
+            }) => ({
+              title: goal.title,
+              domain: goal.domain,
+              priority: goal.priority,
+              horizon: goal.horizon,
+              targetDate: goal.targetDate,
+            }),
+          ),
+          openTasks: context.openTasks.map(
+            (task: { title: string; priority: string; dueDate?: string }) => ({
+              title: task.title,
+              priority: task.priority,
+              dueDate: task.dueDate,
+            }),
+          ),
+          habits: context.habits.map(
+            (habit: { name: string; cadence: string; targetValue: number }) => ({
+              name: habit.name,
+              cadence: habit.cadence,
+              targetValue: habit.targetValue,
+            }),
+          ),
+          health: summarizeHealthForPrompt(context.health, context.profile),
           latestReview: context.latestReview,
         })}`,
         `Baseline draft: ${JSON.stringify(baselineDraft)}`,
@@ -493,10 +534,13 @@ async function reviewWeeklyPlanForUser(
     userId: input.userId,
     id: input.planId,
   });
-  const plannerContext = await ctx.runQuery(
-    internalApi["planner/queries"].getPlannerAgentContext,
-    { userId: input.userId, weekStart: detail.plan.startDate },
-  );
+  if (detail.plan.type !== "week") {
+    throw new Error("Weekly review is only supported for weekly plans.");
+  }
+  const plannerContext = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, {
+    userId: input.userId,
+    weekStart: detail.plan.startDate,
+  });
   const baselineReview = buildReviewSummary(
     detail.plan,
     detail.items,
@@ -525,23 +569,39 @@ async function reviewWeeklyPlanForUser(
           warnings: detail.plan.warnings,
         })}`,
         `Plan items: ${JSON.stringify(
-          detail.items.map((item: { title: string; itemType: string; status: string; date: string; priority: string }) => ({
-            title: item.title,
-            itemType: item.itemType,
-            status: item.status,
-            date: item.date,
-            priority: item.priority,
-          })),
+          detail.items.map(
+            (item: {
+              title: string;
+              itemType: string;
+              status: string;
+              date: string;
+              priority: string;
+            }) => ({
+              title: item.title,
+              itemType: item.itemType,
+              status: item.status,
+              date: item.date,
+              priority: item.priority,
+            }),
+          ),
         )}`,
         `Baseline review: ${JSON.stringify({
           ...baselineReview,
           stressRating: input.stressRating,
           satisfactionRating: input.satisfactionRating,
-          burnoutScore: Math.max(0, Math.min(100, Math.round((100 - baselineReview.completionRate) * 0.55 + ((input.stressRating ?? 3) * 8)))),
+          burnoutScore: Math.max(
+            0,
+            Math.min(
+              100,
+              Math.round(
+                (100 - baselineReview.completionRate) * 0.55 + (input.stressRating ?? 3) * 8,
+              ),
+            ),
+          ),
           burnoutState:
-            (100 - baselineReview.completionRate) * 0.55 + ((input.stressRating ?? 3) * 8) >= 70
+            (100 - baselineReview.completionRate) * 0.55 + (input.stressRating ?? 3) * 8 >= 70
               ? "recovery"
-              : (100 - baselineReview.completionRate) * 0.55 + ((input.stressRating ?? 3) * 8) >= 45
+              : (100 - baselineReview.completionRate) * 0.55 + (input.stressRating ?? 3) * 8 >= 45
                 ? "watch"
                 : "stable",
         })}`,
@@ -580,6 +640,9 @@ async function replanWeeklyPlanForUser(
     userId: input.userId,
     id: input.planId,
   });
+  if (detail.plan.type !== "week") {
+    throw new Error("Replanning is only supported for weekly plans.");
+  }
 
   const threadId = await createPlannerThread(ctx, {
     userId: input.userId,
@@ -600,14 +663,23 @@ async function replanWeeklyPlanForUser(
           burnoutRiskScore: detail.plan.burnoutRiskScore,
         })}`,
         `Items: ${JSON.stringify(
-          detail.items.map((item: { title: string; itemType: string; status: string; date: string; locked: boolean; priority: string }) => ({
-            title: item.title,
-            itemType: item.itemType,
-            status: item.status,
-            date: item.date,
-            locked: item.locked,
-            priority: item.priority,
-          })),
+          detail.items.map(
+            (item: {
+              title: string;
+              itemType: string;
+              status: string;
+              date: string;
+              locked: boolean;
+              priority: string;
+            }) => ({
+              title: item.title,
+              itemType: item.itemType,
+              status: item.status,
+              date: item.date,
+              locked: item.locked,
+              priority: item.priority,
+            }),
+          ),
         )}`,
       ].join("\n\n"),
       schema: replanningAssessmentSchema,
@@ -661,7 +733,9 @@ function detectPlannerChatIntent(text: string) {
   const normalized = text.toLowerCase();
   const wantsReview =
     normalized.includes("review") &&
-    (normalized.includes("last week") || normalized.includes("previous week") || normalized.includes("week"));
+    (normalized.includes("last week") ||
+      normalized.includes("previous week") ||
+      normalized.includes("week"));
   const wantsReplan =
     normalized.includes("replan") ||
     normalized.includes("adjust this week") ||
@@ -684,9 +758,12 @@ function detectPlannerChatIntent(text: string) {
   }
 
   if (wantsPlan) {
-    const mode = normalized.includes("recovery") || normalized.includes("gentle") || normalized.includes("lighter")
-      ? "recovery"
-      : "zero_input";
+    const mode =
+      normalized.includes("recovery") ||
+      normalized.includes("gentle") ||
+      normalized.includes("lighter")
+        ? "recovery"
+        : "zero_input";
     return { kind: "plan", mode } as const;
   }
 
@@ -749,7 +826,7 @@ async function runPlannerChatIntent(
       summary:
         result.movedCount > 0 || result.droppedCount > 0
           ? `The current week was replanned. Moved ${result.movedCount} items and dropped ${result.droppedCount} items.`
-          : result.warning ?? "The current weekly structure was kept unchanged.",
+          : (result.warning ?? "The current weekly structure was kept unchanged."),
     } as const;
   }
 
@@ -823,22 +900,28 @@ function buildPlannerChatReplyPrompt(input: {
             burnoutState: input.context.agentState.burnoutState,
           }
         : null,
-      goals: input.context.goals.map((goal: { title: string; domain: string; horizon: string; priority: string }) => ({
-        title: goal.title,
-        domain: goal.domain,
-        horizon: goal.horizon,
-        priority: goal.priority,
-      })),
-      openTasks: input.context.openTasks.slice(0, 8).map((task: { title: string; priority: string; dueDate?: string }) => ({
-        title: task.title,
-        priority: task.priority,
-        dueDate: task.dueDate,
-      })),
-      habits: input.context.habits.slice(0, 6).map((habit: { name: string; cadence: string; targetValue: number }) => ({
-        name: habit.name,
-        cadence: habit.cadence,
-        targetValue: habit.targetValue,
-      })),
+      goals: input.context.goals.map(
+        (goal: { title: string; domain: string; horizon: string; priority: string }) => ({
+          title: goal.title,
+          domain: goal.domain,
+          horizon: goal.horizon,
+          priority: goal.priority,
+        }),
+      ),
+      openTasks: input.context.openTasks
+        .slice(0, 8)
+        .map((task: { title: string; priority: string; dueDate?: string }) => ({
+          title: task.title,
+          priority: task.priority,
+          dueDate: task.dueDate,
+        })),
+      habits: input.context.habits
+        .slice(0, 6)
+        .map((habit: { name: string; cadence: string; targetValue: number }) => ({
+          name: habit.name,
+          cadence: habit.cadence,
+          targetValue: habit.targetValue,
+        })),
       currentPlan: input.context.currentPlan
         ? {
             title: input.context.currentPlan.title,
@@ -850,19 +933,23 @@ function buildPlannerChatReplyPrompt(input: {
             recoverySuggested: input.context.currentPlan.recoverySuggested,
           }
         : null,
-      currentPlanItems: input.context.currentPlanItems.slice(0, 18).map((item: {
-        title: string;
-        date: string;
-        itemType: string;
-        status: string;
-        priority: string;
-      }) => ({
-        title: item.title,
-        date: item.date,
-        itemType: item.itemType,
-        status: item.status,
-        priority: item.priority,
-      })),
+      currentPlanItems: input.context.currentPlanItems
+        .slice(0, 18)
+        .map(
+          (item: {
+            title: string;
+            date: string;
+            itemType: string;
+            status: string;
+            priority: string;
+          }) => ({
+            title: item.title,
+            date: item.date,
+            itemType: item.itemType,
+            status: item.status,
+            priority: item.priority,
+          }),
+        ),
       latestReview: input.context.latestReview
         ? {
             completionRate: input.context.latestReview.completionRate,
@@ -875,4 +962,33 @@ function buildPlannerChatReplyPrompt(input: {
     "If a plan or review action was run, confirm what happened first, then give the user the most relevant next step.",
     "If no action was run, answer directly from the planner context.",
   ].join("\n\n");
+}
+
+function summarizeHealthForPrompt(
+  health:
+    | {
+        signals: {
+          capacityEstimate: string;
+          currentEnergyLevel: string;
+          recoveryRecommended: boolean;
+          recoveryScore: number;
+          fatigueScore: number;
+          burnoutSignals: string[];
+        };
+      }
+    | null
+    | undefined,
+  profile?: { restDays?: string[] } | null,
+) {
+  if (!health) return null;
+
+  return {
+    capacityEstimate: health.signals.capacityEstimate,
+    currentEnergyLevel: health.signals.currentEnergyLevel,
+    recoveryRecommended: health.signals.recoveryRecommended,
+    recoveryScore: health.signals.recoveryScore,
+    fatigueScore: health.signals.fatigueScore,
+    upcomingRestDays: profile?.restDays ?? [],
+    explicitRestrictions: health.signals.burnoutSignals,
+  };
 }

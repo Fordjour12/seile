@@ -38,6 +38,7 @@ export const planItemTypeValidator = v.union(
   v.literal("priority"),
   v.literal("task"),
   v.literal("habit"),
+  v.literal("workout"),
   v.literal("buffer"),
   v.literal("review"),
   v.literal("milestone"),
@@ -223,7 +224,8 @@ export const plannerAgentStateTable = defineTable({
   updatedAt: v.number(),
 })
   .index("by_userId", ["userId"])
-  .index("by_agentEnabled_userId", ["agentEnabled", "userId"]);
+  .index("by_agentEnabled_userId", ["agentEnabled", "userId"])
+  .index("by_agentEnabled", ["agentEnabled"]);
 
 export const plannerChatCommandsTable = defineTable({
   userId: v.string(),

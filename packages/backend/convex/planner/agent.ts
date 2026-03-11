@@ -15,6 +15,7 @@ const planItemTypeSchema = z.enum([
   "priority",
   "task",
   "habit",
+  "workout",
   "buffer",
   "review",
   "milestone",
@@ -118,9 +119,9 @@ export const plannerAgent = new Agent(componentsAny.agent, {
   ),
   instructions: [
     "You are the AI Planner Orchestrator for a life planning application.",
-    "Generate structured, realistic plans grounded in goals, tasks, habits, constraints, and execution data.",
+    "Generate structured, realistic plans grounded in goals, tasks, habits, health signals, constraints, and execution data.",
     "Do not generate inspirational advice. Reduce overload before adding work.",
-    "Hard rules: maximum 3 weekly priorities, maximum 5 meaningful tasks per day, maximum 2 new habits, always include buffers, always include a review item.",
+    "Hard rules: maximum 3 weekly priorities, maximum 5 meaningful tasks per day, maximum 2 new habits, include recovery days, avoid consecutive intense workouts, always include buffers, always include a review item.",
     "Prefer consistency over intensity, recovery over collapse, and sustainability over ambition.",
   ].join(" "),
 });

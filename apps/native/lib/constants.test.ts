@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import * as constants from "./constants";
+import type { ThemeMode } from "./constants/types";
 
 const PUBLIC_EXPORTS = [
   "UI_PRESETS",
@@ -43,9 +44,8 @@ describe("constants public surface", () => {
 });
 
 describe("theme derivation", () => {
-  test.each(["light", "dark"] as const)(
-    "derives UI element palette from NAV_THEME for %s mode",
-    (mode) => {
+  (["light", "dark"] as const).forEach((mode: ThemeMode) => {
+    test(`derives UI element palette from NAV_THEME for ${mode} mode`, () => {
       const theme = constants.NAV_THEME[mode];
       const palette = constants.UI_ELEMENT_THEME[mode];
 
@@ -54,9 +54,7 @@ describe("theme derivation", () => {
       expect(palette.card.shadowColor).toBe(theme.shadowColor);
       expect(palette.input.border).toBe(theme.input);
       expect(palette.modal.overlay).toBe(`hsla(0, 0%, 0%, ${theme.backdropOpacity})`);
-      expect(palette.bottomSheet.backdrop).toBe(
-        `hsla(0, 0%, 0%, ${theme.backdropOpacity})`,
-      );
-    },
-  );
+      expect(palette.bottomSheet.backdrop).toBe(`hsla(0, 0%, 0%, ${theme.backdropOpacity})`);
+    });
+  });
 });
