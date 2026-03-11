@@ -21,9 +21,6 @@ export const getSpiritualDashboard = query({
 
     const currentWeek = getWeekWindow(isoDateFromTimestamp(Date.now()));
     const currentWeekDates = new Set(currentWeek.dates);
-    const plannerHabitIds = new Set(
-      practices.map((practice) => practice.plannerHabitId).filter((value): value is NonNullable<typeof value> => value !== undefined),
-    );
     const spiritualPlannerGoals = plannerGoals.filter((goal) => goal.domain === "spiritual");
     const latestWeekPlan = [...weekPlans].sort((left, right) => right.startDate.localeCompare(left.startDate))[0] ?? null;
     const sortedGoals = [...goals].sort(sortGoals);
@@ -53,8 +50,7 @@ export const getSpiritualDashboard = query({
       reflections: sortedReflections,
       planner: {
         spiritualGoals: spiritualPlannerGoals.length,
-        spiritualHabits: practices.filter((practice) => practice.active && practice.plannerHabitId && plannerHabitIds.has(practice.plannerHabitId))
-          .length,
+        spiritualHabits: practices.filter((practice) => practice.active && practice.plannerHabitId).length,
         latestWeekPlanId: latestWeekPlan?._id ?? null,
         latestWeekPlanTitle: latestWeekPlan?.title ?? null,
       },
@@ -68,7 +64,12 @@ export const listSpiritualGoals = query({
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    const rows = await ctx.db.query("spiritualGoals").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+    const rows = args.status
+      ? await ctx.db
+          .query("spiritualGoals")
+          .withIndex("by_userId_status", (q) => q.eq("userId", userId).eq("status", args.status!))
+          .collect()
+      : await ctx.db.query("spiritualGoals").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
     return rows
       .filter((row) => (args.status ? row.status === args.status : row.status !== "archived"))
       .sort(sortGoals);
@@ -81,7 +82,12 @@ export const listSpiritualPractices = query({
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    const rows = await ctx.db.query("spiritualPractices").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+    const rows = args.active === undefined
+      ? await ctx.db.query("spiritualPractices").withIndex("by_userId", (q) => q.eq("userId", userId)).collect()
+      : await ctx.db
+          .query("spiritualPractices")
+          .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", args.active!))
+          .collect();
     return rows
       .filter((row) => (args.active === undefined ? true : row.active === args.active))
       .sort((left, right) => Number(right.active) - Number(left.active) || left.title.localeCompare(right.title));
@@ -107,13 +113,12 @@ export const listSpiritualReadings = query({
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    const rows = await ctx.db
+    const limit = Math.max(1, Math.min(args.limit ?? 100, 200));
+    return await ctx.db
       .query("spiritualReadings")
       .withIndex("by_userId_date", (q) => q.eq("userId", userId))
-      .collect();
-    return rows
-      .sort((left, right) => right.date.localeCompare(left.date))
-      .slice(0, Math.max(1, Math.min(args.limit ?? 100, 200)));
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -123,13 +128,12 @@ export const listSpiritualReflections = query({
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    const rows = await ctx.db
+    const limit = Math.max(1, Math.min(args.limit ?? 100, 200));
+    return await ctx.db
       .query("spiritualReflections")
       .withIndex("by_userId_date", (q) => q.eq("userId", userId))
-      .collect();
-    return rows
-      .sort((left, right) => right.date.localeCompare(left.date))
-      .slice(0, Math.max(1, Math.min(args.limit ?? 100, 200)));
+      .order("desc")
+      .take(limit);
   },
 });
 

@@ -4,7 +4,7 @@ import { toast } from "sonner-native";
 
 import { Badge, Button, Card, EmptyState, Input, SectionHeader, Text, View } from "@/components";
 import { NAV_THEME, Typography } from "@/lib/constants";
-import { useCreateSpiritualReflection, useSpiritualReflections } from "@/lib/spiritual";
+import { todayDateKey, useCreateSpiritualReflection, useSpiritualReflections } from "@/lib/spiritual";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 import { FaithField, FaithMetricCard, faithSharedStyles } from "./faith-shared";
@@ -17,7 +17,7 @@ export function FaithReflectionsScreen() {
   const reflections = useSpiritualReflections();
   const createReflection = useCreateSpiritualReflection();
 
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayDateKey());
   const [reflectionType, setReflectionType] = useState<(typeof REFLECTION_TYPES)[number]>("gratitude");
   const [content, setContent] = useState("");
   const [mood, setMood] = useState("");
@@ -41,7 +41,7 @@ export function FaithReflectionsScreen() {
       setContent("");
       setMood("");
       setInsights("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(todayDateKey());
       setReflectionType("gratitude");
     } catch (error) {
       toast.error("Could not save reflection", {
@@ -138,5 +138,6 @@ export function FaithReflectionsScreen() {
 function isWithinLastSevenDays(dateKey: string) {
   const target = Date.parse(`${dateKey}T00:00:00.000Z`);
   if (Number.isNaN(target)) return false;
-  return Date.now() - target <= 7 * 24 * 60 * 60 * 1000;
+  const delta = Date.parse(`${todayDateKey()}T00:00:00.000Z`) - target;
+  return delta >= 0 && delta <= 7 * 24 * 60 * 60 * 1000;
 }

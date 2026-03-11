@@ -60,7 +60,9 @@ export const spiritualReadingsTable = defineTable({
   date: v.string(),
   notes: v.optional(v.string()),
   createdAt: v.number(),
-}).index("by_userId_date", ["userId", "date"]);
+})
+  .index("by_userId", ["userId"])
+  .index("by_userId_date", ["userId", "date"]);
 
 export const prayersTable = defineTable({
   userId: v.string(),

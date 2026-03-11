@@ -314,6 +314,9 @@ function normalizeTargetValue(value: number) {
   if (!Number.isFinite(value) || value <= 0) {
     throw new ConvexError("Validation: target value must be greater than zero");
   }
+  if (value < 0.5) {
+    throw new ConvexError("Validation: target value must be at least 0.5");
+  }
   return Math.max(1, Math.round(value));
 }
 

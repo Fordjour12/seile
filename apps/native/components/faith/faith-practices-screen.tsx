@@ -43,6 +43,17 @@ export function FaithPracticesScreen() {
       return;
     }
 
+    const parsedTargetValue = Number(targetValue);
+    if (!Number.isFinite(parsedTargetValue) || parsedTargetValue <= 0) {
+      toast.error("Target value must be a positive number");
+      return;
+    }
+
+    if (cadence === "custom" && scheduleDays.length === 0) {
+      toast.error("Choose at least one day for a custom practice");
+      return;
+    }
+
     setLoading(true);
     try {
       await createPractice({
@@ -50,7 +61,7 @@ export function FaithPracticesScreen() {
         description: description || undefined,
         practiceType,
         cadence,
-        targetValue: Number(targetValue) || 1,
+        targetValue: parsedTargetValue,
         unit,
         timeOfDay: timeOfDay || undefined,
         scheduleDays: cadence === "custom" ? scheduleDays : undefined,

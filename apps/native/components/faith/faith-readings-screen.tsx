@@ -4,7 +4,7 @@ import { toast } from "sonner-native";
 
 import { Badge, Button, Card, EmptyState, Input, SectionHeader, Text, View } from "@/components";
 import { NAV_THEME, Typography } from "@/lib/constants";
-import { useCreateSpiritualReading, useSpiritualReadings } from "@/lib/spiritual";
+import { todayDateKey, useCreateSpiritualReading, useSpiritualReadings } from "@/lib/spiritual";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 import { FaithField, FaithMetricCard, faithSharedStyles } from "./faith-shared";
@@ -18,7 +18,7 @@ export function FaithReadingsScreen() {
   const [title, setTitle] = useState("");
   const [source, setSource] = useState("");
   const [passage, setPassage] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayDateKey());
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -40,7 +40,7 @@ export function FaithReadingsScreen() {
       setSource("");
       setPassage("");
       setNotes("");
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(todayDateKey());
     } catch (error) {
       toast.error("Could not log reading", {
         description: error instanceof Error ? error.message : "Please try again.",
@@ -120,5 +120,6 @@ export function FaithReadingsScreen() {
 function isWithinLastSevenDays(dateKey: string) {
   const target = Date.parse(`${dateKey}T00:00:00.000Z`);
   if (Number.isNaN(target)) return false;
-  return Date.now() - target <= 7 * 24 * 60 * 60 * 1000;
+  const delta = Date.parse(`${todayDateKey()}T00:00:00.000Z`) - target;
+  return delta >= 0 && delta <= 7 * 24 * 60 * 60 * 1000;
 }
