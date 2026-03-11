@@ -1,5 +1,12 @@
 import { Tabs } from "expo-router";
-import { PiggyBank, Calendar, Erase } from "iconoir-react-native";
+import {
+  PiggyBank,
+  Calendar,
+  Erase,
+  HospitalCircle,
+  HealthShield,
+  HomeTable,
+} from "iconoir-react-native";
 
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
@@ -25,7 +32,11 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <HomeTable />
+            </TabBarIcon2>
+          ),
         }}
       />
       <Tabs.Screen
@@ -39,15 +50,10 @@ export default function TabLayout() {
         options={{
           title: "Health",
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="heartbeat" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="components"
-        options={{
-          title: "Components",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="th-large" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <HealthShield />
+            </TabBarIcon2>
           ),
         }}
       />
@@ -89,14 +95,6 @@ export default function TabLayout() {
               <Calendar />
             </TabBarIcon2>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="planner"
-        options={{
-          title: "Planner",
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="calendar" color={color} />,
         }}
       />
       <Tabs.Screen
