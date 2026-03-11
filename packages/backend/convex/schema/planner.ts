@@ -193,9 +193,12 @@ export const planningReviewsTable = defineTable({
   wins: v.array(v.string()),
   blockers: v.array(v.string()),
   misses: v.array(v.string()),
+  missedHabitsCount: v.optional(v.number()),
   completionRate: v.number(),
   stressRating: v.optional(v.number()),
   satisfactionRating: v.optional(v.number()),
+  burnoutScore: v.optional(v.number()),
+  burnoutState: v.optional(burnoutStateValidator),
   overloadIndicators: v.array(v.string()),
   improvementSuggestions: v.array(v.string()),
   createdAt: v.number(),
@@ -218,4 +221,20 @@ export const plannerAgentStateTable = defineTable({
   lastHabitOptimizationAt: v.optional(v.number()),
   createdAt: v.number(),
   updatedAt: v.number(),
-}).index("by_userId", ["userId"]);
+})
+  .index("by_userId", ["userId"])
+  .index("by_agentEnabled_userId", ["agentEnabled", "userId"]);
+
+export const plannerChatCommandsTable = defineTable({
+  userId: v.string(),
+  threadId: v.string(),
+  messageKey: v.string(),
+  intentKind: v.string(),
+  status: v.union(v.literal("pending"), v.literal("completed")),
+  actionKind: v.optional(v.string()),
+  actionSummary: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_userId_messageKey", ["userId", "messageKey"])
+  .index("by_threadId_createdAt", ["threadId", "createdAt"]);

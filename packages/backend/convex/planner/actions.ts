@@ -1,20 +1,24 @@
 "use node";
 
+import { createHash } from "node:crypto";
+
 import { ConvexError, v } from "convex/values";
 
 import type { ActionCtx } from "../_generated/server";
 import { action, internalAction } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { components, internal } from "../_generated/api";
 import {
   buildReviewSummary,
   buildWeeklyPlanDraft,
   calculateBurnoutRisk,
+  clampMaxTasksPerDay,
 } from "../lib/planner";
 import { requireUserId } from "../lib/identity";
 import {
   burnoutAssessmentSchema,
   createPlannerThread,
   ensurePlannerAgentConfigured,
+  isPlannerAgentConfigured,
   plannerAgent,
   planningModeSchema,
   replanningAssessmentSchema,
@@ -23,6 +27,7 @@ import {
 } from "./agent";
 
 const internalApi = internal as unknown as Record<string, Record<string, any>>;
+const componentsAny = components as any;
 
 const DEFAULT_PROFILE = {
   timezone: "UTC",
@@ -103,13 +108,48 @@ export const sendPlannerChatMessage = action({
 
     const threadId = await ensurePlannerChatThreadForUser(ctx, userId);
     const threadState = await plannerAgent.continueThread(ctx, { threadId, userId });
+    const latestMessages = await ctx.runQuery(componentsAny.agent.messages.listMessagesByThreadId, {
+      threadId,
+      order: "desc",
+      excludeToolMessages: true,
+      paginationOpts: { cursor: null, numItems: 1 },
+    });
     const contextBefore = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
     const intent = detectPlannerChatIntent(text);
-    const actionResult = await runPlannerChatIntent(ctx, {
-      userId,
-      intent,
-      context: contextBefore,
-    });
+    const latestMessageId = latestMessages.page[0]?._id ?? "empty";
+    const messageKey = createHash("sha256")
+      .update(`${threadId}:${latestMessageId}:${text}`)
+      .digest("hex");
+    const commandReservation = await ctx.runMutation(
+      internalApi["planner/mutations"].reservePlannerChatCommand,
+      {
+        userId,
+        threadId,
+        messageKey,
+        intentKind: intent.kind,
+      },
+    );
+    let actionResult: { kind: string; summary: string };
+    if (commandReservation.command?.status === "completed") {
+      actionResult = {
+        kind: commandReservation.command.actionKind ?? intent.kind,
+        summary: commandReservation.command.actionSummary ?? "Planner command already completed.",
+      };
+    } else if (!commandReservation.created) {
+      throw new ConvexError("Planner command is already being processed.");
+    } else {
+      actionResult = await runPlannerChatIntent(ctx, {
+        userId,
+        intent,
+        context: contextBefore,
+      });
+      await ctx.runMutation(internalApi["planner/mutations"].completePlannerChatCommand, {
+        userId,
+        messageKey,
+        actionKind: actionResult.kind,
+        actionSummary: actionResult.summary,
+      });
+    }
     const contextAfter = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
 
     const result = await threadState.thread.generateText({
@@ -143,22 +183,31 @@ export const sendPlannerChatMessage = action({
 export const runWeeklyReviewCycle = internalAction({
   args: {},
   handler: async (ctx) => {
-    ensurePlannerAgentConfigured();
+    if (!isPlannerAgentConfigured()) {
+      return { reviewedCount: 0 };
+    }
     const states = await ctx.runQuery(internalApi["planner/queries"].listAgentEnabledStates, {});
     let reviewedCount = 0;
 
     for (const state of states) {
-      const targetPlan = await ctx.runQuery(
-        internalApi["planner/queries"].getLatestPastWeeklyPlanWithoutReview,
-        { userId: state.userId },
-      );
-      if (!targetPlan) continue;
+      try {
+        const targetPlan = await ctx.runQuery(
+          internalApi["planner/queries"].getLatestPastWeeklyPlanWithoutReview,
+          { userId: state.userId },
+        );
+        if (!targetPlan) continue;
 
-      await reviewWeeklyPlanForUser(ctx, {
-        userId: state.userId,
-        planId: targetPlan._id,
-      });
-      reviewedCount += 1;
+        await reviewWeeklyPlanForUser(ctx, {
+          userId: state.userId,
+          planId: targetPlan._id,
+        });
+        reviewedCount += 1;
+      } catch (error) {
+        console.error("Planner weekly review cycle failed", {
+          userId: state.userId,
+          error,
+        });
+      }
     }
 
     return { reviewedCount };
@@ -168,20 +217,29 @@ export const runWeeklyReviewCycle = internalAction({
 export const runWeeklyPlanningCycle = internalAction({
   args: {},
   handler: async (ctx) => {
-    ensurePlannerAgentConfigured();
+    if (!isPlannerAgentConfigured()) {
+      return { createdCount: 0 };
+    }
     const states = await ctx.runQuery(internalApi["planner/queries"].listAgentEnabledStates, {});
     let createdCount = 0;
     const nextWeekStart = nextWeekMonday();
 
     for (const state of states) {
-      const result = await draftWeeklyPlanForUser(ctx, {
-        userId: state.userId,
-        weekStart: nextWeekStart,
-        mode: state.burnoutState === "recovery" ? "recovery" : "discovery",
-        createdBy: "agent",
-      });
-      if (!result.reused) {
-        createdCount += 1;
+      try {
+        const result = await draftWeeklyPlanForUser(ctx, {
+          userId: state.userId,
+          weekStart: nextWeekStart,
+          mode: state.burnoutState === "recovery" ? "recovery" : "discovery",
+          createdBy: "agent",
+        });
+        if (!result.reused) {
+          createdCount += 1;
+        }
+      } catch (error) {
+        console.error("Planner weekly planning cycle failed", {
+          userId: state.userId,
+          error,
+        });
       }
     }
 
@@ -192,64 +250,73 @@ export const runWeeklyPlanningCycle = internalAction({
 export const runMidweekAdjustmentCycle = internalAction({
   args: {},
   handler: async (ctx) => {
-    ensurePlannerAgentConfigured();
+    if (!isPlannerAgentConfigured()) {
+      return { adjustedCount: 0 };
+    }
     const states = await ctx.runQuery(internalApi["planner/queries"].listAgentEnabledStates, {});
     let adjustedCount = 0;
 
     for (const state of states) {
-      const context = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, {
-        userId: state.userId,
-      });
-      if (!context.currentPlan) continue;
-
-      const pendingTasks = context.currentPlanItems.filter(
-        (item: { itemType: string; status: string }) => item.itemType === "task" && item.status === "pending",
-      );
-      const doneTasks = context.currentPlanItems.filter(
-        (item: { itemType: string; status: string }) => item.itemType === "task" && item.status === "done",
-      );
-
-      const threadId = await createPlannerThread(ctx, {
-        userId: state.userId,
-        title: `Midweek adjustment ${context.week.startDate}`,
-        summary: "Assess whether the remaining week needs a lighter plan.",
-      });
-
-      const result = await plannerAgent.generateObject(
-        ctx,
-        { threadId },
-        {
-          prompt: [
-            "Assess midweek drift for this weekly plan.",
-            "Return shouldAdjust=false unless remaining work is clearly overloaded or burnout risk is rising.",
-            "If adjustment is needed, produce a direct reason focused on overload, rollover, or low energy.",
-            `Current plan: ${JSON.stringify({
-              title: context.currentPlan.title,
-              warnings: context.currentPlan.warnings,
-              burnoutRiskScore: context.currentPlan.burnoutRiskScore,
-              pendingTasks: pendingTasks.map((item: { title: string; date: string; priority: string }) => ({
-                title: item.title,
-                date: item.date,
-                priority: item.priority,
-              })),
-              doneTaskCount: doneTasks.length,
-              latestReview: context.latestReview,
-            })}`,
-          ].join("\n\n"),
-          schema: replanningAssessmentSchema,
-        },
-      );
-
-      if (result.object.shouldAdjust) {
-        const replanResult = await ctx.runMutation(internalApi["planner/mutations"].performAgentReplan, {
+      try {
+        const context = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, {
           userId: state.userId,
-          planId: context.currentPlan._id,
-          reason: result.object.reason,
-          preserveLockedItems: result.object.preserveLockedItems,
         });
-        if (replanResult.movedCount > 0 || replanResult.droppedCount > 0) {
-          adjustedCount += 1;
+        if (!context.currentPlan) continue;
+
+        const pendingTasks = context.currentPlanItems.filter(
+          (item: { itemType: string; status: string }) => item.itemType === "task" && item.status === "pending",
+        );
+        const doneTasks = context.currentPlanItems.filter(
+          (item: { itemType: string; status: string }) => item.itemType === "task" && item.status === "done",
+        );
+
+        const threadId = await createPlannerThread(ctx, {
+          userId: state.userId,
+          title: `Midweek adjustment ${context.week.startDate}`,
+          summary: "Assess whether the remaining week needs a lighter plan.",
+        });
+
+        const result = await plannerAgent.generateObject(
+          ctx,
+          { threadId },
+          {
+            prompt: [
+              "Assess midweek drift for this weekly plan.",
+              "Return shouldAdjust=false unless remaining work is clearly overloaded or burnout risk is rising.",
+              "If adjustment is needed, produce a direct reason focused on overload, rollover, or low energy.",
+              `Current plan: ${JSON.stringify({
+                title: context.currentPlan.title,
+                warnings: context.currentPlan.warnings,
+                burnoutRiskScore: context.currentPlan.burnoutRiskScore,
+                pendingTasks: pendingTasks.map((item: { title: string; date: string; priority: string }) => ({
+                  title: item.title,
+                  date: item.date,
+                  priority: item.priority,
+                })),
+                doneTaskCount: doneTasks.length,
+                latestReview: context.latestReview,
+              })}`,
+            ].join("\n\n"),
+            schema: replanningAssessmentSchema,
+          },
+        );
+
+        if (result.object.shouldAdjust) {
+          const replanResult = await ctx.runMutation(internalApi["planner/mutations"].performAgentReplan, {
+            userId: state.userId,
+            planId: context.currentPlan._id,
+            reason: result.object.reason,
+            preserveLockedItems: result.object.preserveLockedItems,
+          });
+          if (replanResult.movedCount > 0 || replanResult.droppedCount > 0) {
+            adjustedCount += 1;
+          }
         }
+      } catch (error) {
+        console.error("Planner midweek adjustment cycle failed", {
+          userId: state.userId,
+          error,
+        });
       }
     }
 
@@ -260,53 +327,62 @@ export const runMidweekAdjustmentCycle = internalAction({
 export const runBurnoutMonitoringCycle = internalAction({
   args: {},
   handler: async (ctx) => {
-    ensurePlannerAgentConfigured();
+    if (!isPlannerAgentConfigured()) {
+      return { updatedCount: 0 };
+    }
     const states = await ctx.runQuery(internalApi["planner/queries"].listAgentEnabledStates, {});
     let updatedCount = 0;
 
     for (const state of states) {
-      const context = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, {
-        userId: state.userId,
-      });
-      const baselineRisk = calculateBurnoutRisk({
-        latestReview: context.latestReview,
-        agentState: context.agentState,
-        openTasksCount: context.openTasks.length,
-        missedHabitsCount: context.latestReview?.misses.length ?? 0,
-        mode: "discovery",
-      });
+      try {
+        const context = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, {
+          userId: state.userId,
+        });
+        const baselineRisk = calculateBurnoutRisk({
+          latestReview: context.latestReview,
+          agentState: context.agentState,
+          openTasksCount: context.openTasks.length,
+          missedHabitsCount: context.latestReview?.missedHabitsCount ?? 0,
+          mode: "discovery",
+        });
 
-      const threadId = await createPlannerThread(ctx, {
-        userId: state.userId,
-        title: `Burnout monitor ${context.week.startDate}`,
-        summary: "Assess burnout risk using planner execution data.",
-      });
+        const threadId = await createPlannerThread(ctx, {
+          userId: state.userId,
+          title: `Burnout monitor ${context.week.startDate}`,
+          summary: "Assess burnout risk using planner execution data.",
+        });
 
-      const result = await plannerAgent.generateObject(
-        ctx,
-        { threadId },
-        {
-          prompt: [
-            "Assess burnout risk using execution data.",
-            "Be conservative: recommend recovery when completion is repeatedly low and stress is elevated.",
-            `Context: ${JSON.stringify({
-              baselineRisk,
-              latestReview: context.latestReview,
-              openTasks: context.openTasks.length,
-              currentPlanWarnings: context.currentPlan?.warnings ?? [],
-            })}`,
-          ].join("\n\n"),
-          schema: burnoutAssessmentSchema,
-        },
-      );
+        const result = await plannerAgent.generateObject(
+          ctx,
+          { threadId },
+          {
+            prompt: [
+              "Assess burnout risk using execution data.",
+              "Be conservative: recommend recovery when completion is repeatedly low and stress is elevated.",
+              `Context: ${JSON.stringify({
+                baselineRisk,
+                latestReview: context.latestReview,
+                openTasks: context.openTasks.length,
+                currentPlanWarnings: context.currentPlan?.warnings ?? [],
+              })}`,
+            ].join("\n\n"),
+            schema: burnoutAssessmentSchema,
+          },
+        );
 
-      await ctx.runMutation(internalApi["planner/mutations"].updateAgentBurnoutState, {
-        userId: state.userId,
-        burnoutScore: result.object.burnoutScore,
-        burnoutState: result.object.burnoutState,
-        touchedAt: Date.now(),
-      });
-      updatedCount += 1;
+        await ctx.runMutation(internalApi["planner/mutations"].updateAgentBurnoutState, {
+          userId: state.userId,
+          burnoutScore: result.object.burnoutScore,
+          burnoutState: result.object.burnoutState,
+          touchedAt: Date.now(),
+        });
+        updatedCount += 1;
+      } catch (error) {
+        console.error("Planner burnout monitoring cycle failed", {
+          userId: state.userId,
+          error,
+        });
+      }
     }
 
     return { updatedCount };
@@ -327,6 +403,9 @@ async function draftWeeklyPlanForUser(
     userId: input.userId,
     weekStart: input.weekStart,
   });
+  if (context.currentPlan) {
+    return { id: context.currentPlan._id, reused: true };
+  }
   const profile = context.profile ?? DEFAULT_PROFILE;
   const baselineDraft = buildWeeklyPlanDraft({
     weekStart: context.week.startDate,
@@ -414,11 +493,16 @@ async function reviewWeeklyPlanForUser(
     userId: input.userId,
     id: input.planId,
   });
+  const plannerContext = await ctx.runQuery(
+    internalApi["planner/queries"].getPlannerAgentContext,
+    { userId: input.userId, weekStart: detail.plan.startDate },
+  );
   const baselineReview = buildReviewSummary(
     detail.plan,
     detail.items,
     input.stressRating,
     input.satisfactionRating,
+    clampMaxTasksPerDay(plannerContext.profile?.maxTasksPerDay ?? DEFAULT_PROFILE.maxTasksPerDay),
   );
 
   const threadId = await createPlannerThread(ctx, {
@@ -474,6 +558,7 @@ async function reviewWeeklyPlanForUser(
     wins: result.object.wins,
     blockers: result.object.blockers,
     misses: result.object.misses,
+    missedHabitsCount: baselineReview.missedHabitsCount,
     overloadIndicators: result.object.overloadIndicators,
     improvementSuggestions: result.object.improvementSuggestions,
     stressRating: result.object.stressRating ?? input.stressRating,

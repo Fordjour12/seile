@@ -19,6 +19,10 @@ export function PlannerSettingsScreen() {
     busyKey,
     timezone,
     setTimezone,
+    workStart,
+    setWorkStart,
+    workEnd,
+    setWorkEnd,
     maxTasksPerDay,
     setMaxTasksPerDay,
     energyPattern,
@@ -58,6 +62,8 @@ export function PlannerSettingsScreen() {
         <Card style={{ gap: 14 }}>
           <Text variant="h3">Planner Profile</Text>
           <Input value={timezone} onChangeText={setTimezone} placeholder="Timezone" />
+          <Input value={workStart} onChangeText={setWorkStart} placeholder="Work start (HH:MM)" />
+          <Input value={workEnd} onChangeText={setWorkEnd} placeholder="Work end (HH:MM)" />
           <Input
             value={maxTasksPerDay}
             onChangeText={setMaxTasksPerDay}

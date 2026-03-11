@@ -106,6 +106,7 @@ export type ReviewSummary = {
   wins: string[];
   blockers: string[];
   misses: string[];
+  missedHabitsCount: number;
   overloadIndicators: string[];
   improvementSuggestions: string[];
 };
@@ -189,7 +190,7 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
     latestReview: input.latestReview,
     agentState: input.agentState,
     openTasksCount: openTasks.length,
-    missedHabitsCount: input.latestReview?.misses.length ?? 0,
+    missedHabitsCount: input.latestReview?.missedHabitsCount ?? 0,
     mode: input.mode,
   });
   const recoverySuggested = input.mode === "recovery" || burnoutRiskScore >= 65;
@@ -214,16 +215,27 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
   }
 
   const items: GeneratedPlanItemDraft[] = [];
+  const occupiedByDate = new Map<string, Array<{ start: string; end: string }>>();
   const energyPattern = input.profile.energyPattern;
   const primaryDate = activeDates[0] ?? week.startDate;
 
   priorityTitles.forEach((title, index) => {
+    const reserved = reserveTimedSlot(
+      occupiedByDate,
+      primaryDate,
+      timeForPriority(index, energyPattern),
+      timeForPriority(index + 1, energyPattern),
+    );
+    if (!reserved) {
+      return;
+    }
+
     items.push({
       itemType: "priority",
       title,
       date: primaryDate,
-      startTime: timeForPriority(index, energyPattern),
-      endTime: timeForPriority(index + 1, energyPattern),
+      startTime: reserved.start,
+      endTime: reserved.end,
       priority: "high",
       effort: "medium",
       notes: "Weekly priority",
@@ -244,11 +256,17 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
       linkedGoalId: task.linkedGoalId,
     }));
 
-  if (selectedTasks.length < Math.max(selectedGoals.length * 2, 4)) {
+  const remainingTaskCapacity = Math.max(0, taskCapacity - selectedTasks.length);
+  const desiredGeneratedTaskCount = Math.max(
+    0,
+    Math.min(Math.max(selectedGoals.length * 2, 4) - selectedTasks.length, remainingTaskCapacity),
+  );
+
+  if (desiredGeneratedTaskCount > 0) {
     const generatedTasks = createGoalTasks({
       goals: selectedGoals,
       weekEnd: week.endDate,
-      desiredCount: Math.max(selectedGoals.length * 2, 4) - selectedTasks.length,
+      desiredCount: desiredGeneratedTaskCount,
     });
 
     for (const task of generatedTasks) {
@@ -288,7 +306,7 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
     });
   }
 
-  const selectedHabits = activeHabits.slice(0, MAX_NEW_HABITS);
+  const selectedHabits = activeHabits;
   const habitsToSchedule: HabitCandidate[] =
     selectedHabits.length > 0
       ? selectedHabits.map((habit) => ({
@@ -299,7 +317,9 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
           linkedGoalId: habit.linkedGoalId,
           scheduleDays: habit.scheduleDays,
         }))
-      : createStarterHabits(selectedGoals).map((habit) => ({
+      : createStarterHabits(selectedGoals)
+          .slice(0, MAX_NEW_HABITS)
+          .map((habit) => ({
           name: habit.name,
           cadence: habit.cadence,
           targetValue: habit.targetValue,
@@ -308,15 +328,20 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
           draftHabit: habit,
         }));
 
-  for (const habit of habitsToSchedule.slice(0, MAX_NEW_HABITS)) {
+  for (const habit of habitsToSchedule) {
     for (const date of habitDates(habit.cadence, activeDates, habit.scheduleDays)) {
       const [startTime, endTime] = habitTimeRange(energyPattern, date);
+      const reserved = reserveTimedSlot(occupiedByDate, date, startTime, endTime);
+      if (!reserved) {
+        continue;
+      }
+
       items.push({
         itemType: "habit",
         title: habit.name,
         date,
-        startTime,
-        endTime,
+        startTime: reserved.start,
+        endTime: reserved.end,
         priority: "medium",
         effort: "low",
         linkedHabitId: habit.id,
@@ -328,29 +353,37 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
 
   for (const date of activeDates) {
     const [startTime, endTime] = bufferTimeRange(input.profile.workHours.end);
+    const reserved = reserveTimedSlot(occupiedByDate, date, startTime, endTime);
+    if (!reserved) {
+      continue;
+    }
+
     items.push({
       itemType: "buffer",
       title: recoverySuggested ? "Lighter buffer block" : "Buffer block",
       date,
-      startTime,
-      endTime,
+      startTime: reserved.start,
+      endTime: reserved.end,
       priority: "low",
       effort: "low",
       notes: "Reserved for spillover, admin, or recovery.",
     });
   }
 
-  items.push({
-    itemType: "review",
-    title: "Weekly review",
-    date: week.endDate,
-    startTime: "18:00",
-    endTime: "18:30",
-    priority: "medium",
-    effort: "low",
-    notes: "Capture wins, blockers, and stress signals.",
-    locked: true,
-  });
+  const reviewSlot = reserveTimedSlot(occupiedByDate, week.endDate, "18:00", "18:30");
+  if (reviewSlot) {
+    items.push({
+      itemType: "review",
+      title: "Weekly review",
+      date: week.endDate,
+      startTime: reviewSlot.start,
+      endTime: reviewSlot.end,
+      priority: "medium",
+      effort: "low",
+      notes: "Capture wins, blockers, and stress signals.",
+      locked: true,
+    });
+  }
 
   const titlePrefix = recoverySuggested ? "Recovery" : "Planner";
   const summary = recoverySuggested
@@ -373,9 +406,13 @@ export function buildReviewSummary(
   items: Doc<"planItems">[],
   stressRating?: number,
   satisfactionRating?: number,
+  effectiveDailyCap = MAX_MEANINGFUL_TASKS_PER_DAY,
 ): ReviewSummary {
   const actionableItems = items.filter((item) => item.itemType === "task" || item.itemType === "habit" || item.itemType === "priority");
   const doneItems = actionableItems.filter((item) => item.status === "done");
+  const missedHabitsCount = actionableItems.filter(
+    (item) => item.itemType === "habit" && item.status !== "done",
+  ).length;
   const completionRate =
     actionableItems.length === 0 ? 100 : Math.round((doneItems.length / actionableItems.length) * 100);
   const wins = doneItems.slice(0, 5).map((item) => item.title);
@@ -394,7 +431,7 @@ export function buildReviewSummary(
         : [];
   const overloadIndicators = [
     ...(completionRate < 60 ? ["Low completion rate"] : []),
-    ...(countMeaningfulTasksPerDate(items) > MAX_MEANINGFUL_TASKS_PER_DAY ? ["Exceeded daily task guardrail"] : []),
+    ...(countMeaningfulTasksPerDate(items) > effectiveDailyCap ? ["Exceeded daily task guardrail"] : []),
     ...(stressRating && stressRating >= 4 ? ["High stress rating"] : []),
   ];
   const improvementSuggestions = [
@@ -408,6 +445,7 @@ export function buildReviewSummary(
     wins,
     blockers,
     misses,
+    missedHabitsCount,
     overloadIndicators,
     improvementSuggestions,
   };
@@ -587,6 +625,51 @@ function countMeaningfulTasksPerDate(items: Doc<"planItems">[]) {
   }
 
   return Math.max(0, ...counts.values());
+}
+
+function reserveTimedSlot(
+  occupiedByDate: Map<string, Array<{ start: string; end: string }>>,
+  date: string,
+  start: string,
+  end: string,
+) {
+  let startMinutes = timeToMinutes(start);
+  const endMinutes = timeToMinutes(end);
+  const duration = endMinutes - startMinutes;
+  if (duration <= 0) {
+    return null;
+  }
+
+  const occupied = occupiedByDate.get(date) ?? [];
+  while (startMinutes + duration <= 24 * 60) {
+    const nextStart = minutesToTime(startMinutes);
+    const nextEnd = minutesToTime(startMinutes + duration);
+    const collides = occupied.some(
+      (slot) => !(nextEnd <= slot.start || nextStart >= slot.end),
+    );
+
+    if (!collides) {
+      occupied.push({ start: nextStart, end: nextEnd });
+      occupied.sort((left, right) => left.start.localeCompare(right.start));
+      occupiedByDate.set(date, occupied);
+      return { start: nextStart, end: nextEnd };
+    }
+
+    startMinutes += 15;
+  }
+
+  return null;
+}
+
+function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(":").map((value) => Number.parseInt(value, 10));
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 function priorityScore(priority: PlanningPriority) {

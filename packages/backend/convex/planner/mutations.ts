@@ -385,6 +385,10 @@ export const storeAgentWeeklyPlan = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    const planWindow = {
+      startDate: args.weekStart,
+      endDate: args.endDate,
+    };
 
     const habitIdsByKey = new Map<string, Id<"planningHabits">>();
     for (const item of args.items) {
@@ -433,6 +437,8 @@ export const storeAgentWeeklyPlan = internalMutation({
           habitIdsByKey.set(habitKey, linkedHabitId);
         }
       }
+
+      validateItemDateWithinPlan(planWindow, item.date);
 
       await ctx.db.insert("planItems", {
         userId: args.userId,
@@ -534,6 +540,7 @@ export const saveAgentReview = internalMutation({
     wins: v.array(v.string()),
     blockers: v.array(v.string()),
     misses: v.array(v.string()),
+    missedHabitsCount: v.optional(v.number()),
     overloadIndicators: v.array(v.string()),
     improvementSuggestions: v.array(v.string()),
     stressRating: v.optional(v.number()),
@@ -554,6 +561,9 @@ export const saveAgentReview = internalMutation({
         wins: args.wins,
         blockers: args.blockers,
         misses: args.misses,
+        missedHabitsCount: args.missedHabitsCount,
+        burnoutScore: Math.max(0, Math.min(100, Math.round(args.burnoutScore))),
+        burnoutState: args.burnoutState,
         overloadIndicators: args.overloadIndicators,
         improvementSuggestions: args.improvementSuggestions,
         stressRating: args.stressRating,
@@ -569,6 +579,9 @@ export const saveAgentReview = internalMutation({
         wins: args.wins,
         blockers: args.blockers,
         misses: args.misses,
+        missedHabitsCount: args.missedHabitsCount,
+        burnoutScore: Math.max(0, Math.min(100, Math.round(args.burnoutScore))),
+        burnoutState: args.burnoutState,
         overloadIndicators: args.overloadIndicators,
         improvementSuggestions: args.improvementSuggestions,
         stressRating: args.stressRating,
@@ -637,6 +650,70 @@ export const setActivePlannerThread = internalMutation({
       updatedAt: Date.now(),
     });
     return await ctx.db.get(state._id);
+  },
+});
+
+export const reservePlannerChatCommand = internalMutation({
+  args: {
+    userId: v.string(),
+    threadId: v.string(),
+    messageKey: v.string(),
+    intentKind: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("plannerChatCommands")
+      .withIndex("by_userId_messageKey", (q) =>
+        q.eq("userId", args.userId).eq("messageKey", args.messageKey),
+      )
+      .first();
+
+    if (existing) {
+      return { created: false, command: existing };
+    }
+
+    const now = Date.now();
+    const id = await ctx.db.insert("plannerChatCommands", {
+      userId: args.userId,
+      threadId: args.threadId,
+      messageKey: args.messageKey,
+      intentKind: args.intentKind,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return { created: true, command: await ctx.db.get(id) };
+  },
+});
+
+export const completePlannerChatCommand = internalMutation({
+  args: {
+    userId: v.string(),
+    messageKey: v.string(),
+    actionKind: v.string(),
+    actionSummary: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("plannerChatCommands")
+      .withIndex("by_userId_messageKey", (q) =>
+        q.eq("userId", args.userId).eq("messageKey", args.messageKey),
+      )
+      .first();
+
+    if (!existing) {
+      throw new ConvexError("Planner chat command not found");
+    }
+
+    await ctx.db.patch(existing._id, {
+      status: "completed",
+      actionKind: args.actionKind,
+      actionSummary: args.actionSummary,
+      updatedAt: Date.now(),
+    });
+
+    return await ctx.db.get(existing._id);
   },
 });
 
@@ -733,6 +810,8 @@ async function buildAndStoreWeeklyPlan(
       });
     }
 
+    validateItemDateWithinPlan(week, item.date);
+
     await ctx.db.insert("planItems", {
       userId: input.userId,
       planId,
@@ -775,7 +854,14 @@ async function createWeeklyReviewForPlan(
 ) {
   const plan = await requireOwnedPlan(ctx, input.userId, input.planId);
   const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
-  const summary = buildReviewSummary(plan, items, input.stressRating, input.satisfactionRating);
+  const profile = await ensureProfile(ctx, input.userId);
+  const summary = buildReviewSummary(
+    plan,
+    items,
+    input.stressRating,
+    input.satisfactionRating,
+    clampMaxTasksPerDay(profile.maxTasksPerDay),
+  );
   const existing = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
   const now = Date.now();
 
@@ -886,7 +972,7 @@ async function requireOwnedHabit(ctx: MutationCtx, userId: string, habitId: Id<"
   return habit;
 }
 
-function validateItemDateWithinPlan(plan: Doc<"plans">, date: string) {
+function validateItemDateWithinPlan(plan: Pick<Doc<"plans">, "startDate" | "endDate">, date: string) {
   if (compareDateKeys(date, plan.startDate) < 0 || compareDateKeys(date, plan.endDate) > 0) {
     throw new ConvexError("Validation: plan item date must be inside the plan window");
   }
@@ -958,7 +1044,11 @@ async function performReplan(
   const currentTaskCounts = new Map<string, number>();
   for (const item of items) {
     if (item.itemType !== "task") continue;
-    if (item.status === "done") {
+    if (
+      item.status === "done" ||
+      item.status === "moved" ||
+      (input.preserveLockedItems && item.locked)
+    ) {
       currentTaskCounts.set(item.date, (currentTaskCounts.get(item.date) ?? 0) + 1);
     }
   }
@@ -971,7 +1061,6 @@ async function performReplan(
 
   for (const item of movableItems) {
     if (input.preserveLockedItems && item.locked) {
-      currentTaskCounts.set(item.date, (currentTaskCounts.get(item.date) ?? 0) + 1);
       continue;
     }
 
@@ -1002,6 +1091,12 @@ async function performReplan(
       notes: nextDate === item.date ? item.notes : mergeNotes(item.notes, `Moved during replanning: ${input.reason}`),
       updatedAt: Date.now(),
     });
+    if (item.linkedTaskId && nextDate !== item.date) {
+      await ctx.db.patch(item.linkedTaskId, {
+        dueDate: nextDate,
+        updatedAt: Date.now(),
+      });
+    }
   }
 
   const nextWarnings = appendUnique(plan.warnings, [

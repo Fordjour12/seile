@@ -4,9 +4,7 @@ import { ScrollView, View } from "react-native";
 
 import { Badge, Button, Card, ListItem, Text } from "@/components";
 import { Container } from "@/components/container";
-import { api } from "@/lib/backend-api";
-
-const plannerApi = api as unknown as Record<string, Record<string, any>>;
+import { plannerApi } from "@/lib/planner/api";
 
 export function PlannerOverviewScreen() {
   const router = useRouter();

@@ -1,9 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 
-import { api } from "@/lib/backend-api";
-
-const plannerApi = api as unknown as Record<string, Record<string, any>>;
+import { plannerApi } from "@/lib/planner/api";
 
 const DAY_OPTIONS = [
   "monday",
@@ -31,6 +29,8 @@ export function usePlannerSettings() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   const [timezone, setTimezone] = useState("UTC");
+  const [workStart, setWorkStart] = useState("09:00");
+  const [workEnd, setWorkEnd] = useState("17:00");
   const [maxTasksPerDay, setMaxTasksPerDay] = useState("3");
   const [energyPattern, setEnergyPattern] = useState<EnergyPattern>("morning");
   const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("structured");
@@ -48,6 +48,8 @@ export function usePlannerSettings() {
     }
 
     setTimezone(dashboard.profile.timezone);
+    setWorkStart(dashboard.profile.workHours.start);
+    setWorkEnd(dashboard.profile.workHours.end);
     setMaxTasksPerDay(String(dashboard.profile.maxTasksPerDay));
     setEnergyPattern(dashboard.profile.energyPattern);
     setPlanningStyle(dashboard.profile.planningStyle);
@@ -57,7 +59,7 @@ export function usePlannerSettings() {
 
   const runMutation = async (key: string, callback: () => Promise<unknown>, successMessage: string) => {
     if (busyKey) {
-      return;
+      return false;
     }
 
     setBusyKey(key);
@@ -65,22 +67,32 @@ export function usePlannerSettings() {
     try {
       await callback();
       setStatus(successMessage);
+      return true;
     } catch (error) {
       setStatus(formatPlannerError(error));
+      return false;
     } finally {
       setBusyKey(null);
     }
   };
 
   const saveProfile = async () => {
+    const normalizedWorkStart = normalizePlannerTime(workStart);
+    const normalizedWorkEnd = normalizePlannerTime(workEnd);
+
+    if (!normalizedWorkStart || !normalizedWorkEnd) {
+      setStatus("Work hours must use HH:MM 24-hour format.");
+      return;
+    }
+
     await runMutation(
       "profile",
       () =>
         upsertProfile({
           timezone: timezone.trim() || "UTC",
           workHours: {
-            start: "09:00",
-            end: "17:00",
+            start: normalizedWorkStart,
+            end: normalizedWorkEnd,
           },
           restDays,
           energyPattern,
@@ -93,7 +105,7 @@ export function usePlannerSettings() {
   };
 
   const addGoal = async () => {
-    await runMutation(
+    const success = await runMutation(
       "goal",
       () =>
         createGoal({
@@ -104,7 +116,9 @@ export function usePlannerSettings() {
         }),
       "Goal added.",
     );
-    setGoalTitle("");
+    if (success) {
+      setGoalTitle("");
+    }
   };
 
   const toggleAgent = async (value: boolean) => {
@@ -123,6 +137,10 @@ export function usePlannerSettings() {
     busyKey,
     timezone,
     setTimezone,
+    workStart,
+    setWorkStart,
+    workEnd,
+    setWorkEnd,
     maxTasksPerDay,
     setMaxTasksPerDay,
     energyPattern,
@@ -163,4 +181,9 @@ function formatPlannerError(error: unknown) {
   }
 
   return "Planner settings request failed.";
+}
+
+function normalizePlannerTime(value: string) {
+  const trimmed = value.trim();
+  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(trimmed) ? trimmed : null;
 }

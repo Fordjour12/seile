@@ -2,9 +2,8 @@ import { useLocalSearchParams } from "expo-router";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 
-import { api, asId } from "@/lib/backend-api";
-
-const plannerApi = api as unknown as Record<string, Record<string, any>>;
+import { asId } from "@/lib/backend-api";
+import { plannerApi } from "@/lib/planner/api";
 
 type PlannerPlanItem = {
   _id: string;
@@ -64,7 +63,7 @@ export function usePlannerPlan() {
       `item-${itemId}`,
       () =>
         setPlanItemStatus({
-          itemId: asId<"planItems">(itemId),
+          itemId: toPlanItemId(itemId),
           status: nextStatus,
         }),
       nextStatus === "done" ? "Plan item marked done." : "Plan item moved back to pending.",
@@ -137,6 +136,7 @@ function formatPlanDateLabel(date: string) {
     weekday: "long",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -146,4 +146,13 @@ function formatPlannerError(error: unknown) {
   }
 
   return "Planner action failed.";
+}
+
+function toPlanItemId(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error("Invalid plan item id.");
+  }
+
+  return asId<"planItems">(trimmed);
 }

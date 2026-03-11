@@ -27,6 +27,12 @@ const planningModeSchema = z.enum([
   "recovery",
 ]);
 const burnoutStateSchema = z.enum(["stable", "watch", "recovery"]);
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD date");
+const isoTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Expected HH:MM time");
 
 const draftTaskSchema = z.object({
   title: z.string(),
@@ -52,9 +58,9 @@ export const weeklyPlanSchema = z.object({
     z.object({
       itemType: planItemTypeSchema,
       title: z.string(),
-      date: z.string(),
-      startTime: z.string().optional(),
-      endTime: z.string().optional(),
+      date: isoDateSchema,
+      startTime: isoTimeSchema.optional(),
+      endTime: isoTimeSchema.optional(),
       priority: planningPrioritySchema,
       effort: planningEffortSchema,
       notes: z.string().optional(),
@@ -91,6 +97,8 @@ export const replanningAssessmentSchema = z.object({
   preserveLockedItems: z.boolean(),
   pressureLevel: z.enum(["low", "medium", "high"]),
 });
+
+ensurePlannerAgentConfigured();
 
 const plannerProvider = createOpenRouter({
   apiKey: env.OPENROUTER_API_KEY,
@@ -135,6 +143,10 @@ export function ensurePlannerAgentConfigured() {
       "Planner agent is not configured. Set OPENROUTER_API_KEY in the backend environment.",
     );
   }
+}
+
+export function isPlannerAgentConfigured() {
+  return Boolean(env.OPENROUTER_API_KEY);
 }
 
 export { planningModeSchema };

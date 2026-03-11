@@ -75,8 +75,10 @@ export const getPlannerAgentContext = internalQuery({
 export const listAgentEnabledStates = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const states = await ctx.db.query("plannerAgentState").collect();
-    return states.filter((entry) => entry.agentEnabled);
+    return await ctx.db
+      .query("plannerAgentState")
+      .withIndex("by_agentEnabled_userId", (q) => q.eq("agentEnabled", true))
+      .collect();
   },
 });
 
@@ -90,17 +92,22 @@ export const getLatestPastWeeklyPlanWithoutReview = internalQuery({
       .query("plans")
       .withIndex("by_userId_type", (q) => q.eq("userId", args.userId).eq("type", "week"))
       .collect();
-    const latestPastPlan = plans
-      .filter((plan) => comparePlanEnd(plan.endDate, today) < 0)
-      .sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
-    if (!latestPastPlan) return null;
+    const candidates = plans
+      .filter((plan) => comparePlanEnd(plan.endDate, today) <= 0)
+      .sort((left, right) => right.endDate.localeCompare(left.endDate));
 
-    const review = await ctx.db
-      .query("planningReviews")
-      .withIndex("by_planId", (q) => q.eq("planId", latestPastPlan._id))
-      .first();
+    for (const latestPastPlan of candidates) {
+      const review = await ctx.db
+        .query("planningReviews")
+        .withIndex("by_planId", (q) => q.eq("planId", latestPastPlan._id))
+        .first();
 
-    return review ? null : latestPastPlan;
+      if (!review) {
+        return latestPastPlan;
+      }
+    }
+
+    return null;
   },
 });
 
@@ -255,7 +262,7 @@ export const getPlanById = query({
 async function requireOwnedPlan(ctx: QueryCtx, userId: string, planId: Id<"plans">) {
   const plan = (await ctx.db.get(planId)) as Doc<"plans"> | null;
   if (!plan || plan.userId !== userId) {
-    throw new Error("Plan not found");
+    throw new ConvexError("Plan not found");
   }
 
   return plan;

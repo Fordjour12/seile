@@ -6,6 +6,7 @@ import { budgetEnvelopesTable } from "./schema/budget_envelopes";
 import { budgetPeriodStatusValidator, budgetPeriodsTable } from "./schema/budget_periods";
 import {
   burnoutStateValidator,
+  plannerChatCommandsTable,
   plannerAgentStateTable,
   plannerProfilesTable,
   planningCadenceValidator,
@@ -82,5 +83,6 @@ export default defineSchema({
   planItems: planItemsTable,
   planningReviews: planningReviewsTable,
   plannerAgentState: plannerAgentStateTable,
+  plannerChatCommands: plannerChatCommandsTable,
   schedulerTasks: schedulerTasksTable,
 });
