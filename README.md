@@ -31,9 +31,22 @@ bun run dev:setup
 
 Follow the prompts to create a new Convex project and connect it to your application.
 
-Copy environment variables from `packages/backend/.env.local` to `apps/*/.env`.
+Keep server-only secrets in `packages/backend/.env.local`. Only copy `EXPO_PUBLIC_*` values into app env files such as `apps/native/.env`.
 
-For `apps/native/.env`, use Expo public variable names:
+`packages/backend/.env.local` (server-only):
+
+```bash
+BETTER_AUTH_SECRET="<32+ char secret>"
+SITE_URL="<your app/site URL>"
+CONVEX_SITE_URL="<your Convex site URL>"
+OPENROUTER_API_KEY="<your OpenRouter API key>"
+PLANNER_AGENT_MODEL="openai/gpt-4o-mini"
+OPENROUTER_APP_NAME="Seile Planner"
+```
+
+`PLANNER_AGENT_MODEL` can be any OpenRouter model slug, for example `anthropic/claude-3.7-sonnet`, `google/gemini-2.5-pro`, or `openai/gpt-4o-mini`.
+
+`apps/native/.env` (client/public):
 
 ```bash
 EXPO_PUBLIC_CONVEX_URL="<your Convex cloud URL>"
