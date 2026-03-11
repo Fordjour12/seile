@@ -1,6 +1,6 @@
-import { NAV_THEME } from "@/lib/constants";
+import type { ThemeScale } from "@/lib/constants/types";
 
-type Theme = typeof NAV_THEME.light;
+type Theme = ThemeScale;
 
 export function withAlpha(color: string, alpha: number): string {
   if (color.startsWith("hsl(")) {

@@ -28,7 +28,13 @@ type PlanningMode = Doc<"plans">["mode"];
 
 export type PlannerProfileLike = Pick<
   Doc<"plannerProfiles">,
-  "timezone" | "workHours" | "restDays" | "energyPattern" | "planningStyle" | "maxTasksPerDay" | "deepWorkPreference"
+  | "timezone"
+  | "workHours"
+  | "restDays"
+  | "energyPattern"
+  | "planningStyle"
+  | "maxTasksPerDay"
+  | "deepWorkPreference"
 >;
 
 export type WeeklyPlanInput = {
@@ -246,7 +252,9 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
   }
 
   if (selectedGoals.length === 0) {
-    warnings.push("No active goals found, so the plan leans on starter tasks and stabilizing habits.");
+    warnings.push(
+      "No active goals found, so the plan leans on starter tasks and stabilizing habits.",
+    );
   }
 
   const items: GeneratedPlanItemDraft[] = [];
@@ -285,7 +293,12 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
   });
 
   for (const workout of workoutDrafts) {
-    const [startTime, endTime] = workoutTimeRange(energyPattern, workout.date, workout.durationMinutes, workout.intensity);
+    const [startTime, endTime] = workoutTimeRange(
+      energyPattern,
+      workout.date,
+      workout.durationMinutes,
+      workout.intensity,
+    );
     items.push({
       itemType: "workout",
       title: workout.title,
@@ -293,7 +306,8 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
       startTime,
       endTime,
       priority: workout.intensity === "high" ? "medium" : "low",
-      effort: workout.intensity === "high" ? "high" : workout.intensity === "medium" ? "medium" : "low",
+      effort:
+        workout.intensity === "high" ? "high" : workout.intensity === "medium" ? "medium" : "low",
       notes: workout.notes,
     });
   }
@@ -381,13 +395,13 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
       : createStarterHabits(selectedGoals)
           .slice(0, MAX_NEW_HABITS)
           .map((habit) => ({
-          name: habit.name,
-          cadence: habit.cadence,
-          targetValue: habit.targetValue,
-          linkedGoalId: habit.linkedGoalId,
-          scheduleDays: habit.scheduleDays,
-          draftHabit: habit,
-        }));
+            name: habit.name,
+            cadence: habit.cadence,
+            targetValue: habit.targetValue,
+            linkedGoalId: habit.linkedGoalId,
+            scheduleDays: habit.scheduleDays,
+            draftHabit: habit,
+          }));
 
   for (const habit of habitsToSchedule) {
     for (const date of habitDates(habit.cadence, activeDates, habit.scheduleDays)) {
@@ -481,7 +495,9 @@ export function buildReviewSummary(
     (item) => item.itemType === "habit" && item.status !== "done",
   ).length;
   const completionRate =
-    actionableItems.length === 0 ? 100 : Math.round((doneItems.length / actionableItems.length) * 100);
+    actionableItems.length === 0
+      ? 100
+      : Math.round((doneItems.length / actionableItems.length) * 100);
   const wins = doneItems.slice(0, 5).map((item) => item.title);
   const misses = actionableItems
     .filter((item) => item.status !== "done")
@@ -490,7 +506,9 @@ export function buildReviewSummary(
   const blockers =
     misses.length > 0
       ? [
-          completionRate < 60 ? "Execution drift across the week." : "Some planned work rolled over.",
+          completionRate < 60
+            ? "Execution drift across the week."
+            : "Some planned work rolled over.",
           ...(stressRating && stressRating >= 4 ? ["Stress stayed elevated."] : []),
         ]
       : stressRating && stressRating >= 4
@@ -498,13 +516,19 @@ export function buildReviewSummary(
         : [];
   const overloadIndicators = [
     ...(completionRate < 60 ? ["Low completion rate"] : []),
-    ...(countMeaningfulTasksPerDate(items) > effectiveDailyCap ? ["Exceeded daily task guardrail"] : []),
+    ...(countMeaningfulTasksPerDate(items) > effectiveDailyCap
+      ? ["Exceeded daily task guardrail"]
+      : []),
     ...(stressRating && stressRating >= 4 ? ["High stress rating"] : []),
   ];
   const improvementSuggestions = [
     ...(completionRate < 60 ? ["Reduce next week to 1-2 priorities and trim task volume."] : []),
-    ...(stressRating && stressRating >= 4 ? ["Add more recovery blocks and protect one lighter day."] : []),
-    ...(completionRate >= 60 && (satisfactionRating ?? 0) >= 4 ? ["Keep the same weekly structure and repeat what worked."] : []),
+    ...(stressRating && stressRating >= 4
+      ? ["Add more recovery blocks and protect one lighter day."]
+      : []),
+    ...(completionRate >= 60 && (satisfactionRating ?? 0) >= 4
+      ? ["Keep the same weekly structure and repeat what worked."]
+      : []),
   ];
 
   return {
@@ -551,7 +575,9 @@ function allocateDate(input: {
   preferredDate?: string;
 }) {
   const preferredDate =
-    input.preferredDate && input.dates.includes(input.preferredDate) ? input.preferredDate : undefined;
+    input.preferredDate && input.dates.includes(input.preferredDate)
+      ? input.preferredDate
+      : undefined;
 
   if (preferredDate && input.counts[preferredDate] < input.maxPerDay) {
     return preferredDate;
@@ -644,12 +670,16 @@ function buildWorkoutCandidates(input: {
         3,
         Math.max(
           1,
-          input.health.activeHabits.reduce((max, habit) => {
-            if (habit.cadence === "daily" || habit.cadence === "weekdays") return Math.max(max, 3);
-            if (habit.cadence === "weekly") return Math.max(max, 1);
-            if (habit.cadence === "custom") return Math.max(max, Math.min(3, habit.targetValue));
-            return max;
-          }, input.health.activeGoals.length > 0 ? 2 : 0),
+          input.health.activeHabits.reduce(
+            (max, habit) => {
+              if (habit.cadence === "daily" || habit.cadence === "weekdays")
+                return Math.max(max, 3);
+              if (habit.cadence === "weekly") return Math.max(max, 1);
+              if (habit.cadence === "custom") return Math.max(max, Math.min(3, habit.targetValue));
+              return max;
+            },
+            input.health.activeGoals.length > 0 ? 2 : 0,
+          ),
         ),
       );
 
@@ -666,10 +696,17 @@ function buildWorkoutCandidates(input: {
     : input.health.signals.capacityEstimate === "high"
       ? "medium"
       : "low";
-  const workoutDates = evenlySpreadDates(input.weekDates, targetCount, preferredIntensity === "medium");
+  const workoutDates = evenlySpreadDates(
+    input.weekDates,
+    targetCount,
+    preferredIntensity === "medium",
+  );
 
   return workoutDates.map((date, index) => {
-    const workoutType = index === workoutDates.length - 1 && preferredIntensity === "low" ? "stretching" : preferredType;
+    const workoutType =
+      index === workoutDates.length - 1 && preferredIntensity === "low"
+        ? "stretching"
+        : preferredType;
     const durationMinutes =
       workoutType === "walking" || workoutType === "stretching"
         ? input.recoverySuggested
@@ -693,7 +730,8 @@ function buildWorkoutCandidates(input: {
 
 function habitDates(cadence: PlanningCadence, dates: string[], scheduleDays?: string[]) {
   if (cadence === "daily") return dates;
-  if (cadence === "weekdays") return dates.filter((date) => !["saturday", "sunday"].includes(getDayName(date)));
+  if (cadence === "weekdays")
+    return dates.filter((date) => !["saturday", "sunday"].includes(getDayName(date)));
   if (cadence === "weekly") return dates.length > 0 ? [dates[0]] : [];
   if (cadence === "custom" && scheduleDays?.length) {
     return dates.filter((date) => scheduleDays.includes(getDayName(date)));
@@ -795,9 +833,7 @@ function reserveTimedSlot(
   while (startMinutes + duration <= 24 * 60) {
     const nextStart = minutesToTime(startMinutes);
     const nextEnd = minutesToTime(startMinutes + duration);
-    const collides = occupied.some(
-      (slot) => !(nextEnd <= slot.start || nextStart >= slot.end),
-    );
+    const collides = occupied.some((slot) => !(nextEnd <= slot.start || nextStart >= slot.end));
 
     if (!collides) {
       occupied.push({ start: nextStart, end: nextEnd });
@@ -823,10 +859,7 @@ function minutesToTime(totalMinutes: number) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
-function adjustedMaxTasksPerDay(
-  base: number,
-  capacity?: "low" | "medium" | "high",
-) {
+function adjustedMaxTasksPerDay(base: number, capacity?: "low" | "medium" | "high") {
   if (capacity === "low") return Math.min(base, 2);
   if (capacity === "high") return Math.min(MAX_MEANINGFUL_TASKS_PER_DAY, base + 1);
   return base;
@@ -877,10 +910,6 @@ function workoutTitle(
   return intensity === "high" ? `Workout: ${noun}` : noun;
 }
 
-function timeToMinutes(value: string) {
-  const [hours, minutes] = value.split(":").map(Number);
-  return hours * 60 + minutes;
-}
 function priorityScore(priority: PlanningPriority) {
   return PRIORITY_SCORES[priority];
 }

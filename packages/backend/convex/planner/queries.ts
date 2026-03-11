@@ -4,7 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { components } from "../_generated/api";
 import { derivePlannerHealthContext } from "../lib/health";
-import { getWeekWindow, isoDateFromTimestamp } from "../lib/planner";
+import { addDays, getWeekWindow, isoDateFromTimestamp } from "../lib/planner";
 import { requireUserId } from "../lib/identity";
 import { env } from "@seile/env/backend";
 
@@ -119,8 +119,14 @@ export const getPlanByIdForUser = internalQuery({
   },
   handler: async (ctx, args) => {
     const plan = await requireOwnedPlan(ctx, args.userId, args.id);
-    const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
-    const review = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
+    const items = await ctx.db
+      .query("planItems")
+      .withIndex("by_planId_date", (q) => q.eq("planId", plan._id))
+      .collect();
+    const review = await ctx.db
+      .query("planningReviews")
+      .withIndex("by_planId", (q) => q.eq("planId", plan._id))
+      .first();
 
     return { plan, items, review };
   },
@@ -130,7 +136,10 @@ export const listGoals = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireUserId(ctx);
-    const goals = await ctx.db.query("planningGoals").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+    const goals = await ctx.db
+      .query("planningGoals")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
     return goals.sort((left, right) => sortByPriority(left.priority, right.priority));
   },
 });
@@ -160,9 +169,7 @@ export const listPlannerChatMessages = query({
     return {
       continueCursor: page.continueCursor,
       isDone: page.isDone,
-      page: page.page
-        .map((entry: any) => normalizePlannerChatMessage(entry))
-        .filter(Boolean),
+      page: page.page.map((entry: any) => normalizePlannerChatMessage(entry)).filter(Boolean),
     };
   },
 });
@@ -174,7 +181,10 @@ export const listPlannerChatThreads = query({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     const activeThreadId = (
-      await ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first()
+      await ctx.db
+        .query("plannerAgentState")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .first()
     )?.activeThreadId;
 
     const page = await ctx.runQuery(componentsAny.agent.threads.listThreadsByUserId, {
@@ -224,7 +234,9 @@ export const getPlannerChatThread = query({
 
 export const listPlans = query({
   args: {
-    type: v.optional(v.union(v.literal("year"), v.literal("month"), v.literal("week"), v.literal("day"))),
+    type: v.optional(
+      v.union(v.literal("year"), v.literal("month"), v.literal("week"), v.literal("day")),
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
@@ -236,7 +248,10 @@ export const listPlans = query({
         .withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", planType))
         .collect();
     } else {
-      rows = await ctx.db.query("plans").withIndex("by_userId", (q) => q.eq("userId", userId)).collect();
+      rows = await ctx.db
+        .query("plans")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect();
     }
     return rows.sort((left, right) => right.startDate.localeCompare(left.startDate));
   },
@@ -249,8 +264,14 @@ export const getPlanById = query({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     const plan = await requireOwnedPlan(ctx, userId, args.id);
-    const items = await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", plan._id)).collect();
-    const review = await ctx.db.query("planningReviews").withIndex("by_planId", (q) => q.eq("planId", plan._id)).first();
+    const items = await ctx.db
+      .query("planItems")
+      .withIndex("by_planId_date", (q) => q.eq("planId", plan._id))
+      .collect();
+    const review = await ctx.db
+      .query("planningReviews")
+      .withIndex("by_planId", (q) => q.eq("planId", plan._id))
+      .first();
 
     return {
       plan,
@@ -269,7 +290,10 @@ async function requireOwnedPlan(ctx: QueryCtx, userId: string, planId: Id<"plans
   return plan;
 }
 
-function sortByPriority(left: Doc<"planningGoals">["priority"], right: Doc<"planningGoals">["priority"]) {
+function sortByPriority(
+  left: Doc<"planningGoals">["priority"],
+  right: Doc<"planningGoals">["priority"],
+) {
   return priorityScore(right) - priorityScore(left);
 }
 
@@ -288,10 +312,28 @@ function priorityScore(priority: "low" | "medium" | "high") {
 async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: string) {
   const week = getWeekWindow(weekStart ?? isoDateFromTimestamp(Date.now()));
   const recentHealthWindowStart = addDays(week.endDate, -20);
-  const [profile, agentState, goals, tasks, habits, plans, latestReview, healthGoals, healthHabits, workouts, metrics, energyLogs] =
-    await Promise.all([
-    ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
-    ctx.db.query("plannerAgentState").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
+  const [
+    profile,
+    agentState,
+    goals,
+    tasks,
+    habits,
+    plans,
+    latestReview,
+    healthGoals,
+    healthHabits,
+    workouts,
+    metrics,
+    energyLogs,
+  ] = await Promise.all([
+    ctx.db
+      .query("plannerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first(),
+    ctx.db
+      .query("plannerAgentState")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first(),
     ctx.db
       .query("planningGoals")
       .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
@@ -306,9 +348,7 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
       .collect(),
     ctx.db
       .query("plans")
-      .withIndex("by_userId_type_and_startDate", (q) =>
-        q.eq("userId", userId).eq("type", "week").gte("startDate", week.startDate),
-      )
+      .withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week"))
       .collect(),
     ctx.db
       .query("planningReviews")
@@ -345,10 +385,14 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
 
   const currentPlan =
     plans
+      .filter((plan) => plan.startDate >= week.startDate)
       .filter((plan) => plan.startDate === week.startDate)
       .sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
   const currentPlanItems = currentPlan
-    ? await ctx.db.query("planItems").withIndex("by_planId_date", (q) => q.eq("planId", currentPlan._id)).collect()
+    ? await ctx.db
+        .query("planItems")
+        .withIndex("by_planId_date", (q) => q.eq("planId", currentPlan._id))
+        .collect()
     : [];
   const health = derivePlannerHealthContext({
     goals: healthGoals,
@@ -420,7 +464,11 @@ function extractPlannerChatText(entry: { text?: string; message?: { content?: un
         return [];
       }
 
-      if ((part.type === "text" || part.type === "reasoning") && "text" in part && typeof part.text === "string") {
+      if (
+        (part.type === "text" || part.type === "reasoning") &&
+        "text" in part &&
+        typeof part.text === "string"
+      ) {
         return [part.text];
       }
 

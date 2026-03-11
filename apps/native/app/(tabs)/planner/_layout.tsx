@@ -21,7 +21,7 @@ export default function PlannerLayout() {
             <IconButton
               variant="ghost"
               size="sm"
-              onPress={() => router.push("/planner/settings")}
+              onPress={() => router.push("/(tabs)/planner/settings" as never)}
               icon={<Settings color={theme.foreground} width={18} height={18} />}
             />
           ),

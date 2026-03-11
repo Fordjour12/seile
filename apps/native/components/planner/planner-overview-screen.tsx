@@ -50,7 +50,8 @@ export function PlannerOverviewScreen() {
           <Text variant="muted">AI Chief-of-Staff</Text>
           <Text variant="h2">Planner workspace</Text>
           <Text variant="small">
-            Browse your weekly plans, reopen previous planner conversations, or jump into a fresh chat.
+            Browse your weekly plans, reopen previous planner conversations, or jump into a fresh
+            chat.
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             <Badge color={home?.agentState?.agentEnabled ? "success" : "warning"}>
@@ -64,7 +65,7 @@ export function PlannerOverviewScreen() {
               <Badge color="secondary">No current plan</Badge>
             )}
           </View>
-          <Button title="Open chat" onPress={() => router.push("/planner/chat")} />
+          <Button title="Open chat" onPress={() => router.push("/(tabs)/planner/chat" as never)} />
         </Card>
 
         <Card variant="outline" style={{ gap: 12 }}>
@@ -76,7 +77,12 @@ export function PlannerOverviewScreen() {
                   key={plan._id}
                   title={plan.title}
                   subtitle={`${plan.startDate} to ${plan.endDate} · ${plan.summary}`}
-                  onPress={() => router.push(`/planner/plans/${plan._id}`)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/planner/plans/[id]",
+                      params: { id: plan._id },
+                    } as never)
+                  }
                   right={
                     <View style={{ alignItems: "flex-end", gap: 6 }}>
                       <Badge color={plan.recoverySuggested ? "warning" : "secondary"}>
@@ -104,7 +110,12 @@ export function PlannerOverviewScreen() {
                   key={thread.id}
                   title={thread.title}
                   subtitle={thread.summary || "Planner conversation"}
-                  onPress={() => router.push(`/planner/${thread.id}`)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/planner/[id]",
+                      params: { id: thread.id },
+                    } as never)
+                  }
                   right={
                     thread.isActive ? (
                       <Badge color="success">Active</Badge>
