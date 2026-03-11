@@ -60,10 +60,6 @@ export function PlannerCurrentPlanCard({
 
       {plan.priorityTitles.length ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {plan.priorityTitles.slice(0, 3).map((priority) => (
-            <Badge key={priority} variant="outline" color="primary">
-              {priority}
-            </Badge>
           {plan.priorityTitles.slice(0, 3).map((priority, index) => (
             <Badge key={`${priority}-${index}`} variant="outline" color="primary">
               {priority}
