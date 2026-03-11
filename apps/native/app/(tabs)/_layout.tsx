@@ -1,9 +1,12 @@
 import { Tabs } from "expo-router";
+import { Image } from "expo-image";
 import { PiggyBank, Calendar, Erase } from "iconoir-react-native";
 
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
+
+const SETTINGS_AVATAR_URL = "https://avatars.githubusercontent.com/u/53586559?v=4";
 
 export default function TabLayout() {
   const { isDarkColorScheme } = useColorScheme();
@@ -95,10 +98,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="auth-smoke"
+        name="settings"
         options={{
-          title: "Session",
-          tabBarIcon: ({ color }) => <TabBarIcon name="shield" color={color} />,
+          title: "Settings",
+          tabBarIcon: ({ focused, size }) => (
+            <Image
+              source={SETTINGS_AVATAR_URL}
+              contentFit="cover"
+              style={{
+                width: size ?? 24,
+                height: size ?? 24,
+                borderRadius: ((size ?? 24) / 2),
+                borderWidth: 2,
+                borderColor: focused ? theme.primary : theme.border,
+              }}
+            />
+          ),
         }}
       />
     </Tabs>

@@ -148,12 +148,25 @@ export const listPlannerChatMessages = query({
       excludeToolMessages: true,
       paginationOpts: args.paginationOpts ?? { cursor: null, numItems: 80 },
     });
+    const chatRequests = await ctx.db
+      .query("plannerChatRequests")
+      .withIndex("by_userId_threadId", (q) => q.eq("userId", userId).eq("threadId", args.threadId))
+      .collect();
+    const clientRequestIdsByMessageId = new Map<string, string>();
+    for (const request of chatRequests) {
+      if (request.userMessageId) {
+        clientRequestIdsByMessageId.set(request.userMessageId, request.clientRequestId);
+      }
+      if (request.assistantMessageId) {
+        clientRequestIdsByMessageId.set(request.assistantMessageId, request.clientRequestId);
+      }
+    }
 
     return {
       continueCursor: page.continueCursor,
       isDone: page.isDone,
       page: page.page
-        .map((entry: any) => normalizePlannerChatMessage(entry))
+        .map((entry: any) => normalizePlannerChatMessage(entry, clientRequestIdsByMessageId))
         .filter(Boolean),
     };
   },
@@ -211,6 +224,19 @@ export const getPlannerChatThread = query({
       status: thread.status ?? "active",
       createdAt: thread._creationTime,
     };
+  },
+});
+
+export const getPlannerChatRequestByClientId = internalQuery({
+  args: {
+    userId: v.string(),
+    clientRequestId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("plannerChatRequests")
+      .withIndex("by_userId_clientRequestId", (q) => q.eq("userId", args.userId).eq("clientRequestId", args.clientRequestId))
+      .first();
   },
 });
 
@@ -326,7 +352,7 @@ function comparePlanEnd(left: string, right: string) {
   return left < right ? -1 : 1;
 }
 
-function normalizePlannerChatMessage(entry: any) {
+function normalizePlannerChatMessage(entry: any, clientRequestIdsByMessageId?: Map<string, string>) {
   const role = entry?.message?.role;
   if (role !== "user" && role !== "assistant") {
     return null;
@@ -344,6 +370,7 @@ function normalizePlannerChatMessage(entry: any) {
     status: entry.status ?? "success",
     createdAt: entry._creationTime,
     error: entry.error,
+    clientRequestId: clientRequestIdsByMessageId?.get(entry._id),
   };
 }
 

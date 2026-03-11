@@ -7,6 +7,7 @@ import { budgetPeriodStatusValidator, budgetPeriodsTable } from "./schema/budget
 import {
   burnoutStateValidator,
   plannerAgentStateTable,
+  plannerChatRequestsTable,
   plannerProfilesTable,
   planningCadenceValidator,
   planningEffortValidator,
@@ -89,6 +90,7 @@ export default defineSchema({
   planningGoals: planningGoalsTable,
   planningTasks: planningTasksTable,
   planningHabits: planningHabitsTable,
+  plannerChatRequests: plannerChatRequestsTable,
   plans: plansTable,
   planItems: planItemsTable,
   planningReviews: planningReviewsTable,

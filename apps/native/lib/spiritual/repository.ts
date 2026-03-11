@@ -177,41 +177,6 @@ export function useCreateSpiritualReflection() {
   return (payload: CreateSpiritualReflectionPayload) => createReflection(payload);
 }
 
-export function formatGoalTarget(goal: SpiritualGoal) {
-  if (goal.targetValue && goal.unit) {
-    return `${goal.progress}% of ${goal.targetValue} ${goal.unit}`;
-  }
-  if (goal.targetValue) {
-    return `${goal.progress}% of ${goal.targetValue}`;
-  }
-  return `${goal.progress}% complete`;
-}
-
-export function formatPracticeCadence(practice: SpiritualPractice) {
-  if (practice.cadence !== "custom") {
-    return practice.cadence;
-  }
-  return practice.scheduleDays?.length ? `custom · ${practice.scheduleDays.join(", ")}` : "custom cadence";
-}
-
-export function formatPrayerStatus(status: PrayerStatus) {
-  if (status === "answered") return "Answered";
-  if (status === "archived") return "Archived";
-  return "Active";
-}
-
-export function formatSpiritualDate(date: string) {
-  const parsed = Date.parse(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(parsed)) {
-    return date;
-  }
-  return new Date(parsed).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 export function formatGoalTarget(goal: Pick<SpiritualGoal, "targetValue" | "unit" | "progress">) {
   if (!goal.targetValue) {
     return `${goal.progress}% complete`;

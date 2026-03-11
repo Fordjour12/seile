@@ -92,51 +92,96 @@ export const ensurePlannerChatThread = action({
 export const sendPlannerChatMessage = action({
   args: {
     text: v.string(),
+    clientRequestId: v.string(),
   },
   handler: async (ctx, args) => {
     ensurePlannerAgentConfigured();
     const userId = await requireUserId(ctx);
     const text = args.text.trim();
+    const clientRequestId = args.clientRequestId.trim();
     if (!text) {
       throw new ConvexError("Planner message cannot be empty.");
     }
-
-    const threadId = await ensurePlannerChatThreadForUser(ctx, userId);
-    const threadState = await plannerAgent.continueThread(ctx, { threadId, userId });
-    const contextBefore = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
-    const intent = detectPlannerChatIntent(text);
-    const actionResult = await runPlannerChatIntent(ctx, {
-      userId,
-      intent,
-      context: contextBefore,
-    });
-    const contextAfter = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
-
-    const result = await threadState.thread.generateText({
-      prompt: buildPlannerChatReplyPrompt({
-        userText: text,
-        intent,
-        actionResult,
-        context: contextAfter,
-      }),
-    });
-
-    const savedMessages = result.savedMessages ?? [];
-    let assistantMessageId: string | undefined;
-    for (let index = savedMessages.length - 1; index >= 0; index -= 1) {
-      const message = savedMessages[index];
-      if (message.message?.role === "assistant") {
-        assistantMessageId = message._id;
-        break;
-      }
+    if (!clientRequestId) {
+      throw new ConvexError("Planner message is missing a client request id.");
     }
 
-    return {
+    const threadId = await ensurePlannerChatThreadForUser(ctx, userId);
+    const existingRequest = await ctx.runQuery(internalApi["planner/queries"].getPlannerChatRequestByClientId, {
+      userId,
+      clientRequestId,
+    });
+    if (existingRequest?.status === "success") {
+      return {
+        threadId: existingRequest.threadId,
+        userMessageId: existingRequest.userMessageId,
+        assistantMessageId: existingRequest.assistantMessageId,
+        text: existingRequest.assistantText ?? "",
+        clientRequestId,
+      };
+    }
+
+    await ctx.runMutation(internalApi["planner/mutations"].markPlannerChatRequestPending, {
+      userId,
+      clientRequestId,
       threadId,
-      userMessageId: result.promptMessageId,
-      assistantMessageId,
-      text: result.text,
-    };
+      text,
+    });
+
+    const threadState = await plannerAgent.continueThread(ctx, { threadId, userId });
+    try {
+      const contextBefore = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
+      const intent = detectPlannerChatIntent(text);
+      const actionResult = await runPlannerChatIntent(ctx, {
+        userId,
+        intent,
+        context: contextBefore,
+      });
+      const contextAfter = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, { userId });
+
+      const result = await threadState.thread.generateText({
+        prompt: buildPlannerChatReplyPrompt({
+          userText: text,
+          intent,
+          actionResult,
+          context: contextAfter,
+        }),
+      });
+
+      const savedMessages = result.savedMessages ?? [];
+      let assistantMessageId: string | undefined;
+      for (let index = savedMessages.length - 1; index >= 0; index -= 1) {
+        const message = savedMessages[index];
+        if (message.message?.role === "assistant") {
+          assistantMessageId = message._id;
+          break;
+        }
+      }
+      await ctx.runMutation(internalApi["planner/mutations"].completePlannerChatRequest, {
+        userId,
+        clientRequestId,
+        threadId,
+        text,
+        userMessageId: result.promptMessageId,
+        assistantMessageId,
+        assistantText: result.text,
+      });
+
+      return {
+        threadId,
+        userMessageId: result.promptMessageId,
+        assistantMessageId,
+        text: result.text,
+        clientRequestId,
+      };
+    } catch (error) {
+      await ctx.runMutation(internalApi["planner/mutations"].failPlannerChatRequest, {
+        userId,
+        clientRequestId,
+        error: error instanceof Error ? error.message : "Planner chat failed",
+      });
+      throw error;
+    }
   },
 });
 

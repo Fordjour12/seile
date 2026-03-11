@@ -11,6 +11,7 @@ export type PlannerChatMessage = {
   text: string;
   status: "pending" | "success" | "failed";
   createdAt: number;
+  clientRequestId?: string;
   error?: string;
 };
 
@@ -90,7 +91,18 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
     }
 
     const serverMessageIds = new Set(serverMessages.map((message) => message.id));
-    setLocalMessages((current) => current.filter((message) => !serverMessageIds.has(message.id)));
+    const serverClientRequestIds = new Set(
+      serverMessages
+        .map((message) => message.clientRequestId)
+        .filter((value): value is string => typeof value === "string" && value.length > 0),
+    );
+    setLocalMessages((current) =>
+      current.filter(
+        (message) =>
+          !serverMessageIds.has(message.id) &&
+          !(message.clientRequestId && serverClientRequestIds.has(message.clientRequestId)),
+      ),
+    );
   }, [serverMessages]);
 
   const messages = useMemo(() => {
@@ -108,7 +120,11 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
     return Array.from(merged.values()).sort((left, right) => left.createdAt - right.createdAt);
   }, [localMessages, serverMessages]);
 
-  const sendMessage = async (value?: string) => {
+  const sendMessage = async (
+    value?: string,
+    existingClientRequestId?: string,
+    existingMessageId?: string,
+  ) => {
     if (options?.readOnly) {
       return;
     }
@@ -119,28 +135,35 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
     }
 
     const now = Date.now();
-    const pendingMessageId = `pending-${now}`;
-    setLocalMessages((current) => [
-      ...current,
-      {
+    const clientRequestId = existingClientRequestId ?? createPlannerClientRequestId();
+    const pendingMessageId = existingMessageId ?? `pending-${clientRequestId}`;
+    setLocalMessages((current) => {
+      const next = current.filter(
+        (message) => message.id !== pendingMessageId && message.clientRequestId !== clientRequestId,
+      );
+      next.push({
         id: pendingMessageId,
         role: "user",
         text,
         status: "pending",
         createdAt: now,
+        clientRequestId,
         localOnly: true,
         retryText: text,
-      },
-    ]);
+      });
+      return next;
+    });
     setComposerText("");
     setIsSending(true);
     setStatus("Planner is thinking...");
 
     try {
-      const result = await sendPlannerChatMessage({ text });
+      const result = await sendPlannerChatMessage({ text, clientRequestId });
       setStatus("Planner replied.");
       setLocalMessages((current) => {
-        const next = current.filter((message) => message.id !== pendingMessageId);
+        const next = current.filter(
+          (message) => message.id !== pendingMessageId && message.clientRequestId !== clientRequestId,
+        );
 
         if (result.userMessageId && !next.some((message) => message.id === result.userMessageId)) {
           next.push({
@@ -149,6 +172,7 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
             text,
             status: "success",
             createdAt: now,
+            clientRequestId,
           });
         }
 
@@ -162,6 +186,7 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
             text: result.text,
             status: "success",
             createdAt: now + 1,
+            clientRequestId,
           });
         }
 
@@ -172,7 +197,7 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
       setStatus(message);
       setLocalMessages((current) =>
         current.map((entry) =>
-          entry.id === pendingMessageId
+          entry.id === pendingMessageId || entry.clientRequestId === clientRequestId
             ? {
                 ...entry,
                 status: "failed",
@@ -188,12 +213,11 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
 
   const retryMessage = async (messageId: string) => {
     const entry = localMessages.find((message) => message.id === messageId);
-    if (!entry?.retryText) {
+    if (!entry?.retryText || !entry.clientRequestId) {
       return;
     }
 
-    setLocalMessages((current) => current.filter((message) => message.id !== messageId));
-    await sendMessage(entry.retryText);
+    await sendMessage(entry.retryText, entry.clientRequestId, entry.id);
   };
 
   const hasConversation = messages.length > 0 || Boolean(resolvedThreadId);
@@ -223,4 +247,8 @@ function formatPlannerError(error: unknown) {
   }
 
   return "Planner request failed.";
+}
+
+function createPlannerClientRequestId() {
+  return `planner-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }

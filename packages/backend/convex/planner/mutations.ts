@@ -640,6 +640,120 @@ export const setActivePlannerThread = internalMutation({
   },
 });
 
+export const markPlannerChatRequestPending = internalMutation({
+  args: {
+    userId: v.string(),
+    clientRequestId: v.string(),
+    threadId: v.string(),
+    text: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("plannerChatRequests")
+      .withIndex("by_userId_clientRequestId", (q) => q.eq("userId", args.userId).eq("clientRequestId", args.clientRequestId))
+      .first();
+    const now = Date.now();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        threadId: args.threadId,
+        text: args.text,
+        status: "pending",
+        error: undefined,
+        updatedAt: now,
+      });
+      return await ctx.db.get(existing._id);
+    }
+
+    const id = await ctx.db.insert("plannerChatRequests", {
+      userId: args.userId,
+      clientRequestId: args.clientRequestId,
+      threadId: args.threadId,
+      text: args.text,
+      status: "pending",
+      userMessageId: undefined,
+      assistantMessageId: undefined,
+      assistantText: undefined,
+      error: undefined,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return await ctx.db.get(id);
+  },
+});
+
+export const completePlannerChatRequest = internalMutation({
+  args: {
+    userId: v.string(),
+    clientRequestId: v.string(),
+    threadId: v.string(),
+    text: v.string(),
+    userMessageId: v.optional(v.string()),
+    assistantMessageId: v.optional(v.string()),
+    assistantText: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("plannerChatRequests")
+      .withIndex("by_userId_clientRequestId", (q) => q.eq("userId", args.userId).eq("clientRequestId", args.clientRequestId))
+      .first();
+    const now = Date.now();
+
+    if (!existing) {
+      const id = await ctx.db.insert("plannerChatRequests", {
+        userId: args.userId,
+        clientRequestId: args.clientRequestId,
+        threadId: args.threadId,
+        text: args.text,
+        status: "success",
+        userMessageId: args.userMessageId,
+        assistantMessageId: args.assistantMessageId,
+        assistantText: args.assistantText,
+        error: undefined,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return await ctx.db.get(id);
+    }
+
+    await ctx.db.patch(existing._id, {
+      threadId: args.threadId,
+      text: args.text,
+      status: "success",
+      userMessageId: args.userMessageId,
+      assistantMessageId: args.assistantMessageId,
+      assistantText: args.assistantText,
+      error: undefined,
+      updatedAt: now,
+    });
+    return await ctx.db.get(existing._id);
+  },
+});
+
+export const failPlannerChatRequest = internalMutation({
+  args: {
+    userId: v.string(),
+    clientRequestId: v.string(),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("plannerChatRequests")
+      .withIndex("by_userId_clientRequestId", (q) => q.eq("userId", args.userId).eq("clientRequestId", args.clientRequestId))
+      .first();
+    if (!existing) {
+      return null;
+    }
+
+    await ctx.db.patch(existing._id, {
+      status: "failed",
+      error: args.error,
+      updatedAt: Date.now(),
+    });
+    return await ctx.db.get(existing._id);
+  },
+});
+
 async function buildAndStoreWeeklyPlan(
   ctx: MutationCtx,
   input: {

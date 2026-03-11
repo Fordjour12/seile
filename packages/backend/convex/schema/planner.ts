@@ -219,3 +219,19 @@ export const plannerAgentStateTable = defineTable({
   createdAt: v.number(),
   updatedAt: v.number(),
 }).index("by_userId", ["userId"]);
+
+export const plannerChatRequestsTable = defineTable({
+  userId: v.string(),
+  clientRequestId: v.string(),
+  threadId: v.string(),
+  text: v.string(),
+  status: v.union(v.literal("pending"), v.literal("success"), v.literal("failed")),
+  userMessageId: v.optional(v.string()),
+  assistantMessageId: v.optional(v.string()),
+  assistantText: v.optional(v.string()),
+  error: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_userId_clientRequestId", ["userId", "clientRequestId"])
+  .index("by_userId_threadId", ["userId", "threadId"]);
