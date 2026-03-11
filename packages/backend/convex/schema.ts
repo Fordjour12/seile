@@ -49,6 +49,15 @@ import {
   schedulerTaskStatusValidator,
   schedulerTasksTable,
 } from "./schema/scheduler_tasks";
+import {
+  prayerStatusValidator,
+  prayersTable,
+  spiritualGoalsTable,
+  spiritualGoalStatusValidator,
+  spiritualPracticesTable,
+  spiritualReadingsTable,
+  spiritualReflectionsTable,
+} from "./schema/spiritual";
 import { transactionsTable } from "./schema/transactions";
 
 export {
@@ -85,6 +94,8 @@ export {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
   schedulerTaskStatusValidator,
+  prayerStatusValidator,
+  spiritualGoalStatusValidator,
 };
 
 export default defineSchema({
@@ -111,4 +122,9 @@ export default defineSchema({
   plannerAgentState: plannerAgentStateTable,
   plannerChatCommands: plannerChatCommandsTable,
   schedulerTasks: schedulerTasksTable,
+  spiritualGoals: spiritualGoalsTable,
+  spiritualPractices: spiritualPracticesTable,
+  spiritualReadings: spiritualReadingsTable,
+  prayers: prayersTable,
+  spiritualReflections: spiritualReflectionsTable,
 });

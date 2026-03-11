@@ -1,9 +1,20 @@
 import { Tabs } from "expo-router";
-import { PiggyBank, Calendar, Erase } from "iconoir-react-native";
+import {
+  PiggyBank,
+  Calendar,
+  Erase,
+  HealthShield,
+  HomeTable,
+  Safari,
+} from "iconoir-react-native";
+import { Image } from "expo-image";
 
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
+
+const SETTINGS_AVATAR_URL =
+  "https://avatars.githubusercontent.com/u/53586559?v=4";
 
 export default function TabLayout() {
   const { isDarkColorScheme } = useColorScheme();
@@ -25,7 +36,11 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <HomeTable />
+            </TabBarIcon2>
+          ),
         }}
       />
       <Tabs.Screen
@@ -39,15 +54,10 @@ export default function TabLayout() {
         options={{
           title: "Health",
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="heartbeat" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="components"
-        options={{
-          title: "Components",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="th-large" color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <HealthShield />
+            </TabBarIcon2>
           ),
         }}
       />
@@ -80,6 +90,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="faith"
+        options={{
+          title: "Faith",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <Safari />
+            </TabBarIcon2>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="scheduler"
         options={{
           title: "Scheduler",
@@ -91,27 +113,24 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="planner"
-        options={{
-          title: "Planner",
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="calendar" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="auth-smoke"
-        options={{
-          title: "Session",
-          tabBarIcon: ({ color }) => <TabBarIcon name="shield" color={color} />,
-        }}
-      />
+
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="cog" color={color} />,
+          tabBarIcon: ({ focused, size }) => (
+            <Image
+              source={SETTINGS_AVATAR_URL}
+              contentFit="cover"
+              style={{
+                width: size ?? 24,
+                height: size ?? 24,
+                borderRadius: (size ?? 24) / 2,
+                borderWidth: 2,
+                borderColor: focused ? theme.primary : theme.border,
+              }}
+            />
+          ),
         }}
       />
     </Tabs>
