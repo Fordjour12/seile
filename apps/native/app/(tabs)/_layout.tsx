@@ -1,9 +1,20 @@
 import { Tabs } from "expo-router";
-import { PiggyBank, Calendar, Erase, HealthShield, HomeTable } from "iconoir-react-native";
+import {
+  PiggyBank,
+  Calendar,
+  Erase,
+  HealthShield,
+  HomeTable,
+  Safari,
+} from "iconoir-react-native";
+import { Image } from "expo-image";
 
 import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
+
+const SETTINGS_AVATAR_URL =
+  "https://avatars.githubusercontent.com/u/53586559?v=4";
 
 export default function TabLayout() {
   const { isDarkColorScheme } = useColorScheme();
@@ -83,7 +94,11 @@ export default function TabLayout() {
         options={{
           title: "Faith",
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="heart" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <Safari />
+            </TabBarIcon2>
+          ),
         }}
       />
       <Tabs.Screen
@@ -98,12 +113,24 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="cog" color={color} />,
+          tabBarIcon: ({ focused, size }) => (
+            <Image
+              source={SETTINGS_AVATAR_URL}
+              contentFit="cover"
+              style={{
+                width: size ?? 24,
+                height: size ?? 24,
+                borderRadius: (size ?? 24) / 2,
+                borderWidth: 2,
+                borderColor: focused ? theme.primary : theme.border,
+              }}
+            />
+          ),
         }}
       />
     </Tabs>

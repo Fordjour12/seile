@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 
 export default function FaithLayout() {
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" options={{ title: "Faith" }} />
       <Stack.Screen name="goals" options={{ title: "Goals" }} />
       <Stack.Screen name="practices" options={{ title: "Practices" }} />
