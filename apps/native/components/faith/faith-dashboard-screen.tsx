@@ -181,25 +181,34 @@ export function FaithDashboardScreen() {
 
       <View style={styles.section}>
         <SectionHeader title="Recent Study" subtitle="READING AND REFLECTION" />
-        <View style={styles.list}>
-          {readingPreview.map((reading) => (
-            <ListItem
-              key={reading.id}
-              title={reading.title}
-              subtitle={reading.source ?? reading.passage ?? "Reading note"}
-              meta={formatSpiritualDate(reading.date)}
-            />
-          ))}
-          {reflectionPreview.map((reflection) => (
-            <ListItem
-              key={reflection.id}
-              title={reflection.reflectionType}
-              subtitle={reflection.content}
-              meta={formatSpiritualDate(reflection.date)}
-              right={reflection.mood ? <Badge variant="outline" color="secondary">{reflection.mood}</Badge> : undefined}
-            />
-          ))}
-        </View>
+        {readingPreview.length === 0 && reflectionPreview.length === 0 ? (
+          <EmptyState
+            title="No recent study yet"
+            message="Log a reading or reflection to keep your study rhythm visible here."
+            actionLabel="Add reading"
+            onActionPress={() => router.push("/faith/readings")}
+          />
+        ) : (
+          <View style={styles.list}>
+            {readingPreview.map((reading) => (
+              <ListItem
+                key={reading.id}
+                title={reading.title}
+                subtitle={reading.source ?? reading.passage ?? "Reading note"}
+                meta={formatSpiritualDate(reading.date)}
+              />
+            ))}
+            {reflectionPreview.map((reflection) => (
+              <ListItem
+                key={reflection.id}
+                title={reflection.reflectionType}
+                subtitle={reflection.content}
+                meta={formatSpiritualDate(reflection.date)}
+                right={reflection.mood ? <Badge variant="outline" color="secondary">{reflection.mood}</Badge> : undefined}
+              />
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
   );

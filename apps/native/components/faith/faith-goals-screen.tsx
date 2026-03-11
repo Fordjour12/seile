@@ -33,13 +33,19 @@ export function FaithGoalsScreen() {
       return;
     }
 
+    const parsedTarget = targetValue.trim() ? Number(targetValue) : undefined;
+    if (parsedTarget !== undefined && !Number.isFinite(parsedTarget)) {
+      toast.error("Target value must be a valid number");
+      return;
+    }
+
     setLoading(true);
     try {
       await createGoal({
         title,
         description: description || undefined,
         goalType,
-        targetValue: targetValue.trim() ? Number(targetValue) : undefined,
+        targetValue: parsedTarget,
         unit: unit || undefined,
         deadline: deadline || undefined,
       });
