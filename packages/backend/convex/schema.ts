@@ -19,6 +19,10 @@ import {
 import { budgetEnvelopesTable } from "./schema/budget_envelopes";
 import { budgetPeriodStatusValidator, budgetPeriodsTable } from "./schema/budget_periods";
 import {
+  financeAgentAuditLogTable,
+  financeAgentStateTable,
+} from "./schema/finance_agent";
+import {
   burnoutStateValidator,
   plannerChatCommandsTable,
   plannerAgentStateTable,
@@ -43,6 +47,13 @@ import {
 import { recurringTransactionsTable } from "./schema/recurring_transactions";
 import { debtPlansTable, debtStatusValidator, debtTypeValidator, payoffStrategyValidator } from "./schema/debt_plans";
 import { savingsGoalsTable, savingsStatusValidator } from "./schema/savings_goals";
+import {
+  linkedFinanceEntityTypeValidator,
+  sharedGoalsTable,
+  sharedGoalKindValidator,
+  sharedGoalSourceDomainValidator,
+  sharedGoalStatusValidator,
+} from "./schema/shared_goals";
 import {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
@@ -91,6 +102,9 @@ export {
   planItemStatusValidator,
   planItemTypeValidator,
   planStatusValidator,
+  sharedGoalKindValidator,
+  sharedGoalSourceDomainValidator,
+  sharedGoalStatusValidator,
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
   schedulerTaskStatusValidator,
@@ -112,6 +126,7 @@ export default defineSchema({
   recurringTransactions: recurringTransactionsTable,
   debtPlans: debtPlansTable,
   savingsGoals: savingsGoalsTable,
+  sharedGoals: sharedGoalsTable,
   plannerProfiles: plannerProfilesTable,
   planningGoals: planningGoalsTable,
   planningTasks: planningTasksTable,

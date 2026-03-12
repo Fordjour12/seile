@@ -14,6 +14,10 @@ import {
   isoDateFromTimestamp,
 } from "../lib/planner";
 import { requireUserId } from "../lib/identity";
+import {
+  createPlannerSharedGoal,
+  requireOwnedSharedGoal,
+} from "../shared_goals/helpers";
 
 const DEFAULT_PROFILE = {
   timezone: "UTC",
@@ -153,26 +157,15 @@ export const createPlanningGoal = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    const title = args.title.trim();
-    if (!title) {
-      throw new ConvexError("Validation: goal title is required");
-    }
-
-    const now = Date.now();
-    const id = await ctx.db.insert("planningGoals", {
+    return await createPlannerSharedGoal(ctx, {
       userId,
-      title,
-      description: optionalTrim(args.description),
-      domain: args.domain.trim() || "general",
+      title: args.title,
+      description: args.description,
+      domain: args.domain,
       horizon: args.horizon,
-      targetDate: optionalTrim(args.targetDate),
+      targetDate: args.targetDate,
       priority: args.priority,
-      active: true,
-      createdAt: now,
-      updatedAt: now,
     });
-
-    return await ctx.db.get(id);
   },
 });
 
@@ -181,12 +174,12 @@ export const createTask = mutation({
     title: v.string(),
     dueDate: v.optional(v.string()),
     priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-    linkedGoalId: v.optional(v.id("planningGoals")),
+    sharedGoalId: v.optional(v.id("sharedGoals")),
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    if (args.linkedGoalId) {
-      await requireOwnedGoal(ctx, userId, args.linkedGoalId);
+    if (args.sharedGoalId) {
+      await requireOwnedSharedGoal(ctx, userId, args.sharedGoalId);
     }
 
     const title = args.title.trim();
@@ -201,7 +194,8 @@ export const createTask = mutation({
       dueDate: optionalTrim(args.dueDate),
       priority: args.priority,
       status: "pending",
-      linkedGoalId: args.linkedGoalId,
+      linkedGoalId: undefined,
+      sharedGoalId: args.sharedGoalId,
       createdAt: now,
       updatedAt: now,
     });
@@ -220,13 +214,13 @@ export const createHabit = mutation({
       v.literal("custom"),
     ),
     targetValue: v.number(),
-    linkedGoalId: v.optional(v.id("planningGoals")),
+    sharedGoalId: v.optional(v.id("sharedGoals")),
     scheduleDays: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
-    if (args.linkedGoalId) {
-      await requireOwnedGoal(ctx, userId, args.linkedGoalId);
+    if (args.sharedGoalId) {
+      await requireOwnedSharedGoal(ctx, userId, args.sharedGoalId);
     }
 
     const name = args.name.trim();
@@ -240,7 +234,8 @@ export const createHabit = mutation({
       name,
       cadence: args.cadence,
       targetValue: Math.max(1, Math.round(args.targetValue)),
-      linkedGoalId: args.linkedGoalId,
+      linkedGoalId: undefined,
+      sharedGoalId: args.sharedGoalId,
       active: true,
       scheduleDays: args.scheduleDays ? uniqueStrings(args.scheduleDays) : undefined,
       createdAt: now,
@@ -462,6 +457,7 @@ export const storeAgentWeeklyPlan = internalMutation({
           priority: draftTask.priority,
           status: "pending",
           linkedGoalId: undefined,
+          sharedGoalId: draftTask.sharedGoalId,
           createdAt: now,
           updatedAt: now,
         });
@@ -483,6 +479,7 @@ export const storeAgentWeeklyPlan = internalMutation({
             cadence: draftHabit.cadence,
             targetValue: Math.max(1, Math.round(draftHabit.targetValue)),
             linkedGoalId: undefined,
+            sharedGoalId: draftHabit.sharedGoalId,
             active: true,
             scheduleDays: draftHabit.scheduleDays,
             createdAt: now,
@@ -902,7 +899,8 @@ async function buildAndStoreWeeklyPlan(
         dueDate: item.draftTask.dueDate,
         priority: item.draftTask.priority,
         status: "pending",
-        linkedGoalId: item.draftTask.linkedGoalId,
+        linkedGoalId: undefined,
+        sharedGoalId: item.draftTask.sharedGoalId,
         createdAt: now,
         updatedAt: now,
       });
@@ -914,7 +912,8 @@ async function buildAndStoreWeeklyPlan(
         name: item.draftHabit.name,
         cadence: item.draftHabit.cadence,
         targetValue: item.draftHabit.targetValue,
-        linkedGoalId: item.draftHabit.linkedGoalId,
+        linkedGoalId: undefined,
+        sharedGoalId: item.draftHabit.sharedGoalId,
         active: true,
         scheduleDays: item.draftHabit.scheduleDays,
         createdAt: now,
@@ -1080,14 +1079,6 @@ async function requireOwnedPlanItem(ctx: MutationCtx, userId: string, itemId: Id
     throw new ConvexError("Plan item not found");
   }
   return item;
-}
-
-async function requireOwnedGoal(ctx: MutationCtx, userId: string, goalId: Id<"planningGoals">) {
-  const goal = await ctx.db.get(goalId);
-  if (!goal || goal.userId !== userId) {
-    throw new ConvexError("Goal not found");
-  }
-  return goal;
 }
 
 async function requireOwnedTask(ctx: MutationCtx, userId: string, taskId: Id<"planningTasks">) {

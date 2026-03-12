@@ -335,7 +335,7 @@ async function buildPlannerContext(ctx: QueryCtx, userId: string, weekStart?: st
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first(),
     ctx.db
-      .query("planningGoals")
+      .query("sharedGoals")
       .withIndex("by_userId_active", (q) => q.eq("userId", userId).eq("active", true))
       .collect(),
     ctx.db

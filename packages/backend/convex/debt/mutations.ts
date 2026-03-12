@@ -4,6 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { buildRanks } from "../lib/fractionalIndex";
 import { requireUserId } from "../lib/identity";
+import { syncDebtPlanSharedGoal } from "../shared_goals/helpers";
 import { debtTypeValidator, payoffStrategyValidator } from "../schema/debt_plans";
 import { validateApr, validateDebtCurrency, validateDebtMoney, validateDebtName, validatePriorityRank } from "./validators";
 
@@ -25,6 +26,7 @@ export const createDebtPlan = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ id: Id<"debtPlans"> }> => {
+    const userId = await requireUserId(ctx);
     const now = Date.now();
     const originalBalance = validateDebtMoney("originalBalance", args.originalBalance);
     const currentBalance = validateDebtMoney("currentBalance", args.currentBalance);
@@ -32,7 +34,7 @@ export const createDebtPlan = mutation({
       throw new ConvexError("Validation: currentBalance cannot exceed originalBalance");
     }
     const id = await ctx.db.insert("debtPlans", {
-      userId: await requireUserId(ctx),
+      userId,
       name: validateDebtName(args.name),
       debtType: args.debtType,
       status: args.status ?? "active",
@@ -46,10 +48,27 @@ export const createDebtPlan = mutation({
       linkedRecurringId: args.linkedRecurringId,
       payoffStrategy: args.payoffStrategy,
       priorityRank: validatePriorityRank(args.priorityRank),
+      sharedGoalId: undefined,
       notes: args.notes?.trim() || undefined,
       publishedAt: undefined,
       createdAt: now,
       updatedAt: now,
+    });
+
+    const sharedGoal = await syncDebtPlanSharedGoal(ctx, {
+      userId,
+      debtPlanId: id,
+      name: validateDebtName(args.name),
+      status: args.status ?? "active",
+      currency: validateDebtCurrency(args.currency ?? "GHS"),
+      originalBalance,
+      currentBalance,
+      nextDueDate: args.nextDueDate,
+      notes: args.notes?.trim() || undefined,
+    });
+    await ctx.db.patch(id, {
+      sharedGoalId: sharedGoal._id,
+      updatedAt: Date.now(),
     });
 
     return { id };
@@ -76,6 +95,7 @@ export const updateDebtPlan = mutation({
   },
   handler: async (ctx, args): Promise<Doc<"debtPlans">> => {
     const existing = await requireOwnedDebt(ctx, args.id);
+    const userId = await requireUserId(ctx);
     const patch: Partial<Doc<"debtPlans">> = { updatedAt: Date.now() };
     if (args.name !== undefined) patch.name = validateDebtName(args.name);
     if (args.debtType !== undefined) patch.debtType = args.debtType;
@@ -108,6 +128,25 @@ export const updateDebtPlan = mutation({
     await ctx.db.patch(existing._id, patch);
     const updated = await ctx.db.get(existing._id);
     if (!updated) throw new ConvexError("Debt plan not found after update");
+    const sharedGoal = await syncDebtPlanSharedGoal(ctx, {
+      userId,
+      debtPlanId: updated._id,
+      sharedGoalId: updated.sharedGoalId,
+      name: updated.name,
+      status: updated.status,
+      currency: updated.currency,
+      originalBalance: updated.originalBalance,
+      currentBalance: updated.currentBalance,
+      nextDueDate: updated.nextDueDate,
+      notes: updated.notes,
+    });
+    if (updated.sharedGoalId !== sharedGoal._id) {
+      await ctx.db.patch(updated._id, {
+        sharedGoalId: sharedGoal._id,
+        updatedAt: Date.now(),
+      });
+      return (await ctx.db.get(updated._id))!;
+    }
     return updated;
   },
 });
@@ -134,6 +173,16 @@ export const archiveDebtPlan = mutation({
     const debt = await requireOwnedDebt(ctx, args.id);
     if (debt.status === "archived") return true;
     await ctx.db.patch(args.id, { status: "archived", updatedAt: Date.now() });
+    if (debt.sharedGoalId) {
+      const sharedGoal = await ctx.db.get(debt.sharedGoalId);
+      if (sharedGoal) {
+        await ctx.db.patch(sharedGoal._id, {
+          status: "archived",
+          active: false,
+          updatedAt: Date.now(),
+        });
+      }
+    }
     return true;
   },
 });

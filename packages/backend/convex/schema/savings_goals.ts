@@ -23,6 +23,7 @@ export const savingsGoalsTable = defineTable({
   color: v.optional(v.string()),
   icon: v.optional(v.string()),
   priorityRank: v.optional(v.string()),
+  sharedGoalId: v.optional(v.id("sharedGoals")),
   notes: v.optional(v.string()),
   publishedAt: v.optional(v.number()),
   createdAt: v.number(),

@@ -24,6 +24,7 @@ export const debtPlansTable = defineTable({
   linkedRecurringId: v.optional(v.id("recurringTransactions")),
   payoffStrategy: v.optional(payoffStrategyValidator),
   priorityRank: v.optional(v.string()),
+  sharedGoalId: v.optional(v.id("sharedGoals")),
   notes: v.optional(v.string()),
   publishedAt: v.optional(v.number()),
   createdAt: v.number(),

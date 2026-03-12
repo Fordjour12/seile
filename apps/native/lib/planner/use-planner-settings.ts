@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 
 import { plannerApi } from "@/lib/planner/api";
+import { sharedGoalsApi } from "@/lib/api/shared-goals";
 
 const DAY_OPTIONS = [
   "monday",
@@ -22,7 +23,7 @@ export function usePlannerSettings() {
   const dashboard = useQuery(plannerApi["planner/queries"].getPlannerDashboard, {});
   const home = useQuery(plannerApi["planner/queries"].getPlannerChatHome, {});
   const upsertProfile = useMutation(plannerApi["planner/mutations"].upsertPlannerProfile);
-  const createGoal = useMutation(plannerApi["planner/mutations"].createPlanningGoal);
+  const createGoal = useMutation(sharedGoalsApi.mutations.createSharedGoal);
   const setAgentEnabled = useMutation(plannerApi["planner/mutations"].setAgentEnabled);
 
   const [status, setStatus] = useState("Planner settings ready.");
