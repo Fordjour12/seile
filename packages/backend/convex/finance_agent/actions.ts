@@ -142,7 +142,7 @@ async function ensureFinanceAgentThreadForUser(ctx: ActionCtx, userId: string) {
     return state.activeThreadId;
   }
 
-  const { threadId } = await createFinanceAgentThread(ctx, {
+  const threadId = await createFinanceAgentThread(ctx, {
     userId,
     title: "Finance agent",
     summary: "Analyze finances and propose confirmed actions.",

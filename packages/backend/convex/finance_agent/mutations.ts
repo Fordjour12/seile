@@ -19,7 +19,7 @@ export const setFinanceAgentEnabled = mutation({
       agentEnabled: args.agentEnabled,
       updatedAt: Date.now(),
     });
-    return await ctx.db.get(state._id);
+    return await ctx.db.get("financeAgentState", state._id);
   },
 });
 
@@ -34,7 +34,7 @@ export const setActiveFinanceThread = internalMutation({
       activeThreadId: args.activeThreadId,
       updatedAt: Date.now(),
     });
-    return await ctx.db.get(state._id);
+    return await ctx.db.get("financeAgentState", state._id);
   },
 });
 
@@ -83,5 +83,5 @@ async function ensureFinanceAgentState(ctx: any, userId: string) {
     createdAt: now,
     updatedAt: now,
   });
-  return (await ctx.db.get(id))!;
+  return (await ctx.db.get("financeAgentState", id))!;
 }

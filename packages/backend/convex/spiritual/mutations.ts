@@ -50,7 +50,7 @@ export const createSpiritualGoal = mutation({
       updatedAt: now,
     });
 
-    return await ctx.db.get(id);
+    return await ctx.db.get("spiritualGoals", id);
   },
 });
 
@@ -74,7 +74,7 @@ export const updateSpiritualGoalProgress = mutation({
     });
 
     if (goal.plannerGoalId) {
-      const plannerGoal = await ctx.db.get(goal.plannerGoalId);
+      const plannerGoal = await ctx.db.get("planningGoals", goal.plannerGoalId);
       if (plannerGoal && plannerGoal.userId === userId) {
         await ctx.db.patch(goal.plannerGoalId, {
           active: nextStatus === "active",
@@ -84,7 +84,7 @@ export const updateSpiritualGoalProgress = mutation({
       }
     }
 
-    return await ctx.db.get(goal._id);
+    return await ctx.db.get("spiritualGoals", goal._id);
   },
 });
 
@@ -140,7 +140,7 @@ export const createSpiritualPractice = mutation({
       updatedAt: now,
     });
 
-    return await ctx.db.get(id);
+    return await ctx.db.get("spiritualPractices", id);
   },
 });
 
@@ -158,7 +158,7 @@ export const toggleSpiritualPracticeActive = mutation({
     });
 
     if (practice.plannerHabitId) {
-      const plannerHabit = await ctx.db.get(practice.plannerHabitId);
+      const plannerHabit = await ctx.db.get("planningHabits", practice.plannerHabitId);
       if (plannerHabit && plannerHabit.userId === userId) {
         await ctx.db.patch(practice.plannerHabitId, {
           active: args.active,
@@ -167,7 +167,7 @@ export const toggleSpiritualPracticeActive = mutation({
       }
     }
 
-    return await ctx.db.get(practice._id);
+    return await ctx.db.get("spiritualPractices", practice._id);
   },
 });
 
@@ -191,7 +191,7 @@ export const createPrayer = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    return await ctx.db.get(id);
+    return await ctx.db.get("prayers", id);
   },
 });
 
@@ -208,7 +208,7 @@ export const updatePrayerStatus = mutation({
       answeredAt: args.status === "answered" ? Date.now() : undefined,
       updatedAt: Date.now(),
     });
-    return await ctx.db.get(prayer._id);
+    return await ctx.db.get("prayers", prayer._id);
   },
 });
 
@@ -233,7 +233,7 @@ export const createSpiritualReading = mutation({
       notes: optionalTrim(args.notes),
       createdAt: Date.now(),
     });
-    return await ctx.db.get(id);
+    return await ctx.db.get("spiritualReadings", id);
   },
 });
 
@@ -261,7 +261,7 @@ export const createSpiritualReflection = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    return await ctx.db.get(id);
+    return await ctx.db.get("spiritualReflections", id);
   },
 });
 
@@ -270,7 +270,7 @@ async function requireOwnedSpiritualGoal(
   userId: string,
   id: Id<"spiritualGoals">,
 ): Promise<Doc<"spiritualGoals">> {
-  const row = await ctx.db.get(id);
+  const row = await ctx.db.get("spiritualGoals", id);
   if (!row || row.userId !== userId) {
     throw new ConvexError("Spiritual goal not found");
   }
@@ -282,7 +282,7 @@ async function requireOwnedSpiritualPractice(
   userId: string,
   id: Id<"spiritualPractices">,
 ): Promise<Doc<"spiritualPractices">> {
-  const row = await ctx.db.get(id);
+  const row = await ctx.db.get("spiritualPractices", id);
   if (!row || row.userId !== userId) {
     throw new ConvexError("Spiritual practice not found");
   }
@@ -290,7 +290,7 @@ async function requireOwnedSpiritualPractice(
 }
 
 async function requireOwnedPrayer(ctx: MutationCtx, userId: string, id: Id<"prayers">): Promise<Doc<"prayers">> {
-  const row = await ctx.db.get(id);
+  const row = await ctx.db.get("prayers", id);
   if (!row || row.userId !== userId) {
     throw new ConvexError("Prayer not found");
   }

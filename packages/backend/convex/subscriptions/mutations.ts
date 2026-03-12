@@ -59,7 +59,7 @@ export const createSubscription = mutation({
       updatedAt: now,
     });
 
-    const created = await ctx.db.get(id);
+    const created = await ctx.db.get("recurringTransactions", id);
     if (!created) {
       throw new ConvexError("Failed to create subscription");
     }
@@ -74,7 +74,7 @@ export const cancelSubscription = mutation({
   },
   handler: async (ctx, args): Promise<boolean> => {
     const userId = await requireUserId(ctx);
-    const recurring = await ctx.db.get(args.id);
+    const recurring = await ctx.db.get("recurringTransactions", args.id);
     if (!recurring || recurring.userId !== userId || !recurring.isSubscription) {
       throw new ConvexError("Subscription not found");
     }

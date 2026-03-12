@@ -51,7 +51,7 @@ export const createWorkout = mutation({
       createdAt: now,
     });
 
-    const created = await ctx.db.get(id);
+    const created = await ctx.db.get("workouts", id);
     if (!created) {
       throw new ConvexError("Failed to create workout");
     }
@@ -88,7 +88,7 @@ export const createHealthHabit = mutation({
       updatedAt: now,
     });
 
-    const created = await ctx.db.get(id);
+    const created = await ctx.db.get("healthHabits", id);
     if (!created) {
       throw new ConvexError("Failed to create health habit");
     }
@@ -123,7 +123,7 @@ export const createHealthGoal = mutation({
       updatedAt: now,
     });
 
-    const created = await ctx.db.get(id);
+    const created = await ctx.db.get("healthGoals", id);
     if (!created) {
       throw new ConvexError("Failed to create health goal");
     }
@@ -163,7 +163,7 @@ export const logHealthMetrics = mutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, patch);
-      const updated = await ctx.db.get(existing._id);
+      const updated = await ctx.db.get("healthMetrics", existing._id);
       if (!updated) throw new ConvexError("Health metrics not found");
       return updated;
     }
@@ -173,7 +173,7 @@ export const logHealthMetrics = mutation({
       ...patch,
       createdAt: Date.now(),
     });
-    const created = await ctx.db.get(id);
+    const created = await ctx.db.get("healthMetrics", id);
     if (!created) {
       throw new ConvexError("Failed to log health metrics");
     }
@@ -202,7 +202,7 @@ export const logEnergy = mutation({
       createdAt: Date.now(),
     });
 
-    const created = await ctx.db.get(id);
+    const created = await ctx.db.get("energyLogs", id);
     if (!created) {
       throw new ConvexError("Failed to log energy");
     }
@@ -212,7 +212,7 @@ export const logEnergy = mutation({
 });
 
 async function requireOwnedPlanItem(ctx: MutationCtx, userId: string, id: Id<"planItems">) {
-  const item = await ctx.db.get(id);
+  const item = await ctx.db.get("planItems", id);
   if (!item || item.userId !== userId) {
     throw new ConvexError("Plan item not found");
   }

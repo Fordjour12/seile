@@ -2,11 +2,12 @@
 
 import { z } from "zod";
 
-import { api, internal } from "../_generated/api";
+import { api } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { financeProposalSchema } from "./validators";
 
+const apiAny = api as any;
 const dateInputSchema = z.union([
   z.number(),
   z.string().transform((value) => new Date(value).getTime()),
@@ -189,7 +190,7 @@ export async function executeConfirmedFinanceProposal(
   switch (proposal.actionType) {
     case "account.create": {
       return await ctx.runMutation(
-        api.accounts.createAccount,
+        apiAny.accounts.createAccount,
         accountCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson)),
       );
     }
@@ -197,7 +198,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = accountUpdatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.accounts.updateAccount, {
+      return await ctx.runMutation(apiAny.accounts.updateAccount, {
         ...payload,
         accountId: payload.accountId as Id<"accounts">,
       });
@@ -206,7 +207,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ accountId: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.accounts.deleteAccount, {
+      return await ctx.runMutation(apiAny.accounts.deleteAccount, {
         accountId: payload.accountId as Id<"accounts">,
       });
     }
@@ -214,7 +215,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = transactionCreatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.transactions.mutations.createTransaction, {
+      return await ctx.runMutation(apiAny.transactions.mutations.createTransaction, {
         ...payload,
         accountId: payload.accountId as Id<"accounts"> | undefined,
         fromAccountId: payload.fromAccountId as Id<"accounts"> | undefined,
@@ -226,7 +227,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = transactionUpdatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.transactions.mutations.updateTransaction, {
+      return await ctx.runMutation(apiAny.transactions.mutations.updateTransaction, {
         id: payload.id as Id<"transactions">,
         categoryId: payload.categoryId as Id<"categories"> | undefined,
         note: payload.note,
@@ -237,13 +238,13 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.transactions.mutations.reverseTransaction, {
+      return await ctx.runMutation(apiAny.transactions.mutations.reverseTransaction, {
         id: payload.id as Id<"transactions">,
       });
     }
     case "budgetPeriod.create": {
       return await ctx.runMutation(
-        api.budget.mutations.createBudgetPeriod,
+        apiAny.budget.mutations.createBudgetPeriod,
         budgetPeriodCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson)),
       );
     }
@@ -251,7 +252,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = budgetPeriodUpdatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.budget.mutations.updateBudgetPeriod, {
+      return await ctx.runMutation(apiAny.budget.mutations.updateBudgetPeriod, {
         ...payload,
         id: payload.id as Id<"budgetPeriods">,
       });
@@ -260,7 +261,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.budget.mutations.closeBudgetPeriod, {
+      return await ctx.runMutation(apiAny.budget.mutations.closeBudgetPeriod, {
         id: payload.id as Id<"budgetPeriods">,
       });
     }
@@ -268,7 +269,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.budget.mutations.archiveBudgetPeriod, {
+      return await ctx.runMutation(apiAny.budget.mutations.archiveBudgetPeriod, {
         id: payload.id as Id<"budgetPeriods">,
       });
     }
@@ -276,7 +277,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = budgetEnvelopeCreatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.budget.mutations.createEnvelope, {
+      return await ctx.runMutation(apiAny.budget.mutations.createEnvelope, {
         ...payload,
         periodId: payload.periodId as Id<"budgetPeriods">,
         categoryId: payload.categoryId as Id<"categories">,
@@ -286,7 +287,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = budgetEnvelopeUpdatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.budget.mutations.updateEnvelope, {
+      return await ctx.runMutation(apiAny.budget.mutations.updateEnvelope, {
         ...payload,
         id: payload.id as Id<"budgetEnvelopes">,
       });
@@ -295,7 +296,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.budget.mutations.deleteEnvelope, {
+      return await ctx.runMutation(apiAny.budget.mutations.deleteEnvelope, {
         id: payload.id as Id<"budgetEnvelopes">,
       });
     }
@@ -303,7 +304,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = debtCreatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.debt.mutations.createDebtPlan, {
+      return await ctx.runMutation(apiAny.debt.mutations.createDebtPlan, {
         ...payload,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
         linkedRecurringId:
@@ -314,7 +315,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = debtUpdatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.debt.mutations.updateDebtPlan, {
+      return await ctx.runMutation(apiAny.debt.mutations.updateDebtPlan, {
         ...payload,
         id: payload.id as Id<"debtPlans">,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
@@ -326,7 +327,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.debt.mutations.archiveDebtPlan, {
+      return await ctx.runMutation(apiAny.debt.mutations.archiveDebtPlan, {
         id: payload.id as Id<"debtPlans">,
       });
     }
@@ -334,7 +335,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = savingsCreatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.savings.mutations.createSavingsGoal, {
+      return await ctx.runMutation(apiAny.savings.mutations.createSavingsGoal, {
         ...payload,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
         linkedRecurringId:
@@ -346,7 +347,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = savingsUpdatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.savings.mutations.updateSavingsGoal, {
+      return await ctx.runMutation(apiAny.savings.mutations.updateSavingsGoal, {
         ...payload,
         id: payload.id as Id<"savingsGoals">,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
@@ -359,7 +360,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.savings.mutations.archiveSavingsGoal, {
+      return await ctx.runMutation(apiAny.savings.mutations.archiveSavingsGoal, {
         id: payload.id as Id<"savingsGoals">,
       });
     }
@@ -367,7 +368,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = recurringCreatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.recurring.mutations.createRecurringTransaction, {
+      return await ctx.runMutation(apiAny.recurring.mutations.createRecurringTransaction, {
         ...payload,
         accountId: payload.accountId as Id<"accounts"> | undefined,
         fromAccountId: payload.fromAccountId as Id<"accounts"> | undefined,
@@ -379,7 +380,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = recurringUpdatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.recurring.mutations.updateRecurringTransaction, {
+      return await ctx.runMutation(apiAny.recurring.mutations.updateRecurringTransaction, {
         ...payload,
         id: payload.id as Id<"recurringTransactions">,
         categoryId: payload.categoryId as Id<"categories"> | undefined,
@@ -389,7 +390,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.recurring.mutations.pauseRecurringTransaction, {
+      return await ctx.runMutation(apiAny.recurring.mutations.pauseRecurringTransaction, {
         id: payload.id as Id<"recurringTransactions">,
       });
     }
@@ -397,7 +398,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.recurring.mutations.resumeRecurringTransaction, {
+      return await ctx.runMutation(apiAny.recurring.mutations.resumeRecurringTransaction, {
         id: payload.id as Id<"recurringTransactions">,
       });
     }
@@ -408,7 +409,7 @@ export async function executeConfirmedFinanceProposal(
           deleteGeneratedTransactions: z.boolean().optional(),
         })
         .parse(JSON.parse(proposal.payloadJson));
-      return await ctx.runMutation(api.recurring.mutations.deleteRecurringTransaction, {
+      return await ctx.runMutation(apiAny.recurring.mutations.deleteRecurringTransaction, {
         id: payload.id as Id<"recurringTransactions">,
         deleteGeneratedTransactions: payload.deleteGeneratedTransactions,
       });
@@ -417,7 +418,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = subscriptionCreatePayloadSchema.parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.subscriptions.mutations.createSubscription, {
+      return await ctx.runMutation(apiAny.subscriptions.mutations.createSubscription, {
         ...payload,
         accountId: payload.accountId as Id<"accounts">,
         categoryId: payload.categoryId as Id<"categories"> | undefined,
@@ -427,7 +428,7 @@ export async function executeConfirmedFinanceProposal(
       const payload = z.object({ id: z.string() }).parse(
         JSON.parse(proposal.payloadJson),
       );
-      return await ctx.runMutation(api.subscriptions.mutations.cancelSubscription, {
+      return await ctx.runMutation(apiAny.subscriptions.mutations.cancelSubscription, {
         id: payload.id as Id<"recurringTransactions">,
       });
     }

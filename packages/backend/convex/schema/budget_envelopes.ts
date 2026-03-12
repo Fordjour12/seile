@@ -17,6 +17,7 @@ export const budgetEnvelopesTable = defineTable({
   createdAt: v.number(),
   updatedAt: v.number(),
 })
+  .index("by_userId", ["userId"])
   .index("by_periodId", ["periodId"])
   .index("by_periodId_categoryId", ["periodId", "categoryId"])
   .index("by_userId_categoryId", ["userId", "categoryId"]);

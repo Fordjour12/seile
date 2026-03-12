@@ -445,9 +445,15 @@ export const storeAgentWeeklyPlan = internalMutation({
       let linkedHabitId: Id<"planningHabits"> | undefined;
 
       if (item.itemType === "task") {
-        const draftTask = item.draftTask ?? {
+        const draftTask: {
+          title: string;
+          priority: "low" | "medium" | "high";
+          sharedGoalId?: Id<"sharedGoals">;
+          dueDate: string;
+        } = item.draftTask ?? {
           title: item.title,
           priority: item.priority,
+          sharedGoalId: undefined,
           dueDate: item.date,
         };
         linkedTaskId = await ctx.db.insert("planningTasks", {
@@ -464,10 +470,17 @@ export const storeAgentWeeklyPlan = internalMutation({
       }
 
       if (item.itemType === "habit") {
-        const draftHabit = item.draftHabit ?? {
+        const draftHabit: {
+          name: string;
+          cadence: "daily" | "weekdays" | "weekly" | "custom";
+          targetValue: number;
+          sharedGoalId?: Id<"sharedGoals">;
+          scheduleDays?: string[];
+        } = item.draftHabit ?? {
           name: item.title,
           cadence: "daily" as const,
           targetValue: 1,
+          sharedGoalId: undefined,
           scheduleDays: undefined,
         };
         const habitKey = `${draftHabit.name.toLowerCase()}::${draftHabit.cadence}`;
@@ -838,7 +851,7 @@ async function buildAndStoreWeeklyPlan(
     ensureProfile(ctx, input.userId),
     ensureAgentState(ctx, input.userId),
     ctx.db
-      .query("planningGoals")
+      .query("sharedGoals")
       .withIndex("by_userId_active", (q) => q.eq("userId", input.userId).eq("active", true))
       .collect(),
     ctx.db

@@ -25,6 +25,10 @@ type PlanningPriority = Doc<"sharedGoals">["priority"];
 type PlanningCadence = Doc<"planningHabits">["cadence"];
 type EnergyPattern = Doc<"plannerProfiles">["energyPattern"];
 type PlanningMode = Doc<"plans">["mode"];
+type GoalLike = Pick<
+  Doc<"sharedGoals">,
+  "_id" | "title" | "priority" | "targetDate" | "active"
+>;
 
 export type PlannerProfileLike = Pick<
   Doc<"plannerProfiles">,
@@ -40,7 +44,7 @@ export type PlannerProfileLike = Pick<
 export type WeeklyPlanInput = {
   weekStart: string;
   mode: PlanningMode;
-  goals: Doc<"sharedGoals">[];
+  goals: GoalLike[];
   tasks: Doc<"planningTasks">[];
   habits: Doc<"planningHabits">[];
   latestReview: Doc<"planningReviews"> | null;
@@ -398,7 +402,7 @@ export function buildWeeklyPlanDraft(input: WeeklyPlanInput): WeeklyPlanDraft {
             name: habit.name,
             cadence: habit.cadence,
             targetValue: habit.targetValue,
-            linkedGoalId: habit.linkedGoalId,
+            sharedGoalId: habit.sharedGoalId,
             scheduleDays: habit.scheduleDays,
             draftHabit: habit,
           }));
@@ -590,7 +594,7 @@ function allocateDate(input: {
 }
 
 function createGoalTasks(input: {
-  goals: Doc<"sharedGoals">[];
+  goals: GoalLike[];
   weekEnd: string;
   desiredCount: number;
 }): GeneratedTaskDraft[] {
@@ -636,7 +640,7 @@ function createGoalTasks(input: {
   return drafts.slice(0, input.desiredCount);
 }
 
-function createStarterHabits(goals: Doc<"sharedGoals">[]) {
+function createStarterHabits(goals: GoalLike[]) {
   return [
     {
       name: "Five-minute daily reset",

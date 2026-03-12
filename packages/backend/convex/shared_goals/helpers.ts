@@ -29,7 +29,7 @@ export async function requireOwnedSharedGoal(
   userId: string,
   sharedGoalId: Id<"sharedGoals">,
 ) {
-  const goal = await ctx.db.get(sharedGoalId);
+  const goal = await ctx.db.get("sharedGoals", sharedGoalId);
   if (!goal || goal.userId !== userId) {
     throw new ConvexError("Shared goal not found");
   }
@@ -41,12 +41,34 @@ export async function createSharedGoalRecord(
   input: SharedGoalBaseInput,
 ) {
   const now = Date.now();
+  const title = optionalTrim(input.title);
+  if (!title) {
+    throw new ConvexError("Validation: shared goal title is required");
+  }
+
   const id = await ctx.db.insert("sharedGoals", {
-    ...normalizeSharedGoalInput(input),
+    userId: input.userId,
+    title,
+    description: optionalTrim(input.description),
+    status: input.status,
+    priority: input.priority,
+    horizon: input.horizon,
+    targetDate: optionalTrim(input.targetDate),
+    goalKind: input.goalKind,
+    targetAmount:
+      input.targetAmount !== undefined ? Math.max(0, input.targetAmount) : undefined,
+    currentAmount:
+      input.currentAmount !== undefined ? Math.max(0, input.currentAmount) : undefined,
+    currencyCode: optionalTrim(input.currencyCode)?.toUpperCase(),
+    sourceDomain: input.sourceDomain,
+    linkedFinanceEntityType: input.linkedFinanceEntityType,
+    linkedFinanceEntityId: input.linkedFinanceEntityId,
+    domain: optionalTrim(input.domain),
+    active: input.status === "active" || input.status === "draft",
     createdAt: now,
     updatedAt: now,
   });
-  return (await ctx.db.get(id))!;
+  return (await ctx.db.get("sharedGoals", id))!;
 }
 
 export async function updateSharedGoalRecord(
@@ -59,7 +81,7 @@ export async function updateSharedGoalRecord(
     ...patch,
     updatedAt: Date.now(),
   });
-  return (await ctx.db.get(sharedGoalId))!;
+  return (await ctx.db.get("sharedGoals", sharedGoalId))!;
 }
 
 export async function createPlannerSharedGoal(

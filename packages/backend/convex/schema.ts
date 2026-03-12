@@ -117,6 +117,8 @@ export default defineSchema({
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,
   categories: categoriesTable,
+  financeAgentState: financeAgentStateTable,
+  financeAgentAuditLog: financeAgentAuditLogTable,
   workouts: workoutsTable,
   healthHabits: healthHabitsTable,
   healthGoals: healthGoalsTable,

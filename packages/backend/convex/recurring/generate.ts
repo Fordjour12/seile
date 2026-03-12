@@ -64,7 +64,7 @@ async function generateOneEntryInternal(
   recurringId: Id<"recurringTransactions">,
   runAt: number,
 ): Promise<{ success: true; idempotencyKey: string } | { skipped: true; reason: "inactive" | "duplicate"; key?: string }> {
-  const recurring = await ctx.db.get(recurringId);
+  const recurring = await ctx.db.get("recurringTransactions", recurringId);
   if (!recurring || !recurring.isActive) {
     return { skipped: true as const, reason: "inactive" as const };
   }

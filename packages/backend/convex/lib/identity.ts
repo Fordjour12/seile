@@ -1,11 +1,8 @@
 import { ConvexError } from "convex/values";
 
-import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import { authComponent } from "../auth";
 
-type AuthCtx = QueryCtx | MutationCtx | ActionCtx;
-
-export async function requireUserId(ctx: AuthCtx): Promise<string> {
+export async function requireUserId(ctx: any): Promise<string> {
   const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new ConvexError("Unauthenticated");
@@ -25,6 +22,6 @@ export async function requireUserId(ctx: AuthCtx): Promise<string> {
   return userId;
 }
 
-export async function getOptionalUser(ctx: AuthCtx) {
+export async function getOptionalUser(ctx: any) {
   return await authComponent.safeGetAuthUser(ctx);
 }
