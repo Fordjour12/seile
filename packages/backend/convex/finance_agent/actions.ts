@@ -7,15 +7,15 @@ import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { requireUserId } from "../lib/identity";
 import {
-  createFinanceAgentThread,
-  ensureFinanceAgentConfigured,
-  financeAgent,
-} from "./agent";
+  createFinanceThread,
+} from "../ai/agents/finance";
 import {
-  financeAssistantResponseSchema,
-  financeProposalSchema,
-} from "./validators";
-import { executeConfirmedFinanceProposal } from "./tools";
+  confirmPendingAIActionForUser,
+  mapPendingActionsToFinanceProposals,
+  runAIForUser,
+} from "../ai/runRouter";
+import { executeConfirmedFinanceProposal } from "../ai/executeWithApproval";
+import { financeProposalSchema } from "../ai/types";
 
 const internalApi = internal as unknown as Record<string, Record<string, any>>;
 
@@ -33,7 +33,6 @@ export const sendFinanceAgentMessage = action({
     text: v.string(),
   },
   handler: async (ctx, args) => {
-    ensureFinanceAgentConfigured();
     const userId = await requireUserId(ctx);
     const text = args.text.trim();
     if (!text) {
@@ -41,48 +40,25 @@ export const sendFinanceAgentMessage = action({
     }
 
     const threadId = await ensureFinanceAgentThreadForUser(ctx, userId);
-    const threadState = await financeAgent.continueThread(ctx, { threadId, userId });
-    const context = await ctx.runQuery(
-      internalApi["finance_agent/queries"].getFinanceAgentContext,
-      { userId },
-    );
-
-    const structured = await financeAgent.generateObject(
-      ctx,
-      { threadId },
-      {
-        prompt: buildFinanceAgentProposalPrompt({ userText: text, context: context.summary }),
-        schema: financeAssistantResponseSchema,
-      },
-    );
-
-    const textResult = await threadState.thread.generateText({
-      prompt: buildFinanceAgentReplyPrompt({
-        userText: text,
-        context: context.summary,
-        suggestedReply: structured.object.reply,
-        proposedActions: structured.object.proposedActions,
-      }),
+    const result = await runAIForUser(ctx, {
+      userId,
+      text,
+      threadId,
+      source: "finance_chat",
+      preferredDomains: ["finance"],
+      surface: "finance_chat",
+      persistToThread: true,
     });
-
-    const savedMessages = textResult.savedMessages ?? [];
-    let assistantMessageId: string | undefined;
-    for (let index = savedMessages.length - 1; index >= 0; index -= 1) {
-      const message = savedMessages[index];
-      if (message.message?.role === "assistant") {
-        assistantMessageId = message._id;
-        break;
-      }
-    }
 
     return {
       threadId,
-      userMessageId: textResult.promptMessageId,
-      assistantMessageId,
-      text: textResult.text,
-      proposedActions: structured.object.proposedActions.map((proposal) =>
-        financeProposalSchema.parse(proposal),
-      ),
+      userMessageId: result.userMessageId,
+      assistantMessageId: result.assistantMessageId,
+      text: result.text,
+      proposedActions:
+        result.kind === "approval_request"
+          ? mapPendingActionsToFinanceProposals(result.pendingActions)
+          : [],
     };
   },
 });
@@ -98,10 +74,25 @@ export const executeFinanceAgentProposal = action({
     const proposal = financeProposalSchema.parse(JSON.parse(args.proposalJson));
 
     try {
-      const result = await executeConfirmedFinanceProposal(ctx, {
-        proposalJson: args.proposalJson,
-        confirmationText: args.confirmationText,
-      });
+      let approval: any = null;
+      try {
+        approval = await ctx.runQuery(internalApi["ai/state"].getApprovalInternal, {
+          approvalId: proposal.proposalId,
+          userId,
+        });
+      } catch {
+        approval = null;
+      }
+      const result = approval
+        ? await confirmPendingAIActionForUser(ctx, {
+            userId,
+            approvalId: approval._id,
+            confirmationText: args.confirmationText,
+          })
+        : await executeConfirmedFinanceProposal(ctx, {
+            proposalJson: args.proposalJson,
+            confirmationText: args.confirmationText,
+          });
       await ctx.runMutation(
         internalApi["finance_agent/mutations"].logConfirmedFinanceAction,
         {
@@ -142,7 +133,7 @@ async function ensureFinanceAgentThreadForUser(ctx: ActionCtx, userId: string) {
     return state.activeThreadId;
   }
 
-  const threadId = await createFinanceAgentThread(ctx, {
+  const threadId = await createFinanceThread(ctx, {
     userId,
     title: "Finance agent",
     summary: "Analyze finances and propose confirmed actions.",
@@ -157,43 +148,4 @@ async function ensureFinanceAgentThreadForUser(ctx: ActionCtx, userId: string) {
   );
 
   return threadId;
-}
-
-function buildFinanceAgentProposalPrompt(input: {
-  userText: string;
-  context: any;
-}) {
-  return [
-    "You are preparing a finance-agent response.",
-    "Return JSON only.",
-    "If the user asks to change finance data, include proposedActions.",
-    "Use exact entity ids from the provided context when an existing record is referenced.",
-    "Do not propose planner actions.",
-    `Finance context: ${JSON.stringify(input.context)}`,
-    `User message: ${input.userText}`,
-  ].join("\n\n");
-}
-
-function buildFinanceAgentReplyPrompt(input: {
-  userText: string;
-  context: any;
-  suggestedReply: string;
-  proposedActions: Array<{
-    title: string;
-    preview: string;
-    actionType: string;
-  }>;
-}) {
-  return [
-    "You are replying inside an ongoing finance-agent chat.",
-    "Reply directly and concisely.",
-    "If proposed actions exist, explain that they require explicit confirmation.",
-    "Do not say that a mutation already ran.",
-    `Finance context: ${JSON.stringify(input.context)}`,
-    `User message: ${input.userText}`,
-    `Suggested answer: ${input.suggestedReply}`,
-    input.proposedActions.length > 0
-      ? `Proposed actions: ${JSON.stringify(input.proposedActions)}`
-      : "No proposed actions.",
-  ].join("\n\n");
 }

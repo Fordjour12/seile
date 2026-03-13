@@ -1,13 +1,19 @@
-"use node";
-
 import { z } from "zod";
 
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { financeProposalSchema } from "./validators";
+import { buildPendingAction, getApprovalMode } from "./approval";
+import {
+  financeProposalSchema,
+  type AIDomain,
+  type PendingAction,
+  type RunSource,
+} from "./types";
 
 const apiAny = api as any;
+const internalApi = internal as unknown as Record<string, Record<string, any>>;
+
 const dateInputSchema = z.union([
   z.number(),
   z.string().transform((value) => new Date(value).getTime()),
@@ -106,9 +112,7 @@ const debtCreatePayloadSchema = z.object({
   notes: z.string().optional(),
 });
 
-const debtUpdatePayloadSchema = debtCreatePayloadSchema
-  .partial()
-  .extend({ id: z.string() });
+const debtUpdatePayloadSchema = debtCreatePayloadSchema.partial().extend({ id: z.string() });
 
 const savingsCreatePayloadSchema = z.object({
   name: z.string(),
@@ -127,9 +131,7 @@ const savingsCreatePayloadSchema = z.object({
   notes: z.string().optional(),
 });
 
-const savingsUpdatePayloadSchema = savingsCreatePayloadSchema
-  .partial()
-  .extend({ id: z.string() });
+const savingsUpdatePayloadSchema = savingsCreatePayloadSchema.partial().extend({ id: z.string() });
 
 const recurringCreatePayloadSchema = z.object({
   kind: z.enum(["expense", "income", "transfer"]),
@@ -177,6 +179,72 @@ const subscriptionCreatePayloadSchema = z.object({
   externalSubscriptionId: z.string().optional(),
 });
 
+export async function createPendingApprovals(
+  ctx: ActionCtx,
+  input: {
+    userId: string;
+    threadId?: string;
+    runId?: string;
+    source: RunSource;
+    domain: AIDomain;
+    proposals: Array<{
+      actionType: string;
+      title: string;
+      preview: string;
+      payloadJson: string;
+      destructive?: boolean;
+    }>;
+  },
+): Promise<PendingAction[]> {
+  const created: PendingAction[] = [];
+
+  for (const proposal of input.proposals) {
+    const approvalMode = getApprovalMode({
+      domain: input.domain,
+      actionType: proposal.actionType,
+    });
+
+    const approvalId = await ctx.runMutation(internalApi["ai/state"].createApprovalInternal, {
+      userId: input.userId,
+      threadId: input.threadId,
+      runId: input.runId,
+      domain: input.domain,
+      actionType: proposal.actionType,
+      title: proposal.title,
+      preview: proposal.preview,
+      payloadJson: proposal.payloadJson,
+      approvalMode,
+      destructive: proposal.destructive ?? false,
+      source: input.source,
+    });
+
+    await ctx.runMutation(internalApi["ai/state"].logToolCallInternal, {
+      userId: input.userId,
+      runId: input.runId,
+      domain: input.domain,
+      toolName: proposal.actionType,
+      actionType: proposal.actionType,
+      approvalMode,
+      outcome: "approval_requested",
+    });
+
+    created.push(
+      buildPendingAction({
+        approvalId,
+        domain: input.domain,
+        actionType: proposal.actionType,
+        title: proposal.title,
+        preview: proposal.preview,
+        payloadJson: proposal.payloadJson,
+        destructive: proposal.destructive,
+        approvalMode,
+      }),
+    );
+  }
+
+  return created;
+}
+
 export async function executeConfirmedFinanceProposal(
   ctx: ActionCtx,
   input: {
@@ -188,33 +256,26 @@ export async function executeConfirmedFinanceProposal(
   assertConfirmationText(proposal.destructive, input.confirmationText);
 
   switch (proposal.actionType) {
-    case "account.create": {
+    case "account.create":
       return await ctx.runMutation(
         apiAny.accounts.createAccount,
         accountCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson)),
       );
-    }
     case "account.update": {
-      const payload = accountUpdatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = accountUpdatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.accounts.updateAccount, {
         ...payload,
         accountId: payload.accountId as Id<"accounts">,
       });
     }
     case "account.archive": {
-      const payload = z.object({ accountId: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ accountId: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.accounts.deleteAccount, {
         accountId: payload.accountId as Id<"accounts">,
       });
     }
     case "transaction.create": {
-      const payload = transactionCreatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = transactionCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.transactions.mutations.createTransaction, {
         ...payload,
         accountId: payload.accountId as Id<"accounts"> | undefined,
@@ -224,9 +285,7 @@ export async function executeConfirmedFinanceProposal(
       });
     }
     case "transaction.update": {
-      const payload = transactionUpdatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = transactionUpdatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.transactions.mutations.updateTransaction, {
         id: payload.id as Id<"transactions">,
         categoryId: payload.categoryId as Id<"categories"> | undefined,
@@ -235,48 +294,37 @@ export async function executeConfirmedFinanceProposal(
       });
     }
     case "transaction.reverse": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.transactions.mutations.reverseTransaction, {
         id: payload.id as Id<"transactions">,
       });
     }
-    case "budgetPeriod.create": {
+    case "budgetPeriod.create":
       return await ctx.runMutation(
         apiAny.budget.mutations.createBudgetPeriod,
         budgetPeriodCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson)),
       );
-    }
     case "budgetPeriod.update": {
-      const payload = budgetPeriodUpdatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = budgetPeriodUpdatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.budget.mutations.updateBudgetPeriod, {
         ...payload,
         id: payload.id as Id<"budgetPeriods">,
       });
     }
     case "budgetPeriod.close": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.budget.mutations.closeBudgetPeriod, {
         id: payload.id as Id<"budgetPeriods">,
       });
     }
     case "budgetPeriod.archive": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.budget.mutations.archiveBudgetPeriod, {
         id: payload.id as Id<"budgetPeriods">,
       });
     }
     case "budgetEnvelope.create": {
-      const payload = budgetEnvelopeCreatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = budgetEnvelopeCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.budget.mutations.createEnvelope, {
         ...payload,
         periodId: payload.periodId as Id<"budgetPeriods">,
@@ -284,90 +332,68 @@ export async function executeConfirmedFinanceProposal(
       });
     }
     case "budgetEnvelope.update": {
-      const payload = budgetEnvelopeUpdatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = budgetEnvelopeUpdatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.budget.mutations.updateEnvelope, {
         ...payload,
         id: payload.id as Id<"budgetEnvelopes">,
       });
     }
     case "budgetEnvelope.delete": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.budget.mutations.deleteEnvelope, {
         id: payload.id as Id<"budgetEnvelopes">,
       });
     }
     case "debt.create": {
-      const payload = debtCreatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = debtCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.debt.mutations.createDebtPlan, {
         ...payload,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
-        linkedRecurringId:
-          payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
+        linkedRecurringId: payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
       });
     }
     case "debt.update": {
-      const payload = debtUpdatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = debtUpdatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.debt.mutations.updateDebtPlan, {
         ...payload,
         id: payload.id as Id<"debtPlans">,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
-        linkedRecurringId:
-          payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
+        linkedRecurringId: payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
       });
     }
     case "debt.archive": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.debt.mutations.archiveDebtPlan, {
         id: payload.id as Id<"debtPlans">,
       });
     }
     case "savings.create": {
-      const payload = savingsCreatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = savingsCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.savings.mutations.createSavingsGoal, {
         ...payload,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
-        linkedRecurringId:
-          payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
+        linkedRecurringId: payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
         categoryId: payload.categoryId as Id<"categories"> | undefined,
       });
     }
     case "savings.update": {
-      const payload = savingsUpdatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = savingsUpdatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.savings.mutations.updateSavingsGoal, {
         ...payload,
         id: payload.id as Id<"savingsGoals">,
         linkedAccountId: payload.linkedAccountId as Id<"accounts"> | undefined,
-        linkedRecurringId:
-          payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
+        linkedRecurringId: payload.linkedRecurringId as Id<"recurringTransactions"> | undefined,
         categoryId: payload.categoryId as Id<"categories"> | undefined,
       });
     }
     case "savings.archive": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.savings.mutations.archiveSavingsGoal, {
         id: payload.id as Id<"savingsGoals">,
       });
     }
     case "recurring.create": {
-      const payload = recurringCreatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = recurringCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.recurring.mutations.createRecurringTransaction, {
         ...payload,
         accountId: payload.accountId as Id<"accounts"> | undefined,
@@ -377,9 +403,7 @@ export async function executeConfirmedFinanceProposal(
       });
     }
     case "recurring.update": {
-      const payload = recurringUpdatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = recurringUpdatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.recurring.mutations.updateRecurringTransaction, {
         ...payload,
         id: payload.id as Id<"recurringTransactions">,
@@ -387,27 +411,20 @@ export async function executeConfirmedFinanceProposal(
       });
     }
     case "recurring.pause": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.recurring.mutations.pauseRecurringTransaction, {
         id: payload.id as Id<"recurringTransactions">,
       });
     }
     case "recurring.resume": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.recurring.mutations.resumeRecurringTransaction, {
         id: payload.id as Id<"recurringTransactions">,
       });
     }
     case "recurring.delete": {
       const payload = z
-        .object({
-          id: z.string(),
-          deleteGeneratedTransactions: z.boolean().optional(),
-        })
+        .object({ id: z.string(), deleteGeneratedTransactions: z.boolean().optional() })
         .parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.recurring.mutations.deleteRecurringTransaction, {
         id: payload.id as Id<"recurringTransactions">,
@@ -415,9 +432,7 @@ export async function executeConfirmedFinanceProposal(
       });
     }
     case "subscription.create": {
-      const payload = subscriptionCreatePayloadSchema.parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = subscriptionCreatePayloadSchema.parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.subscriptions.mutations.createSubscription, {
         ...payload,
         accountId: payload.accountId as Id<"accounts">,
@@ -425,9 +440,7 @@ export async function executeConfirmedFinanceProposal(
       });
     }
     case "subscription.cancel": {
-      const payload = z.object({ id: z.string() }).parse(
-        JSON.parse(proposal.payloadJson),
-      );
+      const payload = z.object({ id: z.string() }).parse(JSON.parse(proposal.payloadJson));
       return await ctx.runMutation(apiAny.subscriptions.mutations.cancelSubscription, {
         id: payload.id as Id<"recurringTransactions">,
       });
@@ -437,10 +450,7 @@ export async function executeConfirmedFinanceProposal(
   }
 }
 
-function assertConfirmationText(
-  destructive: boolean,
-  confirmationText: string,
-) {
+function assertConfirmationText(destructive: boolean, confirmationText: string) {
   const normalized = confirmationText.trim().toUpperCase();
   if (destructive) {
     if (normalized !== "DELETE") {

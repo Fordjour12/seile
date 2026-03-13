@@ -1,30 +1,17 @@
 "use node";
 
 import { Agent, createThread } from "@convex-dev/agent";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { ActionCtx } from "../_generated/server";
-import { components } from "../_generated/api";
+
+import type { ActionCtx } from "../../_generated/server";
+import { components } from "../../_generated/api";
 import { env } from "@seile/env/backend";
+import { getModel } from "../model";
 
 const componentsAny = components as any;
-const DEFAULT_FINANCE_MODEL = "openai/gpt-4o-mini";
-
-const financeProvider = createOpenRouter({
-  apiKey: env.OPENROUTER_API_KEY,
-  ...(env.FINANCE_AGENT_BASE_URL
-    ? { baseURL: env.FINANCE_AGENT_BASE_URL }
-    : {}),
-  headers: {
-    "HTTP-Referer": env.SITE_URL,
-    "X-OpenRouter-Title": env.OPENROUTER_APP_NAME ?? "Seile Finance",
-  },
-});
 
 export const financeAgent = new Agent(componentsAny.agent, {
   name: "Finance Agent",
-  languageModel: financeProvider.chat(
-    env.FINANCE_AGENT_MODEL ?? DEFAULT_FINANCE_MODEL,
-  ),
+  languageModel: getModel({ tier: "fast", domain: "finance" }),
   instructions: [
     "You are the Finance Agent for a personal finance application.",
     "You can analyze accounts, transactions, budgets, debt, savings, recurring payments, subscriptions, and shared goals.",
@@ -35,7 +22,7 @@ export const financeAgent = new Agent(componentsAny.agent, {
   ].join(" "),
 });
 
-export async function createFinanceAgentThread(
+export async function createFinanceThread(
   ctx: ActionCtx,
   input: {
     userId: string;
