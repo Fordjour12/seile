@@ -9,6 +9,37 @@
  */
 
 import type * as accounts from "../accounts.js";
+import type * as ai_agents_career from "../ai/agents/career.js";
+import type * as ai_agents_faith from "../ai/agents/faith.js";
+import type * as ai_agents_finance from "../ai/agents/finance.js";
+import type * as ai_agents_health from "../ai/agents/health.js";
+import type * as ai_agents_planner from "../ai/agents/planner.js";
+import type * as ai_agents_relationships from "../ai/agents/relationships.js";
+import type * as ai_agents_router from "../ai/agents/router.js";
+import type * as ai_agents_space from "../ai/agents/space.js";
+import type * as ai_agents_wellness from "../ai/agents/wellness.js";
+import type * as ai_aggregates from "../ai/aggregates.js";
+import type * as ai_approval from "../ai/approval.js";
+import type * as ai_approval_actions from "../ai/approval_actions.js";
+import type * as ai_crossDomain from "../ai/crossDomain.js";
+import type * as ai_memory from "../ai/memory.js";
+import type * as ai_model from "../ai/model.js";
+import type * as ai_policies from "../ai/policies.js";
+import type * as ai_prompts from "../ai/prompts.js";
+import type * as ai_runRouter from "../ai/runRouter.js";
+import type * as ai_runtime from "../ai/runtime.js";
+import type * as ai_streaming from "../ai/streaming.js";
+import type * as ai_tools_faith from "../ai/tools/faith.js";
+import type * as ai_tools_finance from "../ai/tools/finance.js";
+import type * as ai_tools_health from "../ai/tools/health.js";
+import type * as ai_tools_shared from "../ai/tools/shared.js";
+import type * as ai_tools_wellness from "../ai/tools/wellness.js";
+import type * as ai_types from "../ai/types.js";
+import type * as ai_workflows_manager from "../ai/workflows/manager.js";
+import type * as ai_workflows_monthlyReview from "../ai/workflows/monthlyReview.js";
+import type * as ai_workflows_monthlyReview_actions from "../ai/workflows/monthlyReview_actions.js";
+import type * as ai_workflows_weeklyPlanner from "../ai/workflows/weeklyPlanner.js";
+import type * as ai_workflows_weeklyPlanner_actions from "../ai/workflows/weeklyPlanner_actions.js";
 import type * as auth from "../auth.js";
 import type * as bootstrap from "../bootstrap.js";
 import type * as budget_helpers from "../budget/helpers.js";
@@ -20,12 +51,15 @@ import type * as crons from "../crons.js";
 import type * as debt_mutations from "../debt/mutations.js";
 import type * as debt_queries from "../debt/queries.js";
 import type * as debt_validators from "../debt/validators.js";
+import type * as faith_ai from "../faith/ai.js";
+import type * as finance_ai from "../finance/ai.js";
 import type * as finance_agent_actions from "../finance_agent/actions.js";
 import type * as finance_agent_agent from "../finance_agent/agent.js";
 import type * as finance_agent_mutations from "../finance_agent/mutations.js";
 import type * as finance_agent_queries from "../finance_agent/queries.js";
 import type * as finance_agent_tools from "../finance_agent/tools.js";
 import type * as finance_agent_validators from "../finance_agent/validators.js";
+import type * as health_ai from "../health/ai.js";
 import type * as health_mutations from "../health/mutations.js";
 import type * as health_queries from "../health/queries.js";
 import type * as healthCheck from "../healthCheck.js";
@@ -43,6 +77,8 @@ import type * as planner_actions from "../planner/actions.js";
 import type * as planner_agent from "../planner/agent.js";
 import type * as planner_mutations from "../planner/mutations.js";
 import type * as planner_queries from "../planner/queries.js";
+import type * as productivity_planner from "../productivity/planner.js";
+import type * as productivity_tasks from "../productivity/tasks.js";
 import type * as recurring_generate from "../recurring/generate.js";
 import type * as recurring_mutations from "../recurring/mutations.js";
 import type * as recurring_queries from "../recurring/queries.js";
@@ -52,6 +88,7 @@ import type * as savings_validators from "../savings/validators.js";
 import type * as scheduler_mutations from "../scheduler/mutations.js";
 import type * as scheduler_queries from "../scheduler/queries.js";
 import type * as schema_accounts from "../schema/accounts.js";
+import type * as schema_ai from "../schema/ai.js";
 import type * as schema_budget_envelopes from "../schema/budget_envelopes.js";
 import type * as schema_budget_periods from "../schema/budget_periods.js";
 import type * as schema_categories from "../schema/categories.js";
@@ -69,12 +106,14 @@ import type * as schema_validators from "../schema/validators.js";
 import type * as shared_goals_helpers from "../shared_goals/helpers.js";
 import type * as shared_goals_mutations from "../shared_goals/mutations.js";
 import type * as shared_goals_queries from "../shared_goals/queries.js";
+import type * as space_ai from "../space/ai.js";
 import type * as spiritual_mutations from "../spiritual/mutations.js";
 import type * as spiritual_queries from "../spiritual/queries.js";
 import type * as subscriptions_mutations from "../subscriptions/mutations.js";
 import type * as subscriptions_queries from "../subscriptions/queries.js";
 import type * as transactions_mutations from "../transactions/mutations.js";
 import type * as transactions_queries from "../transactions/queries.js";
+import type * as wellness_ai from "../wellness/ai.js";
 
 import type {
   ApiFromModules,
@@ -84,6 +123,37 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   accounts: typeof accounts;
+  "ai/agents/career": typeof ai_agents_career;
+  "ai/agents/faith": typeof ai_agents_faith;
+  "ai/agents/finance": typeof ai_agents_finance;
+  "ai/agents/health": typeof ai_agents_health;
+  "ai/agents/planner": typeof ai_agents_planner;
+  "ai/agents/relationships": typeof ai_agents_relationships;
+  "ai/agents/router": typeof ai_agents_router;
+  "ai/agents/space": typeof ai_agents_space;
+  "ai/agents/wellness": typeof ai_agents_wellness;
+  "ai/aggregates": typeof ai_aggregates;
+  "ai/approval": typeof ai_approval;
+  "ai/approval_actions": typeof ai_approval_actions;
+  "ai/crossDomain": typeof ai_crossDomain;
+  "ai/memory": typeof ai_memory;
+  "ai/model": typeof ai_model;
+  "ai/policies": typeof ai_policies;
+  "ai/prompts": typeof ai_prompts;
+  "ai/runRouter": typeof ai_runRouter;
+  "ai/runtime": typeof ai_runtime;
+  "ai/streaming": typeof ai_streaming;
+  "ai/tools/faith": typeof ai_tools_faith;
+  "ai/tools/finance": typeof ai_tools_finance;
+  "ai/tools/health": typeof ai_tools_health;
+  "ai/tools/shared": typeof ai_tools_shared;
+  "ai/tools/wellness": typeof ai_tools_wellness;
+  "ai/types": typeof ai_types;
+  "ai/workflows/manager": typeof ai_workflows_manager;
+  "ai/workflows/monthlyReview": typeof ai_workflows_monthlyReview;
+  "ai/workflows/monthlyReview_actions": typeof ai_workflows_monthlyReview_actions;
+  "ai/workflows/weeklyPlanner": typeof ai_workflows_weeklyPlanner;
+  "ai/workflows/weeklyPlanner_actions": typeof ai_workflows_weeklyPlanner_actions;
   auth: typeof auth;
   bootstrap: typeof bootstrap;
   "budget/helpers": typeof budget_helpers;
@@ -95,12 +165,15 @@ declare const fullApi: ApiFromModules<{
   "debt/mutations": typeof debt_mutations;
   "debt/queries": typeof debt_queries;
   "debt/validators": typeof debt_validators;
+  "faith/ai": typeof faith_ai;
+  "finance/ai": typeof finance_ai;
   "finance_agent/actions": typeof finance_agent_actions;
   "finance_agent/agent": typeof finance_agent_agent;
   "finance_agent/mutations": typeof finance_agent_mutations;
   "finance_agent/queries": typeof finance_agent_queries;
   "finance_agent/tools": typeof finance_agent_tools;
   "finance_agent/validators": typeof finance_agent_validators;
+  "health/ai": typeof health_ai;
   "health/mutations": typeof health_mutations;
   "health/queries": typeof health_queries;
   healthCheck: typeof healthCheck;
@@ -118,6 +191,8 @@ declare const fullApi: ApiFromModules<{
   "planner/agent": typeof planner_agent;
   "planner/mutations": typeof planner_mutations;
   "planner/queries": typeof planner_queries;
+  "productivity/planner": typeof productivity_planner;
+  "productivity/tasks": typeof productivity_tasks;
   "recurring/generate": typeof recurring_generate;
   "recurring/mutations": typeof recurring_mutations;
   "recurring/queries": typeof recurring_queries;
@@ -127,6 +202,7 @@ declare const fullApi: ApiFromModules<{
   "scheduler/mutations": typeof scheduler_mutations;
   "scheduler/queries": typeof scheduler_queries;
   "schema/accounts": typeof schema_accounts;
+  "schema/ai": typeof schema_ai;
   "schema/budget_envelopes": typeof schema_budget_envelopes;
   "schema/budget_periods": typeof schema_budget_periods;
   "schema/categories": typeof schema_categories;
@@ -144,12 +220,14 @@ declare const fullApi: ApiFromModules<{
   "shared_goals/helpers": typeof shared_goals_helpers;
   "shared_goals/mutations": typeof shared_goals_mutations;
   "shared_goals/queries": typeof shared_goals_queries;
+  "space/ai": typeof space_ai;
   "spiritual/mutations": typeof spiritual_mutations;
   "spiritual/queries": typeof spiritual_queries;
   "subscriptions/mutations": typeof subscriptions_mutations;
   "subscriptions/queries": typeof subscriptions_queries;
   "transactions/mutations": typeof transactions_mutations;
   "transactions/queries": typeof transactions_queries;
+  "wellness/ai": typeof wellness_ai;
 }>;
 
 /**
@@ -6985,6 +7063,201 @@ export declare const components: {
           null
         >;
       };
+    };
+  };
+  workflow: {
+    journal: {
+      load: FunctionReference<
+        "query",
+        "internal",
+        { workflowId: string },
+        {
+          journalEntries: Array<{
+            _creationTime: number;
+            _id: string;
+            step: {
+              args: any;
+              argsSize: number;
+              completedAt?: number;
+              functionType: "query" | "mutation" | "action";
+              handle: string;
+              inProgress: boolean;
+              name: string;
+              runResult?:
+                | { kind: "success"; returnValue: any }
+                | { error: string; kind: "failed" }
+                | { kind: "canceled" };
+              startedAt: number;
+              workId?: string;
+            };
+            stepNumber: number;
+            workflowId: string;
+          }>;
+          logLevel: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+          ok: boolean;
+          workflow: {
+            _creationTime: number;
+            _id: string;
+            args: any;
+            generationNumber: number;
+            logLevel?: any;
+            name?: string;
+            onComplete?: { context?: any; fnHandle: string };
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt?: any;
+            state?: any;
+            workflowHandle: string;
+          };
+        }
+      >;
+      startSteps: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          generationNumber: number;
+          steps: Array<{
+            retry?:
+              | boolean
+              | { base: number; initialBackoffMs: number; maxAttempts: number };
+            schedulerOptions?: { runAt?: number } | { runAfter?: number };
+            step: {
+              args: any;
+              argsSize: number;
+              completedAt?: number;
+              functionType: "query" | "mutation" | "action";
+              handle: string;
+              inProgress: boolean;
+              name: string;
+              runResult?:
+                | { kind: "success"; returnValue: any }
+                | { error: string; kind: "failed" }
+                | { kind: "canceled" };
+              startedAt: number;
+              workId?: string;
+            };
+          }>;
+          workflowId: string;
+          workpoolOptions?: {
+            defaultRetryBehavior?: {
+              base: number;
+              initialBackoffMs: number;
+              maxAttempts: number;
+            };
+            logLevel?: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+            maxParallelism?: number;
+            retryActionsByDefault?: boolean;
+          };
+        },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          step: {
+            args: any;
+            argsSize: number;
+            completedAt?: number;
+            functionType: "query" | "mutation" | "action";
+            handle: string;
+            inProgress: boolean;
+            name: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt: number;
+            workId?: string;
+          };
+          stepNumber: number;
+          workflowId: string;
+        }>
+      >;
+    };
+    workflow: {
+      cancel: FunctionReference<
+        "mutation",
+        "internal",
+        { workflowId: string },
+        null
+      >;
+      cleanup: FunctionReference<
+        "mutation",
+        "internal",
+        { workflowId: string },
+        boolean
+      >;
+      complete: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          generationNumber: number;
+          runResult:
+            | { kind: "success"; returnValue: any }
+            | { error: string; kind: "failed" }
+            | { kind: "canceled" };
+          workflowId: string;
+        },
+        null
+      >;
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          maxParallelism?: number;
+          onComplete?: { context?: any; fnHandle: string };
+          startAsync?: boolean;
+          workflowArgs: any;
+          workflowHandle: string;
+          workflowName: string;
+        },
+        string
+      >;
+      getStatus: FunctionReference<
+        "query",
+        "internal",
+        { workflowId: string },
+        {
+          inProgress: Array<{
+            _creationTime: number;
+            _id: string;
+            step: {
+              args: any;
+              argsSize: number;
+              completedAt?: number;
+              functionType: "query" | "mutation" | "action";
+              handle: string;
+              inProgress: boolean;
+              name: string;
+              runResult?:
+                | { kind: "success"; returnValue: any }
+                | { error: string; kind: "failed" }
+                | { kind: "canceled" };
+              startedAt: number;
+              workId?: string;
+            };
+            stepNumber: number;
+            workflowId: string;
+          }>;
+          logLevel: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+          workflow: {
+            _creationTime: number;
+            _id: string;
+            args: any;
+            generationNumber: number;
+            logLevel?: any;
+            name?: string;
+            onComplete?: { context?: any; fnHandle: string };
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt?: any;
+            state?: any;
+            workflowHandle: string;
+          };
+        }
+      >;
     };
   };
 };

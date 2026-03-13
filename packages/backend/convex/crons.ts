@@ -3,7 +3,9 @@ import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
-const plannerInternal = internal as unknown as Record<string, Record<string, any>>;
+const internalApi = internal as unknown as Record<string, Record<string, any>>;
+const plannerInternal = internalApi;
+const aiWorkflowInternal = internalApi;
 
 if (process.env.NODE_ENV !== "production") {
   const requiredPlannerActions = [
@@ -17,6 +19,17 @@ if (process.env.NODE_ENV !== "production") {
   for (const actionName of requiredPlannerActions) {
     if (!plannerActions?.[actionName]) {
       throw new Error(`Missing planner internal action: planner/actions.${actionName}`);
+    }
+  }
+
+  const requiredAiWorkflowActions = [
+    ["ai/workflows/weeklyPlanner", "startWeeklyPlannerCycles"],
+    ["ai/workflows/monthlyReview", "startMonthlyReviewCycles"],
+  ] as const;
+
+  for (const [moduleName, actionName] of requiredAiWorkflowActions) {
+    if (!aiWorkflowInternal[moduleName]?.[actionName]) {
+      throw new Error(`Missing AI workflow internal action: ${moduleName}.${actionName}`);
     }
   }
 }
@@ -60,6 +73,20 @@ crons.interval(
   "planner-burnout-monitor",
   { hours: 6 },
   plannerInternal["planner/actions"].runBurnoutMonitoringCycle,
+  {},
+);
+
+crons.cron(
+  "ai-weekly-planner",
+  "0 6 * * 1",
+  aiWorkflowInternal["ai/workflows/weeklyPlanner"].startWeeklyPlannerCycles,
+  {},
+);
+
+crons.cron(
+  "ai-monthly-review",
+  "15 6 1 * *",
+  aiWorkflowInternal["ai/workflows/monthlyReview"].startMonthlyReviewCycles,
   {},
 );
 

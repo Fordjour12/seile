@@ -1,0 +1,77 @@
+"use node";
+
+import { ConvexError, v } from "convex/values";
+
+import { internal } from "../_generated/api";
+import { action } from "../_generated/server";
+import { requireUserId } from "../lib/identity";
+import { deserializePendingAction } from "./approval";
+import { executeFaithPendingAction } from "./tools/faith";
+import { executeFinancePendingAction } from "./tools/finance";
+import { executeHealthPendingAction } from "./tools/health";
+import type { PendingAction } from "./types";
+
+const internalApi = internal as unknown as Record<string, Record<string, any>>;
+
+export const resolveApprovalRequest = action({
+  args: {
+    requestId: v.string(),
+    approved: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const request = await ctx.runQuery(
+      internalApi["ai/approval"].getApprovalRequestByRequestId,
+      {
+        requestId: args.requestId,
+      },
+    );
+
+    if (!request || request.userId !== userId) {
+      throw new ConvexError("Approval request not found.");
+    }
+
+    if (request.status !== "pending") {
+      throw new ConvexError("Approval request is no longer pending.");
+    }
+
+    if (Date.now() > request.expiresAt) {
+      await ctx.runMutation(internalApi["ai/approval"].markApprovalRequestResolved, {
+        requestId: args.requestId,
+        status: "expired",
+      });
+      throw new ConvexError("Approval request expired.");
+    }
+
+    if (!args.approved) {
+      await ctx.runMutation(internalApi["ai/approval"].markApprovalRequestResolved, {
+        requestId: args.requestId,
+        status: "rejected",
+      });
+      return { approved: false };
+    }
+
+    for (const actionRow of request.actions) {
+      await executePendingAction(ctx, deserializePendingAction(actionRow));
+    }
+
+    await ctx.runMutation(internalApi["ai/approval"].markApprovalRequestResolved, {
+      requestId: args.requestId,
+      status: "approved",
+    });
+    return { approved: true };
+  },
+});
+
+async function executePendingAction(ctx: any, action: PendingAction) {
+  switch (action.domain) {
+    case "finance":
+      return await executeFinancePendingAction(ctx, action);
+    case "health":
+      return await executeHealthPendingAction(ctx, action);
+    case "faith":
+      return await executeFaithPendingAction(ctx, action);
+    default:
+      throw new ConvexError(`Unsupported approval domain: ${action.domain}`);
+  }
+}
