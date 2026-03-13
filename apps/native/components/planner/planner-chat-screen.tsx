@@ -113,12 +113,6 @@ export function PlannerChatThreadScreen({
               <PlannerChatMessageRow
                 key={message.id}
                 message={message}
-                onRetry={(messageId) => void retryMessage(messageId)}
-            {messages.map((message) => (
-            {messages.map((message) => (
-              <PlannerChatMessageRow
-                key={message.id}
-                message={message}
                 onRetry={readOnly ? undefined : (messageId) => void retryMessage(messageId)}
               />
             ))}

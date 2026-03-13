@@ -84,14 +84,25 @@ export default function Layout() {
 function useBetterAuthForConvex() {
   const { data: session, isPending } = authClient.useSession();
   const sessionId = session?.session?.id;
+  const hasSession = Boolean(session?.session);
   const [cachedToken, setCachedToken] = useState<string | null>(null);
+  const [hasResolvedToken, setHasResolvedToken] = useState(false);
   const pendingTokenRef = useRef<Promise<string | null> | null>(null);
 
   useEffect(() => {
     if (!session && !isPending && cachedToken) {
       setCachedToken(null);
     }
+    if (!session && !isPending) {
+      setHasResolvedToken(false);
+    }
   }, [cachedToken, isPending, session]);
+
+  useEffect(() => {
+    setCachedToken(null);
+    setHasResolvedToken(false);
+    pendingTokenRef.current = null;
+  }, [sessionId]);
 
   const fetchAccessToken = useCallback(
     async ({
@@ -119,6 +130,7 @@ function useBetterAuthForConvex() {
           return null;
         })
         .finally(() => {
+          setHasResolvedToken(true);
           pendingTokenRef.current = null;
         });
 
@@ -127,13 +139,25 @@ function useBetterAuthForConvex() {
     [cachedToken, sessionId],
   );
 
+  useEffect(() => {
+    if (!hasSession) {
+      return;
+    }
+
+    if (cachedToken || pendingTokenRef.current) {
+      return;
+    }
+
+    void fetchAccessToken();
+  }, [cachedToken, fetchAccessToken, hasSession, sessionId]);
+
   return useMemo(
     () => ({
-      isLoading: isPending && !cachedToken,
-      isAuthenticated: Boolean(session?.session) || cachedToken !== null,
+      isLoading: isPending || (hasSession && !hasResolvedToken),
+      isAuthenticated: hasSession && cachedToken !== null,
       fetchAccessToken,
     }),
-    [cachedToken, fetchAccessToken, isPending, session?.session],
+    [cachedToken, fetchAccessToken, hasResolvedToken, hasSession, isPending],
   );
 }
 
