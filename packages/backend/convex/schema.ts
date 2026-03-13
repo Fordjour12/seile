@@ -1,5 +1,9 @@
 import { defineSchema } from "convex/server";
 
+import { aiApprovalsTable, aiApprovalStatusValidator } from "./schema/ai_approvals";
+import { aiMemoryTable } from "./schema/ai_memory";
+import { aiRunsTable, aiRunStatusValidator } from "./schema/ai_runs";
+import { aiToolCallsTable, aiToolCallOutcomeValidator } from "./schema/ai_tool_calls";
 import { accountsTable } from "./schema/accounts";
 import { categoriesTable } from "./schema/categories";
 import {
@@ -48,7 +52,6 @@ import { recurringTransactionsTable } from "./schema/recurring_transactions";
 import { debtPlansTable, debtStatusValidator, debtTypeValidator, payoffStrategyValidator } from "./schema/debt_plans";
 import { savingsGoalsTable, savingsStatusValidator } from "./schema/savings_goals";
 import {
-  linkedFinanceEntityTypeValidator,
   sharedGoalsTable,
   sharedGoalKindValidator,
   sharedGoalSourceDomainValidator,
@@ -71,10 +74,7 @@ import {
 } from "./schema/spiritual";
 import { transactionsTable } from "./schema/transactions";
 
-export {
-  accountStatusValidator,
-  accountTypeValidator,
-} from "./schema/validators";
+export { accountStatusValidator, accountTypeValidator } from "./schema/validators";
 export {
   recurringKindValidator,
   scheduleTypeValidator,
@@ -83,6 +83,7 @@ export {
 export { transactionKindValidator } from "./schema/transactions";
 export { budgetPeriodStatusValidator };
 export { debtStatusValidator, debtTypeValidator, payoffStrategyValidator, savingsStatusValidator };
+export { aiApprovalStatusValidator, aiRunStatusValidator, aiToolCallOutcomeValidator };
 export {
   burnoutStateValidator,
   healthCadenceValidator,
@@ -113,6 +114,10 @@ export {
 };
 
 export default defineSchema({
+  aiMemory: aiMemoryTable,
+  aiApprovals: aiApprovalsTable,
+  aiRuns: aiRunsTable,
+  aiToolCalls: aiToolCallsTable,
   accounts: accountsTable,
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,
