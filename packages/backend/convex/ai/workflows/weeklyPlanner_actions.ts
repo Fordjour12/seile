@@ -12,8 +12,6 @@ import { wellnessCoachAgent } from "../agents/wellness";
 import { createAiThread } from "../runtime";
 import type { AIDomain } from "../types";
 
-const internalApi = internal as unknown as Record<string, Record<string, any>>;
-
 const weeklyReviewDomainValidator = v.union(
   v.literal("finance"),
   v.literal("health"),
@@ -98,7 +96,7 @@ export const synthesizePlan = internalAction({
       ].join("\n\n"),
     });
 
-    await ctx.runMutation(internalApi["ai/memory"].upsertMemoryForUserInternal, {
+    await ctx.runMutation(internal.ai.memory.upsertMemoryForUserInternal, {
       userId: args.userId,
       domain: "productivity",
       key: buildWeeklyPlanMemoryKey(args.weekStart),

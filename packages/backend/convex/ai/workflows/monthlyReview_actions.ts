@@ -8,15 +8,13 @@ import { detectCrossDomainSignals } from "../crossDomain";
 import { masterPlannerAgent } from "../agents/planner";
 import { createAiThread } from "../runtime";
 
-const internalApi = internal as unknown as Record<string, Record<string, any>>;
-
 export const buildRetrospective = internalAction({
   args: {
     userId: v.string(),
     month: v.string(),
   },
   handler: async (ctx, args): Promise<string> => {
-    const snapshots = await ctx.runQuery(internalApi["ai/aggregates"].getAllSnapshotsForUser, {
+    const snapshots = await ctx.runQuery(internal.ai.aggregates.getAllSnapshotsForUser, {
       userId: args.userId,
     });
     const crossDomainSignals = detectCrossDomainSignals(snapshots);
@@ -43,7 +41,7 @@ export const buildRetrospective = internalAction({
       ].join("\n\n"),
     });
 
-    await ctx.runMutation(internalApi["ai/memory"].upsertMemoryForUserInternal, {
+    await ctx.runMutation(internal.ai.memory.upsertMemoryForUserInternal, {
       userId: args.userId,
       domain: "productivity",
       key: buildMonthlyReviewMemoryKey(args.month),
@@ -62,7 +60,7 @@ export const buildNextMonthPlan = internalAction({
     planningMonth: v.string(),
   },
   handler: async (ctx, args): Promise<string> => {
-    const snapshots = await ctx.runQuery(internalApi["ai/aggregates"].getAllSnapshotsForUser, {
+    const snapshots = await ctx.runQuery(internal.ai.aggregates.getAllSnapshotsForUser, {
       userId: args.userId,
     });
     const threadId = await createAiThread(ctx, {
@@ -87,7 +85,7 @@ export const buildNextMonthPlan = internalAction({
       ].join("\n\n"),
     });
 
-    await ctx.runMutation(internalApi["ai/memory"].upsertMemoryForUserInternal, {
+    await ctx.runMutation(internal.ai.memory.upsertMemoryForUserInternal, {
       userId: args.userId,
       domain: "productivity",
       key: buildMonthlyPlanMemoryKey(args.planningMonth),

@@ -42,7 +42,10 @@ export async function getAllDomainSnapshots(ctx: ActionCtx, userId: string) {
   })) as Record<AIDomain, DomainSnapshot>;
 }
 
-export async function getWeekSnapshot(ctx: ActionCtx, userId: string) {
+export async function getWeekSnapshot(
+  ctx: ActionCtx,
+  userId: string,
+): Promise<DomainSnapshot | undefined> {
   const snapshots = await getAllDomainSnapshots(ctx, userId);
-  return snapshots.productivity;
+  return snapshots?.productivity;
 }

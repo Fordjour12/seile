@@ -47,7 +47,17 @@ export const financeProposalSchema = z.object({
   actionType: financeActionTypeSchema,
   title: z.string().min(1),
   preview: z.string().min(1),
-  payloadJson: z.string().min(2),
+  payloadJson: z
+    .string()
+    .min(2)
+    .refine((value) => {
+      try {
+        JSON.parse(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }, "payloadJson must be valid JSON"),
   destructive: z.boolean().default(false),
   requiresConfirmation: z.boolean().default(true),
   expectedConfirmation: z.string().optional(),
