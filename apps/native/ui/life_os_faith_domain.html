@@ -1,0 +1,575 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:110px}
+.screen::-webkit-scrollbar{display:none}
+
+.top-bar{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+.pin-badge{font-size:11px;padding:4px 12px;background:#2a2040;color:#9b8fff;border-radius:20px;border:0.5px solid #3d3570;font-weight:500}
+
+.header{padding:10px 24px 0}
+.h-row{display:flex;justify-content:space-between;align-items:center}
+.h-left{display:flex;align-items:center;gap:10px}
+.h-dot{width:10px;height:10px;border-radius:50%;background:#534AB7;flex-shrink:0}
+.h-title{font-size:26px;font-weight:500;color:#fff}
+.h-sub{font-size:13px;color:#444;margin-top:4px}
+.h-add{width:32px;height:32px;border-radius:50%;background:#1e1a30;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.h-add:hover{background:#252040}
+
+/* Health bar */
+.health-bar{margin:14px 24px 0;background:#1a1a24;border:0.5px solid #2d2a40;border-radius:18px;padding:14px 16px}
+.hb-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
+.hb-pct{font-size:32px;font-weight:500;color:#b4adf5}
+.hb-right{text-align:right}
+.hb-label{font-size:11px;color:#555;margin-bottom:3px}
+.hb-trend{font-size:12px;color:#1d9e75;font-weight:500}
+.hb-track{height:5px;background:#1e1e28;border-radius:3px;margin-bottom:12px;overflow:hidden}
+.hb-fill{height:100%;border-radius:3px;background:#534AB7;transition:width .5s}
+.hb-stats{display:flex}
+.hbs{flex:1;text-align:center;border-right:0.5px solid #1e1e28}
+.hbs:last-child{border-right:none}
+.hbs-num{font-size:16px;font-weight:500;color:#e0e0ec}
+.hbs-label{font-size:10px;color:#555;margin-top:2px}
+
+/* Streak cards row */
+.streak-row{display:flex;gap:8px;padding:12px 24px 0}
+.streak-card{flex:1;background:#1a1a24;border:0.5px solid #2a2040;border-radius:14px;padding:10px 12px;text-align:center;cursor:pointer;transition:border-color .15s}
+.streak-card:hover{border-color:#3d3570}
+.sc-num{font-size:22px;font-weight:500}
+.sc-label{font-size:10px;color:#555;margin-top:2px}
+.sc-dots{display:flex;justify-content:center;gap:3px;margin-top:6px}
+.scd{width:6px;height:6px;border-radius:50%}
+.scd.done{background:#534AB7}
+.scd.today{background:#9b8fff}
+.scd.skip{background:#222}
+
+/* View toggle */
+.view-toggle{display:flex;gap:0;margin:14px 24px 0;background:#141418;border-radius:10px;padding:3px;border:0.5px solid #222}
+.vt-btn{flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:500;color:#555;cursor:pointer;text-align:center;transition:all .2s;border:none;background:transparent}
+.vt-btn.active{background:#1e1a30;color:#c8c0ff;border:0.5px solid #3d3570}
+
+/* LOG VIEW */
+.log-view{padding:10px 24px 0}
+
+.log-section{margin-bottom:4px}
+.ls-head{display:flex;justify-content:space-between;align-items:center;padding:10px 0 8px}
+.ls-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase}
+.ls-action{font-size:12px;color:#9b8fff;cursor:pointer}
+
+.log-entry{background:#1a1a24;border:0.5px solid #2a2040;border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;position:relative}
+.log-entry:hover{border-color:#3d3570}
+.log-entry::before{content:'';position:absolute;left:0;top:14px;bottom:14px;width:3px;background:#534AB7;border-radius:0 2px 2px 0}
+.le-row{display:flex;align-items:flex-start;gap:10px}
+.le-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.le-body{flex:1;min-width:0}
+.le-type{font-size:11px;font-weight:500;color:#8880cc;margin-bottom:2px;letter-spacing:.04em;text-transform:uppercase}
+.le-text{font-size:13px;color:#c8c0d8;line-height:1.5}
+.le-meta{display:flex;gap:8px;align-items:center;margin-top:5px}
+.le-time{font-size:10px;color:#444}
+.le-tag{font-size:10px;padding:1px 7px;background:#2a2040;color:#8880cc;border-radius:20px}
+.le-check{width:18px;height:18px;border-radius:50%;background:#534AB7;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.le-check::after{content:'';width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block}
+
+/* Today quick log */
+.quick-log{background:#13131f;border:0.5px solid #2a2a36;border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.ql-label{font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.ql-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.ql-btn{background:#1a1a28;border:0.5px solid #2a2a3a;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s}
+.ql-btn:hover{border-color:#3d3570;background:#1e1a30}
+.ql-btn.done{background:#1e1a30;border-color:#3d3570}
+.qlb-icon{font-size:16px;margin-bottom:4px;display:block}
+.qlb-label{font-size:11px;color:#888;font-weight:500}
+.ql-btn.done .qlb-label{color:#b4adf5}
+.qlb-check{font-size:9px;color:#9b8fff;margin-top:2px;opacity:0}
+.ql-btn.done .qlb-check{opacity:1}
+
+/* Bible reading tracker */
+.bible-card{background:#1a1a24;border:0.5px solid #2a2040;border-radius:16px;padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.bible-card:hover{border-color:#3d3570}
+.bc-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bc-icon{width:28px;height:28px;border-radius:8px;background:#2a2040;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bc-title{font-size:13px;font-weight:500;color:#d0c8e8}
+.bc-streak{margin-left:auto;font-size:11px;color:#8880cc}
+.bc-ref{font-size:15px;font-weight:500;color:#b4adf5;margin-bottom:4px}
+.bc-excerpt{font-size:12px;color:#666;line-height:1.5;font-style:italic;margin-bottom:10px}
+.bc-progress-row{display:flex;align-items:center;gap:8px}
+.bc-track{flex:1;height:3px;background:#1e1e28;border-radius:2px}
+.bc-fill{height:100%;border-radius:2px;background:#534AB7}
+.bc-label{font-size:11px;color:#555}
+
+/* Fasting card */
+.fasting-card{background:#1a1a24;border:0.5px solid #2a2040;border-radius:16px;padding:14px 16px;margin-bottom:8px}
+.fc-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fc-title{font-size:13px;font-weight:500;color:#d0c8e8}
+.fc-badge{margin-left:auto;font-size:10px;padding:3px 10px;background:#2a2040;color:#9b8fff;border-radius:20px;font-weight:500}
+.fc-next{font-size:14px;color:#b4adf5;font-weight:500;margin-bottom:4px}
+.fc-sub{font-size:12px;color:#555;margin-bottom:10px}
+.fc-history{display:flex;gap:5px}
+.fch{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500}
+.fch.done{background:#2a2040;color:#b4adf5;border:0.5px solid #3d3570}
+.fch.upcoming{background:#141418;color:#333;border:0.5px solid #1e1e22}
+.fch.today{background:#534AB7;color:#fff;border:0.5px solid #6b5fff}
+
+/* RHYTHM VIEW */
+.rhythm-view{display:none;padding:10px 24px 0}
+
+.rhythm-week{margin-bottom:10px}
+.rw-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.rw-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.rw-day{background:#1a1a1e;border-radius:8px;padding:6px 4px;text-align:center;border:0.5px solid #1e1e22}
+.rw-day.active{background:#1e1a30;border-color:#2a2040}
+.rwd-letter{font-size:10px;color:#444;margin-bottom:5px}
+.rwd-dots{display:flex;flex-direction:column;gap:2px;align-items:center}
+.rwd-dot{width:5px;height:5px;border-radius:50%}
+.rwd-dot.prayer{background:#534AB7}
+.rwd-dot.reading{background:#378add}
+.rwd-dot.fasting{background:#9b8fff}
+.rwd-dot.gratitude{background:#1d9e75}
+.rwd-dot.empty{background:#222}
+
+.legend-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{width:7px;height:7px;border-radius:50%}
+.legend-label{font-size:11px;color:#555}
+
+.month-summary{background:#1a1a24;border:0.5px solid #2a2040;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.ms-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.ms-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:0.5px solid #1e1e28}
+.ms-row:last-child{border-bottom:none}
+.ms-name{font-size:12px;color:#888;flex:1}
+.ms-track{width:80px;height:3px;background:#1e1e28;border-radius:2px;flex-shrink:0}
+.ms-fill{height:100%;border-radius:2px}
+.ms-val{font-size:12px;font-weight:500;color:#b4adf5;width:32px;text-align:right;flex-shrink:0}
+
+/* AI card */
+.ai-card{margin:10px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
+.ac-dot{width:6px;height:6px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ac-body{flex:1}
+.ac-text{font-size:13px;color:#8888a0;line-height:1.5;margin-bottom:8px}
+.ac-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ac-chip{font-size:11px;padding:5px 10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer;transition:all .15s}
+.ac-chip:hover{background:#252040}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#0e0e10;border-top:0.5px solid #1e1e22;padding:12px 0 28px;display:flex;justify-content:space-around}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.4}
+.nav-item.active{opacity:1}
+.nav-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#d85a30}
+.nav-label{font-size:10px;color:#888;font-weight:500}
+.nav-item.active .nav-label{color:#d85a30}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="top-bar">
+      <div class="back-btn" onclick="sendPrompt('Go back to the Domains hub')">
+        <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+        Domains
+      </div>
+      <div class="pin-badge">Pinned domain</div>
+    </div>
+
+    <div class="header">
+      <div class="h-row">
+        <div class="h-left">
+          <div class="h-dot"></div>
+          <div class="h-title">Faith</div>
+        </div>
+        <div class="h-add" onclick="sendPrompt('Quick log a faith entry — prayer, reading, gratitude, or fasting')">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#9b8fff" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        </div>
+      </div>
+      <div class="h-sub">Week of Mar 10 · 85% · strongest faith week this month</div>
+    </div>
+
+    <!-- Health bar -->
+    <div class="health-bar">
+      <div class="hb-row">
+        <div>
+          <div class="hb-label">Domain health this week</div>
+          <div class="hb-pct">85%</div>
+        </div>
+        <div class="hb-right">
+          <div class="hb-label">vs last week</div>
+          <div class="hb-trend">↑ +12%</div>
+        </div>
+      </div>
+      <div class="hb-track"><div class="hb-fill" style="width:85%"></div></div>
+      <div class="hb-stats">
+        <div class="hbs"><div class="hbs-num" style="color:#9b8fff">5</div><div class="hbs-label">Prayer days</div></div>
+        <div class="hbs"><div class="hbs-num" style="color:#b4adf5">1</div><div class="hbs-label">Fasts</div></div>
+        <div class="hbs"><div class="hbs-num" style="color:#85b7eb">6</div><div class="hbs-label">Bible days</div></div>
+        <div class="hbs"><div class="hbs-num" style="color:#1d9e75">4</div><div class="hbs-label">Gratitude</div></div>
+      </div>
+    </div>
+
+    <!-- Streaks -->
+    <div class="streak-row">
+      <div class="streak-card" onclick="sendPrompt('Tell me about my prayer streak in detail')">
+        <div class="sc-num" style="color:#9b8fff">5</div>
+        <div class="sc-label">Prayer streak</div>
+        <div class="sc-dots">
+          <div class="scd done"></div><div class="scd done"></div><div class="scd done"></div>
+          <div class="scd done"></div><div class="scd today"></div><div class="scd skip"></div><div class="scd skip"></div>
+        </div>
+      </div>
+      <div class="streak-card" onclick="sendPrompt('Tell me about my Bible reading streak')">
+        <div class="sc-num" style="color:#85b7eb">6</div>
+        <div class="sc-label">Reading streak</div>
+        <div class="sc-dots">
+          <div class="scd done" style="background:#378add"></div><div class="scd done" style="background:#378add"></div>
+          <div class="scd done" style="background:#378add"></div><div class="scd done" style="background:#378add"></div>
+          <div class="scd today" style="background:#85b7eb"></div><div class="scd skip"></div><div class="scd skip"></div>
+        </div>
+      </div>
+      <div class="streak-card" onclick="sendPrompt('Tell me about my devotional streak')">
+        <div class="sc-num" style="color:#1d9e75">4</div>
+        <div class="sc-label">Devotional streak</div>
+        <div class="sc-dots">
+          <div class="scd skip"></div><div class="scd done" style="background:#1d9e75"></div>
+          <div class="scd done" style="background:#1d9e75"></div><div class="scd done" style="background:#1d9e75"></div>
+          <div class="scd today" style="background:#6fcf97"></div><div class="scd skip"></div><div class="scd skip"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View toggle -->
+    <div class="view-toggle">
+      <div class="vt-btn active" id="vt-log" onclick="setView('log')">Today</div>
+      <div class="vt-btn" id="vt-rhythm" onclick="setView('rhythm')">Rhythm</div>
+    </div>
+
+    <!-- LOG VIEW -->
+    <div class="log-view" id="view-log">
+
+      <!-- Quick log -->
+      <div class="log-section">
+        <div class="ls-head">
+          <span class="ls-label">Log today</span>
+        </div>
+        <div class="quick-log">
+          <div class="ql-label">What have you done today?</div>
+          <div class="ql-grid">
+            <div class="ql-btn done" id="ql-prayer" onclick="toggleQuickLog(this)">
+              <span class="qlb-icon">🙏</span>
+              <div class="qlb-label">Prayer</div>
+              <div class="qlb-check">✓ logged</div>
+            </div>
+            <div class="ql-btn done" id="ql-reading" onclick="toggleQuickLog(this)">
+              <span class="qlb-icon">📖</span>
+              <div class="qlb-label">Bible reading</div>
+              <div class="qlb-check">✓ logged</div>
+            </div>
+            <div class="ql-btn" id="ql-devotional" onclick="toggleQuickLog(this)">
+              <span class="qlb-icon">✦</span>
+              <div class="qlb-label">Devotional</div>
+              <div class="qlb-check">✓ logged</div>
+            </div>
+            <div class="ql-btn" id="ql-gratitude" onclick="toggleQuickLog(this)">
+              <span class="qlb-icon">🌿</span>
+              <div class="qlb-label">Gratitude</div>
+              <div class="qlb-check">✓ logged</div>
+            </div>
+            <div class="ql-btn" id="ql-fasting" onclick="toggleQuickLog(this)">
+              <span class="qlb-icon">◎</span>
+              <div class="qlb-label">Fasting</div>
+              <div class="qlb-check">✓ logged</div>
+            </div>
+            <div class="ql-btn" onclick="sendPrompt('Add a custom faith log entry for today')">
+              <span class="qlb-icon" style="font-size:14px;color:#444">+</span>
+              <div class="qlb-label" style="color:#444">Other</div>
+              <div class="qlb-check"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bible reading -->
+      <div class="log-section">
+        <div class="ls-head">
+          <span class="ls-label">Bible reading</span>
+          <span class="ls-action" onclick="sendPrompt('Log a new Bible reading entry')">+ Log reading</span>
+        </div>
+        <div class="bible-card" onclick="sendPrompt('Tell me more about Romans 8 and log notes from my reading today')">
+          <div class="bc-header">
+            <div class="bc-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="1.5" stroke="#9b8fff" stroke-width="1.2"/><path d="M6 6h4M6 9h2" stroke="#9b8fff" stroke-width="1" stroke-linecap="round"/></svg>
+            </div>
+            <span class="bc-title">Reading today</span>
+            <span class="bc-streak">6-day streak</span>
+          </div>
+          <div class="bc-ref">Romans 8 : 1 – 17</div>
+          <div class="bc-excerpt">"There is therefore now no condemnation for those who are in Christ Jesus…"</div>
+          <div class="bc-progress-row">
+            <div class="bc-track"><div class="bc-fill" style="width:42%"></div></div>
+            <span class="bc-label">Romans · 42% complete</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prayer log -->
+      <div class="log-section">
+        <div class="ls-head">
+          <span class="ls-label">Prayer</span>
+          <span class="ls-action" onclick="sendPrompt('Log a new prayer entry in my Faith domain')">+ Log prayer</span>
+        </div>
+        <div class="log-entry" onclick="sendPrompt('Open the full prayer entry from this morning')">
+          <div class="le-row">
+            <div class="le-icon" style="background:#2a2040">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="#9b8fff" opacity=".5"/></svg>
+            </div>
+            <div class="le-body">
+              <div class="le-type">Morning prayer</div>
+              <div class="le-text">Gratitude for clarity this week. Prayed for direction on the Life OS build and the people in my life.</div>
+              <div class="le-meta">
+                <span class="le-time">Today · 6:12 AM</span>
+                <span class="le-tag">Morning</span>
+              </div>
+            </div>
+            <div class="le-check"></div>
+          </div>
+        </div>
+        <div class="log-entry" onclick="sendPrompt('Open the full prayer entry from Wednesday evening')">
+          <div class="le-row">
+            <div class="le-icon" style="background:#2a2040">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="#9b8fff" opacity=".5"/></svg>
+            </div>
+            <div class="le-body">
+              <div class="le-type">Evening prayer</div>
+              <div class="le-text">Quieter prayer. Fasting day made the evening feel more grounded. Interceded for a few specific things.</div>
+              <div class="le-meta">
+                <span class="le-time">Wed · 9:40 PM</span>
+                <span class="le-tag">Evening</span>
+                <span class="le-tag" style="background:#1e1a30;color:#8880cc">Fasting day</span>
+              </div>
+            </div>
+            <div class="le-check"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fasting -->
+      <div class="log-section">
+        <div class="ls-head">
+          <span class="ls-label">Fasting</span>
+          <span class="ls-action" onclick="sendPrompt('Log a fasting entry or set a fasting intention')">+ Log fast</span>
+        </div>
+        <div class="fasting-card">
+          <div class="fc-header">
+            <div class="le-icon" style="background:#2a2040;width:28px;height:28px;border-radius:8px">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><circle cx="8" cy="8" r="1.5" fill="#9b8fff" opacity=".6"/></svg>
+            </div>
+            <span class="fc-title">Fasting rhythm</span>
+            <span class="fc-badge">Wednesdays</span>
+          </div>
+          <div class="fc-next">Next fast — Wed Mar 19</div>
+          <div class="fc-sub">Last fast: Wed Mar 12 · full day · intention set</div>
+          <div class="fc-history">
+            <div class="fch done">Feb 26</div>
+            <div class="fch done">Mar 5</div>
+            <div class="fch done">Mar 12</div>
+            <div class="fch upcoming">Mar 19</div>
+            <div class="fch upcoming">Mar 26</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gratitude entry -->
+      <div class="log-section">
+        <div class="ls-head">
+          <span class="ls-label">Gratitude</span>
+          <span class="ls-action" onclick="sendPrompt('Add a gratitude entry to my Faith domain')">+ Add</span>
+        </div>
+        <div class="log-entry" onclick="sendPrompt('Open the full gratitude log from this week')">
+          <div class="le-row">
+            <div class="le-icon" style="background:#1a2a1e">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 13s-5-3.5-5-7a5 5 0 0110 0c0 3.5-5 7-5 7z" stroke="#6fcf97" stroke-width="1.3"/></svg>
+            </div>
+            <div class="le-body">
+              <div class="le-type" style="color:#4a9a6a">Gratitude · Thu</div>
+              <div class="le-text">Grateful for the clarity that came from fasting this week. The Life OS work feels purposeful. Good health, good mind.</div>
+              <div class="le-meta">
+                <span class="le-time">Thu · 7:30 PM</span>
+              </div>
+            </div>
+            <div class="le-check" style="background:#1d9e75"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI card -->
+      <div class="ai-card">
+        <div class="ac-dot"></div>
+        <div class="ac-body">
+          <div class="ac-text">Best faith week this month — prayer 5 days, reading 6 days, one fast, devotional 4 days. The Wednesday fast anchored the week spiritually. One thing missing: devotional today. Takes 5 minutes.</div>
+          <div class="ac-chips">
+            <div class="ac-chip" onclick="sendPrompt('Log a devotional entry for today in my Faith domain')">Log devotional ↗</div>
+            <div class="ac-chip" onclick="sendPrompt('Set my fasting intention for next Wednesday')">Set fast intention</div>
+            <div class="ac-chip" onclick="sendPrompt('Show me my faith patterns over the last 30 days')">30-day view</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RHYTHM VIEW -->
+    <div class="rhythm-view" id="view-rhythm">
+      <div class="rhythm-week">
+        <div class="rw-label">This week · Mar 10 – 16</div>
+        <div class="rw-grid">
+          <div class="rw-day active">
+            <div class="rwd-letter" style="color:#9b8fff">M</div>
+            <div class="rwd-dots">
+              <div class="rwd-dot prayer"></div>
+              <div class="rwd-dot reading"></div>
+              <div class="rwd-dot gratitude"></div>
+            </div>
+          </div>
+          <div class="rw-day active">
+            <div class="rwd-letter" style="color:#9b8fff">T</div>
+            <div class="rwd-dots">
+              <div class="rwd-dot prayer"></div>
+              <div class="rwd-dot reading"></div>
+              <div class="rwd-dot empty"></div>
+            </div>
+          </div>
+          <div class="rw-day active">
+            <div class="rwd-letter" style="color:#9b8fff">W</div>
+            <div class="rwd-dots">
+              <div class="rwd-dot prayer"></div>
+              <div class="rwd-dot reading"></div>
+              <div class="rwd-dot fasting"></div>
+            </div>
+          </div>
+          <div class="rw-day active">
+            <div class="rwd-letter" style="color:#9b8fff">T</div>
+            <div class="rwd-dots">
+              <div class="rwd-dot prayer"></div>
+              <div class="rwd-dot reading"></div>
+              <div class="rwd-dot gratitude"></div>
+            </div>
+          </div>
+          <div class="rw-day active" style="border-color:#3d3570;background:#1a1a28">
+            <div class="rwd-letter" style="color:#c8c0ff">F</div>
+            <div class="rwd-dots">
+              <div class="rwd-dot prayer"></div>
+              <div class="rwd-dot reading"></div>
+              <div class="rwd-dot empty"></div>
+            </div>
+          </div>
+          <div class="rw-day">
+            <div class="rwd-letter">S</div>
+            <div class="rwd-dots">
+              <div class="rwd-dot empty"></div>
+              <div class="rwd-dot empty"></div>
+              <div class="rwd-dot empty"></div>
+            </div>
+          </div>
+          <div class="rw-day">
+            <div class="rwd-letter">S</div>
+            <div class="rwd-dots">
+              <div class="rwd-dot empty"></div>
+              <div class="rwd-dot empty"></div>
+              <div class="rwd-dot empty"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-dot" style="background:#534AB7"></div><span class="legend-label">Prayer</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#378add"></div><span class="legend-label">Reading</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b8fff"></div><span class="legend-label">Fasting</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1d9e75"></div><span class="legend-label">Gratitude</span></div>
+      </div>
+
+      <div class="month-summary">
+        <div class="ms-label">March so far · 14 days</div>
+        <div class="ms-row">
+          <span class="ms-name">Prayer</span>
+          <div class="ms-track"><div class="ms-fill" style="width:78%;background:#534AB7"></div></div>
+          <span class="ms-val">11/14</span>
+        </div>
+        <div class="ms-row">
+          <span class="ms-name">Bible reading</span>
+          <div class="ms-track"><div class="ms-fill" style="width:85%;background:#378add"></div></div>
+          <span class="ms-val">12/14</span>
+        </div>
+        <div class="ms-row">
+          <span class="ms-name">Devotional</span>
+          <div class="ms-track"><div class="ms-fill" style="width:64%;background:#1d9e75"></div></div>
+          <span class="ms-val">9/14</span>
+        </div>
+        <div class="ms-row">
+          <span class="ms-name">Gratitude</span>
+          <div class="ms-track"><div class="ms-fill" style="width:57%;background:#6fcf97"></div></div>
+          <span class="ms-val">8/14</span>
+        </div>
+        <div class="ms-row">
+          <span class="ms-name">Fasting</span>
+          <div class="ms-track"><div class="ms-fill" style="width:43%;background:#9b8fff"></div></div>
+          <span class="ms-val">3 fasts</span>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ac-dot"></div>
+        <div class="ac-body">
+          <div class="ac-text">Your faith rhythm is the most consistent it's been since you started tracking. Prayer 78% of days, reading 85%. Devotional is the one area with room — 64%. Fasting every Wednesday is holding strong at 3 consecutive weeks.</div>
+          <div class="ac-chips">
+            <div class="ac-chip" onclick="sendPrompt('How does my faith rhythm correlate with my energy and wellness scores?')">Faith × Wellness ↗</div>
+            <div class="ac-chip" onclick="sendPrompt('Show me my faith rhythm for the last 3 months')">3-month view</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="sendPrompt('Show me the Today screen')">
+      <div class="nav-icon" style="background:#2a2040"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Planner screen')">
+      <div class="nav-icon" style="background:#1a2a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#1d9e75"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div>
+      <span class="nav-label">Planner</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon" style="background:#2a1a1a"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#d85a30" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#d85a30"/></svg></div>
+      <div class="nav-dot"></div>
+      <span class="nav-label">Domains</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the AI tab')">
+      <div class="nav-icon" style="background:#2a2010"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#ba7517"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div>
+      <span class="nav-label">AI</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Profile screen')">
+      <div class="nav-icon" style="background:#0e1a26"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#378add"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#378add" stroke-width="1.5"/></svg></div>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function setView(v){
+  ['log','rhythm'].forEach(function(n){
+    document.getElementById('vt-'+n).classList.toggle('active',n===v);
+    document.getElementById('view-'+n).style.display=n===v?'block':'none';
+  });
+}
+function toggleQuickLog(el){
+  el.classList.toggle('done');
+}
+setView('log');
+</script>

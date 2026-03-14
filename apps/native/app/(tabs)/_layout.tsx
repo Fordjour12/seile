@@ -1,15 +1,15 @@
 import { Tabs } from "expo-router";
 import {
-  PiggyBank,
   Calendar,
   Erase,
   HealthShield,
   HomeTable,
+  PiggyBank,
   Safari,
 } from "iconoir-react-native";
 
 import { Avatar } from "@/components";
-import { TabBarIcon, TabBarIcon2 } from "@/components/tabbar-icon";
+import { TabBarIcon2, TabBarIcon } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
 import { useAuth } from "@/lib/auth-context";
 import { useColorScheme } from "@/lib/use-color-scheme";
@@ -40,12 +40,6 @@ export default function TabLayout() {
               <HomeTable />
             </TabBarIcon2>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="two"
-        options={{
-          href: null,
         }}
       />
       <Tabs.Screen
@@ -113,6 +107,16 @@ export default function TabLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="domains"
+        options={{
+          title: "Domains",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="bullseye" color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="settings"
         options={{
