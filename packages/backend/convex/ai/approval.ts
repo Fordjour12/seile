@@ -43,6 +43,7 @@ export const getPendingApprovals = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireUserId(ctx);
+    const now = Date.now();
     const rows = await ctx.db
       .query("approvalRequests")
       .withIndex("by_user_status", (q) =>
@@ -50,12 +51,14 @@ export const getPendingApprovals = query({
       )
       .collect();
 
-    return rows.map((row) => ({
-      requestId: row.requestId,
-      createdAt: row.createdAt,
-      expiresAt: row.expiresAt,
-      actions: row.actions.map(deserializePendingAction),
-    }));
+    return rows
+      .filter((row) => row.expiresAt > now)
+      .map((row) => ({
+        requestId: row.requestId,
+        createdAt: row.createdAt,
+        expiresAt: row.expiresAt,
+        actions: row.actions.map(deserializePendingAction),
+      }));
   },
 });
 
@@ -78,7 +81,9 @@ export const markApprovalRequestResolved = internalMutation({
       v.literal("approved"),
       v.literal("rejected"),
       v.literal("expired"),
+      v.literal("failed"),
     ),
+    error: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const request = await ctx.db
@@ -93,6 +98,7 @@ export const markApprovalRequestResolved = internalMutation({
     await ctx.db.patch(request._id, {
       status: args.status,
       resolvedAt: Date.now(),
+      error: args.error,
     });
   },
 });

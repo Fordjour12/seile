@@ -10,7 +10,6 @@ import { pickDomainsFromIntent } from "./policies";
 import { getModel } from "./model";
 import type { AIDomain, DomainSnapshot } from "./types";
 
-const internalApi = internal as unknown as Record<string, Record<string, any>>;
 const MAX_STREAMING_SNAPSHOT_CHARS = 2400;
 const MAX_STREAMING_DOMAIN_CHARS = 700;
 
@@ -20,7 +19,14 @@ export function registerAiStreamingRoutes(http: HttpRouter) {
     method: "POST",
     handler: httpAction(async (ctx, request) => {
       const userId = await requireUserId(ctx as any);
-      const body = await request.json();
+      let body: unknown;
+      try {
+        body = await request.json();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Malformed JSON in /ai/stream request", { message });
+        return new Response(`Malformed JSON: ${message}`, { status: 400 });
+      }
       const prompt =
         body && typeof body === "object" && "prompt" in body && typeof body.prompt === "string"
           ? body.prompt
@@ -31,7 +37,7 @@ export function registerAiStreamingRoutes(http: HttpRouter) {
       }
 
       const domains = pickDomainsFromIntent(prompt);
-      const snapshots = await ctx.runQuery(internalApi["ai/aggregates"].getAllSnapshotsForUser, {
+      const snapshots = await ctx.runQuery(internal.ai.aggregates.getAllSnapshotsForUser, {
         userId,
       });
       const system = [

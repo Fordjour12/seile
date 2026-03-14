@@ -30,6 +30,7 @@ export const approvalRequestStatusValidator = v.union(
   v.literal("approved"),
   v.literal("rejected"),
   v.literal("expired"),
+  v.literal("failed"),
 );
 
 export const aiMemoryTable = defineTable({
@@ -60,6 +61,7 @@ export const approvalRequestsTable = defineTable({
   createdAt: v.number(),
   expiresAt: v.number(),
   resolvedAt: v.optional(v.number()),
+  error: v.optional(v.string()),
 })
   .index("by_user_status", ["userId", "status"])
   .index("by_requestId", ["requestId"]);

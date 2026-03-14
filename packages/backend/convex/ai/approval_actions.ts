@@ -11,8 +11,6 @@ import { executeFinancePendingAction } from "./tools/finance";
 import { executeHealthPendingAction } from "./tools/health";
 import type { PendingAction } from "./types";
 
-const internalApi = internal as unknown as Record<string, Record<string, any>>;
-
 export const resolveApprovalRequest = action({
   args: {
     requestId: v.string(),
@@ -21,7 +19,7 @@ export const resolveApprovalRequest = action({
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
     const request = await ctx.runQuery(
-      internalApi["ai/approval"].getApprovalRequestByRequestId,
+      internal.ai.approval.getApprovalRequestByRequestId,
       {
         requestId: args.requestId,
       },
@@ -36,7 +34,7 @@ export const resolveApprovalRequest = action({
     }
 
     if (Date.now() > request.expiresAt) {
-      await ctx.runMutation(internalApi["ai/approval"].markApprovalRequestResolved, {
+      await ctx.runMutation(internal.ai.approval.markApprovalRequestResolved, {
         requestId: args.requestId,
         status: "expired",
       });
@@ -44,18 +42,27 @@ export const resolveApprovalRequest = action({
     }
 
     if (!args.approved) {
-      await ctx.runMutation(internalApi["ai/approval"].markApprovalRequestResolved, {
+      await ctx.runMutation(internal.ai.approval.markApprovalRequestResolved, {
         requestId: args.requestId,
         status: "rejected",
       });
       return { approved: false };
     }
 
-    for (const actionRow of request.actions) {
-      await executePendingAction(ctx, deserializePendingAction(actionRow));
+    try {
+      for (const actionRow of request.actions) {
+        await executePendingAction(ctx, deserializePendingAction(actionRow));
+      }
+    } catch (error) {
+      await ctx.runMutation(internal.ai.approval.markApprovalRequestResolved, {
+        requestId: args.requestId,
+        status: "failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
     }
 
-    await ctx.runMutation(internalApi["ai/approval"].markApprovalRequestResolved, {
+    await ctx.runMutation(internal.ai.approval.markApprovalRequestResolved, {
       requestId: args.requestId,
       status: "approved",
     });

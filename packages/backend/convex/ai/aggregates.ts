@@ -154,12 +154,19 @@ export async function buildHealthSnapshot(
   ctx: QueryCtx,
   userId: string,
 ): Promise<DomainSnapshot> {
+  const recentEnergyCutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
   const [goals, habits, workouts, metrics, energyLogs, profile] = await Promise.all([
     ctx.db.query("healthGoals").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
     ctx.db.query("healthHabits").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
     ctx.db.query("workouts").withIndex("by_userId_and_date", (q) => q.eq("userId", userId)).collect(),
     ctx.db.query("healthMetrics").withIndex("by_userId_and_date", (q) => q.eq("userId", userId)).collect(),
-    ctx.db.query("energyLogs").withIndex("by_userId_and_timestamp", (q) => q.eq("userId", userId)).collect(),
+    ctx.db
+      .query("energyLogs")
+      .withIndex("by_userId_and_timestamp", (q) =>
+        q.eq("userId", userId).gte("timestamp", recentEnergyCutoff),
+      )
+      .order("desc")
+      .take(10),
     ctx.db.query("plannerProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).first(),
   ]);
 
@@ -235,11 +242,15 @@ export async function buildWellnessSnapshot(
   ctx: QueryCtx,
   userId: string,
 ): Promise<DomainSnapshot> {
+  const recentEnergyCutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
   const [energyLogs, reviews, plannerState] = await Promise.all([
     ctx.db
       .query("energyLogs")
-      .withIndex("by_userId_and_timestamp", (q) => q.eq("userId", userId))
-      .collect(),
+      .withIndex("by_userId_and_timestamp", (q) =>
+        q.eq("userId", userId).gte("timestamp", recentEnergyCutoff),
+      )
+      .order("desc")
+      .take(10),
     ctx.db
       .query("planningReviews")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
@@ -251,8 +262,11 @@ export async function buildWellnessSnapshot(
       .first(),
   ]);
 
-  const recentEnergy = energyLogs.slice(-10);
-  const avgEnergy = averageLevel(recentEnergy.map((entry) => entry.energyLevel));
+  const recentEnergy = energyLogs;
+  const avgEnergyScore = averageLevel(
+    recentEnergy.map((entry) => entry.energyLevel),
+    "positive",
+  );
   const avgStress = averageLevel(recentEnergy.map((entry) => entry.stressLevel));
   const avgFatigue = averageLevel(recentEnergy.map((entry) => entry.fatigueLevel));
   const latestReview = reviews[0] ?? null;
@@ -261,7 +275,7 @@ export async function buildWellnessSnapshot(
     domain: "wellness",
     generatedAt: Date.now(),
     summary: {
-      avgEnergyScore: avgEnergy,
+      avgEnergyScore,
       avgStressScore: avgStress,
       avgFatigueScore: avgFatigue,
       latestBurnoutScore: latestReview?.burnoutScore ?? plannerState?.burnoutScore ?? null,
@@ -372,7 +386,7 @@ export async function buildProductivitySnapshot(
   userId: string,
 ): Promise<DomainSnapshot> {
   const week = getWeekWindow(isoDateFromTimestamp(Date.now()));
-  const [tasks, habits, plans, currentReview] = await Promise.all([
+  const [tasks, habits, currentWeekPlans, currentReview] = await Promise.all([
     ctx.db
       .query("planningTasks")
       .withIndex("by_userId_status", (q) => q.eq("userId", userId).eq("status", "pending"))
@@ -383,7 +397,10 @@ export async function buildProductivitySnapshot(
       .collect(),
     ctx.db
       .query("plans")
-      .withIndex("by_userId_type", (q) => q.eq("userId", userId).eq("type", "week"))
+      .withIndex("by_userId_startDate", (q) =>
+        q.eq("userId", userId).eq("startDate", week.startDate),
+      )
+      .order("desc")
       .collect(),
     ctx.db
       .query("planningReviews")
@@ -393,8 +410,8 @@ export async function buildProductivitySnapshot(
   ]);
 
   const currentPlan =
-    plans
-      .filter((plan) => plan.startDate === week.startDate)
+    currentWeekPlans
+      .filter((plan) => plan.type === "week")
       .sort((left, right) => right.createdAt - left.createdAt)[0] ?? null;
 
   return {
@@ -462,15 +479,20 @@ async function buildUnavailableSnapshot(
   };
 }
 
-function averageLevel(values: Array<"low" | "medium" | "high">) {
+function averageLevel(
+  values: Array<"low" | "medium" | "high">,
+  direction: "inverse" | "positive" = "inverse",
+) {
   if (values.length === 0) {
     return null;
   }
 
   const score = values.reduce((sum, value) => {
-    if (value === "low") return sum + 3;
+    if (value === "low") {
+      return sum + (direction === "positive" ? 1 : 3);
+    }
     if (value === "medium") return sum + 2;
-    return sum + 1;
+    return sum + (direction === "positive" ? 3 : 1);
   }, 0);
 
   return Number((score / values.length).toFixed(2));
