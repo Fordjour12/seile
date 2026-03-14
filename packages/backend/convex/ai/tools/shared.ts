@@ -4,9 +4,6 @@ import { api, internal } from "../../_generated/api";
 import type { ActionCtx } from "../../_generated/server";
 import type { AIDomain, DomainSnapshot } from "../types";
 
-const apiAny = api as any;
-const internalApi = internal as unknown as Record<string, Record<string, any>>;
-
 export async function createTaskDraft(
   ctx: ActionCtx,
   input: {
@@ -15,7 +12,7 @@ export async function createTaskDraft(
     dueDate?: string;
   },
 ) {
-  return await ctx.runMutation(apiAny["productivity/planner/mutations"].createTask, {
+  return await ctx.runMutation(api.productivity.planner.mutations.createTask, {
     title: input.title,
     priority: input.priority ?? "medium",
     dueDate: input.dueDate,
@@ -31,7 +28,7 @@ export async function createHabitDraft(
     scheduleDays?: string[];
   },
 ) {
-  return await ctx.runMutation(apiAny["productivity/planner/mutations"].createHabit, {
+  return await ctx.runMutation(api.productivity.planner.mutations.createHabit, {
     name: input.name,
     cadence: input.cadence ?? "daily",
     targetValue: input.targetValue ?? 1,
@@ -40,7 +37,7 @@ export async function createHabitDraft(
 }
 
 export async function getAllDomainSnapshots(ctx: ActionCtx, userId: string) {
-  return (await ctx.runQuery(internalApi["ai/aggregates"].getAllSnapshotsForUser, {
+  return (await ctx.runQuery(internal.ai.aggregates.getAllSnapshotsForUser, {
     userId,
   })) as Record<AIDomain, DomainSnapshot>;
 }

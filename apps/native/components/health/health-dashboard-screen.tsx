@@ -8,7 +8,7 @@ import { api } from "@/lib/backend-api";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
-const healthApi = api as unknown as Record<string, Record<string, any>>;
+const healthApi = api.health;
 const TODAY = formatLocalDateKey(new Date());
 
 const LEVEL_OPTIONS = ["low", "medium", "high"] as const;
@@ -35,12 +35,12 @@ const GOAL_TYPE_OPTIONS = [
 ] as const;
 
 export function HealthDashboardScreen() {
-  const dashboard = useQuery(healthApi["health/queries"].getHealthDashboard, {});
-  const createWorkout = useMutation(healthApi["health/mutations"].createWorkout);
-  const createHealthHabit = useMutation(healthApi["health/mutations"].createHealthHabit);
-  const createHealthGoal = useMutation(healthApi["health/mutations"].createHealthGoal);
-  const logHealthMetrics = useMutation(healthApi["health/mutations"].logHealthMetrics);
-  const logEnergy = useMutation(healthApi["health/mutations"].logEnergy);
+  const dashboard = useQuery(healthApi.queries.getHealthDashboard, {});
+  const createWorkout = useMutation(healthApi.mutations.createWorkout);
+  const createHealthHabit = useMutation(healthApi.mutations.createHealthHabit);
+  const createHealthGoal = useMutation(healthApi.mutations.createHealthGoal);
+  const logHealthMetrics = useMutation(healthApi.mutations.logHealthMetrics);
+  const logEnergy = useMutation(healthApi.mutations.logEnergy);
 
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;

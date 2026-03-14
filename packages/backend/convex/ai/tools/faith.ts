@@ -8,7 +8,6 @@ import { faithCoachAgent } from "../agents/faith";
 import type { PendingAction } from "../types";
 import { isoDateFromTimestamp } from "../../lib/planner";
 
-const apiAny = api as any;
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const faithActionSchema = z.discriminatedUnion("toolName", [
@@ -105,11 +104,16 @@ export async function executeFaithPendingAction(
   });
 
   if (parsed.toolName === "faith.createPrayer") {
-    return await ctx.runMutation(apiAny["spiritual/mutations"].createPrayer, parsed.args);
+    return await ctx.runMutation(api.spiritual.mutations.createPrayer, parsed.args);
   }
 
+  const readingArgs = {
+    ...parsed.args,
+    date: parsed.args.date ?? isoDateFromTimestamp(Date.now()),
+  };
+
   return await ctx.runMutation(
-    apiAny["spiritual/mutations"].createSpiritualReading,
-    parsed.args,
+    api.spiritual.mutations.createSpiritualReading,
+    readingArgs,
   );
 }

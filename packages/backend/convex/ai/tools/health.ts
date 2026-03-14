@@ -8,7 +8,6 @@ import { healthCoachAgent } from "../agents/health";
 import type { PendingAction } from "../types";
 import { isoDateFromTimestamp } from "../../lib/planner";
 
-const apiAny = api as any;
 
 const healthActionSchema = z.object({
   toolName: z.literal("health.logWorkout"),
@@ -28,7 +27,7 @@ const healthActionSchema = z.object({
     ]),
     durationMinutes: z.number().int().min(1).max(360),
     intensity: z.enum(["low", "medium", "high"]).default("medium"),
-    date: z.string().optional(),
+    date: z.iso.date().optional(),
     notes: z.string().optional(),
   }),
 });
@@ -51,10 +50,10 @@ export async function analyzeHealthRequest(
   const thread = input.threadId
     ? { threadId: input.threadId }
     : await healthCoachAgent.createThread(ctx, {
-        userId: input.userId,
-        title: "Health AI",
-        summary: "Health specialist conversation",
-      });
+      userId: input.userId,
+      title: "Health AI",
+      summary: "Health specialist conversation",
+    });
   const threadId = input.threadId ?? thread.threadId;
 
   const result = await healthCoachAgent.generateObject(ctx, thread, {
@@ -95,12 +94,16 @@ export async function executeHealthPendingAction(
     throw new Error(`Unsupported health tool: ${action.toolName}`);
   }
 
-  const args = healthActionSchema.parse({
+  const parsed = healthActionSchema.parse({
     toolName: action.toolName,
     title: "Log workout",
     preview: action.previewText,
     args: action.args,
   }).args;
+  const args = {
+    ...parsed,
+    date: parsed.date ?? isoDateFromTimestamp(Date.now()),
+  };
 
-  return await ctx.runMutation(apiAny["health/mutations"].createWorkout, args);
+  return await ctx.runMutation(api.health.mutations.createWorkout, args);
 }
