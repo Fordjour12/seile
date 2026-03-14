@@ -85,7 +85,7 @@ function mapOutgoingType(type: AccountType): BackendAccountType {
 
 export function useAccount(accountId?: string): Account | null | undefined {
   const response = useQuery(
-    api.accounts.getAccountById,
+    api.finance.accounts.getAccountById,
     accountId ? { accountId: asId<"accounts">(accountId) } : "skip",
   );
 
@@ -95,7 +95,7 @@ export function useAccount(accountId?: string): Account | null | undefined {
 export function useCreateAccount(): (
   payload: CreateAccountPayload,
 ) => Promise<Account> {
-  const createAccount = useMutation(api.accounts.createAccount);
+  const createAccount = useMutation(api.finance.accounts.createAccount);
 
   return async (payload) => {
     const response = await createAccount({
@@ -115,7 +115,7 @@ export function useUpdateAccount(): (
   accountId: string,
   payload: UpdateAccountPayload,
 ) => Promise<Account> {
-  const updateAccount = useMutation(api.accounts.updateAccount);
+  const updateAccount = useMutation(api.finance.accounts.updateAccount);
 
   return async (accountId, payload) => {
     const response = await updateAccount({
@@ -136,7 +136,7 @@ export function useUpdateAccount(): (
 export function useDeleteAccount(): (
   payload: DeleteAccountPayload,
 ) => Promise<boolean> {
-  const deleteAccount = useMutation(api.accounts.deleteAccount);
+  const deleteAccount = useMutation(api.finance.accounts.deleteAccount);
 
   return (payload) =>
     deleteAccount({
@@ -145,7 +145,7 @@ export function useDeleteAccount(): (
 }
 
 export function useAccounts(): Account[] | undefined {
-  const response = useQuery(api.accounts.listAccounts, {
+  const response = useQuery(api.finance.accounts.listAccounts, {
     includeArchived: false,
     pagination: {
       limit: 50,

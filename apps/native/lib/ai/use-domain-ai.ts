@@ -1,8 +1,14 @@
 import { useAction } from "convex/react";
 import { useState } from "react";
 
-import type { AIResponse, AiChatMessage } from "./types";
+import type { AiChatMessage } from "./types";
 import { aiApi } from "./api";
+import type { RunAIResponse } from "./api";
+
+type ApprovalAction = Extract<
+  RunAIResponse,
+  { type: "approval_request" }
+>["actions"][number];
 
 export function useDomainAi() {
   const runAI = useAction(aiApi["ai/runRouter"].runAI);
@@ -10,6 +16,7 @@ export function useDomainAi() {
   const [messages, setMessages] = useState<AiChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [status, setStatus] = useState("AI ready.");
+  const [threadId, setThreadId] = useState<string | null>(null);
 
   const sendMessage = async (value?: string) => {
     const text = (value ?? composerText).trim();
@@ -34,7 +41,11 @@ export function useDomainAi() {
     ]);
 
     try {
-      const result = (await runAI({ userMessage: text })) as AIResponse;
+      const result = await runAI({
+        userMessage: text,
+        threadId: threadId ?? undefined,
+      });
+      setThreadId(result.threadId);
       setMessages((current) => [...current, normalizeAiResponse(result)]);
       setStatus("AI replied.");
     } catch (error) {
@@ -62,16 +73,17 @@ export function useDomainAi() {
     sendMessage,
     isSending,
     status,
+    threadId,
   };
 }
 
-function normalizeAiResponse(response: AIResponse): AiChatMessage {
+function normalizeAiResponse(response: RunAIResponse): AiChatMessage {
   if (response.type === "approval_request") {
     return {
       id: `approval-${response.requestId}`,
       role: "assistant",
       text: `${response.title}\n\n${response.actions
-        .map((action) => `• ${action.previewText}`)
+        .map((action: ApprovalAction) => `• ${action.previewText}`)
         .join("\n")}`,
       createdAt: Date.now(),
       status: "success",

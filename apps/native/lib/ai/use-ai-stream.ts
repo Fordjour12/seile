@@ -47,7 +47,6 @@ export function useAiStream() {
       setError(
         streamError instanceof Error ? streamError.message : "AI stream failed.",
       );
-      throw streamError;
     } finally {
       setIsStreaming(false);
     }

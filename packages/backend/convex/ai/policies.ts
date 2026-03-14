@@ -1,5 +1,22 @@
 import type { AIDomain, ApprovalMode, DomainAvailability, RouteIntent } from "./types";
 
+const FINANCE_DOMAIN_PATTERN =
+  /\b(budget|money|spend|saving|debt|account|finance|income|expense|subscription)\b/;
+const HEALTH_DOMAIN_PATTERN =
+  /\b(workout|exercise|gym|fitness|meal|health|energy|sleep|steps|calories|nutrition)\b/;
+const WELLNESS_DOMAIN_PATTERN =
+  /\b(stress|mood|anxious|burnout|mental|wellness|overwhelmed|therapy|journal|breathe)\b/;
+const PRODUCTIVITY_DOMAIN_PATTERN =
+  /\b(task|todo|plan|focus|week|schedule|deadline|priority|planner|productivity)\b/;
+const CAREER_DOMAIN_PATTERN =
+  /\b(career|job|work|promotion|learn|skill|resume|interview|salary|freelance)\b/;
+const RELATIONSHIPS_DOMAIN_PATTERN =
+  /\b(relationship|friend|family|partner|connection|date|social|love|boundaries)\b/;
+const FAITH_DOMAIN_PATTERN =
+  /\b(prayer|faith|devotion|spiritual|church|scripture|fast|worship|gratitude|bible)\b/;
+const SPACE_DOMAIN_PATTERN =
+  /\b(room|space|decor|design|clean|desk|home|furniture|organize|environment)\b/;
+
 const AUTO_TOOLS = new Set([
   "shared.getWeekSnapshot",
   "shared.getAllDomainSnapshots",
@@ -27,35 +44,35 @@ export function pickDomainsFromIntent(input: string): AIDomain[] {
   const text = input.toLowerCase();
   const domains = new Set<AIDomain>();
 
-  if (/budget|money|spend|saving|debt|account|finance|income|expense|subscription/.test(text)) {
+  if (FINANCE_DOMAIN_PATTERN.test(text)) {
     domains.add("finance");
   }
 
-  if (/workout|exercise|gym|fitness|meal|health|energy|sleep|steps|calories|nutrition/.test(text)) {
+  if (HEALTH_DOMAIN_PATTERN.test(text)) {
     domains.add("health");
   }
 
-  if (/stress|mood|anxious|burnout|mental|wellness|overwhelmed|therapy|journal|breathe/.test(text)) {
+  if (WELLNESS_DOMAIN_PATTERN.test(text)) {
     domains.add("wellness");
   }
 
-  if (/task|todo|plan|focus|week|schedule|deadline|priority|planner|productivity/.test(text)) {
+  if (PRODUCTIVITY_DOMAIN_PATTERN.test(text)) {
     domains.add("productivity");
   }
 
-  if (/career|job|work|promotion|learn|skill|resume|interview|salary|freelance/.test(text)) {
+  if (CAREER_DOMAIN_PATTERN.test(text)) {
     domains.add("career");
   }
 
-  if (/relationship|friend|family|partner|connection|date|social|love|boundaries/.test(text)) {
+  if (RELATIONSHIPS_DOMAIN_PATTERN.test(text)) {
     domains.add("relationships");
   }
 
-  if (/prayer|faith|devotion|spiritual|church|scripture|fast|worship|gratitude|bible/.test(text)) {
+  if (FAITH_DOMAIN_PATTERN.test(text)) {
     domains.add("faith");
   }
 
-  if (/room|space|decor|design|clean|desk|home|furniture|organize|environment/.test(text)) {
+  if (SPACE_DOMAIN_PATTERN.test(text)) {
     domains.add("space");
   }
 

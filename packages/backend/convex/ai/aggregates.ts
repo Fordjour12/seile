@@ -1,5 +1,6 @@
 import { internalQuery } from "../_generated/server";
 import type { QueryCtx } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
 import { v } from "convex/values";
 
 import type { AIDomain, DomainSnapshot } from "./types";
@@ -82,6 +83,14 @@ export async function buildFinanceSnapshot(
   const subscriptions = recurringTransactions.filter(
     (row) => row.isSubscription && row.isActive,
   );
+  const envelopesByPeriodId = new Map<string, number>();
+  for (const envelope of envelopes) {
+    const key = envelope.periodId.toString();
+    envelopesByPeriodId.set(
+      key,
+      (envelopesByPeriodId.get(key) ?? 0) + envelope.allocatedAmount,
+    );
+  }
 
   return {
     domain: "finance",
@@ -98,12 +107,45 @@ export async function buildFinanceSnapshot(
       subscriptionCount: subscriptions.length,
     },
     raw: {
-      accounts,
-      budgetPeriods,
-      recentTransactions: transactions,
-      debtPlans: activeDebt,
-      savingsGoals: activeSavings,
-      subscriptions,
+      accounts: accounts.map((account) => ({
+        id: account._id,
+        accountType: account.type,
+        maskedIdentifier: maskAccountIdentifier(account.name, account.providerName),
+        currentBalance: account.balance,
+      })),
+      budgetPeriods: budgetPeriods.map((period) => ({
+        id: period._id,
+        startDate: toMonthStartDate(period.year, period.month),
+        endDate: toMonthEndDate(period.year, period.month),
+        totalBudget: envelopesByPeriodId.get(period._id.toString()) ?? 0,
+        status: period.status,
+      })),
+      recentTransactions: transactions.map((transaction) => ({
+        id: transaction._id,
+        date: isoDateFromTimestamp(transaction.occurredAt),
+        amount: transaction.amount,
+        merchant: null,
+        category: transaction.categoryId ?? null,
+        kind: transaction.kind,
+      })),
+      debtPlans: activeDebt.map((plan) => ({
+        id: plan._id,
+        remainingBalance: plan.currentBalance,
+        minimumPayment: plan.monthlyDue,
+        nextDueDate: plan.nextDueDate ?? null,
+      })),
+      savingsGoals: activeSavings.map((goal) => ({
+        id: goal._id,
+        targetAmount: goal.targetAmount,
+        currentAmount: goal.currentAmount,
+        targetDate: goal.targetDate ?? null,
+      })),
+      subscriptions: subscriptions.map((subscription) => ({
+        id: subscription._id,
+        name: subscription.subscriptionMeta?.serviceName ?? "Subscription",
+        monthlyCost: normalizeSubscriptionMonthlyCost(subscription),
+        nextBillingDate: isoDateFromTimestamp(subscription.nextRunAt),
+      })),
     },
   };
 }
@@ -144,11 +186,46 @@ export async function buildHealthSnapshot(
       recoveryRecommended: health.signals.recoveryRecommended,
     },
     raw: {
-      goals: health.activeGoals,
-      habits: health.activeHabits,
-      recentWorkouts: health.recentWorkouts,
-      latestMetric: health.latestMetric,
-      latestEnergyLog: health.latestEnergyLog,
+      goals: health.activeGoals.map((goal) => ({
+        id: goal._id,
+        title: goal.title,
+        goalType: goal.goalType,
+        targetValue: goal.targetValue,
+        progress: goal.progress,
+        deadline: goal.deadline ?? null,
+      })),
+      habits: health.activeHabits.map((habit) => ({
+        id: habit._id,
+        name: habit.name,
+        cadence: habit.cadence,
+        targetValue: habit.targetValue,
+        unit: habit.unit,
+      })),
+      recentWorkouts: health.recentWorkouts.map((workout) => ({
+        id: workout._id,
+        date: workout.date,
+        workoutType: workout.workoutType,
+        durationMinutes: workout.durationMinutes,
+        intensity: workout.intensity,
+      })),
+      latestMetric: health.latestMetric
+        ? {
+            date: health.latestMetric.date,
+            sleepHours: health.latestMetric.sleepHours ?? null,
+            steps: health.latestMetric.steps ?? null,
+            weight: health.latestMetric.weight ?? null,
+            restingHeartRate: health.latestMetric.restingHeartRate ?? null,
+            energyLevel: health.latestMetric.energyLevel ?? null,
+          }
+        : null,
+      latestEnergyLog: health.latestEnergyLog
+        ? {
+            timestamp: health.latestEnergyLog.timestamp,
+            energyLevel: health.latestEnergyLog.energyLevel,
+            stressLevel: health.latestEnergyLog.stressLevel,
+            fatigueLevel: health.latestEnergyLog.fatigueLevel,
+          }
+        : null,
       signals: health.signals,
     },
   };
@@ -195,9 +272,26 @@ export async function buildWellnessSnapshot(
         plannerState?.burnoutState === "recovery",
     },
     raw: {
-      recentEnergy,
-      recentReviews: reviews,
-      plannerState,
+      recentEnergy: recentEnergy.map((entry) => ({
+        timestamp: entry.timestamp,
+        energyLevel: entry.energyLevel,
+        stressLevel: entry.stressLevel,
+        fatigueLevel: entry.fatigueLevel,
+      })),
+      recentReviews: reviews.map((review) => ({
+        id: review._id,
+        createdAt: review.createdAt,
+        completionRate: review.completionRate,
+        burnoutScore: review.burnoutScore ?? null,
+        burnoutState: review.burnoutState ?? null,
+        overloadIndicatorCount: review.overloadIndicators.length,
+      })),
+      plannerState: plannerState
+        ? {
+            burnoutScore: plannerState.burnoutScore,
+            burnoutState: plannerState.burnoutState,
+          }
+        : null,
     },
   };
 }
@@ -234,11 +328,41 @@ export async function buildFaithSnapshot(
       recentReflectionCount: reflections.length,
     },
     raw: {
-      goals,
-      practices,
-      prayers,
-      readings,
-      reflections,
+      goals: goals.map((goal) => ({
+        id: goal._id,
+        title: goal.title,
+        goalType: goal.goalType,
+        progress: goal.progress,
+        status: goal.status,
+        deadline: goal.deadline ?? null,
+      })),
+      practices: practices.map((practice) => ({
+        id: practice._id,
+        title: practice.title,
+        practiceType: practice.practiceType,
+        cadence: practice.cadence,
+        targetValue: practice.targetValue,
+        active: practice.active,
+      })),
+      prayers: prayers.map((prayer) => ({
+        id: prayer._id,
+        title: prayer.title,
+        category: prayer.category ?? null,
+        status: prayer.status,
+      })),
+      readings: readings.map((reading) => ({
+        id: reading._id,
+        title: reading.title,
+        source: reading.source ?? null,
+        passage: reading.passage ?? null,
+        date: reading.date,
+      })),
+      reflections: reflections.map((reflection) => ({
+        id: reflection._id,
+        date: reflection.date,
+        reflectionType: reflection.reflectionType,
+        mood: reflection.mood ?? null,
+      })),
     },
   };
 }
@@ -285,10 +409,42 @@ export async function buildProductivitySnapshot(
       latestReviewCompletionRate: currentReview?.completionRate ?? null,
     },
     raw: {
-      tasks: tasks.slice(0, 20),
-      habits,
-      currentPlan,
-      latestReview: currentReview,
+      tasks: tasks.slice(0, 20).map((task) => ({
+        id: task._id,
+        title: task.title,
+        dueDate: task.dueDate ?? null,
+        priority: task.priority,
+        status: task.status,
+      })),
+      habits: habits.map((habit) => ({
+        id: habit._id,
+        name: habit.name,
+        cadence: habit.cadence,
+        targetValue: habit.targetValue,
+        active: habit.active,
+      })),
+      currentPlan: currentPlan
+        ? {
+            id: currentPlan._id,
+            title: currentPlan.title,
+            mode: currentPlan.mode,
+            startDate: currentPlan.startDate,
+            endDate: currentPlan.endDate,
+            priorityTitles: currentPlan.priorityTitles,
+            burnoutRiskScore: currentPlan.burnoutRiskScore ?? null,
+            recoverySuggested: currentPlan.recoverySuggested ?? false,
+          }
+        : null,
+      latestReview: currentReview
+        ? {
+            id: currentReview._id,
+            completionRate: currentReview.completionRate,
+            burnoutScore: currentReview.burnoutScore ?? null,
+            burnoutState: currentReview.burnoutState ?? null,
+            missedHabitsCount: currentReview.missedHabitsCount ?? null,
+            overloadIndicatorCount: currentReview.overloadIndicators.length,
+          }
+        : null,
     },
   };
 }
@@ -318,4 +474,33 @@ function averageLevel(values: Array<"low" | "medium" | "high">) {
   }, 0);
 
   return Number((score / values.length).toFixed(2));
+}
+
+function maskAccountIdentifier(name: string, providerName?: string) {
+  const source = (providerName?.trim() || name.trim()).replace(/\s+/g, "");
+  const suffix = source.slice(-4).padStart(4, "*");
+  return `***${suffix}`;
+}
+
+function toMonthStartDate(year: number, month: number) {
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
+function toMonthEndDate(year: number, month: number) {
+  return isoDateFromTimestamp(Date.UTC(year, month, 0));
+}
+
+function normalizeSubscriptionMonthlyCost(
+  subscription: Doc<"recurringTransactions">,
+) {
+  if (subscription.scheduleType === "monthly") {
+    return subscription.amount;
+  }
+  if (subscription.scheduleType === "weekly") {
+    return Number((subscription.amount * 4.33).toFixed(2));
+  }
+  if (subscription.scheduleType === "yearly") {
+    return Number((subscription.amount / 12).toFixed(2));
+  }
+  return subscription.amount;
 }

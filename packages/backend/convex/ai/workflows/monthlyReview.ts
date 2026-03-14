@@ -43,7 +43,10 @@ export const startMonthlyReviewCycles = internalAction({
       return { started: 0, skipped: 0, month: keys.reviewMonth, planningMonth: keys.planningMonth };
     }
 
-    const states = await ctx.runQuery(internalApi["planner/queries"].listAgentEnabledStates, {});
+    const states = await ctx.runQuery(
+      internalApi["productivity/planner/queries"].listAgentEnabledStates,
+      {},
+    );
     const { reviewMonth, planningMonth } = getMonthlyKeys();
     let started = 0;
     let skipped = 0;

@@ -9,6 +9,7 @@ import type { PendingAction } from "../types";
 import { isoDateFromTimestamp } from "../../lib/planner";
 
 const apiAny = api as any;
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const faithActionSchema = z.discriminatedUnion("toolName", [
   z.object({
@@ -29,7 +30,7 @@ const faithActionSchema = z.discriminatedUnion("toolName", [
       title: z.string().min(1),
       source: z.string().optional(),
       passage: z.string().optional(),
-      date: z.string().optional(),
+      date: isoDateSchema.optional(),
       notes: z.string().optional(),
     }),
   }),
@@ -57,6 +58,7 @@ export async function analyzeFaithRequest(
         title: "Faith AI",
         summary: "Faith specialist conversation",
       });
+  const threadId = input.threadId ?? thread.threadId;
 
   const result = await faithCoachAgent.generateObject(ctx, thread, {
     prompt: [
@@ -85,6 +87,7 @@ export async function analyzeFaithRequest(
   }));
 
   return {
+    threadId,
     reply: result.object.reply,
     actions,
   };

@@ -15,7 +15,7 @@ export async function createTaskDraft(
     dueDate?: string;
   },
 ) {
-  return await ctx.runMutation(apiAny["planner/mutations"].createTask, {
+  return await ctx.runMutation(apiAny["productivity/planner/mutations"].createTask, {
     title: input.title,
     priority: input.priority ?? "medium",
     dueDate: input.dueDate,
@@ -31,7 +31,7 @@ export async function createHabitDraft(
     scheduleDays?: string[];
   },
 ) {
-  return await ctx.runMutation(apiAny["planner/mutations"].createHabit, {
+  return await ctx.runMutation(apiAny["productivity/planner/mutations"].createHabit, {
     name: input.name,
     cadence: input.cadence ?? "daily",
     targetValue: input.targetValue ?? 1,

@@ -81,7 +81,7 @@ function mapRecurring(item: BackendRecurring): RecurringTransaction {
 export function useRecurringTransactions(
   includeInactive: boolean = false,
 ): RecurringTransaction[] | undefined {
-  const rows = useQuery(api.recurring.queries.listRecurringTransactions, {
+  const rows = useQuery(api.finance.recurring.queries.listRecurringTransactions, {
     includeInactive,
   });
 
@@ -102,7 +102,7 @@ export function useRecurringTransaction(
 export function useUpcomingRecurring(
   withinDays: number,
 ): RecurringTransaction[] | undefined {
-  const rows = useQuery(api.recurring.queries.getUpcomingRecurring, {
+  const rows = useQuery(api.finance.recurring.queries.getUpcomingRecurring, {
     withinDays,
   });
 
@@ -112,7 +112,7 @@ export function useUpcomingRecurring(
 export function useCreateRecurringTransaction(): (
   payload: CreateRecurringPayload,
 ) => Promise<void> {
-  const createRecurringTransaction = useMutation(api.recurring.mutations.createRecurringTransaction);
+  const createRecurringTransaction = useMutation(api.finance.recurring.mutations.createRecurringTransaction);
 
   return async (payload) => {
     await createRecurringTransaction({
@@ -150,7 +150,7 @@ export function useUpdateRecurringTransaction(): (
   id: string,
   payload: UpdateRecurringPayload,
   ) => Promise<void> {
-  const updateRecurringTransaction = useMutation(api.recurring.mutations.updateRecurringTransaction);
+  const updateRecurringTransaction = useMutation(api.finance.recurring.mutations.updateRecurringTransaction);
 
   return async (id, payload) => {
     await updateRecurringTransaction({
@@ -178,7 +178,7 @@ export function useUpdateRecurringTransaction(): (
 }
 
 export function usePauseRecurringTransaction(): (id: string) => Promise<boolean> {
-  const pauseRecurringTransaction = useMutation(api.recurring.mutations.pauseRecurringTransaction);
+  const pauseRecurringTransaction = useMutation(api.finance.recurring.mutations.pauseRecurringTransaction);
 
   return (id) =>
     pauseRecurringTransaction({
@@ -187,7 +187,7 @@ export function usePauseRecurringTransaction(): (id: string) => Promise<boolean>
 }
 
 export function useResumeRecurringTransaction(): (id: string) => Promise<void> {
-  const resumeRecurringTransaction = useMutation(api.recurring.mutations.resumeRecurringTransaction);
+  const resumeRecurringTransaction = useMutation(api.finance.recurring.mutations.resumeRecurringTransaction);
 
   return async (id) => {
     await resumeRecurringTransaction({
@@ -200,7 +200,7 @@ export function useDeleteRecurringTransaction(): (
   id: string,
   deleteGeneratedTransactions?: boolean,
 ) => Promise<boolean> {
-  const deleteRecurringTransaction = useMutation(api.recurring.mutations.deleteRecurringTransaction);
+  const deleteRecurringTransaction = useMutation(api.finance.recurring.mutations.deleteRecurringTransaction);
 
   return (id, deleteGeneratedTransactions = false) =>
     deleteRecurringTransaction({

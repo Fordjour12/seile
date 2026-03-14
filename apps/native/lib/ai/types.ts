@@ -1,3 +1,5 @@
+import type { RunAIResponse } from "./api";
+
 export type AIDomain =
   | "finance"
   | "health"
@@ -8,7 +10,7 @@ export type AIDomain =
   | "faith"
   | "space";
 
-export type ApprovalMode = "auto" | "confirm" | "restricted";
+export type ApprovalMode = "auto" | "confirm" | "confirmText" | "restricted";
 
 export type PendingAction = {
   toolName: string;
@@ -16,27 +18,10 @@ export type PendingAction = {
   args: Record<string, unknown>;
   domain: AIDomain;
   previewText: string;
+  expectedConfirmation?: string;
 };
 
-export type AIResponse =
-  | {
-      type: "message";
-      content: string;
-      domains: AIDomain[];
-      crossDomainSignals?: Array<{
-        sourceDomain: AIDomain;
-        targetDomain: AIDomain;
-        signal: string;
-        severity: "low" | "medium" | "high";
-        suggestedAction?: string;
-      }>;
-    }
-  | {
-      type: "approval_request";
-      title: string;
-      actions: PendingAction[];
-      requestId: string;
-    };
+export type AIResponse = RunAIResponse;
 
 export type AiChatMessage = {
   id: string;

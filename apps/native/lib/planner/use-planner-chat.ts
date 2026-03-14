@@ -55,14 +55,14 @@ export const PLANNER_QUICK_PROMPTS: PlannerQuickPrompt[] = [
 ];
 
 export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean }) {
-  const home = useQuery(plannerApi["planner/queries"].getPlannerChatHome, {});
+  const home = useQuery(plannerApi["productivity/planner/queries"].getPlannerChatHome, {});
   const resolvedThreadId = options?.threadId ?? home?.activeThreadId ?? undefined;
   const thread = useQuery(
-    plannerApi["planner/queries"].getPlannerChatThread,
+    plannerApi["productivity/planner/queries"].getPlannerChatThread,
     options?.threadId ? { threadId: options.threadId } : "skip",
   ) as PlannerChatThread | null | undefined;
   const serverMessagesResult = useQuery(
-    plannerApi["planner/queries"].listPlannerChatMessages,
+    plannerApi["productivity/planner/queries"].listPlannerChatMessages,
     resolvedThreadId
       ? {
           threadId: resolvedThreadId,
@@ -73,7 +73,9 @@ export function usePlannerChat(options?: { threadId?: string; readOnly?: boolean
         }
       : "skip",
   );
-  const sendPlannerChatMessage = useAction(plannerApi["planner/actions"].sendPlannerChatMessage);
+  const sendPlannerChatMessage = useAction(
+    plannerApi["productivity/planner/actions"].sendPlannerChatMessage,
+  );
 
   const [composerText, setComposerText] = useState("");
   const [status, setStatus] = useState("Planner ready.");

@@ -15,6 +15,7 @@ export const aiDomainValidator = v.union(
 export const approvalModeValidator = v.union(
   v.literal("auto"),
   v.literal("confirm"),
+  v.literal("confirmText"),
   v.literal("restricted"),
 );
 
@@ -52,6 +53,7 @@ export const approvalRequestsTable = defineTable({
       argsJson: v.string(),
       domain: aiDomainValidator,
       previewText: v.string(),
+      expectedConfirmation: v.optional(v.string()),
     }),
   ),
   status: approvalRequestStatusValidator,

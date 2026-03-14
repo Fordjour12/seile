@@ -69,9 +69,45 @@ async function executePendingAction(ctx: any, action: PendingAction) {
       return await executeFinancePendingAction(ctx, action);
     case "health":
       return await executeHealthPendingAction(ctx, action);
+    case "wellness":
+      return await executeWellnessPendingAction(ctx, action);
+    case "productivity":
+      return await executeProductivityPendingAction(ctx, action);
+    case "career":
+      return await executeCareerPendingAction(ctx, action);
+    case "relationships":
+      return await executeRelationshipsPendingAction(ctx, action);
     case "faith":
       return await executeFaithPendingAction(ctx, action);
-    default:
-      throw new ConvexError(`Unsupported approval domain: ${action.domain}`);
+    case "space":
+      return await executeSpacePendingAction(ctx, action);
   }
+}
+
+async function executeWellnessPendingAction(_ctx: any, action: PendingAction) {
+  throw new ConvexError(
+    `Unsupported wellness approval action: ${action.toolName}`,
+  );
+}
+
+async function executeProductivityPendingAction(_ctx: any, action: PendingAction) {
+  throw new ConvexError(
+    `Unsupported productivity approval action: ${action.toolName}`,
+  );
+}
+
+async function executeCareerPendingAction(_ctx: any, action: PendingAction) {
+  throw new ConvexError(
+    `Unsupported career approval action: ${action.toolName}`,
+  );
+}
+
+async function executeRelationshipsPendingAction(_ctx: any, action: PendingAction) {
+  throw new ConvexError(
+    `Unsupported relationships approval action: ${action.toolName}`,
+  );
+}
+
+async function executeSpacePendingAction(_ctx: any, action: PendingAction) {
+  throw new ConvexError(`Unsupported space approval action: ${action.toolName}`);
 }

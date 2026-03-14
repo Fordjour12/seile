@@ -8,8 +8,11 @@ import { requireUserId } from "../lib/identity";
 import { getDomainPrompt, GLOBAL_SYSTEM_PROMPT } from "./prompts";
 import { pickDomainsFromIntent } from "./policies";
 import { getModel } from "./model";
+import type { AIDomain, DomainSnapshot } from "./types";
 
 const internalApi = internal as unknown as Record<string, Record<string, any>>;
+const MAX_STREAMING_SNAPSHOT_CHARS = 2400;
+const MAX_STREAMING_DOMAIN_CHARS = 700;
 
 export function registerAiStreamingRoutes(http: HttpRouter) {
   http.route({
@@ -35,7 +38,7 @@ export function registerAiStreamingRoutes(http: HttpRouter) {
         GLOBAL_SYSTEM_PROMPT,
         `Active domains: ${domains.join(", ")}`,
         ...domains.map(getDomainPrompt),
-        `Snapshots: ${JSON.stringify(snapshots)}`,
+        `Snapshots: ${summarizeSnapshots(snapshots, domains)}`,
       ].join("\n\n");
 
       const result = streamText({
@@ -47,4 +50,30 @@ export function registerAiStreamingRoutes(http: HttpRouter) {
       return result.toTextStreamResponse();
     }),
   });
+}
+
+function summarizeSnapshots(
+  snapshots: Record<string, DomainSnapshot>,
+  domains: AIDomain[],
+) {
+  const summaryByDomain = domains.map((domain) => {
+    const snapshot = snapshots[domain];
+    const compact = JSON.stringify({
+      generatedAt: snapshot?.generatedAt ?? null,
+      summary: snapshot?.summary ?? {},
+    });
+    return `${domain}: ${truncateSnapshotText(compact, MAX_STREAMING_DOMAIN_CHARS)}`;
+  });
+
+  return truncateSnapshotText(
+    summaryByDomain.join("\n"),
+    MAX_STREAMING_SNAPSHOT_CHARS,
+  );
+}
+
+function truncateSnapshotText(value: string, maxLength: number) {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  return `${value.slice(0, Math.max(0, maxLength - 1))}…`;
 }

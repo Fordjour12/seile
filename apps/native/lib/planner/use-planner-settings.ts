@@ -20,11 +20,11 @@ type EnergyPattern = "morning" | "midday" | "evening" | "mixed";
 type PlanningStyle = "structured" | "flexible" | "minimal";
 
 export function usePlannerSettings() {
-  const dashboard = useQuery(plannerApi["planner/queries"].getPlannerDashboard, {});
-  const home = useQuery(plannerApi["planner/queries"].getPlannerChatHome, {});
-  const upsertProfile = useMutation(plannerApi["planner/mutations"].upsertPlannerProfile);
+  const dashboard = useQuery(plannerApi["productivity/planner/queries"].getPlannerDashboard, {});
+  const home = useQuery(plannerApi["productivity/planner/queries"].getPlannerChatHome, {});
+  const upsertProfile = useMutation(plannerApi["productivity/planner/mutations"].upsertPlannerProfile);
   const createGoal = useMutation(sharedGoalsApi.mutations.createSharedGoal);
-  const setAgentEnabled = useMutation(plannerApi["planner/mutations"].setAgentEnabled);
+  const setAgentEnabled = useMutation(plannerApi["productivity/planner/mutations"].setAgentEnabled);
 
   const [status, setStatus] = useState("Planner settings ready.");
   const [busyKey, setBusyKey] = useState<string | null>(null);

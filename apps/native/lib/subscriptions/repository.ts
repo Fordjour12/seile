@@ -61,7 +61,7 @@ function mapRecurring(row: any): RecurringTransaction {
 export function useSubscriptions(
   includeInactive: boolean = false,
 ): Subscription[] | undefined {
-  const rows = useQuery(api.subscriptions.queries.listSubscriptions, {
+  const rows = useQuery(api.finance.subscriptions.queries.listSubscriptions, {
     includeInactive,
   });
 
@@ -80,7 +80,7 @@ export function useSubscription(id?: string): Subscription | null | undefined {
 export function useSubscriptionsByStatus(
   status: "active" | "trial" | "paused" | "cancelled",
 ): Subscription[] | undefined {
-  const rows = useQuery(api.subscriptions.queries.getByStatus, {
+  const rows = useQuery(api.finance.subscriptions.queries.getByStatus, {
     status,
   });
 
@@ -88,7 +88,7 @@ export function useSubscriptionsByStatus(
 }
 
 export function useUpcomingRenewals(withinDays: number): Subscription[] | undefined {
-  const rows = useQuery(api.subscriptions.queries.getUpcomingRenewals, {
+  const rows = useQuery(api.finance.subscriptions.queries.getUpcomingRenewals, {
     withinDays,
   });
 
@@ -98,7 +98,7 @@ export function useUpcomingRenewals(withinDays: number): Subscription[] | undefi
 export function useCreateSubscription(): (
   payload: CreateSubscriptionPayload,
 ) => Promise<void> {
-  const createSubscription = useMutation(api.subscriptions.mutations.createSubscription);
+  const createSubscription = useMutation(api.finance.subscriptions.mutations.createSubscription);
 
   return async (payload) => {
     await createSubscription({
@@ -121,7 +121,7 @@ export function useCreateSubscription(): (
 }
 
 export function useCancelSubscription(): (id: string) => Promise<boolean> {
-  const cancelSubscription = useMutation(api.subscriptions.mutations.cancelSubscription);
+  const cancelSubscription = useMutation(api.finance.subscriptions.mutations.cancelSubscription);
 
   return (id) =>
     cancelSubscription({
@@ -130,5 +130,5 @@ export function useCancelSubscription(): (id: string) => Promise<boolean> {
 }
 
 export function useMonthlySubscriptionSpend(): MonthlySubscriptionSpend | undefined {
-  return useQuery(api.subscriptions.queries.getMonthlySubscriptionSpend, {});
+  return useQuery(api.finance.subscriptions.queries.getMonthlySubscriptionSpend, {});
 }

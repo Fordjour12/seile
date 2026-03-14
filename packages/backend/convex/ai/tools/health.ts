@@ -55,6 +55,7 @@ export async function analyzeHealthRequest(
         title: "Health AI",
         summary: "Health specialist conversation",
       });
+  const threadId = input.threadId ?? thread.threadId;
 
   const result = await healthCoachAgent.generateObject(ctx, thread, {
     prompt: [
@@ -80,6 +81,7 @@ export async function analyzeHealthRequest(
   }));
 
   return {
+    threadId,
     reply: result.object.reply,
     actions,
   };

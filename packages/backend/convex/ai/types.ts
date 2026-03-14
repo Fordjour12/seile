@@ -8,7 +8,7 @@ export type AIDomain =
   | "faith"
   | "space";
 
-export const ALL_DOMAINS: AIDomain[] = [
+export const ALL_DOMAINS = Object.freeze([
   "finance",
   "health",
   "wellness",
@@ -17,10 +17,10 @@ export const ALL_DOMAINS: AIDomain[] = [
   "relationships",
   "faith",
   "space",
-];
+] as const satisfies readonly AIDomain[]);
 
 export type GoalHorizon = "day" | "week" | "month" | "year";
-export type ApprovalMode = "auto" | "confirm" | "restricted";
+export type ApprovalMode = "auto" | "confirm" | "confirmText" | "restricted";
 export type Priority = "low" | "medium" | "high";
 
 export type PlanItem = {
@@ -48,6 +48,7 @@ export type PendingAction = {
   args: Record<string, unknown>;
   domain: AIDomain;
   previewText: string;
+  expectedConfirmation?: string;
 };
 
 export type ApprovalRequest = {
@@ -90,6 +91,22 @@ export type AIResponse =
       suggestions: PlanItem[];
       generatedFor: AIDomain[];
       rationale: string;
+    };
+
+export type RunAIResponse =
+  | {
+      type: "message";
+      content: string;
+      domains: AIDomain[];
+      crossDomainSignals?: CrossDomainSignal[];
+      threadId: string | null;
+    }
+  | {
+      type: "approval_request";
+      title: string;
+      actions: PendingAction[];
+      requestId: string;
+      threadId: string | null;
     };
 
 export type DomainSnapshot = {

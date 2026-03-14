@@ -60,19 +60,19 @@ function mapSavingsGoal(row: BackendSavingsGoal): SavingsGoal {
 }
 
 export function useSavingsSummary(): SavingsSummary | undefined {
-  return useQuery(api.savings.queries.getSavingsSummary, {});
+  return useQuery(api.finance.savings.queries.getSavingsSummary, {});
 }
 
 export function useSavingsGoals(
   status?: SavingsGoalStatus,
 ): SavingsGoal[] | undefined {
-  const rows = useQuery(api.savings.queries.listSavingsGoals, { status });
+  const rows = useQuery(api.finance.savings.queries.listSavingsGoals, { status });
   return rows?.map(mapSavingsGoal);
 }
 
 export function useSavingsGoal(id?: string): SavingsGoal | undefined {
   const row = useQuery(
-    api.savings.queries.getSavingsGoalById,
+    api.finance.savings.queries.getSavingsGoalById,
     id ? { id: asId<"savingsGoals">(id) } : "skip",
   );
   return row ? mapSavingsGoal(row) : undefined;
@@ -81,7 +81,7 @@ export function useSavingsGoal(id?: string): SavingsGoal | undefined {
 export function useCreateSavingsGoal(): (
   payload: CreateSavingsGoalPayload,
 ) => Promise<void> {
-  const createSavingsGoal = useMutation(api.savings.mutations.createSavingsGoal);
+  const createSavingsGoal = useMutation(api.finance.savings.mutations.createSavingsGoal);
 
   return async (payload) => {
     await createSavingsGoal({
@@ -105,7 +105,7 @@ export function useUpdateSavingsGoal(): (
   id: string,
   payload: UpdateSavingsGoalPayload,
 ) => Promise<void> {
-  const updateSavingsGoal = useMutation(api.savings.mutations.updateSavingsGoal);
+  const updateSavingsGoal = useMutation(api.finance.savings.mutations.updateSavingsGoal);
 
   return async (id, payload) => {
     await updateSavingsGoal({
@@ -127,7 +127,7 @@ export function useUpdateSavingsGoal(): (
 }
 
 export function useArchiveSavingsGoal(): (id: string) => Promise<boolean> {
-  const archiveSavingsGoal = useMutation(api.savings.mutations.archiveSavingsGoal);
+  const archiveSavingsGoal = useMutation(api.finance.savings.mutations.archiveSavingsGoal);
 
   return (id) =>
     archiveSavingsGoal({

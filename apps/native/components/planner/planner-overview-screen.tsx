@@ -8,8 +8,8 @@ import { plannerApi } from "@/lib/planner/api";
 
 export function PlannerOverviewScreen() {
   const router = useRouter();
-  const home = useQuery(plannerApi["planner/queries"].getPlannerChatHome, {});
-  const plans = useQuery(plannerApi["planner/queries"].listPlans, { type: "week" }) as
+  const home = useQuery(plannerApi["productivity/planner/queries"].getPlannerChatHome, {});
+  const plans = useQuery(plannerApi["productivity/planner/queries"].listPlans, { type: "week" }) as
     | Array<{
         _id: string;
         title: string;
@@ -21,7 +21,7 @@ export function PlannerOverviewScreen() {
         recoverySuggested?: boolean;
       }>
     | undefined;
-  const threads = useQuery(plannerApi["planner/queries"].listPlannerChatThreads, {
+  const threads = useQuery(plannerApi["productivity/planner/queries"].listPlannerChatThreads, {
     paginationOpts: { cursor: null, numItems: 20 },
   }) as
     | {

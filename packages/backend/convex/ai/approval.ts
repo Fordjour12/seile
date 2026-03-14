@@ -11,6 +11,7 @@ const approvalActionValidator = v.object({
   argsJson: v.string(),
   domain: aiDomainValidator,
   previewText: v.string(),
+  expectedConfirmation: v.optional(v.string()),
 });
 
 export const createApprovalRequestInternal = internalMutation({
@@ -103,12 +104,13 @@ export function serializePendingActions(actions: PendingAction[]) {
     argsJson: JSON.stringify(action.args),
     domain: action.domain,
     previewText: action.previewText,
+    expectedConfirmation: action.expectedConfirmation,
   }));
 }
 
 export function deserializePendingAction(action: {
   toolName: string;
-  approvalMode: "auto" | "confirm" | "restricted";
+  approvalMode: "auto" | "confirm" | "confirmText" | "restricted";
   argsJson: string;
   domain:
     | "finance"
@@ -120,12 +122,21 @@ export function deserializePendingAction(action: {
     | "faith"
     | "space";
   previewText: string;
+  expectedConfirmation?: string;
 }) {
+  let args: Record<string, unknown>;
+  try {
+    args = JSON.parse(action.argsJson) as Record<string, unknown>;
+  } catch {
+    args = {};
+  }
+
   return {
     toolName: action.toolName,
     approvalMode: action.approvalMode,
-    args: JSON.parse(action.argsJson) as Record<string, unknown>,
+    args,
     domain: action.domain,
     previewText: action.previewText,
+    expectedConfirmation: action.expectedConfirmation,
   } satisfies PendingAction;
 }

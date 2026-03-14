@@ -89,7 +89,10 @@ export const startWeeklyPlannerCycles = internalAction({
       return { started: 0, skipped: 0, weekStart: getCurrentWeekStart() };
     }
 
-    const states = await ctx.runQuery(internalApi["planner/queries"].listAgentEnabledStates, {});
+    const states = await ctx.runQuery(
+      internalApi["productivity/planner/queries"].listAgentEnabledStates,
+      {},
+    );
     const weekStart = getCurrentWeekStart();
     let started = 0;
     let skipped = 0;
@@ -118,7 +121,7 @@ export const startWeeklyPlannerCycles = internalAction({
 });
 
 async function buildWeeklyGoal(ctx: any, userId: string, weekStart: string) {
-  const context = await ctx.runQuery(internalApi["planner/queries"].getPlannerAgentContext, {
+  const context = await ctx.runQuery(internalApi["productivity/planner/queries"].getPlannerAgentContext, {
     userId,
     weekStart,
   });

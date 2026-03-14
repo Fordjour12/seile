@@ -3,13 +3,13 @@ import { api as generatedApi } from "@seile/backend/convex/_generated/api";
 import type { Id, TableNames } from "@seile/backend/convex/_generated/dataModel";
 
 export const financeApi = {
-  accounts: generatedApi.accounts,
-  transactions: generatedApi.transactions,
-  budget: generatedApi.budget,
-  debt: generatedApi.debt,
-  savings: generatedApi.savings,
-  recurring: generatedApi.recurring,
-  subscriptions: generatedApi.subscriptions,
+  accounts: generatedApi.finance.accounts,
+  transactions: generatedApi.finance.transactions,
+  budget: generatedApi.finance.budget,
+  debt: generatedApi.finance.debt,
+  savings: generatedApi.finance.savings,
+  recurring: generatedApi.finance.recurring,
+  subscriptions: generatedApi.finance.subscriptions,
 };
 
 export function asId<TableName extends TableNames>(value: string): Id<TableName> {
