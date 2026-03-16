@@ -1,0 +1,433 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.screen::-webkit-scrollbar{display:none}
+
+/* Progress track */
+.progress-track{flex-shrink:0;padding:14px 24px 0;display:flex;align-items:center;gap:10px}
+.pt-back{font-size:13px;color:#555;cursor:pointer;flex-shrink:0}
+.pt-bar{flex:1;height:2px;background:#1a1a1e;border-radius:1px;overflow:hidden}
+.pt-fill{height:100%;background:#9b8fff;border-radius:1px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.pt-label{font-size:11px;color:#444;flex-shrink:0}
+
+/* Phase panels */
+.phase{display:none;flex:1;flex-direction:column;padding:0 24px;animation:fadeUp .3s ease}
+.phase.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Phase header */
+.phase-eyebrow{font-size:10px;color:#555;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 6px}
+.phase-title{font-size:22px;font-weight:500;color:#fff;line-height:1.3;margin-bottom:4px}
+.phase-sub{font-size:13px;color:#555;line-height:1.5;margin-bottom:16px}
+
+/* AI pre-read card */
+.ai-preread{background:#13131f;border:0.5px solid #2a2a36;border-radius:16px;padding:14px 16px;margin-bottom:14px}
+.apr-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.apr-pulse{width:6px;height:6px;border-radius:50%;background:#9b8fff;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.apr-label{font-size:11px;color:#6b5fff;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.apr-time{margin-left:auto;font-size:11px;color:#333}
+.apr-sentence{font-size:15px;color:#c0c0d0;line-height:1.6;margin-bottom:12px;font-weight:500}
+.apr-metrics{display:flex;gap:8px;margin-bottom:12px}
+.apm{flex:1;background:#1a1a24;border-radius:10px;padding:8px;text-align:center}
+.apm-num{font-size:18px;font-weight:500}
+.apm-label{font-size:10px;color:#555;margin-top:2px}
+.apr-flags{display:flex;flex-direction:column;gap:5px}
+.apf{display:flex;align-items:center;gap:7px;font-size:12px;color:#777}
+.apf-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+
+/* Domain health row */
+.domain-health-bars{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.dhb-row{display:flex;align-items:center;gap:8px}
+.dhb-name{font-size:11px;font-weight:500;width:60px;flex-shrink:0}
+.dhb-track{flex:1;height:5px;background:#1a1a1e;border-radius:3px;overflow:hidden}
+.dhb-fill{height:100%;border-radius:3px;transition:width .6s}
+.dhb-pct{font-size:11px;font-weight:500;width:28px;text-align:right;flex-shrink:0}
+
+/* Reflection questions */
+.question-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.qc-num{font-size:10px;color:#444;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.qc-question{font-size:15px;color:#e0e0ec;font-weight:500;line-height:1.4;margin-bottom:12px}
+.qc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.qc-chip{padding:7px 12px;background:#141418;border:0.5px solid #222;border-radius:20px;font-size:12px;color:#555;cursor:pointer;transition:all .15s}
+.qc-chip:hover{border-color:#333;color:#888}
+.qc-chip.selected{background:#1e1a30;border-color:#3d3570;color:#c8c0ff}
+.qc-or{font-size:11px;color:#333;margin:6px 0 8px}
+.qc-textarea{width:100%;background:#141418;border:0.5px solid #1e1e22;border-radius:10px;padding:10px 12px;font-size:13px;color:#d0d0dc;outline:none;resize:none;font-family:inherit;line-height:1.5;transition:border-color .15s}
+.qc-textarea:focus{border-color:#3d3570}
+.qc-textarea::placeholder{color:#2a2a2e}
+
+/* Energy sliders - compact version */
+.energy-mini{display:flex;gap:8px;margin-bottom:14px}
+.em-item{flex:1;background:#1a1a1e;border:0.5px solid #1e1e22;border-radius:12px;padding:10px}
+.em-label{font-size:10px;color:#555;margin-bottom:6px}
+.em-val{font-size:18px;font-weight:500;text-align:center;margin-bottom:6px}
+.em-track{height:4px;background:#1e1e22;border-radius:2px;overflow:hidden;cursor:pointer}
+.em-fill{height:100%;border-radius:2px;transition:width .15s}
+
+/* Proposal cards */
+.proposal-card{background:#1a1a24;border:0.5px solid #2d2a40;border-radius:16px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s}
+.proposal-card.done{opacity:.4;pointer-events:none}
+.pc-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pc-domain-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pc-domain{font-size:11px;font-weight:500}
+.pc-type{font-size:10px;color:#444;padding:1px 7px;background:#1e1e22;border-radius:20px}
+.pc-num{margin-left:auto;font-size:11px;color:#333}
+.pc-title{font-size:14px;font-weight:500;color:#d0d0dc;margin-bottom:4px;line-height:1.3}
+.pc-why{font-size:12px;color:#555;line-height:1.4;margin-bottom:10px}
+.pc-change{background:#141418;border-radius:8px;padding:8px 10px;margin-bottom:10px}
+.pc-change-row{display:flex;justify-content:space-between;padding:2px 0}
+.pcr-key{font-size:11px;color:#444}
+.pcr-val{font-size:11px;color:#b4adf5;font-weight:500}
+.pc-actions{display:flex;gap:6px}
+.pc-btn{flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:none;text-align:center;transition:opacity .15s}
+.pc-btn.approve{background:#9b8fff;color:#0e0e10}
+.pc-btn.skip{background:#1e1e28;color:#555;border:0.5px solid #2a2a2e}
+.pc-btn:hover{opacity:.8}
+
+/* Skip counter */
+.skip-counter{font-size:11px;color:#333;text-align:center;margin-bottom:8px}
+
+/* Next week preview */
+.week-preview{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:10px}
+.wp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.wp-title{font-size:13px;font-weight:500;color:#ccc}
+.wp-badge{font-size:10px;padding:3px 10px;background:#1e1a30;color:#9b8fff;border-radius:20px;border:0.5px solid #3d3570}
+.wp-days{display:flex;gap:5px}
+.wpd{flex:1;background:#141418;border-radius:8px;padding:8px 4px;text-align:center;border:0.5px solid #1e1e22}
+.wpd.today{background:#1e1a30;border-color:#3d3570}
+.wpd-letter{font-size:10px;color:#444;margin-bottom:4px}
+.wpd.today .wpd-letter{color:#9b8fff}
+.wpd-count{font-size:12px;font-weight:500;color:#666}
+.wpd.today .wpd-count{color:#c8c0ff}
+.wpd-dot{width:4px;height:4px;border-radius:50%;background:#333;margin:3px auto 0}
+.wpd.today .wpd-dot{background:#9b8fff}
+
+/* Finish state */
+.finish-card{background:#1a1a24;border:0.5px solid #2d2a40;border-radius:16px;padding:16px;margin-bottom:12px;text-align:center}
+.fc-icon{width:52px;height:52px;border-radius:50%;background:#2a2040;border:1.5px solid #9b8fff;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.fc-title{font-size:18px;font-weight:500;color:#e0e0ec;margin-bottom:6px}
+.fc-sub{font-size:13px;color:#555;line-height:1.5;margin-bottom:14px}
+.fc-stats{display:flex;gap:8px;margin-bottom:14px}
+.fcs{flex:1;background:#141418;border-radius:10px;padding:9px;text-align:center;border:0.5px solid #1e1e22}
+.fcs-num{font-size:17px;font-weight:500}
+.fcs-label{font-size:10px;color:#555;margin-top:2px}
+
+/* Bottom buttons */
+.phase-btns{flex-shrink:0;padding:14px 24px 32px;display:flex;gap:8px}
+.pb-primary{flex:1;padding:14px;background:#9b8fff;color:#0e0e10;border:none;border-radius:14px;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.pb-primary:hover{opacity:.85}
+.pb-ghost{padding:14px 16px;background:#1a1a1e;color:#555;border:0.5px solid #222;border-radius:14px;font-size:14px;cursor:pointer;flex-shrink:0}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="progress-track">
+      <span class="pt-back" onclick="prevPhase()">←</span>
+      <div class="pt-bar"><div class="pt-fill" id="pt-fill" style="width:0%"></div></div>
+      <span class="pt-label" id="pt-label">Phase 1 of 5</span>
+    </div>
+
+    <!-- ─── PHASE 1: AI pre-read ─── -->
+    <div class="phase active" id="phase1">
+      <div class="phase-eyebrow">Weekly review · Mar 10 – 14</div>
+      <div class="phase-title">Here's your week.</div>
+      <div class="phase-sub">I've read everything. Here's what I found before I ask you anything.</div>
+
+      <div class="ai-preread">
+        <div class="apr-header">
+          <div class="apr-pulse"></div>
+          <span class="apr-label">AI read</span>
+          <span class="apr-time">Generated Fri 8:00 PM</span>
+        </div>
+        <div class="apr-sentence">Faith and Career carried the week. Finance was the one open wound. Everything else held steady.</div>
+        <div class="apr-metrics">
+          <div class="apm"><div class="apm-num" style="color:#1d9e75">68%</div><div class="apm-label">Completion</div></div>
+          <div class="apm"><div class="apm-num" style="color:#9b8fff">11</div><div class="apm-label">Priorities</div></div>
+          <div class="apm"><div class="apm-num" style="color:#ba7517">2</div><div class="apm-label">Deferred</div></div>
+          <div class="apm"><div class="apm-num" style="color:#b4adf5">47</div><div class="apm-label">Habits</div></div>
+        </div>
+        <div class="apr-flags">
+          <div class="apf"><div class="apf-dot" style="background:#9b8fff"></div>Faith 85% — best week this month. Prayer 5/7, reading 6/7, fasting held.</div>
+          <div class="apf"><div class="apf-dot" style="background:#85b7eb"></div>Career 90% — deep work streak 5 days. UI/UX sprint 68% complete.</div>
+          <div class="apf"><div class="apf-dot" style="background:#ba7517"></div>Finance 55% — budget review deferred 4 days. Surplus pattern still there.</div>
+          <div class="apf"><div class="apf-dot" style="background:#f0997b"></div>Health 70% — 2 of 3 sessions done. Energy dipped Wednesday (fasting).</div>
+          <div class="apf"><div class="apf-dot" style="background:#ed93b1"></div>Wellness 60% — mood stable at 7.1. Stress lowest in 30 days.</div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:#444;font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Domain health</div>
+      <div class="domain-health-bars">
+        <div class="dhb-row"><span class="dhb-name" style="color:#85b7eb">Career</span><div class="dhb-track"><div class="dhb-fill" style="width:90%;background:#185FA5"></div></div><span class="dhb-pct" style="color:#85b7eb">90%</span></div>
+        <div class="dhb-row"><span class="dhb-name" style="color:#b4adf5">Faith</span><div class="dhb-track"><div class="dhb-fill" style="width:85%;background:#534AB7"></div></div><span class="dhb-pct" style="color:#b4adf5">85%</span></div>
+        <div class="dhb-row"><span class="dhb-name" style="color:#aaa">Tasks</span><div class="dhb-track"><div class="dhb-fill" style="width:72%;background:#5F5E5A"></div></div><span class="dhb-pct" style="color:#aaa">72%</span></div>
+        <div class="dhb-row"><span class="dhb-name" style="color:#f0997b">Health</span><div class="dhb-track"><div class="dhb-fill" style="width:70%;background:#993C1D"></div></div><span class="dhb-pct" style="color:#f0997b">70%</span></div>
+        <div class="dhb-row"><span class="dhb-name" style="color:#ed93b1">Wellness</span><div class="dhb-track"><div class="dhb-fill" style="width:60%;background:#993556"></div></div><span class="dhb-pct" style="color:#ed93b1">60%</span></div>
+        <div class="dhb-row"><span class="dhb-name" style="color:#ba7517">Finance</span><div class="dhb-track"><div class="dhb-fill" style="width:55%;background:#ba7517"></div></div><span class="dhb-pct" style="color:#ba7517">55%</span></div>
+      </div>
+    </div>
+
+    <!-- ─── PHASE 2: Reflection ─── -->
+    <div class="phase" id="phase2">
+      <div class="phase-eyebrow">Phase 2 · Reflection</div>
+      <div class="phase-title">Your turn.</div>
+      <div class="phase-sub">Three questions. Honest answers only — this shapes your next week.</div>
+
+      <div class="question-card">
+        <div class="qc-num">Question 1 of 3</div>
+        <div class="qc-question">What actually worked this week?</div>
+        <div class="qc-chips">
+          <div class="qc-chip selected" onclick="this.classList.toggle('selected')">Morning faith routine</div>
+          <div class="qc-chip selected" onclick="this.classList.toggle('selected')">Deep work blocks</div>
+          <div class="qc-chip" onclick="this.classList.toggle('selected')">Evening walks</div>
+          <div class="qc-chip" onclick="this.classList.toggle('selected')">Energy management</div>
+          <div class="qc-chip" onclick="this.classList.toggle('selected')">Task batching</div>
+        </div>
+        <div class="qc-or">or add your own</div>
+        <textarea class="qc-textarea" rows="2" placeholder="What felt good this week?"></textarea>
+      </div>
+
+      <div class="question-card">
+        <div class="qc-num">Question 2 of 3</div>
+        <div class="qc-question">What got in the way?</div>
+        <div class="qc-chips">
+          <div class="qc-chip selected" onclick="this.classList.toggle('selected')">Finance review kept slipping</div>
+          <div class="qc-chip" onclick="this.classList.toggle('selected')">Low energy mid-week</div>
+          <div class="qc-chip" onclick="this.classList.toggle('selected')">Unexpected interruptions</div>
+          <div class="qc-chip" onclick="this.classList.toggle('selected')">Overloaded Monday</div>
+        </div>
+        <textarea class="qc-textarea" rows="2" placeholder="What blocked you or slowed you down?"></textarea>
+      </div>
+
+      <div class="question-card">
+        <div class="qc-num">Question 3 of 3</div>
+        <div class="qc-question">How are you heading into next week?</div>
+        <div class="energy-mini">
+          <div class="em-item">
+            <div class="em-label">Energy</div>
+            <div class="em-val" id="er-energy" style="color:#ba7517">7</div>
+            <div class="em-track" onclick="setMini(this,'er-energy','#ba7517',event)">
+              <div class="em-fill" id="ef-energy" style="width:70%;background:#ba7517"></div>
+            </div>
+          </div>
+          <div class="em-item">
+            <div class="em-label">Readiness</div>
+            <div class="em-val" id="er-ready" style="color:#1d9e75">8</div>
+            <div class="em-track" onclick="setMini(this,'er-ready','#1d9e75',event)">
+              <div class="em-fill" id="ef-ready" style="width:80%;background:#1d9e75"></div>
+            </div>
+          </div>
+          <div class="em-item">
+            <div class="em-label">Stress</div>
+            <div class="em-val" id="er-stress" style="color:#e24b4a">3</div>
+            <div class="em-track" onclick="setMini(this,'er-stress','#e24b4a',event)">
+              <div class="em-fill" id="ef-stress" style="width:30%;background:#e24b4a"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PHASE 3: AI adjustments ─── -->
+    <div class="phase" id="phase3">
+      <div class="phase-eyebrow">Phase 3 · AI proposals</div>
+      <div class="phase-title">Here's what I'd change.</div>
+      <div class="phase-sub">Based on your week and your reflection. Approve what fits — skip what doesn't.</div>
+
+      <div class="skip-counter" id="skip-counter">3 proposals · 0 approved · 0 skipped</div>
+
+      <div class="proposal-card" id="prop1">
+        <div class="pc-header">
+          <div class="pc-domain-icon" style="background:#1a2a1e"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#6fcf97" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+          <span class="pc-domain" style="color:#1d9e75">Finance</span>
+          <span class="pc-type">Fix backlog</span>
+          <span class="pc-num">1 of 3</span>
+        </div>
+        <div class="pc-title">Schedule budget review — Monday 10 AM, 45 min</div>
+        <div class="pc-why">Deferred 4 days this week. Slotting it first on Monday before anything else can push it again.</div>
+        <div class="pc-change">
+          <div class="pc-change-row"><span class="pcr-key">Added to planner</span><span class="pcr-val">Mon Mar 17 · 10:00 AM</span></div>
+          <div class="pc-change-row"><span class="pcr-key">Priority level</span><span class="pcr-val">High · first item</span></div>
+        </div>
+        <div class="pc-actions">
+          <div class="pc-btn approve" onclick="approveProposal('prop1')">Approve</div>
+          <div class="pc-btn skip" onclick="skipProposal('prop1')">Skip</div>
+        </div>
+      </div>
+
+      <div class="proposal-card" id="prop2">
+        <div class="pc-header">
+          <div class="pc-domain-icon" style="background:#2a1510"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 13s-5-3.5-5-7a5 5 0 0110 0c0 3.5-5 7-5 7z" stroke="#f0997b" stroke-width="1.3"/></svg></div>
+          <span class="pc-domain" style="color:#d85a30">Health</span>
+          <span class="pc-type">Protect recovery</span>
+          <span class="pc-num">2 of 3</span>
+        </div>
+        <div class="pc-title">Keep training at 3× next week — not 4</div>
+        <div class="pc-why">Energy heading into next week is 7 — recovering but not full. 3 sessions with good sleep beats 4 with depleted energy.</div>
+        <div class="pc-change">
+          <div class="pc-change-row"><span class="pcr-key">Next week target</span><span class="pcr-val">3 sessions</span></div>
+          <div class="pc-change-row"><span class="pcr-key">Resets week after</span><span class="pcr-val">Mar 24 → back to 4×</span></div>
+        </div>
+        <div class="pc-actions">
+          <div class="pc-btn approve" onclick="approveProposal('prop2')">Approve</div>
+          <div class="pc-btn skip" onclick="skipProposal('prop2')">Skip</div>
+        </div>
+      </div>
+
+      <div class="proposal-card" id="prop3">
+        <div class="pc-domain-icon" style="display:none"></div>
+        <div class="pc-header">
+          <div class="pc-domain-icon" style="background:#2a2040"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="#9b8fff" opacity=".5"/></svg></div>
+          <span class="pc-domain" style="color:#9b8fff">Faith</span>
+          <span class="pc-type">Lock pattern</span>
+          <span class="pc-num">3 of 3</span>
+        </div>
+        <div class="pc-title">Formalise fasting intention — set Wednesday fast for next 4 weeks</div>
+        <div class="pc-why">3 consecutive Wednesdays held. The rhythm is already there — making it explicit protects it when the week gets busy.</div>
+        <div class="pc-change">
+          <div class="pc-change-row"><span class="pcr-key">Added to planner</span><span class="pcr-val">Wed × 4 weeks</span></div>
+          <div class="pc-change-row"><span class="pcr-key">Reminder</span><span class="pcr-val">Tue 9 PM · prepare</span></div>
+        </div>
+        <div class="pc-actions">
+          <div class="pc-btn approve" onclick="approveProposal('prop3')">Approve</div>
+          <div class="pc-btn skip" onclick="skipProposal('prop3')">Skip</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PHASE 4: Next week preview ─── -->
+    <div class="phase" id="phase4">
+      <div class="phase-eyebrow">Phase 4 · Next week</div>
+      <div class="phase-title">Next week, built.</div>
+      <div class="phase-sub">Draft plan with your approved changes applied. Review and adjust before saving.</div>
+
+      <div class="week-preview">
+        <div class="wp-header">
+          <span class="wp-title">Week of Mar 17 – 21</span>
+          <span class="wp-badge">Draft</span>
+        </div>
+        <div class="wp-days">
+          <div class="wpd today"><div class="wpd-letter">M</div><div class="wpd-count">4</div><div class="wpd-dot"></div></div>
+          <div class="wpd"><div class="wpd-letter">T</div><div class="wpd-count">3</div><div class="wpd-dot"></div></div>
+          <div class="wpd"><div class="wpd-letter">W</div><div class="wpd-count">4</div><div class="wpd-dot"></div></div>
+          <div class="wpd"><div class="wpd-letter">T</div><div class="wpd-count">3</div><div class="wpd-dot"></div></div>
+          <div class="wpd"><div class="wpd-letter">F</div><div class="wpd-count">2</div><div class="wpd-dot"></div></div>
+        </div>
+      </div>
+
+      <div style="background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:11px;color:#444;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Changes applied from proposals</div>
+        <div style="display:flex;flex-direction:column;gap:6px" id="applied-changes">
+          <div class="apf" style="font-size:12px"><div class="apf-dot" style="background:#1d9e75"></div>Budget review → Monday 10 AM · high priority</div>
+          <div class="apf" style="font-size:12px"><div class="apf-dot" style="background:#d85a30"></div>Health: 3 sessions target · resets Mar 24</div>
+          <div class="apf" style="font-size:12px"><div class="apf-dot" style="background:#9b8fff"></div>Wednesday fasting locked · × 4 weeks · Tue reminder</div>
+        </div>
+      </div>
+
+      <div style="background:#13131f;border:0.5px solid #2a2a36;border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;gap:8px">
+        <div style="width:5px;height:5px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s infinite"></div>
+        <div style="font-size:12px;color:#6b5fff;line-height:1.5">16 priorities across 5 days. Monday is your heaviest day intentionally — Finance first, then deep work. Friday stays light as usual.</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:4px">
+        <div style="flex:1;padding:10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:10px;font-size:12px;color:#9b8fff;cursor:pointer;text-align:center" onclick="sendPrompt('Adjust my next week plan — change the load or move items')">Adjust plan ↗</div>
+        <div style="flex:1;padding:10px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:10px;font-size:12px;color:#666;cursor:pointer;text-align:center" onclick="sendPrompt('Show me the full next week plan in the Planner screen')">View in Planner ↗</div>
+      </div>
+    </div>
+
+    <!-- ─── PHASE 5: Done ─── -->
+    <div class="phase" id="phase5">
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:20px">
+        <div class="finish-card">
+          <div class="fc-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#9b8fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="fc-title">Week reviewed.</div>
+          <div class="fc-sub">Plan saved. 3 changes applied. Next week starts Monday with the budget review first on the list.</div>
+          <div class="fc-stats">
+            <div class="fcs"><div class="fcs-num" style="color:#1d9e75">3</div><div class="fcs-label">Approved</div></div>
+            <div class="fcs"><div class="fcs-num" style="color:#9b8fff">16</div><div class="fcs-label">Priorities</div></div>
+            <div class="fcs"><div class="fcs-num" style="color:#b4adf5">68%</div><div class="fcs-label">This week</div></div>
+          </div>
+        </div>
+
+        <div style="background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px;margin-bottom:10px">
+          <div style="font-size:11px;color:#444;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">One thing to carry forward</div>
+          <div style="font-size:14px;color:#c8c0d0;line-height:1.6;font-style:italic">"The morning faith routine is your strongest anchor right now. Everything else in the week performs better when it holds."</div>
+          <div style="font-size:11px;color:#333;margin-top:6px">— AI · based on cross-domain patterns</div>
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;padding:12px;background:#9b8fff;border-radius:12px;font-size:14px;font-weight:500;color:#0e0e10;cursor:pointer;text-align:center" onclick="sendPrompt('Show me the Today screen — start of next week')">Go to Today ↗</div>
+          <div style="flex:1;padding:12px;background:#1a1a1e;border:0.5px solid #222;border-radius:12px;font-size:14px;color:#555;cursor:pointer;text-align:center" onclick="sendPrompt('Open the Planner to see my full next week plan')">View Planner</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="phase-btns" id="phase-btns">
+    <button class="pb-ghost" id="skip-btn" onclick="skipPhase()">Skip</button>
+    <button class="pb-primary" id="next-btn" onclick="nextPhase()">Continue</button>
+  </div>
+</div>
+</div>
+
+<script>
+var cur=1;var approved=0;var skipped=0;
+var phases=5;
+var pcts=[0,20,40,60,80,100];
+var labels=['Phase 1 of 5','Phase 2 of 5','Phase 3 of 5','Phase 4 of 5','Phase 5 of 5'];
+var skipLabels={1:'Skip read',2:'Skip reflection',3:'Skip proposals',4:'Save & finish',5:''};
+var nextLabels={1:'That\'s my week →','2':'Done reflecting →','3':'See next week →','4':'Save plan →','5':''};
+
+function goPhase(n){
+  document.getElementById('phase'+cur).classList.remove('active');
+  cur=n;
+  document.getElementById('phase'+n).classList.add('active');
+  document.getElementById('pt-fill').style.width=pcts[n]+'%';
+  document.getElementById('pt-label').textContent=labels[n-1];
+  var skipBtn=document.getElementById('skip-btn');
+  var nextBtn=document.getElementById('next-btn');
+  var btns=document.getElementById('phase-btns');
+  skipBtn.textContent=skipLabels[n]||'Skip';
+  nextBtn.textContent=nextLabels[n]||'Continue';
+  btns.style.display=n===5?'none':'flex';
+  document.querySelector('.screen').scrollTop=0;
+}
+function nextPhase(){if(cur<phases)goPhase(cur+1)}
+function prevPhase(){if(cur>1)goPhase(cur-1)}
+function skipPhase(){if(cur<phases)goPhase(cur+1)}
+
+function setMini(track,valId,color,e){
+  var rect=track.getBoundingClientRect();
+  var pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+  var val=Math.max(1,Math.min(10,Math.round(pct*10)));
+  var fillId=valId.replace('er-','ef-');
+  document.getElementById(valId).textContent=val;
+  document.getElementById(fillId).style.width=(val*10)+'%';
+}
+
+function approveProposal(id){
+  approved++;
+  document.getElementById(id).classList.add('done');
+  updateCounter();
+}
+function skipProposal(id){
+  skipped++;
+  document.getElementById(id).classList.add('done');
+  updateCounter();
+}
+function updateCounter(){
+  document.getElementById('skip-counter').textContent='3 proposals · '+approved+' approved · '+skipped+' skipped';
+}
+</script>

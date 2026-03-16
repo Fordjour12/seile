@@ -64,6 +64,32 @@ export default function AiLayout() {
           },
         }}
       />
+      <Stack.Screen
+        name="approvals"
+        options={{
+          title: "Approvals",
+          headerShown: true,
+          headerShadowVisible: false,
+          headerTintColor: theme.foreground,
+          headerBackTitle: "AI",
+          headerStyle: {
+            backgroundColor: theme.background,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="memory"
+        options={{
+          title: "AI Memory",
+          headerShown: true,
+          headerShadowVisible: false,
+          headerTintColor: theme.foreground,
+          headerBackTitle: "AI",
+          headerStyle: {
+            backgroundColor: theme.background,
+          },
+        }}
+      />
     </Stack>
   );
 }

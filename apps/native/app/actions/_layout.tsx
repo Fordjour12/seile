@@ -47,6 +47,22 @@ export default function ActionsLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="check-in"
+        options={{
+          title: "Check-In",
+          presentation: "modal",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="goal"
+        options={{
+          title: "New Goal",
+          presentation: "modal",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

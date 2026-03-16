@@ -1,0 +1,658 @@
+import { useMemo, useState, type ComponentProps, type ReactNode } from "react";
+import {
+  Pressable,
+  ScrollView,
+  Switch,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from "react-native";
+
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Redirect, useRouter } from "expo-router";
+import Animated, { FadeInDown } from "react-native-reanimated";
+
+import { Badge, Button, Card, Text } from "@/components";
+import { Container } from "@/components/container";
+import { useAuth } from "@/lib/auth-context";
+import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
+import { useColorScheme } from "@/lib/use-color-scheme";
+
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type PlanningStyle = "balanced" | "light" | "intensive";
+type AiTone = "direct" | "coaching" | "minimal";
+
+const STEP_PROGRESS: Record<Step, number> = {
+  1: 14,
+  2: 28,
+  3: 43,
+  4: 57,
+  5: 71,
+  6: 86,
+  7: 100,
+};
+
+const DOMAIN_OPTIONS = [
+  { id: "faith", label: "Faith", subtitle: "Prayer, fasting, devotionals", color: "#534AB7", background: "#2a2040", icon: "bullseye", pinned: true },
+  { id: "career", label: "Career", subtitle: "Projects, skills, goals", color: "#185FA5", background: "#1a1e2a", icon: "briefcase" },
+  { id: "finance", label: "Finance", subtitle: "Budget, savings, spending", color: "#0F6E56", background: "#1a2a1e", icon: "money" },
+  { id: "health", label: "Health", subtitle: "Training, sleep, energy", color: "#993C1D", background: "#2a1510", icon: "heartbeat" },
+  { id: "wellness", label: "Wellness", subtitle: "Mood, stress, rest", color: "#993556", background: "#2a1020", icon: "moon-o" },
+  { id: "tasks", label: "Tasks", subtitle: "To-dos, projects, inbox", color: "#5F5E5A", background: "#252525", icon: "check-square-o" },
+  { id: "relationships", label: "Relationships", subtitle: "Connections, family, friends", color: "#185FA5", background: "#0e1420", icon: "users" },
+  { id: "space", label: "Space", subtitle: "Home, zones, decor", color: "#854F0B", background: "#1a1408", icon: "home" },
+] as const;
+
+const STYLE_OPTIONS = [
+  {
+    id: "balanced" as const,
+    label: "Balanced",
+    description: "3-4 priorities per day. Full habits. One deep work block. Sustainable and steady.",
+    color: "#ba7517",
+  },
+  {
+    id: "light" as const,
+    label: "Light",
+    description: "2-3 priorities per day. Habits only. Space for the unexpected and recovery.",
+    color: "#1d9e75",
+  },
+  {
+    id: "intensive" as const,
+    label: "Intensive",
+    description: "4-5 priorities per day. Multiple deep work blocks. Stretch goals included.",
+    color: "#e24b4a",
+  },
+] as const;
+
+const TONE_OPTIONS = [
+  {
+    id: "direct" as const,
+    label: "Direct",
+    example: '"Finance review is 4 days overdue. Do it today."',
+  },
+  {
+    id: "coaching" as const,
+    label: "Coaching",
+    example: '"The finance review has been waiting - finishing it today would close the week cleanly."',
+  },
+  {
+    id: "minimal" as const,
+    label: "Minimal",
+    example: '"Finance: review due. 4 days elapsed."',
+  },
+] as const;
+
+const TONE_MESSAGES: Record<AiTone, string> = {
+  direct:
+    "I don't know much about you yet - and that's fine. I'll start light. Check-ins, habits, completions - I'll read them all. Nothing changes without your approval.",
+  coaching:
+    "I'm starting without much context, and that's okay. The best way I learn is by watching what you actually do. I'll offer gentle suggestions early on and sharpen them as the picture fills in.",
+  minimal:
+    "No data yet. Will build context from check-ins and completions. Approval required for all changes.",
+};
+
+const NOTIFICATION_OPTIONS = [
+  {
+    key: "morningBriefing",
+    title: "Morning briefing",
+    subtitle: "Today screen summary - 8:00 AM",
+  },
+  {
+    key: "approvalAlerts",
+    title: "Approval alerts",
+    subtitle: "Notify when AI has a change to propose",
+  },
+  {
+    key: "eveningCheckin",
+    title: "Evening check-in",
+    subtitle: "Quick mood + day rating - 9:00 PM",
+  },
+  {
+    key: "weeklyReview",
+    title: "Weekly review reminder",
+    subtitle: "Friday evening - review unlocks",
+  },
+  {
+    key: "habitReminders",
+    title: "Habit reminders",
+    subtitle: "Nudge for unchecked habits - evening",
+  },
+] as const;
+
+export function OnboardingScreen() {
+  const { user, hasHydrated } = useAuth();
+  const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const { height } = useWindowDimensions();
+  const router = useRouter();
+
+  const [step, setStep] = useState<Step>(1);
+  const [name, setName] = useState("");
+  const [domains, setDomains] = useState<string[]>(["faith", "career", "finance", "health"]);
+  const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
+  const [aiTone, setAiTone] = useState<AiTone>("direct");
+  const [notifications, setNotifications] = useState({
+    morningBriefing: true,
+    approvalAlerts: true,
+    eveningCheckin: true,
+    weeklyReview: true,
+    habitReminders: false,
+  });
+
+  const minHeight = Math.max(height - UI_PRESETS.spacing.screen * 2, 760);
+  const displayName = name.trim() || "Bobie";
+
+  const summaryDomains = useMemo(
+    () => DOMAIN_OPTIONS.filter((item) => domains.includes(item.id)),
+    [domains],
+  );
+
+  if (hasHydrated && user) {
+    return <Redirect href="/(tabs)/balance" />;
+  }
+
+  function nextStep() {
+    setStep((current) => Math.min(7, current + 1) as Step);
+  }
+
+  function previousStep() {
+    setStep((current) => Math.max(1, current - 1) as Step);
+  }
+
+  function toggleDomain(id: string) {
+    if (id === "faith") {
+      return;
+    }
+
+    setDomains((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  }
+
+  function toggleNotification(key: keyof typeof notifications) {
+    setNotifications((current) => ({ ...current, [key]: !current[key] }));
+  }
+
+  return (
+    <Container>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          minHeight,
+          paddingHorizontal: UI_PRESETS.spacing.section,
+          paddingTop: UI_PRESETS.spacing.lg,
+          paddingBottom: UI_PRESETS.spacing.section,
+          gap: 20,
+        }}
+      >
+        <View
+          style={{
+            height: 2,
+            borderRadius: 999,
+            backgroundColor: theme.border,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              width: `${STEP_PROGRESS[step]}%`,
+              height: "100%",
+              borderRadius: 999,
+              backgroundColor: "#9b8fff",
+            }}
+          />
+        </View>
+
+        {step === 1 ? (
+          <Animated.View entering={FadeInDown.duration(420)} style={{ flex: 1, justifyContent: "space-between", gap: 24, minHeight: minHeight - 120 }}>
+            <View style={{ flex: 1, justifyContent: "center", gap: 28, paddingBottom: 20 }}>
+              <View style={{ alignItems: "center", gap: 18 }}>
+                <View
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 999,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(26, 26, 36, 0.96)",
+                    borderWidth: 1,
+                    borderColor: "rgba(45, 42, 64, 0.8)",
+                  }}
+                >
+                  <View
+                    style={{
+                      position: "absolute",
+                      inset: -8,
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: "rgba(45, 42, 64, 0.8)",
+                    }}
+                  />
+                  <View
+                    style={{
+                      position: "absolute",
+                      inset: -18,
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: "rgba(30, 30, 40, 0.8)",
+                    }}
+                  />
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 999,
+                      backgroundColor: "rgba(30, 26, 48, 0.96)",
+                      borderWidth: 1,
+                      borderColor: "rgba(61, 53, 112, 0.9)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 999,
+                        backgroundColor: "#9b8fff",
+                      }}
+                    />
+                  </View>
+                </View>
+                <View style={{ gap: 10, alignItems: "center" }}>
+                  <Text selectable variant="muted" style={{ textTransform: "uppercase", letterSpacing: 1, color: theme.mutedForeground, fontFamily: "Geist", fontWeight: "700" }}>
+                    Welcome to
+                  </Text>
+                  <Text selectable style={{ color: theme.foreground, fontFamily: "Geist", fontSize: 34, fontWeight: "700" }}>
+                    Life OS
+                  </Text>
+                  <Text selectable variant="small" style={{ color: theme.mutedForeground, textAlign: "center", lineHeight: 22, maxWidth: 300 }}>
+                    One intelligent system for every domain of your life. Calm, personal, yours.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{ gap: 8 }}>
+                {[
+                  ["#9b8fff", "Plans your week using your real patterns"],
+                  ["#1d9e75", "Tracks 8 life domains in one place"],
+                  ["#ba7517", "Never changes anything without your approval"],
+                ].map(([color, label]) => (
+                  <Card key={label} style={{ borderRadius: 12, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 999, backgroundColor: color }} />
+                    <Text selectable variant="small" style={{ color: theme.foreground }}>
+                      {label}
+                    </Text>
+                  </Card>
+                ))}
+              </View>
+            </View>
+
+            <Button title="Get started" onPress={nextStep} style={{ borderRadius: 14, borderCurve: "continuous" }} />
+          </Animated.View>
+        ) : null}
+
+        {step === 2 ? (
+          <StepShell
+            stepLabel="Step 1 of 6"
+            title="What should I call you?"
+            subtitle="This is your personal space. Just your first name is fine."
+            onBack={previousStep}
+            onNext={nextStep}
+            nextDisabled={!name.trim()}
+          >
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Your name..."
+              placeholderTextColor={theme.mutedForeground}
+              style={{
+                minHeight: 54,
+                borderRadius: 14,
+                borderCurve: "continuous",
+                borderWidth: 1,
+                borderColor: theme.border,
+                backgroundColor: theme.card,
+                color: theme.foreground,
+                paddingHorizontal: 16,
+                fontFamily: "Figtree",
+                fontSize: 18,
+              }}
+            />
+            <Text selectable variant="muted" style={{ color: theme.mutedForeground }}>
+              Used in greetings and planning sessions - nothing else.
+            </Text>
+          </StepShell>
+        ) : null}
+
+        {step === 3 ? (
+          <StepShell
+            stepLabel="Step 2 of 6"
+            title="Which areas of life matter most to you?"
+            subtitle="Select all that apply. You can change this any time."
+            onBack={previousStep}
+            onNext={nextStep}
+          >
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {DOMAIN_OPTIONS.map((item) => {
+                const selected = domains.includes(item.id);
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => toggleDomain(item.id)}
+                    style={({ pressed }) => ({
+                      width: "48.5%",
+                      minWidth: 150,
+                      borderRadius: 16,
+                      borderCurve: "continuous",
+                      padding: 14,
+                      borderWidth: selected ? 1.5 : 1,
+                      borderColor: selected ? item.color : theme.border,
+                      backgroundColor: selected ? `${item.color}22` : theme.card,
+                      opacity: pressed ? 0.88 : 1,
+                    })}
+                  >
+                    <View style={{ position: "absolute", top: 10, right: 10, width: 16, height: 16, borderRadius: 999, borderWidth: 1.5, borderColor: selected ? item.color : theme.border, backgroundColor: selected ? item.color : "transparent", alignItems: "center", justifyContent: "center" }}>
+                      {selected ? <FontAwesome name="check" size={8} color="#ffffff" /> : null}
+                    </View>
+                    <View style={{ width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: item.background, marginBottom: 8 }}>
+                      <FontAwesome name={item.icon as ComponentProps<typeof FontAwesome>["name"]} size={14} color={item.color} />
+                    </View>
+                    <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700", marginBottom: 2 }}>
+                      {item.label}
+                    </Text>
+                    <Text selectable variant="muted" style={{ color: theme.mutedForeground, lineHeight: 16 }}>
+                      {item.subtitle}
+                    </Text>
+                    {item.id === "faith" ? (
+                      <Badge variant="outline" color="secondary" style={{ alignSelf: "flex-start", marginTop: 10 }}>
+                        Pinned
+                      </Badge>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text selectable variant="muted" style={{ color: theme.mutedForeground, textAlign: "center" }}>
+              Faith is always active and pinned first.
+            </Text>
+          </StepShell>
+        ) : null}
+
+        {step === 4 ? (
+          <StepShell
+            stepLabel="Step 3 of 6"
+            title="How do you like to plan?"
+            subtitle="This shapes how the AI builds your weekly plan. You can change it any time."
+            onBack={previousStep}
+            onNext={nextStep}
+          >
+            <View style={{ gap: 8 }}>
+              {STYLE_OPTIONS.map((item) => {
+                const selected = planningStyle === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => setPlanningStyle(item.id)}
+                    style={({ pressed }) => ({
+                      borderRadius: 16,
+                      borderCurve: "continuous",
+                      padding: 16,
+                      backgroundColor: selected ? "rgba(30, 22, 40, 0.96)" : theme.card,
+                      borderWidth: 1,
+                      borderColor: selected ? "rgba(61, 53, 112, 0.9)" : theme.border,
+                      opacity: pressed ? 0.88 : 1,
+                      flexDirection: "row",
+                      alignItems: "flex-start",
+                      gap: 12,
+                    })}
+                  >
+                    <View style={{ width: 10, height: 10, borderRadius: 999, backgroundColor: item.color, marginTop: 3 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text selectable style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700", marginBottom: 3 }}>
+                        {item.label}
+                      </Text>
+                      <Text selectable variant="small" style={{ color: theme.mutedForeground, lineHeight: 18 }}>
+                        {item.description}
+                      </Text>
+                    </View>
+                    <View style={{ width: 18, height: 18, borderRadius: 999, borderWidth: 1.5, borderColor: selected ? "#9b8fff" : theme.border, backgroundColor: selected ? "#9b8fff" : "transparent" }}>
+                      {selected ? <View style={{ position: "absolute", inset: 5, borderRadius: 999, backgroundColor: "#0e0e10" }} /> : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </StepShell>
+        ) : null}
+
+        {step === 5 ? (
+          <StepShell
+            stepLabel="Step 4 of 6"
+            title="How should the AI talk to you?"
+            subtitle="This changes how suggestions, nudges, and summaries are written throughout the app."
+            onBack={previousStep}
+            onNext={nextStep}
+          >
+            <View style={{ gap: 8 }}>
+              {TONE_OPTIONS.map((item) => {
+                const selected = aiTone === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => setAiTone(item.id)}
+                    style={({ pressed }) => ({
+                      borderRadius: 14,
+                      borderCurve: "continuous",
+                      padding: 14,
+                      backgroundColor: selected ? "rgba(30, 22, 40, 0.96)" : theme.card,
+                      borderWidth: 1,
+                      borderColor: selected ? "rgba(61, 53, 112, 0.9)" : theme.border,
+                      opacity: pressed ? 0.88 : 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 12,
+                    })}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700" }}>
+                        {item.label}
+                      </Text>
+                      <Text selectable variant="muted" style={{ color: theme.mutedForeground, marginTop: 2, fontStyle: "italic", lineHeight: 17 }}>
+                        {item.example}
+                      </Text>
+                    </View>
+                    <View style={{ width: 18, height: 18, borderRadius: 999, borderWidth: 1.5, borderColor: selected ? "#9b8fff" : theme.border, backgroundColor: selected ? "#9b8fff" : "transparent" }}>
+                      {selected ? <View style={{ position: "absolute", inset: 3, borderRadius: 999, backgroundColor: "#0e0e10" }} /> : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Card style={{ borderRadius: 10, borderCurve: "continuous", padding: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card }}>
+              <Text selectable variant="muted" style={{ color: theme.mutedForeground, marginBottom: 4 }}>
+                Also applies to
+              </Text>
+              <Text selectable variant="small" style={{ color: theme.foreground, lineHeight: 20 }}>
+                Today suggestions - domain nudges - plan summaries - weekly review - approval language
+              </Text>
+            </Card>
+          </StepShell>
+        ) : null}
+
+        {step === 6 ? (
+          <StepShell
+            stepLabel="Step 5 of 6"
+            title="When should I check in with you?"
+            subtitle="You can adjust timing later in Profile. These are just defaults."
+            onBack={previousStep}
+            onNext={nextStep}
+          >
+            <View style={{ gap: 8 }}>
+              {NOTIFICATION_OPTIONS.map((item) => {
+                const active = notifications[item.key];
+                return (
+                  <Pressable
+                    key={item.key}
+                    onPress={() => toggleNotification(item.key)}
+                    style={({ pressed }) => ({
+                      borderRadius: 14,
+                      borderCurve: "continuous",
+                      padding: 14,
+                      backgroundColor: theme.card,
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                      opacity: pressed ? 0.88 : 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 12,
+                    })}
+                  >
+                    <View style={{ width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(30, 26, 48, 0.96)" }}>
+                      <FontAwesome name="clock-o" size={12} color="#9b8fff" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700" }}>
+                        {item.title}
+                      </Text>
+                      <Text selectable variant="muted" style={{ color: theme.mutedForeground, marginTop: 2 }}>
+                        {item.subtitle}
+                      </Text>
+                    </View>
+                    <Switch
+                      value={active}
+                      onValueChange={() => toggleNotification(item.key)}
+                      trackColor={{ false: "#252530", true: "#9b8fff" }}
+                      thumbColor="#ffffff"
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </StepShell>
+        ) : null}
+
+        {step === 7 ? (
+          <Animated.View entering={FadeInDown.duration(420)} style={{ flex: 1, justifyContent: "space-between", gap: 20, minHeight: minHeight - 120 }}>
+            <View style={{ gap: 16 }}>
+              <View style={{ gap: 8 }}>
+                <Text selectable variant="muted" style={{ textTransform: "uppercase", letterSpacing: 1, color: theme.mutedForeground, fontFamily: "Geist", fontWeight: "700" }}>
+                  Step 6 of 6
+                </Text>
+                <Text selectable style={{ color: theme.foreground, fontFamily: "Geist", fontSize: 28, fontWeight: "700", lineHeight: 34 }}>
+                  You're set up, {displayName}.
+                </Text>
+                <Text selectable variant="small" style={{ color: theme.mutedForeground, lineHeight: 22 }}>
+                  Here's what I know heading into your first week. I'll learn more as you use the app.
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                {summaryDomains.map((item) => (
+                  <View key={item.id} style={{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: item.background, borderWidth: 1, borderColor: `${item.color}66` }}>
+                    <Text selectable variant="muted" style={{ color: item.color, fontFamily: "Geist", fontWeight: "700" }}>
+                      {item.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <Card
+                style={{
+                  borderRadius: 16,
+                  borderCurve: "continuous",
+                  padding: 16,
+                  gap: 10,
+                  borderWidth: 1,
+                  borderColor: "rgba(42, 42, 64, 0.9)",
+                  backgroundColor: "rgba(19, 19, 31, 0.96)",
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: "#9b8fff" }} />
+                  <Text selectable variant="muted" style={{ color: theme.primary, textTransform: "uppercase", letterSpacing: 1, fontFamily: "Geist", fontWeight: "700" }}>
+                    First message
+                  </Text>
+                </View>
+                <Text selectable variant="small" style={{ color: "#b0b0c0", lineHeight: 22 }}>
+                  {TONE_MESSAGES[aiTone]}
+                </Text>
+              </Card>
+
+              <Card style={{ borderRadius: 14, borderCurve: "continuous", padding: 14, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card }}>
+                <Text selectable variant="muted" style={{ color: theme.mutedForeground, textTransform: "uppercase", letterSpacing: 1, fontFamily: "Geist", fontWeight: "700", marginBottom: 8 }}>
+                  What happens next
+                </Text>
+                <View style={{ gap: 8 }}>
+                  {[
+                    ["#9b8fff", "You'll land on Today - your daily command center"],
+                    ["#1d9e75", "The AI will suggest your first priorities and habits"],
+                    ["#ba7517", "Your first weekly plan generates after your first check-in"],
+                    ["#534AB7", "Faith is pinned first - log your first prayer anytime"],
+                  ].map(([color, label]) => (
+                    <View key={label} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                      <View style={{ width: 5, height: 5, borderRadius: 999, backgroundColor: color, marginTop: 6 }} />
+                      <Text selectable variant="small" style={{ color: theme.foreground, lineHeight: 18, flex: 1 }}>
+                        {label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              <Button title="Create account" onPress={() => router.push("/(auth)/sign-up")} style={{ borderRadius: 14, borderCurve: "continuous" }} />
+              <Button title="I already have one" variant="outline" onPress={() => router.push("/(auth)/sign-in")} style={{ borderRadius: 14, borderCurve: "continuous" }} />
+              <Button title="Back" variant="ghost" onPress={previousStep} style={{ borderRadius: 14, borderCurve: "continuous" }} />
+            </View>
+          </Animated.View>
+        ) : null}
+      </ScrollView>
+    </Container>
+  );
+}
+
+function StepShell({
+  stepLabel,
+  title,
+  subtitle,
+  children,
+  onBack,
+  onNext,
+  nextDisabled = false,
+}: {
+  stepLabel: string;
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+  onBack: () => void;
+  onNext: () => void;
+  nextDisabled?: boolean;
+}) {
+  return (
+    <Animated.View entering={FadeInDown.duration(420)} style={{ flex: 1, justifyContent: "space-between", gap: 20 }}>
+      <View style={{ gap: 16 }}>
+        <View style={{ gap: 10 }}>
+          <Text selectable variant="muted" style={{ textTransform: "uppercase", letterSpacing: 1, fontFamily: "Geist", fontWeight: "700", color: "#666" }}>
+            {stepLabel}
+          </Text>
+          <Text selectable style={{ color: "#ffffff", fontFamily: "Geist", fontSize: 28, fontWeight: "700", lineHeight: 34 }}>
+            {title}
+          </Text>
+          <Text selectable variant="small" style={{ color: "#666", lineHeight: 22 }}>
+            {subtitle}
+          </Text>
+        </View>
+        {children}
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 8, paddingTop: 8 }}>
+        <Button title="←" variant="outline" onPress={onBack} style={{ paddingHorizontal: 18, borderRadius: 14, borderCurve: "continuous" }} />
+        <Button title="Continue" onPress={onNext} disabled={nextDisabled} style={{ flex: 1, borderRadius: 14, borderCurve: "continuous" }} />
+      </View>
+    </Animated.View>
+  );
+}

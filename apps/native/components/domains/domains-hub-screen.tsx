@@ -143,6 +143,7 @@ const DOMAIN_ITEMS: DomainCardItem[] = [
     nudge: "",
     section: "inactive",
     inactiveLabel: "No activity this week · tap to activate",
+    href: "/(tabs)/domains/relationships",
   },
   {
     id: "space",
@@ -156,6 +157,7 @@ const DOMAIN_ITEMS: DomainCardItem[] = [
     nudge: "",
     section: "inactive",
     inactiveLabel: "Single-room zone · tap to activate",
+    href: "/(tabs)/domains/space",
   },
 ];
 

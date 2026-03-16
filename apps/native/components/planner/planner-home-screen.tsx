@@ -190,7 +190,7 @@ export function PlannerHomeScreen() {
               </Text>
             </View>
             <Pressable
-              onPress={() => router.push("/(tabs)/planner/balance" as never)}
+              onPress={() => router.push("/(tabs)/planner/weekly-review" as never)}
               style={({ pressed }) => ({
                 borderRadius: 999,
                 borderCurve: "continuous",
@@ -285,8 +285,9 @@ export function PlannerHomeScreen() {
             <ControlPill label="Lighten load" warn onPress={() => router.push("/(tabs)/ai/weekly-plan" as never)} theme={theme} />
             <ControlPill label="Regenerate" onPress={() => router.push("/(tabs)/ai/weekly-plan" as never)} theme={theme} />
             <ControlPill label="Add priority" onPress={() => router.push("/actions/quick-add" as never)} theme={theme} />
+            <ControlPill label="New goal" onPress={() => router.push("/actions/goal" as never)} theme={theme} />
             <ControlPill label="Energy forecast" onPress={() => router.push("/(tabs)/domains/wellness" as never)} theme={theme} />
-            <ControlPill label="Balance view" onPress={() => router.push("/(tabs)/planner/balance" as never)} theme={theme} />
+            <ControlPill label="Balance view" onPress={() => router.push("/(tabs)/balance" as never)} theme={theme} />
           </ScrollView>
         </Animated.View>
 
@@ -355,7 +356,7 @@ export function PlannerHomeScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(220).duration(420)}>
-          <Pressable onPress={() => router.push("/(tabs)/planner/balance" as never)} style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}>
+          <Pressable onPress={() => router.push("/(tabs)/planner/weekly-review" as never)} style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}>
             <Card
               style={{
                 borderRadius: 20,

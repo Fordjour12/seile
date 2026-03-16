@@ -35,6 +35,13 @@ export default function PlannerLayout() {
         }}
       />
       <Stack.Screen
+        name="weekly-review"
+        options={{
+          title: "Weekly Review",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
         name="chat"
         options={{
           title: "Chat",
