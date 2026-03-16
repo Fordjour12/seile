@@ -1,0 +1,441 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.bg-screen{flex:1;position:relative;overflow:hidden}
+.bg-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:10;display:flex;flex-direction:column;justify-content:flex-end}
+.today-ghost{padding:20px 24px;opacity:.35}
+.tg-greeting{font-size:22px;font-weight:500;color:#fff;margin-bottom:10px}
+.tg-line{height:11px;background:#1a1a1e;border-radius:6px;margin-bottom:8px}
+.tg-card{background:#1a1a1e;border-radius:14px;padding:14px;margin-bottom:8px}
+.tg-card-line{height:9px;background:#222;border-radius:5px;margin-bottom:6px}
+
+/* Sheet */
+.sheet{background:#141418;border-radius:24px 24px 0 0;border-top:0.5px solid #2a2a2e;padding:0 0 44px;z-index:20}
+.sheet-handle{width:36px;height:4px;background:#252530;border-radius:2px;margin:12px auto 0}
+
+.type-selector{display:flex;gap:6px;padding:14px 20px 0;overflow-x:auto}
+.type-selector::-webkit-scrollbar{display:none}
+.type-pill{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:0.5px solid #2a2a2e;background:#1a1a1e;cursor:pointer;white-space:nowrap;transition:all .18s;flex-shrink:0}
+.type-pill svg{flex-shrink:0}
+.type-pill span{font-size:12px;font-weight:500;color:#666}
+.type-pill.active{border-width:1px}
+.type-pill.active span{color:#e0e0ec}
+.type-pill.t-task.active{background:#1e1e28;border-color:#444}
+.type-pill.t-habit.active{background:#1a2a1e;border-color:#2a4a30}
+.type-pill.t-expense.active{background:#1a2414;border-color:#2a4020}
+.type-pill.t-prayer.active{background:#1e1a30;border-color:#3d3570}
+.type-pill.t-note.active{background:#1e1808;border-color:#3d3010}
+
+/* Panels */
+.panel{display:none;padding:14px 20px 0}
+.panel.active{display:block}
+
+.p-label{font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+
+/* Main input */
+.main-input{width:100%;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:14px 16px;font-size:16px;color:#e8e8ec;outline:none;transition:border-color .15s;resize:none;font-family:inherit;line-height:1.4}
+.main-input:focus{border-color:#3d3570}
+.main-input::placeholder{color:#3a3a44}
+
+/* Meta row */
+.meta-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.meta-chip{display:flex;align-items:center;gap:5px;padding:7px 12px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:20px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.meta-chip:hover{border-color:#444}
+.meta-chip span{font-size:12px;color:#888;white-space:nowrap}
+.meta-chip.set span{color:#ccc}
+.meta-chip.set{border-color:#333}
+.mc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* Domain picker */
+.domain-picker{display:none;margin-top:10px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;overflow:hidden}
+.domain-picker.open{display:block}
+.dp-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:0.5px solid #1e1e22;cursor:pointer;transition:background .15s}
+.dp-item:last-child{border-bottom:none}
+.dp-item:hover{background:#1e1e24}
+.dp-bar{width:3px;height:18px;border-radius:2px;flex-shrink:0}
+.dp-name{font-size:13px;color:#ccc;flex:1}
+.dp-check{font-size:12px;color:#9b8fff;opacity:0}
+.dp-item.selected .dp-check{opacity:1}
+
+/* Priority row (tasks) */
+.priority-row{display:flex;gap:6px;margin-top:10px}
+.pri-btn{flex:1;padding:8px 0;border-radius:10px;border:0.5px solid #2a2a2e;background:#1a1a1e;font-size:12px;font-weight:500;color:#555;cursor:pointer;text-align:center;transition:all .15s}
+.pri-btn:hover{color:#aaa}
+.pri-btn.active.high{background:#2a1510;border-color:#3d2010;color:#f0997b}
+.pri-btn.active.med{background:#1e1a30;border-color:#3d3570;color:#9b8fff}
+.pri-btn.active.low{background:#1a1a1e;border-color:#333;color:#888}
+
+/* Habit frequency */
+.freq-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.freq-btn{padding:7px 14px;border-radius:20px;border:0.5px solid #2a2a2e;background:#1a1a1e;font-size:12px;font-weight:500;color:#555;cursor:pointer;transition:all .15s;flex-shrink:0}
+.freq-btn.active{background:#1a2a1e;border-color:#2a4a30;color:#6fcf97}
+
+/* Amount input (expense) */
+.amount-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.currency{font-size:18px;font-weight:500;color:#555;flex-shrink:0}
+.amount-input{flex:1;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:12px;padding:11px 14px;font-size:22px;font-weight:500;color:#1d9e75;outline:none;transition:border-color .15s;font-family:inherit}
+.amount-input:focus{border-color:#2a4030}
+.amount-input::placeholder{color:#2a2a2e}
+
+/* AI suggestion strip */
+.ai-strip{margin-top:12px;padding:10px 12px;background:#13131f;border:0.5px solid #2a2a30;border-radius:12px;display:flex;align-items:center;gap:8px}
+.ai-strip-dot{width:5px;height:5px;border-radius:50%;background:#9b8fff;flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ai-strip-text{font-size:12px;color:#6b5fff;flex:1;line-height:1.4}
+
+/* Save button */
+.save-row{padding:14px 20px 0;display:flex;gap:8px}
+.save-btn{flex:1;padding:14px;border-radius:14px;border:none;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.save-btn.primary{background:#9b8fff;color:#0e0e10}
+.save-btn.primary:hover{opacity:.85}
+.save-btn.cancel{background:#1a1a1e;color:#555;border:0.5px solid #2a2a2e}
+.save-btn.cancel:hover{color:#888}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="bg-screen">
+    <div class="today-ghost">
+      <div class="tg-greeting">Good morning, Bobie.</div>
+      <div class="tg-line" style="width:65%"></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:80%"></div><div class="tg-card-line" style="width:55%"></div></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:90%"></div><div class="tg-card-line" style="width:60%"></div></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:70%"></div><div class="tg-card-line" style="width:45%"></div></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:85%"></div><div class="tg-card-line" style="width:50%"></div></div>
+    </div>
+
+    <div class="bg-dim">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+
+        <!-- Type selector -->
+        <div class="type-selector">
+          <div class="type-pill t-task active" id="tp-task" onclick="setType('task')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="3" width="10" height="10" rx="2" stroke="#888" stroke-width="1.5"/><path d="M6 8l1.5 1.5L10 6" stroke="#888" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Task</span>
+          </div>
+          <div class="type-pill t-habit" id="tp-habit" onclick="setType('habit')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#555" stroke-width="1.5"/><path d="M5.5 8l2 2 3-3" stroke="#555" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Habit</span>
+          </div>
+          <div class="type-pill t-expense" id="tp-expense" onclick="setType('expense')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span>Expense</span>
+          </div>
+          <div class="type-pill t-prayer" id="tp-prayer" onclick="setType('prayer')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#555" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#555" opacity=".5"/></svg>
+            <span>Prayer</span>
+          </div>
+          <div class="type-pill t-note" id="tp-note" onclick="setType('note')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="2" stroke="#555" stroke-width="1.5"/><path d="M6 6h4M6 9h2" stroke="#555" stroke-width="1" stroke-linecap="round"/></svg>
+            <span>Note</span>
+          </div>
+        </div>
+
+        <!-- TASK panel -->
+        <div class="panel active" id="panel-task">
+          <textarea class="main-input" rows="2" placeholder="What needs to get done?" id="task-input" oninput="updateTaskAI(this.value)"></textarea>
+
+          <div class="priority-row">
+            <div class="pri-btn high" id="pri-high" onclick="setPri('high')">High</div>
+            <div class="pri-btn med active" id="pri-med" onclick="setPri('med')">Medium</div>
+            <div class="pri-btn low" id="pri-low" onclick="setPri('low')">Low</div>
+          </div>
+
+          <div class="meta-row">
+            <div class="meta-chip set" id="mc-domain-task" onclick="toggleDomainPicker('dp-task')">
+              <div class="mc-dot" id="domain-dot-task" style="background:#185FA5"></div>
+              <span id="domain-label-task">Career</span>
+            </div>
+            <div class="meta-chip" onclick="this.querySelector('span').textContent='Today';this.classList.add('set')">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#666" stroke-width="1.2"/><path d="M7 4v3l2 1.5" stroke="#666" stroke-width="1" stroke-linecap="round"/></svg>
+              <span>Due date</span>
+            </div>
+            <div class="meta-chip" onclick="this.querySelector('span').textContent='Deep work';this.classList.add('set')">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="3" width="10" height="1.2" rx=".6" fill="#666"/><rect x="2" y="6" width="7" height="1.2" rx=".6" fill="#666"/><rect x="2" y="9" width="9" height="1.2" rx=".6" fill="#666"/></svg>
+              <span>Time slot</span>
+            </div>
+          </div>
+
+          <div class="domain-picker" id="dp-task">
+            <div class="dp-item" onclick="selectDomain('task','Career','#185FA5',this)"><div class="dp-bar" style="background:#185FA5"></div><span class="dp-name">Career</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('task','Faith','#534AB7',this)"><div class="dp-bar" style="background:#534AB7"></div><span class="dp-name">Faith</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('task','Finance','#0F6E56',this)"><div class="dp-bar" style="background:#0F6E56"></div><span class="dp-name">Finance</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('task','Health','#993C1D',this)"><div class="dp-bar" style="background:#993C1D"></div><span class="dp-name">Health</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('task','Wellness','#993556',this)"><div class="dp-bar" style="background:#993556"></div><span class="dp-name">Wellness</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('task','Tasks','#5F5E5A',this)"><div class="dp-bar" style="background:#5F5E5A"></div><span class="dp-name">Tasks</span><span class="dp-check">✓</span></div>
+          </div>
+
+          <div class="ai-strip" id="task-ai-strip" style="display:none">
+            <div class="ai-strip-dot"></div>
+            <div class="ai-strip-text" id="task-ai-text">Looks like a Career task — slotting for your next deep work block.</div>
+          </div>
+        </div>
+
+        <!-- HABIT panel -->
+        <div class="panel" id="panel-habit">
+          <textarea class="main-input" rows="2" placeholder="Name this habit…" id="habit-input"></textarea>
+
+          <div class="freq-row">
+            <div class="freq-btn active" onclick="setFreq(this)">Daily</div>
+            <div class="freq-btn" onclick="setFreq(this)">Weekdays</div>
+            <div class="freq-btn" onclick="setFreq(this)">3× week</div>
+            <div class="freq-btn" onclick="setFreq(this)">Weekly</div>
+            <div class="freq-btn" onclick="setFreq(this)">Custom</div>
+          </div>
+
+          <div class="meta-row" style="margin-top:10px">
+            <div class="meta-chip set" id="mc-domain-habit" onclick="toggleDomainPicker('dp-habit')">
+              <div class="mc-dot" id="domain-dot-habit" style="background:#534AB7"></div>
+              <span id="domain-label-habit">Faith</span>
+            </div>
+            <div class="meta-chip" onclick="this.querySelector('span').textContent='6:00 AM';this.classList.add('set')">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#666" stroke-width="1.2"/><path d="M7 4v3l2 1.5" stroke="#666" stroke-width="1" stroke-linecap="round"/></svg>
+              <span>Reminder time</span>
+            </div>
+          </div>
+
+          <div class="domain-picker" id="dp-habit">
+            <div class="dp-item selected" onclick="selectDomain('habit','Faith','#534AB7',this)"><div class="dp-bar" style="background:#534AB7"></div><span class="dp-name">Faith</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('habit','Health','#993C1D',this)"><div class="dp-bar" style="background:#993C1D"></div><span class="dp-name">Health</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('habit','Wellness','#993556',this)"><div class="dp-bar" style="background:#993556"></div><span class="dp-name">Wellness</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('habit','Career','#185FA5',this)"><div class="dp-bar" style="background:#185FA5"></div><span class="dp-name">Career</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('habit','Finance','#0F6E56',this)"><div class="dp-bar" style="background:#0F6E56"></div><span class="dp-name">Finance</span><span class="dp-check">✓</span></div>
+          </div>
+
+          <div class="ai-strip">
+            <div class="ai-strip-dot"></div>
+            <div class="ai-strip-text">Faith habits added here appear on Today automatically and feed your streak tracking.</div>
+          </div>
+        </div>
+
+        <!-- EXPENSE panel -->
+        <div class="panel" id="panel-expense">
+          <div class="amount-row">
+            <span class="currency">GH₵</span>
+            <input class="amount-input" type="number" placeholder="0" id="expense-amount" oninput="updateExpenseAI(this.value)"/>
+          </div>
+
+          <textarea class="main-input" rows="1" placeholder="What was this for?" style="margin-top:10px;font-size:14px" id="expense-desc"></textarea>
+
+          <div class="meta-row">
+            <div class="meta-chip set" onclick="toggleDomainPicker('dp-expense')">
+              <div class="mc-dot" style="background:#185FA5"></div>
+              <span>General</span>
+            </div>
+            <div class="meta-chip" onclick="this.querySelector('span').textContent='Today';this.classList.add('set')">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#666" stroke-width="1.2"/><path d="M7 4v3l2 1.5" stroke="#666" stroke-width="1" stroke-linecap="round"/></svg>
+              <span>Date</span>
+            </div>
+            <div class="meta-chip" onclick="this.querySelector('span').textContent='One-time';this.classList.add('set')">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M9 4l3 3-3 3" stroke="#666" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Recurring?</span>
+            </div>
+          </div>
+
+          <div class="domain-picker" id="dp-expense">
+            <div class="dp-item selected" onclick="selectDomainRaw(this,'#185FA5','General','expense-cat')"><div class="dp-bar" style="background:#185FA5"></div><span class="dp-name">General</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomainRaw(this,'#0F6E56','Food','expense-cat')"><div class="dp-bar" style="background:#0F6E56"></div><span class="dp-name">Food</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomainRaw(this,'#378ADD','Transport','expense-cat')"><div class="dp-bar" style="background:#378ADD"></div><span class="dp-name">Transport</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomainRaw(this,'#534AB7','Subscriptions','expense-cat')"><div class="dp-bar" style="background:#534AB7"></div><span class="dp-name">Subscriptions</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomainRaw(this,'#9b8fff','Tithe','expense-cat')"><div class="dp-bar" style="background:#9b8fff"></div><span class="dp-name">Tithe</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomainRaw(this,'#5F5E5A','Other','expense-cat')"><div class="dp-bar" style="background:#5F5E5A"></div><span class="dp-name">Other</span><span class="dp-check">✓</span></div>
+          </div>
+
+          <div class="ai-strip" id="expense-ai-strip" style="display:none">
+            <div class="ai-strip-dot"></div>
+            <div class="ai-strip-text" id="expense-ai-text">GH₵ 88 left in your daily budget today.</div>
+          </div>
+        </div>
+
+        <!-- PRAYER panel -->
+        <div class="panel" id="panel-prayer">
+          <textarea class="main-input" rows="3" placeholder="Log a prayer, intention, or reflection…" id="prayer-input"></textarea>
+
+          <div class="meta-row">
+            <div class="meta-chip set">
+              <div class="mc-dot" style="background:#534AB7"></div>
+              <span>Faith</span>
+            </div>
+            <div class="meta-chip" onclick="cycleType(this)">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#666" stroke-width="1.2"/><circle cx="7" cy="7" r="2" fill="#666" opacity=".5"/></svg>
+              <span id="prayer-type-label">Prayer</span>
+            </div>
+            <div class="meta-chip" onclick="this.querySelector('span').textContent='Morning';this.classList.add('set')">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#666" stroke-width="1.2"/><path d="M7 4v3l2 1.5" stroke="#666" stroke-width="1" stroke-linecap="round"/></svg>
+              <span>Time of day</span>
+            </div>
+          </div>
+
+          <div class="ai-strip">
+            <div class="ai-strip-dot"></div>
+            <div class="ai-strip-text">This will count toward your daily prayer streak. Currently 5 days — keep it going.</div>
+          </div>
+        </div>
+
+        <!-- NOTE panel -->
+        <div class="panel" id="panel-note">
+          <textarea class="main-input" rows="4" placeholder="Write a quick note…" id="note-input"></textarea>
+
+          <div class="meta-row">
+            <div class="meta-chip set" onclick="toggleDomainPicker('dp-note')">
+              <div class="mc-dot" id="domain-dot-note" style="background:#5F5E5A"></div>
+              <span id="domain-label-note">General</span>
+            </div>
+            <div class="meta-chip" onclick="this.querySelector('span').textContent='Pinned';this.classList.add('set')">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M7 2v8M4 7l3 3 3-3" stroke="#666" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Pin note</span>
+            </div>
+          </div>
+
+          <div class="domain-picker" id="dp-note">
+            <div class="dp-item selected" onclick="selectDomain('note','General','#5F5E5A',this)"><div class="dp-bar" style="background:#5F5E5A"></div><span class="dp-name">General</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('note','Career','#185FA5',this)"><div class="dp-bar" style="background:#185FA5"></div><span class="dp-name">Career</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('note','Faith','#534AB7',this)"><div class="dp-bar" style="background:#534AB7"></div><span class="dp-name">Faith</span><span class="dp-check">✓</span></div>
+            <div class="dp-item" onclick="selectDomain('note','Finance','#0F6E56',this)"><div class="dp-bar" style="background:#0F6E56"></div><span class="dp-name">Finance</span><span class="dp-check">✓</span></div>
+          </div>
+        </div>
+
+        <div class="save-row">
+          <button class="save-btn cancel" onclick="sendPrompt('Dismiss the quick add sheet')">Cancel</button>
+          <button class="save-btn primary" onclick="saveItem()">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var currentType='task';
+var prayerTypes=['Prayer','Gratitude','Reflection','Fasting','Devotional'];
+var prayerTypeIdx=0;
+
+function setType(t){
+  var types=['task','habit','expense','prayer','note'];
+  types.forEach(function(n){
+    document.getElementById('tp-'+n).classList.remove('active');
+    document.getElementById('panel-'+n).classList.remove('active');
+    var svg=document.getElementById('tp-'+n).querySelector('svg path,svg circle,svg rect');
+  });
+  document.getElementById('tp-'+t).classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+  currentType=t;
+  closeAllPickers();
+}
+
+function toggleDomainPicker(id){
+  var dp=document.getElementById(id);
+  var wasOpen=dp.classList.contains('open');
+  closeAllPickers();
+  if(!wasOpen)dp.classList.add('open');
+}
+
+function closeAllPickers(){
+  document.querySelectorAll('.domain-picker').forEach(function(d){d.classList.remove('open')});
+}
+
+function selectDomain(type,name,color,el){
+  var picker=el.closest('.domain-picker');
+  picker.querySelectorAll('.dp-item').forEach(function(i){i.classList.remove('selected')});
+  el.classList.add('selected');
+  document.getElementById('domain-dot-'+type).style.background=color;
+  document.getElementById('domain-label-'+type).textContent=name;
+  setTimeout(function(){picker.classList.remove('open')},200);
+}
+
+function selectDomainRaw(el,color,name,contextId){
+  var picker=el.closest('.domain-picker');
+  picker.querySelectorAll('.dp-item').forEach(function(i){i.classList.remove('selected')});
+  el.classList.add('selected');
+  var chip=picker.previousElementSibling;
+  if(chip&&chip.classList.contains('meta-row')){
+    var dot=chip.querySelector('.mc-dot');
+    var lbl=chip.querySelector('span');
+    if(dot)dot.style.background=color;
+    if(lbl)lbl.textContent=name;
+  }
+  setTimeout(function(){picker.classList.remove('open')},200);
+}
+
+function setPri(level){
+  ['high','med','low'].forEach(function(l){
+    var b=document.getElementById('pri-'+l);
+    b.classList.remove('active');
+  });
+  document.getElementById('pri-'+level).classList.add('active');
+}
+
+function setFreq(el){
+  document.querySelectorAll('.freq-btn').forEach(function(b){b.classList.remove('active')});
+  el.classList.add('active');
+}
+
+function cycleType(chip){
+  prayerTypeIdx=(prayerTypeIdx+1)%prayerTypes.length;
+  document.getElementById('prayer-type-label').textContent=prayerTypes[prayerTypeIdx];
+  chip.classList.add('set');
+}
+
+var aiTimer=null;
+function updateTaskAI(val){
+  clearTimeout(aiTimer);
+  var strip=document.getElementById('task-ai-strip');
+  var text=document.getElementById('task-ai-text');
+  if(val.length<4){strip.style.display='none';return;}
+  aiTimer=setTimeout(function(){
+    var lower=val.toLowerCase();
+    var msg='Tap to assign to a domain and due date.';
+    if(lower.includes('pray')||lower.includes('fast')||lower.includes('bible')||lower.includes('devotion')){
+      msg='Looks like a Faith task — assigned automatically.';
+      document.getElementById('domain-dot-task').style.background='#534AB7';
+      document.getElementById('domain-label-task').textContent='Faith';
+    } else if(lower.includes('budget')||lower.includes('finance')||lower.includes('money')||lower.includes('tithe')){
+      msg='Looks like a Finance task — assigned automatically.';
+      document.getElementById('domain-dot-task').style.background='#0F6E56';
+      document.getElementById('domain-label-task').textContent='Finance';
+    } else if(lower.includes('convex')||lower.includes('schema')||lower.includes('design')||lower.includes('code')||lower.includes('build')){
+      msg='Career task detected — slotting for your next deep work block.';
+      document.getElementById('domain-dot-task').style.background='#185FA5';
+      document.getElementById('domain-label-task').textContent='Career';
+    } else if(lower.includes('walk')||lower.includes('run')||lower.includes('train')||lower.includes('gym')){
+      msg='Health task — added to your Health domain.';
+      document.getElementById('domain-dot-task').style.background='#993C1D';
+      document.getElementById('domain-label-task').textContent='Health';
+    }
+    text.textContent=msg;
+    strip.style.display='flex';
+  },400);
+}
+
+function updateExpenseAI(val){
+  var strip=document.getElementById('expense-ai-strip');
+  var text=document.getElementById('expense-ai-text');
+  if(!val||val==0){strip.style.display='none';return;}
+  var n=parseFloat(val);
+  var remaining=88;
+  if(n>remaining){
+    text.textContent='This would exceed your daily budget by GH₵ '+Math.round(n-remaining)+'. You have GH₵ '+remaining+' left today.';
+  } else {
+    text.textContent='GH₵ '+(remaining-Math.round(n))+' remaining in your daily budget after this.';
+  }
+  strip.style.display='flex';
+}
+
+function saveItem(){
+  sendPrompt('Quick add saved — show me how the '+currentType+' appears in Life OS after being added');
+}
+
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.domain-picker')&&!e.target.closest('.meta-chip')){
+    closeAllPickers();
+  }
+});
+</script>
