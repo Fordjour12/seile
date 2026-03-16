@@ -28,6 +28,13 @@ export default function PlannerLayout() {
         }}
       />
       <Stack.Screen
+        name="balance"
+        options={{
+          title: "Balance",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
         name="chat"
         options={{
           title: "Chat",

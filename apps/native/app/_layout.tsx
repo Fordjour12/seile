@@ -196,6 +196,10 @@ function StackLayout() {
           options={{ title: "Tabs", headerShown: false }}
         />
         <Stack.Screen
+          name="actions"
+          options={{ title: "Actions", headerShown: false }}
+        />
+        <Stack.Screen
           name="modal"
           options={{ title: "Modal", presentation: "modal" }}
         />

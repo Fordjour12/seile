@@ -1,0 +1,387 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;background:#0e0e10;overflow-y:auto;padding:0 0 110px}
+.screen::-webkit-scrollbar{display:none}
+
+.header{padding:20px 24px 0}
+.h-row{display:flex;justify-content:space-between;align-items:center}
+.h-title{font-size:26px;font-weight:500;color:#fff}
+.h-sub{font-size:13px;color:#555;margin-top:4px}
+.review-btn{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:20px;padding:7px 14px;font-size:12px;color:#888;cursor:pointer;white-space:nowrap;transition:background .15s}
+.review-btn:hover{background:#252530}
+
+.week-strip{display:flex;gap:6px;padding:16px 24px 0;overflow-x:auto}
+.week-strip::-webkit-scrollbar{display:none}
+.day-pill{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;border-radius:12px;cursor:pointer;flex-shrink:0;transition:all .15s;border:0.5px solid transparent}
+.day-pill .day-letter{font-size:11px;color:#555;font-weight:500}
+.day-pill .day-num{font-size:16px;font-weight:500;color:#666}
+.day-pill .day-dot{width:4px;height:4px;border-radius:50%;margin-top:2px}
+.day-pill.today{background:#1e1a30;border-color:#3d3570}
+.day-pill.today .day-letter{color:#9b8fff}
+.day-pill.today .day-num{color:#c8c0ff}
+.day-pill.today .day-dot{background:#9b8fff}
+.day-pill.has-items .day-dot{background:#444}
+.day-pill:hover:not(.today){background:#1a1a1e}
+.day-pill.selected:not(.today){background:#1a2030;border-color:#2a3a5a}
+.day-pill.selected:not(.today) .day-num{color:#85b7eb}
+
+.ai-summary{margin:16px 24px 0;background:#13131a;border:0.5px solid #2d2a40;border-radius:16px;padding:14px 16px}
+.ai-sum-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-pulse{width:7px;height:7px;border-radius:50%;background:#9b8fff;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.ai-sum-label{font-size:11px;font-weight:500;color:#6b5fff;letter-spacing:.06em;text-transform:uppercase}
+.ai-sum-badge{margin-left:auto;font-size:11px;color:#555}
+.ai-sum-sentence{font-size:14px;color:#c0c0cc;line-height:1.5;margin-bottom:12px}
+.ai-metrics{display:flex;gap:8px}
+.ai-metric{flex:1;background:#1a1a24;border-radius:10px;padding:8px 10px;text-align:center}
+.ai-metric-num{font-size:18px;font-weight:500;color:#e0e0ec}
+.ai-metric-label{font-size:10px;color:#555;margin-top:2px}
+
+.controls{display:flex;gap:8px;padding:12px 24px 0;overflow-x:auto}
+.controls::-webkit-scrollbar{display:none}
+.ctrl-pill{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:20px;padding:7px 14px;font-size:12px;color:#888;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.ctrl-pill:hover{background:#252530;color:#ccc}
+.ctrl-pill.warn{border-color:#3d3010;color:#ba7517;background:#1a1508}
+
+.section{padding:16px 24px 0}
+.section-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-label span{font-size:11px;color:#444;font-weight:400;text-transform:none;letter-spacing:0}
+
+.day-card{background:#1a1a1e;border-radius:16px;border:0.5px solid #2a2a2e;margin-bottom:8px;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.day-card:hover{border-color:#333}
+.day-card.active{border-color:#3d3570}
+.day-card-header{padding:12px 16px;display:flex;align-items:center;gap:10px}
+.dc-day{font-size:13px;font-weight:500;color:#888}
+.dc-day.today-label{color:#9b8fff}
+.dc-items{font-size:12px;color:#555;margin-left:auto;flex-shrink:0}
+.dc-load{width:40px;height:4px;background:#252530;border-radius:2px;overflow:hidden}
+.dc-load-fill{height:100%;border-radius:2px;transition:width .3s}
+.dc-load-fill.low{background:#1d9e75}
+.dc-load-fill.med{background:#ba7517}
+.dc-load-fill.high{background:#e24b4a}
+.dc-chevron{width:14px;height:14px;flex-shrink:0;opacity:.3;transition:transform .2s}
+.day-card.open .dc-chevron{transform:rotate(90deg)}
+
+.day-card-body{display:none;padding:0 16px 12px;border-top:0.5px solid #222}
+.day-card.open .day-card-body{display:block}
+
+.plan-block{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid #1e1e22}
+.plan-block:last-child{border-bottom:none}
+.pb-bar{width:3px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:36px}
+.pb-bar.faith{background:#534AB7}
+.pb-bar.finance{background:#1d9e75}
+.pb-bar.career{background:#378add}
+.pb-bar.health{background:#d85a30}
+.pb-bar.wellness{background:#d4537e}
+.pb-bar.tasks{background:#888}
+.pb-title{font-size:13px;color:#ccc;font-weight:500;line-height:1.3;flex:1}
+.pb-meta{display:flex;gap:6px;align-items:center;margin-top:3px}
+.pb-tag{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500}
+.pb-tag.faith{background:#2a2040;color:#b4adf5}
+.pb-tag.finance{background:#1a2a1e;color:#6fcf97}
+.pb-tag.career{background:#1a1e2a;color:#85b7eb}
+.pb-tag.health{background:#2a1a1a;color:#f0997b}
+.pb-tag.wellness{background:#2a1020;color:#ed93b1}
+.pb-tag.tasks{background:#252525;color:#888}
+.pb-time{font-size:11px;color:#444}
+.pb-check{width:18px;height:18px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;margin-top:2px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.pb-check.done{background:#9b8fff;border-color:#9b8fff}
+.pb-check.done::after{content:'';width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block}
+
+.energy-note{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#151515;border-radius:8px;margin-top:8px}
+.e-icon{font-size:12px;color:#555;flex-shrink:0}
+.e-text{font-size:11px;color:#555;line-height:1.4;font-style:italic}
+
+.review-card{margin:16px 24px 0;background:#0f1a12;border:0.5px solid #1a3020;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s}
+.review-card:hover{border-color:#2a5030}
+.review-icon{width:32px;height:32px;border-radius:10px;background:#1a3020;border:0.5px solid #2a5030;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.review-icon svg{width:16px;height:16px;fill:#1d9e75}
+.review-body{flex:1}
+.review-title{font-size:14px;font-weight:500;color:#c8e8d4}
+.review-sub{font-size:12px;color:#555;margin-top:2px}
+.review-arrow{font-size:16px;color:#1d9e75;opacity:.7}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#0e0e10;border-top:0.5px solid #1e1e22;padding:12px 0 28px;display:flex;justify-content:space-around;align-items:center}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.4;transition:opacity .15s}
+.nav-item.active{opacity:1}
+.nav-icon{width:22px;height:22px;border-radius:6px;background:#1a2a1e;display:flex;align-items:center;justify-content:center}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#1d9e75}
+.nav-label{font-size:10px;color:#888;font-weight:500}
+.nav-item.active .nav-label{color:#1d9e75}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;align-items:center;font-size:11px;color:#fff">
+      <span>▮▮▮</span><span>WiFi</span>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="header">
+      <div class="h-row">
+        <div class="h-title">Planner</div>
+        <button class="review-btn" onclick="sendPrompt('Walk me through the weekly review flow in detail')">Review week ↗</button>
+      </div>
+      <div class="h-sub">Week of Mar 10 – 16, 2026</div>
+    </div>
+
+    <div class="week-strip" id="week-strip">
+      <div class="day-pill has-items" data-day="0" onclick="selectDay(0)"><span class="day-letter">M</span><span class="day-num">10</span><span class="day-dot"></span></div>
+      <div class="day-pill has-items" data-day="1" onclick="selectDay(1)"><span class="day-letter">T</span><span class="day-num">11</span><span class="day-dot"></span></div>
+      <div class="day-pill has-items" data-day="2" onclick="selectDay(2)"><span class="day-letter">W</span><span class="day-num">12</span><span class="day-dot"></span></div>
+      <div class="day-pill has-items" data-day="3" onclick="selectDay(3)"><span class="day-letter">T</span><span class="day-num">13</span><span class="day-dot"></span></div>
+      <div class="day-pill today" data-day="4" onclick="selectDay(4)"><span class="day-letter">F</span><span class="day-num">14</span><span class="day-dot"></span></div>
+      <div class="day-pill" data-day="5" onclick="selectDay(5)"><span class="day-letter">S</span><span class="day-num">15</span><span class="day-dot"></span></div>
+      <div class="day-pill" data-day="6" onclick="selectDay(6)"><span class="day-letter">S</span><span class="day-num">16</span><span class="day-dot"></span></div>
+    </div>
+
+    <div class="ai-summary">
+      <div class="ai-sum-header">
+        <div class="ai-pulse"></div>
+        <span class="ai-sum-label">Week summary</span>
+        <span class="ai-sum-badge">Updated 6:00 AM</span>
+      </div>
+      <div class="ai-sum-sentence">Heavy career week with strong faith consistency. Finance needs attention — budget review still pending from Monday.</div>
+      <div class="ai-metrics">
+        <div class="ai-metric"><div class="ai-metric-num">11</div><div class="ai-metric-label">Priorities</div></div>
+        <div class="ai-metric"><div class="ai-metric-num" style="color:#1d9e75">68%</div><div class="ai-metric-label">Done so far</div></div>
+        <div class="ai-metric"><div class="ai-metric-num" style="color:#ba7517">2</div><div class="ai-metric-label">Deferred</div></div>
+        <div class="ai-metric"><div class="ai-metric-num" style="color:#9b8fff">5</div><div class="ai-metric-label">Days active</div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="ctrl-pill warn" onclick="sendPrompt('Lighten my load for the rest of this week')">↓ Lighten load</div>
+      <div class="ctrl-pill" onclick="sendPrompt('Regenerate my weekly plan lightly based on current progress')">↺ Regenerate</div>
+      <div class="ctrl-pill" onclick="sendPrompt('Add a priority to this week')">+ Add priority</div>
+      <div class="ctrl-pill" onclick="sendPrompt('Show me the energy forecast for this week based on my check-ins')">Energy forecast</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Daily breakdown <span>tap a day to expand</span></div>
+
+      <div class="day-card" id="dc0" onclick="toggleDay(0)">
+        <div class="day-card-header">
+          <span class="dc-day">Monday · Mar 10</span>
+          <div class="dc-load"><div class="dc-load-fill high" style="width:90%"></div></div>
+          <span class="dc-items">4 items</span>
+          <svg class="dc-chevron" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="day-card-body">
+          <div class="plan-block">
+            <div class="pb-bar faith"></div>
+            <div style="flex:1"><div class="pb-title">Morning devotional + prayer</div><div class="pb-meta"><span class="pb-tag faith">Faith</span><span class="pb-time">6:00 AM</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar finance"></div>
+            <div style="flex:1"><div class="pb-title">Q2 budget variance review</div><div class="pb-meta"><span class="pb-tag finance">Finance</span><span class="pb-time">10:00 AM</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar career"></div>
+            <div style="flex:1"><div class="pb-title">Life OS schema finalization</div><div class="pb-meta"><span class="pb-tag career">Career</span><span class="pb-time">Deep work</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar tasks"></div>
+            <div style="flex:1"><div class="pb-title">Reply to 3 pending messages</div><div class="pb-meta"><span class="pb-tag tasks">Tasks</span><span class="pb-time">Afternoon</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+          <div class="energy-note"><span class="e-icon">⚡</span><span class="e-text">High cognitive load day. You flagged energy at 6/10 this morning — consider deferring the message reply to Tuesday.</span></div>
+        </div>
+      </div>
+
+      <div class="day-card" id="dc1" onclick="toggleDay(1)">
+        <div class="day-card-header">
+          <span class="dc-day">Tuesday · Mar 11</span>
+          <div class="dc-load"><div class="dc-load-fill med" style="width:55%"></div></div>
+          <span class="dc-items">3 items</span>
+          <svg class="dc-chevron" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="day-card-body">
+          <div class="plan-block">
+            <div class="pb-bar faith"></div>
+            <div style="flex:1"><div class="pb-title">Bible reading — Romans 8</div><div class="pb-meta"><span class="pb-tag faith">Faith</span><span class="pb-time">Morning</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar career"></div>
+            <div style="flex:1"><div class="pb-title">Convex cron job implementation</div><div class="pb-meta"><span class="pb-tag career">Career</span><span class="pb-time">Deep work</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar wellness"></div>
+            <div style="flex:1"><div class="pb-title">Evening decompression — walk</div><div class="pb-meta"><span class="pb-tag wellness">Wellness</span><span class="pb-time">6:30 PM</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-card" id="dc2" onclick="toggleDay(2)">
+        <div class="day-card-header">
+          <span class="dc-day">Wednesday · Mar 12</span>
+          <div class="dc-load"><div class="dc-load-fill med" style="width:60%"></div></div>
+          <span class="dc-items">3 items</span>
+          <svg class="dc-chevron" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="day-card-body">
+          <div class="plan-block">
+            <div class="pb-bar faith"></div>
+            <div style="flex:1"><div class="pb-title">Fasting day — intention set</div><div class="pb-meta"><span class="pb-tag faith">Faith</span><span class="pb-time">All day</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar career"></div>
+            <div style="flex:1"><div class="pb-title">AI layer userContext design</div><div class="pb-meta"><span class="pb-tag career">Career</span><span class="pb-time">Deep work</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar health"></div>
+            <div style="flex:1"><div class="pb-title">30 min strength training</div><div class="pb-meta"><span class="pb-tag health">Health</span><span class="pb-time">5:00 PM</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-card" id="dc3" onclick="toggleDay(3)">
+        <div class="day-card-header">
+          <span class="dc-day">Thursday · Mar 13</span>
+          <div class="dc-load"><div class="dc-load-fill low" style="width:40%"></div></div>
+          <span class="dc-items">2 items</span>
+          <svg class="dc-chevron" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="day-card-body">
+          <div class="plan-block">
+            <div class="pb-bar faith"></div>
+            <div style="flex:1"><div class="pb-title">Gratitude journaling</div><div class="pb-meta"><span class="pb-tag faith">Faith</span><span class="pb-time">Morning</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar career"></div>
+            <div style="flex:1"><div class="pb-title">UI/UX blueprint review</div><div class="pb-meta"><span class="pb-tag career">Career</span><span class="pb-time">Afternoon</span></div></div>
+            <div class="pb-check done" onclick="event.stopPropagation()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-card active open" id="dc4" onclick="toggleDay(4)">
+        <div class="day-card-header">
+          <span class="dc-day today-label">Today · Mar 14</span>
+          <div class="dc-load"><div class="dc-load-fill med" style="width:65%"></div></div>
+          <span class="dc-items">3 items</span>
+          <svg class="dc-chevron" style="transform:rotate(90deg)" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="#9b8fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="day-card-body" style="display:block">
+          <div class="plan-block">
+            <div class="pb-bar faith"></div>
+            <div style="flex:1"><div class="pb-title">Morning devotional + Bible reading</div><div class="pb-meta"><span class="pb-tag faith">Faith</span><span class="pb-time">6:00 AM</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar career"></div>
+            <div style="flex:1"><div class="pb-title">Life OS — Today screen design</div><div class="pb-meta"><span class="pb-tag career">Career</span><span class="pb-time">Deep work</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+          <div class="plan-block">
+            <div class="pb-bar finance"></div>
+            <div style="flex:1"><div class="pb-title">Review budget variance (deferred)</div><div class="pb-meta"><span class="pb-tag finance">Finance</span><span class="pb-time" style="color:#ba7517">Deferred from Mon</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+          <div class="energy-note"><span class="e-icon">✦</span><span class="e-text">Friday — lighter load intentional. Wrap the week well. Weekly review unlocks tonight.</span></div>
+        </div>
+      </div>
+
+      <div class="day-card" id="dc5" onclick="toggleDay(5)">
+        <div class="day-card-header">
+          <span class="dc-day" style="color:#666">Saturday · Mar 15</span>
+          <div class="dc-load"><div class="dc-load-fill low" style="width:25%"></div></div>
+          <span class="dc-items">1 item</span>
+          <svg class="dc-chevron" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="day-card-body">
+          <div class="plan-block">
+            <div class="pb-bar wellness"></div>
+            <div style="flex:1"><div class="pb-title">Rest + reflection day</div><div class="pb-meta"><span class="pb-tag wellness">Wellness</span><span class="pb-time">Open</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-card" id="dc6" onclick="toggleDay(6)">
+        <div class="day-card-header">
+          <span class="dc-day" style="color:#666">Sunday · Mar 16</span>
+          <div class="dc-load" style="opacity:.4"><div class="dc-load-fill low" style="width:20%"></div></div>
+          <span class="dc-items" style="color:#444">1 item</span>
+          <svg class="dc-chevron" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="day-card-body">
+          <div class="plan-block">
+            <div class="pb-bar faith"></div>
+            <div style="flex:1"><div class="pb-title">Church + weekly review</div><div class="pb-meta"><span class="pb-tag faith">Faith</span><span class="pb-time">Morning</span></div></div>
+            <div class="pb-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card" onclick="sendPrompt('Walk me through the weekly review flow in detail')">
+      <div class="review-icon"><svg viewBox="0 0 16 16"><path d="M13 8A5 5 0 113 8a5 5 0 0110 0z" fill="none" stroke="#1d9e75" stroke-width="1.5"/><path d="M8 6v3l2 1" stroke="#1d9e75" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="review-body">
+        <div class="review-title">Weekly review ready Friday night</div>
+        <div class="review-sub">Generates after your last check-in · takes ~8 min</div>
+      </div>
+      <span class="review-arrow">›</span>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="sendPrompt('Design the Today screen for Life OS')">
+      <div class="nav-icon" style="background:#2a2040"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#1d9e75"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div>
+      <div class="nav-dot"></div>
+      <span class="nav-label">Planner</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Design the Domains hub screen for Life OS')">
+      <div class="nav-icon" style="background:#2a1a1a"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#d85a30" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#d85a30"/></svg></div>
+      <span class="nav-label">Domains</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Design the AI chat screen for Life OS')">
+      <div class="nav-icon" style="background:#2a2010"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#ba7517"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div>
+      <span class="nav-label">AI</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Design the Profile screen for Life OS')">
+      <div class="nav-icon" style="background:#0e1a26"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#378add"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#378add" stroke-width="1.5"/></svg></div>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function toggleDay(n){
+  var card=document.getElementById('dc'+n);
+  var body=card.querySelector('.day-card-body');
+  var chev=card.querySelector('.dc-chevron');
+  var isOpen=card.classList.contains('open');
+  card.classList.toggle('open',!isOpen);
+  body.style.display=isOpen?'none':'block';
+}
+function selectDay(n){
+  document.querySelectorAll('.day-pill').forEach(function(p){p.classList.remove('selected')});
+  var pills=document.querySelectorAll('.day-pill');
+  pills[n].classList.add('selected');
+  var card=document.getElementById('dc'+n);
+  if(!card.classList.contains('open'))toggleDay(n);
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+</script>
