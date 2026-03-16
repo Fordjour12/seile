@@ -6,6 +6,7 @@ import {
   HomeTable,
   PiggyBank,
   Safari,
+  Bridge3d,
 } from "iconoir-react-native";
 
 import { Avatar } from "@/components";
@@ -114,6 +115,18 @@ export default function TabLayout() {
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="bullseye" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ai"
+        options={{
+          title: "AI",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <Bridge3d />
+            </TabBarIcon2>
           ),
         }}
       />

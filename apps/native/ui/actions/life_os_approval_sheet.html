@@ -1,0 +1,343 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+
+/* Background screen (Today) — dimmed */
+.bg-screen{flex:1;overflow:hidden;position:relative}
+.bg-dim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:10;display:flex;flex-direction:column;justify-content:flex-end}
+
+/* Fake Today content behind */
+.today-ghost{padding:20px 24px;opacity:.4}
+.tg-greeting{font-size:22px;font-weight:500;color:#fff;margin-bottom:8px}
+.tg-line{height:12px;background:#1a1a1e;border-radius:6px;margin-bottom:8px}
+.tg-card{background:#1a1a1e;border-radius:14px;padding:14px;margin-bottom:8px}
+.tg-card-line{height:10px;background:#222;border-radius:5px;margin-bottom:6px}
+
+/* Sheet itself */
+.sheet{background:#141418;border-radius:24px 24px 0 0;border-top:0.5px solid #2a2a2e;padding:0 0 40px;z-index:20;transition:transform .35s cubic-bezier(.32,.72,0,1)}
+.sheet-handle{width:36px;height:4px;background:#2a2a2e;border-radius:2px;margin:12px auto 0}
+
+/* Sheet states — we show 3 different approval examples */
+.sheet-state{display:none;padding:0 24px}
+.sheet-state.active{display:block}
+
+.sheet-domain-row{display:flex;align-items:center;gap:10px;padding:16px 0 0}
+.sdr-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sdr-domain{font-size:12px;font-weight:500;letter-spacing:.04em}
+.sdr-action{font-size:11px;margin-top:1px}
+.sdr-close{margin-left:auto;width:28px;height:28px;border-radius:50%;background:#1e1e24;border:0.5px solid #2a2a2e;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#555;flex-shrink:0}
+
+.sheet-title{font-size:20px;font-weight:500;color:#fff;margin-top:12px;line-height:1.3}
+
+.sheet-why{font-size:14px;color:#666;line-height:1.6;margin-top:8px}
+
+.context-hint{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;background:#13131f;border-radius:10px;border:0.5px solid #2a2a30}
+.ch-dot{width:6px;height:6px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ch-text{font-size:12px;color:#6b5fff;line-height:1.5;flex:1}
+
+.change-block{margin-top:14px;border-radius:12px;overflow:hidden;border:0.5px solid #2a2a2e}
+.cb-label{font-size:10px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px 6px;background:#1a1a1e}
+.cb-content{background:#141418;padding:0}
+.cb-row{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 14px;border-top:0.5px solid #1e1e22}
+.cb-row:first-child{border-top:none}
+.cb-key{font-size:12px;color:#555;flex-shrink:0;width:110px}
+.cb-val{font-size:13px;color:#d0d0dc;font-weight:500;text-align:right;flex:1}
+.cb-val.green{color:#1d9e75}
+.cb-val.amber{color:#ba7517}
+.cb-val.purple{color:#9b8fff}
+
+.impact-row{display:flex;gap:8px;margin-top:12px}
+.impact-pill{flex:1;background:#1a1a1e;border-radius:10px;padding:8px 10px;text-align:center;border:0.5px solid #2a2a2e}
+.ip-num{font-size:16px;font-weight:500}
+.ip-label{font-size:10px;color:#555;margin-top:2px}
+
+.edit-fields{margin-top:12px;display:flex;flex-direction:column;gap:8px;display:none}
+.edit-fields.open{display:flex}
+.edit-row{display:flex;align-items:center;gap:10px}
+.edit-label{font-size:12px;color:#666;width:90px;flex-shrink:0}
+.edit-input{flex:1;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:8px;padding:8px 12px;font-size:13px;color:#e0e0ec;outline:none}
+.edit-input:focus{border-color:#3d3570}
+
+.action-row{display:flex;gap:8px;margin-top:16px}
+.act-btn{flex:1;padding:13px 0;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .15s;text-align:center}
+.act-btn.approve{background:#9b8fff;color:#0e0e10}
+.act-btn.approve:hover{opacity:.85}
+.act-btn.edit-toggle{background:#1e1e28;color:#888;border:0.5px solid #2a2a3a}
+.act-btn.edit-toggle.active{background:#1e1a30;color:#9b8fff;border-color:#3d3570}
+.act-btn:hover{opacity:.8}
+.reject-btn{width:100%;margin-top:8px;padding:10px;border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#555;transition:color .15s}
+.reject-btn:hover{color:#e24b4a}
+
+/* Selector tabs for demo */
+.demo-selector{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:6px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:20px;padding:4px}
+.ds-btn{font-size:11px;padding:5px 12px;border-radius:16px;cursor:pointer;color:#555;transition:all .15s;white-space:nowrap;border:none;background:transparent}
+.ds-btn.active{background:#1e1a30;color:#c8c0ff}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="bg-screen">
+    <!-- Ghost Today screen behind -->
+    <div class="today-ghost">
+      <div class="tg-greeting">Good morning, Bobie.</div>
+      <div class="tg-line" style="width:70%"></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:85%"></div><div class="tg-card-line" style="width:60%"></div></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:90%"></div><div class="tg-card-line" style="width:50%"></div></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:75%"></div><div class="tg-card-line" style="width:65%"></div></div>
+    </div>
+
+    <div class="bg-dim">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+
+        <!-- STATE 1: Finance savings goal -->
+        <div class="sheet-state active" id="state0">
+          <div class="sheet-domain-row">
+            <div class="sdr-icon" style="background:#1a2a1e">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#6fcf97" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="sdr-domain" style="color:#1d9e75">Finance</div>
+              <div class="sdr-action" style="color:#555">Create savings goal</div>
+            </div>
+            <div class="sdr-close" onclick="dismissSheet()">✕</div>
+          </div>
+
+          <div class="sheet-title">Create an emergency fund savings goal</div>
+
+          <div class="sheet-why">You consistently have GH₵ 380–520 unallocated at month-end. Channelling that into a structured goal puts it to work rather than letting it drift.</div>
+
+          <div class="context-hint">
+            <div class="ch-dot"></div>
+            <div class="ch-text">Based on Finance data from the last 30 days · avg month-end surplus GH₵ 420</div>
+          </div>
+
+          <div class="change-block">
+            <div class="cb-label">What will be created</div>
+            <div class="cb-content">
+              <div class="cb-row"><span class="cb-key">Goal name</span><span class="cb-val">Emergency fund</span></div>
+              <div class="cb-row"><span class="cb-key">Monthly allocation</span><span class="cb-val green">GH₵ 400 / month</span></div>
+              <div class="cb-row"><span class="cb-key">Target amount</span><span class="cb-val">GH₵ 8,000</span></div>
+              <div class="cb-row"><span class="cb-key">Est. completion</span><span class="cb-val purple">~17 months</span></div>
+              <div class="cb-row"><span class="cb-key">Tracked in</span><span class="cb-val">Finance domain</span></div>
+            </div>
+          </div>
+
+          <div class="impact-row">
+            <div class="impact-pill"><div class="ip-num" style="color:#1d9e75">+25%</div><div class="ip-label">Finance health</div></div>
+            <div class="impact-pill"><div class="ip-num" style="color:#ba7517">GH₵ 400</div><div class="ip-label">Monthly reserved</div></div>
+            <div class="impact-pill"><div class="ip-num" style="color:#9b8fff">Auto</div><div class="ip-label">Tracked by cron</div></div>
+          </div>
+
+          <div class="edit-fields" id="ef0">
+            <div class="edit-row"><span class="edit-label">Monthly amount</span><input class="edit-input" value="GH₵ 400"/></div>
+            <div class="edit-row"><span class="edit-label">Target</span><input class="edit-input" value="GH₵ 8,000"/></div>
+            <div class="edit-row"><span class="edit-label">Goal name</span><input class="edit-input" value="Emergency fund"/></div>
+          </div>
+
+          <div class="action-row">
+            <div class="act-btn approve" onclick="approveSheet(0)">Approve</div>
+            <div class="act-btn edit-toggle" id="et0" onclick="toggleEdit('ef0','et0')">Edit</div>
+          </div>
+          <div class="reject-btn" onclick="rejectSheet(0)">Reject — not now</div>
+        </div>
+
+        <!-- STATE 2: Faith — schedule morning routine -->
+        <div class="sheet-state" id="state1">
+          <div class="sheet-domain-row">
+            <div class="sdr-icon" style="background:#2a2040">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#9b8fff" opacity=".5"/></svg>
+            </div>
+            <div>
+              <div class="sdr-domain" style="color:#9b8fff">Faith</div>
+              <div class="sdr-action" style="color:#555">Schedule recurring routine</div>
+            </div>
+            <div class="sdr-close" onclick="dismissSheet()">✕</div>
+          </div>
+
+          <div class="sheet-title">Add a morning spiritual routine to your weekly plan</div>
+
+          <div class="sheet-why">You've logged prayer + devotional on 5 of the last 7 mornings — a natural rhythm that's already working. Formalising it protects the streak and makes it plannable.</div>
+
+          <div class="context-hint">
+            <div class="ch-dot"></div>
+            <div class="ch-text">Based on Faith domain logs · last 7 days · prayer streak 5 days</div>
+          </div>
+
+          <div class="change-block">
+            <div class="cb-label">What will be scheduled</div>
+            <div class="cb-content">
+              <div class="cb-row"><span class="cb-key">Routine name</span><span class="cb-val">Morning spiritual block</span></div>
+              <div class="cb-row"><span class="cb-key">Includes</span><span class="cb-val">Prayer · devotional · reading</span></div>
+              <div class="cb-row"><span class="cb-key">Time</span><span class="cb-val purple">6:00 – 6:45 AM</span></div>
+              <div class="cb-row"><span class="cb-key">Days</span><span class="cb-val">Mon – Fri</span></div>
+              <div class="cb-row"><span class="cb-key">Added to</span><span class="cb-val">Planner + Today habits</span></div>
+            </div>
+          </div>
+
+          <div class="impact-row">
+            <div class="impact-pill"><div class="ip-num" style="color:#9b8fff">+5</div><div class="ip-label">Habit slots</div></div>
+            <div class="impact-pill"><div class="ip-num" style="color:#1d9e75">45 min</div><div class="ip-label">Daily block</div></div>
+            <div class="impact-pill"><div class="ip-num" style="color:#b4adf5">Recurring</div><div class="ip-label">Every weekday</div></div>
+          </div>
+
+          <div class="edit-fields" id="ef1">
+            <div class="edit-row"><span class="edit-label">Start time</span><input class="edit-input" value="6:00 AM"/></div>
+            <div class="edit-row"><span class="edit-label">Duration</span><input class="edit-input" value="45 min"/></div>
+            <div class="edit-row"><span class="edit-label">Days</span><input class="edit-input" value="Mon – Fri"/></div>
+          </div>
+
+          <div class="action-row">
+            <div class="act-btn approve" onclick="approveSheet(1)">Approve</div>
+            <div class="act-btn edit-toggle" id="et1" onclick="toggleEdit('ef1','et1')">Edit</div>
+          </div>
+          <div class="reject-btn" onclick="rejectSheet(1)">Reject — not now</div>
+        </div>
+
+        <!-- STATE 3: Health — adjust budget cap -->
+        <div class="sheet-state" id="state2">
+          <div class="sheet-domain-row">
+            <div class="sdr-icon" style="background:#2a1510">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13s-5-3.5-5-7a5 5 0 0110 0c0 3.5-5 7-5 7z" stroke="#f0997b" stroke-width="1.5"/></svg>
+            </div>
+            <div>
+              <div class="sdr-domain" style="color:#d85a30">Health</div>
+              <div class="sdr-action" style="color:#555">Update weekly target</div>
+            </div>
+            <div class="sdr-close" onclick="dismissSheet()">✕</div>
+          </div>
+
+          <div class="sheet-title">Reduce training sessions from 4× to 3× this week</div>
+
+          <div class="sheet-why">Your average energy this week was 6.2 — below your usual 7.4. Pushing 4 sessions on a recovery week tends to set you back more than it helps, based on your past logs.</div>
+
+          <div class="context-hint">
+            <div class="ch-dot"></div>
+            <div class="ch-text">Based on Health + Wellness check-ins · last 7 days · avg energy 6.2 vs usual 7.4</div>
+          </div>
+
+          <div class="change-block">
+            <div class="cb-label">What will change</div>
+            <div class="cb-content">
+              <div class="cb-row"><span class="cb-key">Current target</span><span class="cb-val amber">4 sessions / week</span></div>
+              <div class="cb-row"><span class="cb-key">Proposed target</span><span class="cb-val green">3 sessions / week</span></div>
+              <div class="cb-row"><span class="cb-key">Removed session</span><span class="cb-val">Thursday training</span></div>
+              <div class="cb-row"><span class="cb-key">Duration</span><span class="cb-val purple">This week only</span></div>
+              <div class="cb-row"><span class="cb-key">Next week</span><span class="cb-val">Resets to 4×</span></div>
+            </div>
+          </div>
+
+          <div class="impact-row">
+            <div class="impact-pill"><div class="ip-num" style="color:#1d9e75">−1</div><div class="ip-label">Session this week</div></div>
+            <div class="impact-pill"><div class="ip-num" style="color:#9b8fff">Temporary</div><div class="ip-label">Reverts next week</div></div>
+            <div class="impact-pill"><div class="ip-num" style="color:#f0997b">Thu</div><div class="ip-label">Freed up</div></div>
+          </div>
+
+          <div class="edit-fields" id="ef2">
+            <div class="edit-row"><span class="edit-label">Sessions</span><input class="edit-input" value="3 per week"/></div>
+            <div class="edit-row"><span class="edit-label">Remove</span><input class="edit-input" value="Thursday session"/></div>
+          </div>
+
+          <div class="action-row">
+            <div class="act-btn approve" onclick="approveSheet(2)">Approve</div>
+            <div class="act-btn edit-toggle" id="et2" onclick="toggleEdit('ef2','et2')">Edit</div>
+          </div>
+          <div class="reject-btn" onclick="rejectSheet(2)">Reject — keep 4 sessions</div>
+        </div>
+
+        <!-- APPROVED state -->
+        <div class="sheet-state" id="state-done">
+          <div style="padding:32px 0 8px;text-align:center">
+            <div style="width:52px;height:52px;border-radius:50%;background:#1a2a1e;border:1.5px solid #1d9e75;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 11l4 4 8-8" stroke="#1d9e75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div style="font-size:18px;font-weight:500;color:#e0e0ec;margin-bottom:8px">Done — change applied</div>
+            <div style="font-size:13px;color:#555;line-height:1.5;max-width:260px;margin:0 auto" id="done-text">Your savings goal has been created and will be tracked from next month.</div>
+            <div style="margin-top:20px;display:flex;gap:8px">
+              <div style="flex:1;padding:11px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:12px;font-size:13px;color:#888;cursor:pointer" onclick="resetDemo()">Back to Today</div>
+              <div style="flex:1;padding:11px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:12px;font-size:13px;color:#9b8fff;cursor:pointer" onclick="sendPrompt('What other changes is the AI proposing this week?')">View pending ↗</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REJECTED state -->
+        <div class="sheet-state" id="state-rejected">
+          <div style="padding:32px 0 8px;text-align:center">
+            <div style="width:52px;height:52px;border-radius:50%;background:#1a1a1e;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 15L15 5M5 5l10 10" stroke="#555" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div style="font-size:18px;font-weight:500;color:#e0e0ec;margin-bottom:8px">Noted — no changes made</div>
+            <div style="font-size:13px;color:#555;line-height:1.5;max-width:260px;margin:0 auto">This suggestion has been dismissed. The AI won't resurface it unless your situation changes significantly.</div>
+            <div style="margin-top:20px">
+              <div style="padding:11px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:12px;font-size:13px;color:#888;cursor:pointer" onclick="resetDemo()">Back to Today</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Demo selector -->
+      <div class="demo-selector">
+        <div class="ds-btn active" id="ds0" onclick="showState(0)">Finance</div>
+        <div class="ds-btn" id="ds1" onclick="showState(1)">Faith</div>
+        <div class="ds-btn" id="ds2" onclick="showState(2)">Health</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var cur=0;
+
+function showState(n){
+  [0,1,2].forEach(function(i){
+    document.getElementById('state'+i).classList.toggle('active',i===n);
+    document.getElementById('ds'+i).classList.toggle('active',i===n);
+  });
+  document.getElementById('state-done').classList.remove('active');
+  document.getElementById('state-rejected').classList.remove('active');
+  cur=n;
+}
+
+function approveSheet(n){
+  [0,1,2].forEach(function(i){document.getElementById('state'+i).classList.remove('active')});
+  document.getElementById('state-rejected').classList.remove('active');
+  var msgs=['Your savings goal has been created and will be tracked from this month.','Morning spiritual block has been added to your Planner for Mon–Fri.','Training target reduced to 3 sessions this week. Resets next Monday.'];
+  document.getElementById('done-text').textContent=msgs[n];
+  document.getElementById('state-done').classList.add('active');
+}
+
+function rejectSheet(n){
+  [0,1,2].forEach(function(i){document.getElementById('state'+i).classList.remove('active')});
+  document.getElementById('state-done').classList.remove('active');
+  document.getElementById('state-rejected').classList.add('active');
+}
+
+function dismissSheet(){
+  rejectSheet(cur);
+}
+
+function resetDemo(){
+  document.getElementById('state-done').classList.remove('active');
+  document.getElementById('state-rejected').classList.remove('active');
+  showState(0);
+}
+
+function toggleEdit(fieldId,btnId){
+  var fields=document.getElementById(fieldId);
+  var btn=document.getElementById(btnId);
+  var isOpen=fields.classList.contains('open');
+  fields.classList.toggle('open',!isOpen);
+  btn.classList.toggle('active',!isOpen);
+  btn.textContent=isOpen?'Edit':'Done';
+}
+</script>
