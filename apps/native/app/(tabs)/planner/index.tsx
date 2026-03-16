@@ -1,5 +1,5 @@
-import { PlannerOverviewScreen } from "@/components/planner/planner-overview-screen";
+import { PlannerHomeScreen } from "@/components/planner/planner-home-screen";
 
 export default function PlannerIndexRoute() {
-  return <PlannerOverviewScreen />;
+  return <PlannerHomeScreen />;
 }
