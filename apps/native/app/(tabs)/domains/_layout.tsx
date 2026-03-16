@@ -103,6 +103,32 @@ export default function DomainsLayout() {
           },
         }}
       />
+      <Stack.Screen
+        name="relationships"
+        options={{
+          title: "Relationships",
+          headerShown: true,
+          headerShadowVisible: false,
+          headerTintColor: theme.foreground,
+          headerBackTitle: "Domains",
+          headerStyle: {
+            backgroundColor: theme.background,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="space"
+        options={{
+          title: "Space",
+          headerShown: true,
+          headerShadowVisible: false,
+          headerTintColor: theme.foreground,
+          headerBackTitle: "Domains",
+          headerStyle: {
+            backgroundColor: theme.background,
+          },
+        }}
+      />
     </Stack>
   );
 }

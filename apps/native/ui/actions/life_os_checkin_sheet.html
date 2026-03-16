@@ -1,0 +1,440 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.bg-screen{flex:1;position:relative;overflow:hidden}
+.bg-dim{position:absolute;inset:0;background:rgba(0,0,0,.58);z-index:10;display:flex;flex-direction:column;justify-content:flex-end}
+.today-ghost{padding:20px 24px;opacity:.3}
+.tg-greeting{font-size:22px;font-weight:500;color:#fff;margin-bottom:10px}
+.tg-line{height:10px;background:#1a1a1e;border-radius:5px;margin-bottom:8px}
+.tg-card{background:#1a1a1e;border-radius:14px;padding:14px;margin-bottom:8px}
+.tg-card-line{height:9px;background:#222;border-radius:5px;margin-bottom:6px}
+
+/* Sheet */
+.sheet{background:#141418;border-radius:24px 24px 0 0;border-top:0.5px solid #2a2a2e;z-index:20;padding-bottom:40px}
+.sheet-handle{width:36px;height:4px;background:#252530;border-radius:2px;margin:12px auto 0}
+
+/* Variants — we show 3 check-in moments */
+.variant{display:none;padding:0 22px}
+.variant.active{display:block}
+
+/* MORNING check-in */
+.ci-greeting{padding:14px 0 4px}
+.ci-time{font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.ci-title{font-size:18px;font-weight:500;color:#fff;line-height:1.3;margin-bottom:4px}
+.ci-sub{font-size:13px;color:#555;line-height:1.4}
+
+/* Slider track — touch-friendly */
+.slider-wrap{margin-bottom:18px}
+.sw-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.sw-label{font-size:13px;font-weight:500;color:#d0d0dc}
+.sw-val{font-size:22px;font-weight:500;line-height:1}
+.sw-desc{font-size:11px;margin-top:2px;text-align:right}
+.slider-track{position:relative;height:48px;display:flex;align-items:center;cursor:pointer;user-select:none}
+.st-bg{position:absolute;left:0;right:0;height:8px;background:#1e1e22;border-radius:4px}
+.st-fill{position:absolute;left:0;height:8px;border-radius:4px;transition:width .1s}
+.st-thumb{position:absolute;width:28px;height:28px;border-radius:50%;background:#fff;transform:translateX(-50%);transition:left .1s;display:flex;align-items:center;justify-content:center}
+.st-thumb-inner{width:10px;height:10px;border-radius:50%}
+
+/* Mood row — face buttons */
+.mood-row{display:flex;justify-content:space-between;margin-bottom:18px}
+.mood-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px 4px;border-radius:10px;border:0.5px solid transparent;transition:all .18s}
+.mood-btn.active{background:#1e1e28;border-color:#333}
+.mood-face{font-size:22px;line-height:1;transition:transform .15s}
+.mood-btn.active .mood-face{transform:scale(1.2)}
+.mood-label{font-size:10px;color:#444;font-weight:500;transition:color .15s}
+.mood-btn.active .mood-label{color:#888}
+
+/* Energy dots */
+.energy-dots{display:flex;gap:6px;margin-bottom:18px}
+.ed{flex:1;height:32px;border-radius:8px;border:0.5px solid #1e1e22;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#333}
+.ed.active{color:#fff}
+
+/* Tags */
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tag{padding:7px 12px;background:#1a1a1e;border:0.5px solid #222;border-radius:20px;font-size:12px;color:#555;cursor:pointer;transition:all .15s}
+.tag:hover{border-color:#333;color:#888}
+.tag.on{background:#1e1a30;border-color:#3d3570;color:#c8c0ff}
+
+/* Context note */
+.context-note{background:#1a1a24;border:0.5px solid #2a2a36;border-radius:12px;padding:10px 12px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start}
+.cn-dot{width:5px;height:5px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px}
+.cn-text{font-size:12px;color:#6b5fff;line-height:1.5;flex:1}
+
+/* Note input */
+.note-input{width:100%;background:#1a1a1e;border:0.5px solid #222;border-radius:12px;padding:10px 12px;font-size:13px;color:#e0e0ec;outline:none;resize:none;font-family:inherit;line-height:1.5;margin-bottom:14px;transition:border-color .15s}
+.note-input:focus{border-color:#3d3570}
+.note-input::placeholder{color:#2a2a2e}
+
+/* Submit */
+.submit-row{display:flex;gap:8px}
+.sub-btn{flex:1;padding:13px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;border:none;text-align:center;transition:opacity .15s}
+.sub-btn.primary{background:#9b8fff;color:#0e0e10}
+.sub-btn.ghost{background:#1a1a1e;color:#555;border:0.5px solid #222;flex:0 0 auto;padding:13px 16px}
+.sub-btn:hover{opacity:.8}
+
+/* Done state */
+.done-state{display:none;padding:28px 22px 0;text-align:center}
+.ds-ring{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.ds-title{font-size:17px;font-weight:500;color:#e0e0ec;margin-bottom:6px}
+.ds-sub{font-size:13px;color:#555;line-height:1.5;max-width:240px;margin:0 auto 16px}
+.ds-scores{display:flex;gap:8px;margin-bottom:16px}
+.dss{flex:1;background:#1a1a1e;border-radius:10px;padding:9px;text-align:center;border:0.5px solid #222}
+.dss-num{font-size:17px;font-weight:500}
+.dss-label{font-size:10px;color:#555;margin-top:2px}
+.ds-ai{background:#13131f;border:0.5px solid #2a2a36;border-radius:12px;padding:10px 12px;text-align:left;display:flex;gap:8px;margin-bottom:16px}
+.ds-ai-dot{width:5px;height:5px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px}
+.ds-ai-text{font-size:12px;color:#6b5fff;line-height:1.5}
+.ds-btn{width:100%;padding:12px;border-radius:12px;background:#1e1a30;color:#9b8fff;border:0.5px solid #3d3570;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s;text-align:center}
+.ds-btn:hover{opacity:.8}
+
+/* Selector */
+.selector{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:5px;background:#141418;border:0.5px solid #2a2a2e;border-radius:20px;padding:4px}
+.sel-btn{font-size:11px;padding:5px 12px;border-radius:16px;cursor:pointer;color:#555;border:none;background:transparent;transition:all .15s;white-space:nowrap}
+.sel-btn.active{background:#1e1a30;color:#c8c0ff}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="bg-screen">
+    <div class="today-ghost">
+      <div class="tg-greeting">Good morning, Bobie.</div>
+      <div class="tg-line" style="width:65%"></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:80%"></div><div class="tg-card-line" style="width:55%"></div></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:90%"></div><div class="tg-card-line" style="width:60%"></div></div>
+    </div>
+
+    <div class="bg-dim">
+
+      <!-- Selector -->
+      <div class="selector">
+        <div class="sel-btn active" id="sb-morning" onclick="showVariant('morning')">Morning</div>
+        <div class="sel-btn" id="sb-midday" onclick="showVariant('midday')">Midday</div>
+        <div class="sel-btn" id="sb-evening" onclick="showVariant('evening')">Evening</div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+
+        <!-- ─── MORNING ─── -->
+        <div class="variant active" id="v-morning">
+          <div class="ci-greeting">
+            <div class="ci-time">Morning check-in · 9:41 AM</div>
+            <div class="ci-title">How are you starting today?</div>
+            <div class="ci-sub">Takes 30 seconds. Feeds your weekly patterns.</div>
+          </div>
+
+          <!-- Mood -->
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">Mood</div>
+          <div class="mood-row" id="mood-row-m">
+            <div class="mood-btn" onclick="pickMood('m',1,this)"><span class="mood-face">😔</span><span class="mood-label">Low</span></div>
+            <div class="mood-btn" onclick="pickMood('m',3,this)"><span class="mood-face">😕</span><span class="mood-label">Meh</span></div>
+            <div class="mood-btn" onclick="pickMood('m',5,this)"><span class="mood-face">😐</span><span class="mood-label">Okay</span></div>
+            <div class="mood-btn active" onclick="pickMood('m',7,this)"><span class="mood-face">😊</span><span class="mood-label">Good</span></div>
+            <div class="mood-btn" onclick="pickMood('m',9,this)"><span class="mood-face">😄</span><span class="mood-label">Great</span></div>
+          </div>
+
+          <!-- Energy -->
+          <div class="slider-wrap">
+            <div class="sw-header">
+              <span class="sw-label">Energy</span>
+              <div>
+                <div class="sw-val" id="m-energy-val" style="color:#ba7517">6</div>
+                <div class="sw-desc" style="color:#ba7517" id="m-energy-desc">Moderate</div>
+              </div>
+            </div>
+            <div class="slider-track" id="m-energy-track" onmousedown="startDrag(event,'m-energy')" ontouchstart="startDrag(event,'m-energy')">
+              <div class="st-bg"></div>
+              <div class="st-fill" id="m-energy-fill" style="width:60%;background:#ba7517"></div>
+              <div class="st-thumb" id="m-energy-thumb" style="left:60%;border:2.5px solid #ba7517">
+                <div class="st-thumb-inner" style="background:#ba7517"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Focus -->
+          <div class="slider-wrap" style="margin-bottom:14px">
+            <div class="sw-header">
+              <span class="sw-label">Focus</span>
+              <div>
+                <div class="sw-val" id="m-focus-val" style="color:#1d9e75">8</div>
+                <div class="sw-desc" style="color:#1d9e75" id="m-focus-desc">Sharp</div>
+              </div>
+            </div>
+            <div class="slider-track" id="m-focus-track" onmousedown="startDrag(event,'m-focus')" ontouchstart="startDrag(event,'m-focus')">
+              <div class="st-bg"></div>
+              <div class="st-fill" id="m-focus-fill" style="width:80%;background:#1d9e75"></div>
+              <div class="st-thumb" id="m-focus-thumb" style="left:80%;border:2.5px solid #1d9e75">
+                <div class="st-thumb-inner" style="background:#1d9e75"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="tag-row">
+            <div class="tag on" onclick="this.classList.toggle('on')">Rested</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Anxious</div>
+            <div class="tag on" onclick="this.classList.toggle('on')">Grateful</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Tired</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Motivated</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Calm</div>
+          </div>
+
+          <!-- AI context hint -->
+          <div class="context-note">
+            <div class="cn-dot"></div>
+            <div class="cn-text">You checked in every morning this week. This feeds your weekly energy pattern and the AI's planning suggestions.</div>
+          </div>
+
+          <div class="submit-row">
+            <div class="sub-btn ghost" onclick="resetSheet()">Skip</div>
+            <div class="sub-btn primary" onclick="submitCheckin('m',7,6,8)">Log morning ↗</div>
+          </div>
+        </div>
+
+        <!-- ─── MIDDAY ─── -->
+        <div class="variant" id="v-midday">
+          <div class="ci-greeting">
+            <div class="ci-time">Midday check-in · 12:30 PM</div>
+            <div class="ci-title">How's the day going?</div>
+            <div class="ci-sub">Quick pulse — 15 seconds.</div>
+          </div>
+
+          <!-- Energy dots — faster than a slider -->
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Energy right now</div>
+          <div class="energy-dots" id="ed-midday">
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',1,this)">1</div>
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',2,this)">2</div>
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',3,this)">3</div>
+            <div class="ed" style="background:#1a1818" onclick="pickDot('midday',4,this)">4</div>
+            <div class="ed active" style="background:#1a2010;border-color:#2a3a10;color:#8ab050" onclick="pickDot('midday',5,this)">5</div>
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',6,this)">6</div>
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',7,this)">7</div>
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',8,this)">8</div>
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',9,this)">9</div>
+            <div class="ed" style="background:#1a1a1e" onclick="pickDot('midday',10,this)">10</div>
+          </div>
+
+          <!-- One-tap tags -->
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Feeling</div>
+          <div class="tag-row">
+            <div class="tag" onclick="this.classList.toggle('on')">On track</div>
+            <div class="tag on" onclick="this.classList.toggle('on')">Focused</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Distracted</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Behind</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Overwhelmed</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Hungry</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Need a break</div>
+          </div>
+
+          <!-- AI nudge based on morning -->
+          <div class="context-note">
+            <div class="cn-dot"></div>
+            <div class="cn-text">Morning: mood 7, energy 6, focus 8. You have 3 hours left in your deep work block. Finance review is still pending.</div>
+          </div>
+
+          <div class="submit-row">
+            <div class="sub-btn ghost" onclick="resetSheet()">Skip</div>
+            <div class="sub-btn primary" onclick="submitCheckin('mid',null,5,null)">Log midday ↗</div>
+          </div>
+        </div>
+
+        <!-- ─── EVENING ─── -->
+        <div class="variant" id="v-evening">
+          <div class="ci-greeting">
+            <div class="ci-time">Evening check-in · 9:00 PM</div>
+            <div class="ci-title">How did today end?</div>
+            <div class="ci-sub">Close the day. This shapes tomorrow's suggestions.</div>
+          </div>
+
+          <!-- Mood -->
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">End-of-day mood</div>
+          <div class="mood-row" id="mood-row-e">
+            <div class="mood-btn" onclick="pickMood('e',1,this)"><span class="mood-face">😔</span><span class="mood-label">Low</span></div>
+            <div class="mood-btn" onclick="pickMood('e',3,this)"><span class="mood-face">😕</span><span class="mood-label">Meh</span></div>
+            <div class="mood-btn" onclick="pickMood('e',5,this)"><span class="mood-face">😐</span><span class="mood-label">Okay</span></div>
+            <div class="mood-btn active" onclick="pickMood('e',7,this)"><span class="mood-face">😊</span><span class="mood-label">Good</span></div>
+            <div class="mood-btn" onclick="pickMood('e',9,this)"><span class="mood-face">😄</span><span class="mood-label">Great</span></div>
+          </div>
+
+          <!-- Day rating -->
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Day rating</div>
+          <div class="slider-wrap" style="margin-bottom:14px">
+            <div class="sw-header">
+              <span class="sw-label">Overall</span>
+              <div>
+                <div class="sw-val" id="e-day-val" style="color:#9b8fff">7</div>
+                <div class="sw-desc" style="color:#9b8fff" id="e-day-desc">Good day</div>
+              </div>
+            </div>
+            <div class="slider-track" id="e-day-track" onmousedown="startDrag(event,'e-day')" ontouchstart="startDrag(event,'e-day')">
+              <div class="st-bg"></div>
+              <div class="st-fill" id="e-day-fill" style="width:70%;background:#9b8fff"></div>
+              <div class="st-thumb" id="e-day-thumb" style="left:70%;border:2.5px solid #9b8fff">
+                <div class="st-thumb-inner" style="background:#9b8fff"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Day summary tags -->
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">What happened</div>
+          <div class="tag-row">
+            <div class="tag on" onclick="this.classList.toggle('on')">Productive</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Restful</div>
+            <div class="tag on" onclick="this.classList.toggle('on')">Deep work</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Stressful</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Social</div>
+            <div class="tag" onclick="this.classList.toggle('on')">Interrupted</div>
+            <div class="tag on" onclick="this.classList.toggle('on')">Faith practice</div>
+          </div>
+
+          <!-- Optional note -->
+          <textarea class="note-input" rows="2" placeholder="Anything worth remembering about today…"></textarea>
+
+          <!-- Tomorrow AI preview -->
+          <div class="context-note" style="margin-bottom:14px">
+            <div class="cn-dot"></div>
+            <div class="cn-text">Your evening rating shapes tomorrow's AI suggestions. A good day here means a fuller plan tomorrow. A low rating means Claude will suggest a lighter start.</div>
+          </div>
+
+          <div class="submit-row">
+            <div class="sub-btn ghost" onclick="resetSheet()">Skip</div>
+            <div class="sub-btn primary" onclick="submitCheckin('e',7,null,null)">Close the day ↗</div>
+          </div>
+        </div>
+
+        <!-- Done state -->
+        <div class="done-state" id="done-state">
+          <div class="ds-ring" id="ds-ring">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ds-title" id="ds-title">Morning logged</div>
+          <div class="ds-sub" id="ds-sub">Streak continues. Data feeds into your 6 AM context sync.</div>
+
+          <div class="ds-scores" id="ds-scores">
+            <div class="dss"><div class="dss-num" id="ds-mood" style="color:#d4537e">7</div><div class="dss-label">Mood</div></div>
+            <div class="dss"><div class="dss-num" id="ds-energy" style="color:#ba7517">6</div><div class="dss-label">Energy</div></div>
+            <div class="dss"><div class="dss-num" id="ds-focus" style="color:#1d9e75">8</div><div class="dss-label">Focus</div></div>
+          </div>
+
+          <div class="ds-ai">
+            <div class="ds-ai-dot"></div>
+            <div class="ds-ai-text" id="ds-ai-text">Energy at 6 — I'll keep your plan balanced today. Finance review is still pending; good time for this afternoon.</div>
+          </div>
+
+          <div class="ds-btn" onclick="resetSheet()">Back to Today</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var dragging=null;
+var moodVals={m:7,e:7};
+var sliderVals={'m-energy':6,'m-focus':8,'e-day':7};
+var energyDescs=['','Drained','Low','Low','Moderate','Moderate','Moderate','Good','Good','High','Peak'];
+var focusDescs=['','Scattered','Poor','Poor','Okay','Okay','Decent','Good','Sharp','Sharp','Laser'];
+var dayDescs=['','Rough','Hard','Hard','Below avg','Okay','Okay','Good day','Good day','Great day','Best day'];
+var descMap={'m-energy':energyDescs,'m-focus':focusDescs,'e-day':dayDescs};
+var colorMap={'m-energy':'#ba7517','m-focus':'#1d9e75','e-day':'#9b8fff'};
+
+function startDrag(e,id){
+  dragging=id;
+  updateSlider(e,id);
+  e.preventDefault();
+}
+document.addEventListener('mousemove',function(e){if(dragging)updateSlider(e,dragging)});
+document.addEventListener('touchmove',function(e){if(dragging)updateSlider(e,dragging)},{passive:false});
+document.addEventListener('mouseup',function(){dragging=null});
+document.addEventListener('touchend',function(){dragging=null});
+
+function updateSlider(e,id){
+  var track=document.getElementById(id+'-track');
+  var rect=track.getBoundingClientRect();
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var pct=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
+  var val=Math.max(1,Math.min(10,Math.round(pct*10)));
+  sliderVals[id]=val;
+  var p=(val/10)*100;
+  var color=colorMap[id];
+  document.getElementById(id+'-fill').style.width=p+'%';
+  document.getElementById(id+'-thumb').style.left=p+'%';
+  var parts=id.split('-');
+  var prefix=parts[0]+'-'+parts[1];
+  document.getElementById(prefix+'-val').textContent=val;
+  document.getElementById(prefix+'-desc').textContent=descMap[id][val]||'';
+}
+
+function pickMood(prefix,val,el){
+  moodVals[prefix]=val;
+  document.querySelectorAll('#mood-row-'+prefix+' .mood-btn').forEach(function(b){b.classList.remove('active')});
+  el.classList.add('active');
+}
+
+function pickDot(group,val,el){
+  var colors=['','#e24b4a','#e24b4a','#e24b4a','#e24b4a','#8ab050','#8ab050','#1d9e75','#1d9e75','#1d9e75','#1d9e75'];
+  var bgs=['','#1a1010','#1a1010','#1a1010','#1a1010','#1a2010','#1a2010','#1a2a1e','#1a2a1e','#1a2a1e','#1a2a1e'];
+  document.querySelectorAll('#ed-'+group+' .ed').forEach(function(d){
+    d.classList.remove('active');
+    d.style.background='#1a1a1e';
+    d.style.color='#333';
+    d.style.borderColor='#1e1e22';
+  });
+  el.classList.add('active');
+  el.style.background=bgs[val];
+  el.style.color=colors[val];
+  el.style.borderColor=colors[val]+'40';
+}
+
+function showVariant(v){
+  ['morning','midday','evening'].forEach(function(n){
+    document.getElementById('v-'+n).classList.toggle('active',n===v);
+    document.getElementById('sb-'+n).classList.toggle('active',n===v);
+  });
+  document.getElementById('done-state').style.display='none';
+}
+
+var aiMsgs={
+  'm':'Energy at 6 — I\'ll keep your plan balanced today. Finance review is still pending; good time for this afternoon.',
+  'mid':'Midday noted. You\'re past the deep work peak. Consider a short break before the afternoon session.',
+  'e':'Good day logged. Tomorrow I\'ll start with a moderate load — one deep work block and the pending Faith devotional.'
+};
+var titles={m:'Morning logged',mid:'Midday noted',e:'Day closed'};
+var subs={m:'Streak continues. Data feeds into your 6 AM context sync.',mid:'Logged. I\'ll use this for your afternoon suggestions.',e:'Tomorrow\'s plan will reflect this. Rest well.'};
+var ringColors={m:'#d4537e',mid:'#ba7517',e:'#9b8fff'};
+
+function submitCheckin(prefix,mood,energy,focus){
+  ['v-morning','v-midday','v-evening'].forEach(function(n){
+    document.getElementById(n).classList.remove('active');
+  });
+  var ds=document.getElementById('done-state');
+  ds.style.display='block';
+  var ring=document.getElementById('ds-ring');
+  var color=ringColors[prefix]||'#9b8fff';
+  ring.style.background=color+'22';
+  ring.style.border='1.5px solid '+color;
+  ring.querySelector('svg path').setAttribute('stroke',color);
+  document.getElementById('ds-title').textContent=titles[prefix]||'Logged';
+  document.getElementById('ds-sub').textContent=subs[prefix]||'';
+  document.getElementById('ds-ai-text').textContent=aiMsgs[prefix]||'';
+  if(mood)document.getElementById('ds-mood').textContent=mood;
+  if(energy)document.getElementById('ds-energy').textContent=energy;
+  if(focus)document.getElementById('ds-focus').textContent=focus;
+  var scoresEl=document.getElementById('ds-scores');
+  scoresEl.style.display=prefix==='mid'?'none':'flex';
+}
+
+function resetSheet(){
+  document.getElementById('done-state').style.display='none';
+  showVariant('morning');
+}
+</script>

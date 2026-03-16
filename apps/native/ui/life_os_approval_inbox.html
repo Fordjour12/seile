@@ -1,0 +1,426 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:40px}
+.screen::-webkit-scrollbar{display:none}
+
+.top-bar{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+.mark-all{font-size:12px;color:#6b5fff;cursor:pointer}
+
+.header{padding:10px 24px 0}
+.h-row{display:flex;align-items:baseline;gap:10px}
+.h-title{font-size:26px;font-weight:500;color:#fff}
+.h-count{font-size:14px;color:#555;font-weight:400}
+.h-sub{font-size:13px;color:#444;margin-top:4px}
+
+/* Filter pills */
+.filter-row{display:flex;gap:6px;padding:12px 24px 0;overflow-x:auto;flex-shrink:0}
+.filter-row::-webkit-scrollbar{display:none}
+.fp{padding:6px 14px;background:#1a1a1e;border:0.5px solid #222;border-radius:20px;font-size:11px;font-weight:500;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.fp.active{background:#1e1a30;border-color:#3d3570;color:#c8c0ff}
+.fp:hover:not(.active){color:#888}
+
+/* Section heads */
+.section-head{padding:14px 24px 6px;font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase}
+
+/* Inbox item */
+.inbox-item{margin:0 24px 8px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;overflow:hidden;transition:border-color .15s;cursor:pointer}
+.inbox-item:hover{border-color:#333}
+.inbox-item.urgent{border-color:#3d3010;background:#181208}
+.inbox-item.read{opacity:.55}
+
+.ii-header{display:flex;align-items:flex-start;gap:10px;padding:12px 14px}
+.ii-domain-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ii-body{flex:1;min-width:0}
+.ii-top{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.ii-domain{font-size:11px;font-weight:500}
+.ii-type{font-size:10px;color:#444;padding:1px 7px;background:#1e1e22;border-radius:20px}
+.ii-unread{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.ii-title{font-size:14px;font-weight:500;color:#d0d0dc;line-height:1.3;margin-bottom:3px}
+.ii-preview{font-size:12px;color:#555;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ii-meta{display:flex;align-items:center;gap:8px;margin-top:6px}
+.ii-time{font-size:10px;color:#333}
+.ii-impact{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+
+/* Expanded item */
+.ii-expanded{display:none;padding:0 14px 12px;border-top:0.5px solid #1e1e22}
+.inbox-item.open .ii-expanded{display:block}
+.ie-why{font-size:13px;color:#888;line-height:1.5;margin-bottom:10px}
+.ie-change{background:#141418;border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.iec-label{font-size:10px;color:#444;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.iec-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid #1a1a1e}
+.iec-row:last-child{border-bottom:none}
+.iec-key{font-size:12px;color:#444}
+.iec-val{font-size:12px;color:#c0b8e8;font-weight:500}
+.ctx-line{font-size:11px;color:#444;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.ctx-dot{width:4px;height:4px;border-radius:50%;background:#6b5fff;flex-shrink:0}
+.ie-actions{display:flex;gap:7px}
+.ie-btn{flex:1;padding:9px 0;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:none;text-align:center;transition:opacity .15s}
+.ie-btn.approve{background:#9b8fff;color:#0e0e10}
+.ie-btn.edit{background:#1e1e28;color:#777;border:0.5px solid #2a2a3a}
+.ie-btn.reject{background:transparent;color:#444;border:0.5px solid #222}
+.ie-btn:hover{opacity:.8}
+
+/* Dismissed / history items */
+.history-item{margin:0 24px 6px;background:#141418;border:0.5px solid #1e1e22;border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s}
+.history-item:hover{border-color:#2a2a2e}
+.hi-icon{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hi-body{flex:1;min-width:0}
+.hi-title{font-size:12px;color:#555;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-meta{font-size:10px;color:#333;margin-top:2px}
+.hi-status{font-size:10px;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.hi-status.approved{background:#1a2a1e;color:#1d9e75}
+.hi-status.rejected{background:#1a1a1e;color:#444}
+.hi-status.expired{background:#1a1a1e;color:#333}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 24px}
+.es-icon{width:48px;height:48px;border-radius:50%;background:#1a1a1e;border:0.5px solid #222;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.es-title{font-size:15px;font-weight:500;color:#444;margin-bottom:5px}
+.es-sub{font-size:13px;color:#333;line-height:1.5}
+
+/* Batch action bar */
+.batch-bar{margin:0 24px 10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.bb-text{font-size:12px;color:#9b8fff;flex:1}
+.bb-btn{font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;border:none;font-weight:500;transition:opacity .15s}
+.bb-btn.approve{background:#9b8fff;color:#0e0e10}
+.bb-btn.dismiss{background:transparent;color:#555;border:0.5px solid #3d3570}
+.bb-btn:hover{opacity:.8}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="top-bar">
+      <div class="back-btn" onclick="sendPrompt('Go back to Today screen')">
+        <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+        Today
+      </div>
+      <div class="mark-all" onclick="markAllRead()">Mark all read</div>
+    </div>
+
+    <div class="header">
+      <div class="h-row">
+        <div class="h-title">Approvals</div>
+        <div class="h-count" id="pending-count">3 pending</div>
+      </div>
+      <div class="h-sub">AI is waiting on you before making any changes</div>
+    </div>
+
+    <div class="filter-row">
+      <div class="fp active" id="fp-all" onclick="setFilter('all',this)">All</div>
+      <div class="fp" id="fp-pending" onclick="setFilter('pending',this)">Pending</div>
+      <div class="fp" id="fp-finance" onclick="setFilter('finance',this)">Finance</div>
+      <div class="fp" id="fp-faith" onclick="setFilter('faith',this)">Faith</div>
+      <div class="fp" id="fp-health" onclick="setFilter('health',this)">Health</div>
+      <div class="fp" id="fp-history" onclick="setFilter('history',this)">History</div>
+    </div>
+
+    <!-- Batch bar -->
+    <div style="height:10px"></div>
+    <div class="batch-bar" id="batch-bar">
+      <span class="bb-text">3 pending — approve all low-risk items?</span>
+      <div class="bb-btn approve" onclick="approveAll()">Approve all ↗</div>
+      <div class="bb-btn dismiss" onclick="hideBatch()">Review each</div>
+    </div>
+
+    <!-- PENDING section -->
+    <div id="pending-section">
+      <div class="section-head">Pending · 3</div>
+
+      <!-- Item 1: Finance savings goal — urgent -->
+      <div class="inbox-item urgent" id="item-finance" onclick="toggleItem('item-finance')">
+        <div class="ii-header">
+          <div class="ii-domain-icon" style="background:#1a2a1e">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#6fcf97" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="ii-body">
+            <div class="ii-top">
+              <span class="ii-domain" style="color:#1d9e75">Finance</span>
+              <span class="ii-type">Create goal</span>
+            </div>
+            <div class="ii-title">Create emergency fund savings goal</div>
+            <div class="ii-preview">GH₵ 400/month allocated from your consistent month-end surplus. Est. completion 17 months.</div>
+            <div class="ii-meta">
+              <span class="ii-time">Proposed 4 days ago</span>
+              <span class="ii-impact" style="background:#2a1e08;color:#ba7517">Finance +25%</span>
+            </div>
+          </div>
+          <div class="ii-unread" style="background:#ba7517"></div>
+        </div>
+        <div class="ii-expanded">
+          <div class="ie-why">You consistently have GH₵ 380–520 unallocated at month-end. Channelling that into a structured goal puts it to work rather than letting it drift.</div>
+          <div class="ie-change">
+            <div class="iec-label">What will be created</div>
+            <div class="iec-row"><span class="iec-key">Goal name</span><span class="iec-val">Emergency fund</span></div>
+            <div class="iec-row"><span class="iec-key">Monthly allocation</span><span class="iec-val" style="color:#1d9e75">GH₵ 400</span></div>
+            <div class="iec-row"><span class="iec-key">Target</span><span class="iec-val">GH₵ 8,000</span></div>
+            <div class="iec-row"><span class="iec-key">Est. completion</span><span class="iec-val" style="color:#9b8fff">~17 months</span></div>
+          </div>
+          <div class="ctx-line"><div class="ctx-dot"></div>Based on Finance data · last 30 days · avg surplus GH₵ 420</div>
+          <div class="ie-actions">
+            <div class="ie-btn approve" onclick="event.stopPropagation();approveItem('item-finance','Finance savings goal approved')">Approve</div>
+            <div class="ie-btn edit" onclick="event.stopPropagation();sendPrompt('Edit the savings goal proposal — change the amount or target')">Edit</div>
+            <div class="ie-btn reject" onclick="event.stopPropagation();dismissItem('item-finance')">Reject</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2: Faith morning routine -->
+      <div class="inbox-item" id="item-faith" onclick="toggleItem('item-faith')">
+        <div class="ii-header">
+          <div class="ii-domain-icon" style="background:#2a2040">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.4"/><circle cx="8" cy="8" r="2" fill="#9b8fff" opacity=".5"/></svg>
+          </div>
+          <div class="ii-body">
+            <div class="ii-top">
+              <span class="ii-domain" style="color:#9b8fff">Faith</span>
+              <span class="ii-type">Schedule routine</span>
+            </div>
+            <div class="ii-title">Add morning spiritual block to weekly plan</div>
+            <div class="ii-preview">Prayer + devotional + reading · 6:00–6:45 AM · Mon–Fri recurring.</div>
+            <div class="ii-meta">
+              <span class="ii-time">Proposed 2 days ago</span>
+              <span class="ii-impact" style="background:#2a2040;color:#9b8fff">Faith +10%</span>
+            </div>
+          </div>
+          <div class="ii-unread" style="background:#9b8fff"></div>
+        </div>
+        <div class="ii-expanded">
+          <div class="ie-why">You've logged prayer + devotional on 5 of the last 7 mornings — a natural rhythm already working. Formalising it protects the streak and makes it plannable.</div>
+          <div class="ie-change">
+            <div class="iec-label">What will be scheduled</div>
+            <div class="iec-row"><span class="iec-key">Routine</span><span class="iec-val">Morning spiritual block</span></div>
+            <div class="iec-row"><span class="iec-key">Time</span><span class="iec-val" style="color:#9b8fff">6:00 – 6:45 AM</span></div>
+            <div class="iec-row"><span class="iec-key">Days</span><span class="iec-val">Mon – Fri</span></div>
+            <div class="iec-row"><span class="iec-key">Added to</span><span class="iec-val">Planner + habits</span></div>
+          </div>
+          <div class="ctx-line"><div class="ctx-dot"></div>Based on Faith logs · last 7 days · prayer streak 5 days</div>
+          <div class="ie-actions">
+            <div class="ie-btn approve" onclick="event.stopPropagation();approveItem('item-faith','Morning spiritual block added to your Planner')">Approve</div>
+            <div class="ie-btn edit" onclick="event.stopPropagation();sendPrompt('Edit the morning spiritual routine — change time or days')">Edit</div>
+            <div class="ie-btn reject" onclick="event.stopPropagation();dismissItem('item-faith')">Reject</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 3: Health training reduction -->
+      <div class="inbox-item" id="item-health" onclick="toggleItem('item-health')">
+        <div class="ii-header">
+          <div class="ii-domain-icon" style="background:#2a1510">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 13s-5-3.5-5-7a5 5 0 0110 0c0 3.5-5 7-5 7z" stroke="#f0997b" stroke-width="1.4"/></svg>
+          </div>
+          <div class="ii-body">
+            <div class="ii-top">
+              <span class="ii-domain" style="color:#d85a30">Health</span>
+              <span class="ii-type">Adjust target</span>
+            </div>
+            <div class="ii-title">Reduce training to 3× this week</div>
+            <div class="ii-preview">Down from 4 sessions. Energy averaged 6.2 — below your usual 7.4. Temporary for this week only.</div>
+            <div class="ii-meta">
+              <span class="ii-time">Proposed today</span>
+              <span class="ii-impact" style="background:#1a2a1e;color:#1d9e75">Recovery ↑</span>
+            </div>
+          </div>
+          <div class="ii-unread" style="background:#d85a30"></div>
+        </div>
+        <div class="ii-expanded">
+          <div class="ie-why">Your average energy this week is 6.2 vs your usual 7.4. Pushing 4 sessions on a recovery week tends to set you back more than it helps, based on your past logs.</div>
+          <div class="ie-change">
+            <div class="iec-label">What will change</div>
+            <div class="iec-row"><span class="iec-key">Current target</span><span class="iec-val" style="color:#ba7517">4 sessions</span></div>
+            <div class="iec-row"><span class="iec-key">Proposed</span><span class="iec-val" style="color:#1d9e75">3 sessions</span></div>
+            <div class="iec-row"><span class="iec-key">Removed</span><span class="iec-val">Thursday session</span></div>
+            <div class="iec-row"><span class="iec-key">Duration</span><span class="iec-val" style="color:#9b8fff">This week only</span></div>
+          </div>
+          <div class="ctx-line"><div class="ctx-dot"></div>Based on wellness check-ins · avg energy 6.2 vs usual 7.4</div>
+          <div class="ie-actions">
+            <div class="ie-btn approve" onclick="event.stopPropagation();approveItem('item-health','Training reduced to 3× this week')">Approve</div>
+            <div class="ie-btn edit" onclick="event.stopPropagation();sendPrompt('Edit the training reduction — keep 4 sessions but reschedule Thursday')">Keep 4, reschedule</div>
+            <div class="ie-btn reject" onclick="event.stopPropagation();dismissItem('item-health')">Reject</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY section -->
+    <div id="history-section">
+      <div class="section-head">History · this week</div>
+
+      <div class="history-item" onclick="sendPrompt('Show me the details of the approved weekly plan from Thursday')">
+        <div class="hi-icon" style="background:#1a2a1e">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-6" stroke="#1d9e75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="hi-body">
+          <div class="hi-title">Weekly plan · Mar 17 draft</div>
+          <div class="hi-meta">Career + Faith + Finance · 16 priorities</div>
+        </div>
+        <span class="hi-status approved">Approved · Thu</span>
+      </div>
+
+      <div class="history-item" onclick="sendPrompt('Show me the details of the deferred faith reflection prompt')">
+        <div class="hi-icon" style="background:#1a1a1e">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 4v4l3 3" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="hi-body">
+          <div class="hi-title">Faith reflection prompt · weekly</div>
+          <div class="hi-meta">Suggested adding structured Sunday reflection</div>
+        </div>
+        <span class="hi-status rejected">Dismissed · Tue</span>
+      </div>
+
+      <div class="history-item" onclick="sendPrompt('Show me the details of the Convex cron task that was auto-approved')">
+        <div class="hi-icon" style="background:#1a2a1e">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-6" stroke="#1d9e75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="hi-body">
+          <div class="hi-title">Habit log — prayer streak update</div>
+          <div class="hi-meta">Auto-approved · low-risk · streak tracker only</div>
+        </div>
+        <span class="hi-status approved">Auto · Mon</span>
+      </div>
+
+      <div class="history-item" onclick="sendPrompt('Show me the budget cap adjustment that expired')">
+        <div class="hi-icon" style="background:#1a1a1e">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#333" stroke-width="1.3"/><path d="M8 5v3l2 1.5" stroke="#333" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="hi-body">
+          <div class="hi-title">Subscriptions audit · 3 items flagged</div>
+          <div class="hi-meta">Expired after 7 days without response</div>
+        </div>
+        <span class="hi-status expired">Expired · Mon</span>
+      </div>
+    </div>
+
+    <!-- Empty state (hidden) -->
+    <div class="empty-state" id="empty-state" style="display:none">
+      <div class="es-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="#444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="es-title">All caught up</div>
+      <div class="es-sub">No pending approvals. The AI won't make any changes until you see them here first.</div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+var pendingCount=3;
+var openItem=null;
+
+function toggleItem(id){
+  var item=document.getElementById(id);
+  if(openItem&&openItem!==id){
+    document.getElementById(openItem).classList.remove('open');
+  }
+  item.classList.toggle('open');
+  openItem=item.classList.contains('open')?id:null;
+  // Mark as read
+  var dot=item.querySelector('.ii-unread');
+  if(dot)dot.style.opacity='0';
+}
+
+function approveItem(id,msg){
+  var item=document.getElementById(id);
+  item.style.transition='opacity .3s,transform .3s';
+  item.style.opacity='0';
+  item.style.transform='translateX(20px)';
+  setTimeout(function(){
+    item.style.display='none';
+    pendingCount--;
+    updateCount();
+    if(pendingCount===0)showEmpty();
+  },300);
+  sendPrompt(msg||'Approved');
+}
+
+function dismissItem(id){
+  var item=document.getElementById(id);
+  item.style.transition='opacity .3s';
+  item.style.opacity='0';
+  setTimeout(function(){
+    item.style.display='none';
+    pendingCount--;
+    updateCount();
+    if(pendingCount===0)showEmpty();
+  },300);
+}
+
+function approveAll(){
+  ['item-finance','item-faith','item-health'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el&&el.style.display!=='none'){
+      el.style.transition='opacity .25s';
+      el.style.opacity='0';
+      setTimeout(function(){el.style.display='none'},300);
+    }
+  });
+  pendingCount=0;
+  updateCount();
+  document.getElementById('batch-bar').style.display='none';
+  setTimeout(showEmpty,400);
+  sendPrompt('Approve all pending AI proposals — Finance savings goal, Faith morning routine, and Health training reduction');
+}
+
+function hideBatch(){
+  document.getElementById('batch-bar').style.display='none';
+}
+
+function updateCount(){
+  document.getElementById('pending-count').textContent=pendingCount>0?pendingCount+' pending':'All clear';
+  var sec=document.getElementById('pending-section').querySelector('.section-head');
+  if(sec)sec.textContent='Pending · '+pendingCount;
+}
+
+function markAllRead(){
+  document.querySelectorAll('.ii-unread').forEach(function(d){d.style.opacity='0'});
+}
+
+function showEmpty(){
+  var ps=document.getElementById('pending-section');
+  if(ps)ps.style.display='none';
+  document.getElementById('batch-bar').style.display='none';
+  document.getElementById('empty-state').style.display='block';
+}
+
+function setFilter(f,el){
+  document.querySelectorAll('.fp').forEach(function(p){p.classList.remove('active')});
+  el.classList.add('active');
+  var pending=document.getElementById('pending-section');
+  var history=document.getElementById('history-section');
+  var batch=document.getElementById('batch-bar');
+  if(f==='history'){
+    pending.style.display='none';
+    history.style.display='block';
+    batch.style.display='none';
+  } else if(f==='pending'){
+    pending.style.display='block';
+    history.style.display='none';
+    batch.style.display='flex';
+  } else if(f==='all'){
+    pending.style.display='block';
+    history.style.display='block';
+    batch.style.display='flex';
+  } else {
+    // domain filter
+    pending.style.display='block';
+    history.style.display='none';
+    batch.style.display='none';
+    ['item-finance','item-faith','item-health'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(!el)return;
+      var show=(f==='finance'&&id==='item-finance')||(f==='faith'&&id==='item-faith')||(f==='health'&&id==='item-health');
+      el.style.display=show?'':'none';
+    });
+  }
+}
+</script>

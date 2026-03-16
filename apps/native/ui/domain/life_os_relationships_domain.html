@@ -1,0 +1,551 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:110px}
+.screen::-webkit-scrollbar{display:none}
+
+.top-bar{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+
+.header{padding:10px 24px 0}
+.h-row{display:flex;justify-content:space-between;align-items:center}
+.h-left{display:flex;align-items:center;gap:10px}
+.h-dot{width:10px;height:10px;border-radius:50%;background:#185FA5;flex-shrink:0}
+.h-title{font-size:26px;font-weight:500;color:#fff}
+.h-sub{font-size:13px;color:#444;margin-top:4px}
+.h-add{width:32px;height:32px;border-radius:50%;background:#0e1420;border:0.5px solid #1a3040;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.h-add:hover{background:#152030}
+
+/* Health summary */
+.health-card{margin:14px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:18px;padding:14px 16px}
+.hc-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
+.hc-pct{font-size:32px;font-weight:500;color:#85b7eb}
+.hc-right{text-align:right}
+.hc-label{font-size:11px;color:#555;margin-bottom:3px}
+.hc-trend{font-size:12px;color:#ba7517;font-weight:500}
+.hc-track{height:5px;background:#1e1e22;border-radius:3px;margin-bottom:12px;overflow:hidden}
+.hc-fill{height:100%;border-radius:3px;background:#185FA5}
+.hc-stats{display:flex}
+.hcs{flex:1;text-align:center;border-right:0.5px solid #1e1e22}
+.hcs:last-child{border-right:none}
+.hcs-num{font-size:16px;font-weight:500;color:#e0e0ec}
+.hcs-label{font-size:10px;color:#555;margin-top:2px}
+
+/* View toggle */
+.view-toggle{display:flex;gap:0;margin:14px 24px 0;background:#141418;border-radius:10px;padding:3px;border:0.5px solid #222}
+.vt-btn{flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:500;color:#555;cursor:pointer;text-align:center;transition:all .2s;border:none;background:transparent}
+.vt-btn.active{background:#0e1420;color:#85b7eb;border:0.5px solid #1a3040}
+
+/* PEOPLE VIEW */
+.people-view{padding:10px 24px 0}
+
+.section-head{display:flex;justify-content:space-between;align-items:center;padding:8px 0 8px}
+.sh-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase}
+.sh-action{font-size:12px;color:#6b5fff;cursor:pointer}
+
+/* Person card */
+.person-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.person-card:hover{border-color:#333}
+.person-card.needs-touch{border-color:#3d2a10;background:#160f08}
+.pc-row{display:flex;align-items:flex-start;gap:12px}
+.pc-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;border:1.5px solid transparent}
+.pc-body{flex:1;min-width:0}
+.pc-name{font-size:14px;font-weight:500;color:#d0d0dc;margin-bottom:2px}
+.pc-relation{font-size:11px;color:#555;margin-bottom:5px}
+.pc-last{display:flex;align-items:center;gap:6px}
+.pc-last-text{font-size:12px;color:#666}
+.pc-last-time{font-size:11px;color:#444}
+.pc-status{flex-shrink:0;text-align:right}
+.pc-warmth{display:flex;gap:2px;justify-content:flex-end;margin-bottom:4px}
+.pw-dot{width:6px;height:6px;border-radius:50%}
+.pc-next{font-size:10px;color:#444;white-space:nowrap}
+.pc-next.due{color:#ba7517}
+.pc-next.overdue{color:#e24b4a}
+
+/* Expanded person */
+.pc-expanded{display:none;padding:10px 0 0;border-top:0.5px solid #1e1e22;margin-top:10px}
+.person-card.open .pc-expanded{display:block}
+.pe-section{margin-bottom:10px}
+.pe-label{font-size:10px;color:#444;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.pe-log-item{display:flex;gap:8px;padding:6px 0;border-bottom:0.5px solid #1a1a1e}
+.pe-log-item:last-child{border-bottom:none}
+.pe-log-type{font-size:11px;color:#555;width:60px;flex-shrink:0;padding-top:1px}
+.pe-log-text{font-size:12px;color:#888;line-height:1.4;flex:1}
+.pe-log-time{font-size:10px;color:#333;flex-shrink:0}
+.pe-actions{display:flex;gap:6px}
+.pe-btn{flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid #2a2a2e;background:#141418;color:#666;text-align:center;transition:all .15s}
+.pe-btn:hover{color:#aaa;border-color:#444}
+.pe-btn.primary{background:#0e1420;border-color:#1a3040;color:#85b7eb}
+
+/* Rhythm section */
+.rhythm-section{margin-bottom:4px}
+.rhythm-row{display:flex;gap:5px;margin-bottom:6px}
+.rr-pill{flex:1;border-radius:8px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.rr-pill:hover{opacity:.75}
+
+/* Intentions */
+.intention-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;display:flex;gap:10px;align-items:center}
+.intention-card:hover{border-color:#333}
+.ic-check{width:18px;height:18px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.ic-check.done{background:#185FA5;border-color:#185FA5}
+.ic-check.done::after{content:'';width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block}
+.ic-body{flex:1}
+.ic-title{font-size:13px;color:#ccc;font-weight:500}
+.ic-meta{font-size:11px;color:#555;margin-top:2px}
+.ic-when{font-size:11px;color:#444;flex-shrink:0}
+
+/* AI card */
+.ai-card{margin:10px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
+.ac-dot{width:6px;height:6px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ac-body{flex:1}
+.ac-text{font-size:13px;color:#8888a0;line-height:1.5;margin-bottom:8px}
+.ac-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ac-chip{font-size:11px;padding:5px 10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer;transition:all .15s}
+.ac-chip:hover{background:#252040}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#0e0e10;border-top:0.5px solid #1e1e22;padding:12px 0 28px;display:flex;justify-content:space-around}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.4}
+.nav-item.active{opacity:1}
+.nav-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#d85a30}
+.nav-label{font-size:10px;color:#888;font-weight:500}
+.nav-item.active .nav-label{color:#d85a30}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="top-bar">
+      <div class="back-btn" onclick="sendPrompt('Go back to the Domains hub')">
+        <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+        Domains
+      </div>
+    </div>
+
+    <div class="header">
+      <div class="h-row">
+        <div class="h-left">
+          <div class="h-dot"></div>
+          <div class="h-title">Relationships</div>
+        </div>
+        <div class="h-add" onclick="sendPrompt('Add a person or log a connection in my Relationships domain')">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#85b7eb" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        </div>
+      </div>
+      <div class="h-sub">Mar 10 – 16 · 0 touchpoints this week</div>
+    </div>
+
+    <div class="health-card">
+      <div class="hc-row">
+        <div>
+          <div class="hc-label">Domain health this week</div>
+          <div class="hc-pct">0%</div>
+        </div>
+        <div class="hc-right">
+          <div class="hc-label">Status</div>
+          <div class="hc-trend">No activity</div>
+        </div>
+      </div>
+      <div class="hc-track"><div class="hc-fill" style="width:0%"></div></div>
+      <div class="hc-stats">
+        <div class="hcs"><div class="hcs-num" style="color:#ba7517">0</div><div class="hcs-label">Touchpoints</div></div>
+        <div class="hcs"><div class="hcs-num">4</div><div class="hcs-label">People tracked</div></div>
+        <div class="hcs"><div class="hcs-num" style="color:#e24b4a">2</div><div class="hcs-label">Overdue</div></div>
+        <div class="hcs"><div class="hcs-num" style="color:#ba7517">1</div><div class="hcs-label">Due soon</div></div>
+      </div>
+    </div>
+
+    <div class="view-toggle">
+      <div class="vt-btn active" id="vt-people" onclick="setView('people')">People</div>
+      <div class="vt-btn" id="vt-intentions" onclick="setView('intentions')">Intentions</div>
+      <div class="vt-btn" id="vt-rhythm" onclick="setView('rhythm')">Rhythm</div>
+    </div>
+
+    <!-- PEOPLE VIEW -->
+    <div id="view-people">
+      <div class="people-view">
+
+        <div class="section-head">
+          <span class="sh-label">Needs attention <span style="color:#333;font-weight:400;text-transform:none;letter-spacing:0">· 2</span></span>
+        </div>
+
+        <!-- Person 1 — overdue -->
+        <div class="person-card needs-touch" id="pc-dad" onclick="togglePerson('pc-dad')">
+          <div class="pc-row">
+            <div class="pc-avatar" style="background:#1a1408;color:#ba7517;border-color:#3d2a10">DA</div>
+            <div class="pc-body">
+              <div class="pc-name">Dad</div>
+              <div class="pc-relation">Family · Close</div>
+              <div class="pc-last">
+                <span class="pc-last-text">Last: called, caught up</span>
+                <span class="pc-last-time">3 weeks ago</span>
+              </div>
+            </div>
+            <div class="pc-status">
+              <div class="pc-warmth">
+                <div class="pw-dot" style="background:#ba7517"></div>
+                <div class="pw-dot" style="background:#ba7517"></div>
+                <div class="pw-dot" style="background:#ba7517"></div>
+                <div class="pw-dot" style="background:#2a2a2e"></div>
+                <div class="pw-dot" style="background:#2a2a2e"></div>
+              </div>
+              <div class="pc-next overdue">Overdue · 1 wk</div>
+            </div>
+          </div>
+          <div class="pc-expanded">
+            <div class="pe-section">
+              <div class="pe-label">Recent log</div>
+              <div class="pe-log-item">
+                <span class="pe-log-type">Call</span>
+                <span class="pe-log-text">Caught up on work, family news. He asked about the Life OS project.</span>
+                <span class="pe-log-time">Mar 3</span>
+              </div>
+            </div>
+            <div class="pe-section">
+              <div class="pe-label">Notes</div>
+              <div style="font-size:12px;color:#555;line-height:1.5">Preferred contact: Sunday mornings or evenings. Appreciates calls over messages.</div>
+            </div>
+            <div class="pe-actions">
+              <div class="pe-btn primary" onclick="event.stopPropagation();sendPrompt('Log a touchpoint with Dad — called and caught up')">Log call ↗</div>
+              <div class="pe-btn" onclick="event.stopPropagation();sendPrompt('Schedule a call with Dad for this weekend')">Schedule</div>
+              <div class="pe-btn" onclick="event.stopPropagation();sendPrompt('Show me my full relationship log with Dad')">History</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Person 2 — overdue -->
+        <div class="person-card needs-touch" id="pc-mentor" onclick="togglePerson('pc-mentor')">
+          <div class="pc-row">
+            <div class="pc-avatar" style="background:#0e1a26;color:#378add;border-color:#1a3040">KA</div>
+            <div class="pc-body">
+              <div class="pc-name">Kwame A.</div>
+              <div class="pc-relation">Mentor · Professional</div>
+              <div class="pc-last">
+                <span class="pc-last-text">Last: shared Life OS update</span>
+                <span class="pc-last-time">2 weeks ago</span>
+              </div>
+            </div>
+            <div class="pc-status">
+              <div class="pc-warmth">
+                <div class="pw-dot" style="background:#378add"></div>
+                <div class="pw-dot" style="background:#378add"></div>
+                <div class="pw-dot" style="background:#378add"></div>
+                <div class="pw-dot" style="background:#378add"></div>
+                <div class="pw-dot" style="background:#2a2a2e"></div>
+              </div>
+              <div class="pc-next overdue">Overdue · 2d</div>
+            </div>
+          </div>
+          <div class="pc-expanded">
+            <div class="pe-section">
+              <div class="pe-label">Recent log</div>
+              <div class="pe-log-item">
+                <span class="pe-log-type">Message</span>
+                <span class="pe-log-text">Shared the UI/UX blueprint draft. He responded positively, asked about the AI layer.</span>
+                <span class="pe-log-time">Mar 1</span>
+              </div>
+            </div>
+            <div class="pe-section">
+              <div class="pe-label">Context</div>
+              <div style="font-size:12px;color:#555;line-height:1.5">Building relationship over Life OS mentorship. Monthly check-in target. He's technically strong — values showing real progress.</div>
+            </div>
+            <div class="pe-actions">
+              <div class="pe-btn primary" onclick="event.stopPropagation();sendPrompt('Help me draft a message to Kwame updating him on Life OS progress')">Draft update ↗</div>
+              <div class="pe-btn" onclick="event.stopPropagation();sendPrompt('Log a touchpoint with Kwame — sent update message')">Log touchpoint</div>
+              <div class="pe-btn" onclick="event.stopPropagation();sendPrompt('Show me my full history with Kwame')">History</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:4px">
+          <span class="sh-label">Active <span style="color:#333;font-weight:400;text-transform:none;letter-spacing:0">· 2</span></span>
+        </div>
+
+        <!-- Person 3 — due soon -->
+        <div class="person-card" id="pc-sis" onclick="togglePerson('pc-sis')">
+          <div class="pc-row">
+            <div class="pc-avatar" style="background:#2a1020;color:#ed93b1;border-color:#3d1030">AB</div>
+            <div class="pc-body">
+              <div class="pc-name">Abena B.</div>
+              <div class="pc-relation">Sister · Family</div>
+              <div class="pc-last">
+                <span class="pc-last-text">Last: birthday call, long catch-up</span>
+                <span class="pc-last-time">1 week ago</span>
+              </div>
+            </div>
+            <div class="pc-status">
+              <div class="pc-warmth">
+                <div class="pw-dot" style="background:#ed93b1"></div>
+                <div class="pw-dot" style="background:#ed93b1"></div>
+                <div class="pw-dot" style="background:#ed93b1"></div>
+                <div class="pw-dot" style="background:#ed93b1"></div>
+                <div class="pw-dot" style="background:#ed93b1"></div>
+              </div>
+              <div class="pc-next due">Due in 1 week</div>
+            </div>
+          </div>
+          <div class="pc-expanded">
+            <div class="pe-section">
+              <div class="pe-label">Recent log</div>
+              <div class="pe-log-item">
+                <span class="pe-log-type">Call</span>
+                <span class="pe-log-text">Birthday call. Long catch-up on her new job, my Life OS project. Great conversation.</span>
+                <span class="pe-log-time">Mar 7</span>
+              </div>
+            </div>
+            <div class="pe-actions">
+              <div class="pe-btn primary" onclick="event.stopPropagation();sendPrompt('Log a touchpoint with Abena — sent a message checking in')">Log touchpoint ↗</div>
+              <div class="pe-btn" onclick="event.stopPropagation();sendPrompt('Show my full log with Abena')">History</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Person 4 — healthy -->
+        <div class="person-card" id="pc-friend" onclick="togglePerson('pc-friend')">
+          <div class="pc-row">
+            <div class="pc-avatar" style="background:#1a2a1e;color:#6fcf97;border-color:#2a4030">EO</div>
+            <div class="pc-body">
+              <div class="pc-name">Efe O.</div>
+              <div class="pc-relation">Friend · Close</div>
+              <div class="pc-last">
+                <span class="pc-last-text">Last: met up, prayer together</span>
+                <span class="pc-last-time">5 days ago</span>
+              </div>
+            </div>
+            <div class="pc-status">
+              <div class="pc-warmth">
+                <div class="pw-dot" style="background:#1d9e75"></div>
+                <div class="pw-dot" style="background:#1d9e75"></div>
+                <div class="pw-dot" style="background:#1d9e75"></div>
+                <div class="pw-dot" style="background:#1d9e75"></div>
+                <div class="pw-dot" style="background:#2a2a2e"></div>
+              </div>
+              <div class="pc-next" style="color:#1d9e75">Healthy ✓</div>
+            </div>
+          </div>
+          <div class="pc-expanded">
+            <div class="pe-section">
+              <div class="pe-label">Recent log</div>
+              <div class="pe-log-item">
+                <span class="pe-log-type">In person</span>
+                <span class="pe-log-text">Meetup and prayer session. Encouraged each other on faith goals. Discussed Life OS concept.</span>
+                <span class="pe-log-time">Mar 9</span>
+              </div>
+            </div>
+            <div class="pe-actions">
+              <div class="pe-btn primary" onclick="event.stopPropagation();sendPrompt('Log a new touchpoint with Efe')">Log touchpoint ↗</div>
+              <div class="pe-btn" onclick="event.stopPropagation();sendPrompt('Show my full log with Efe')">History</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:4px">
+          <span class="sh-label">Add someone</span>
+        </div>
+        <div style="background:#141418;border:0.5px solid #1e1e22;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s" onclick="sendPrompt('Add a new person to my Relationships domain')" onmouseover="this.style.borderColor='#2a2a2e'" onmouseout="this.style.borderColor='#1e1e22'">
+          <div style="width:36px;height:36px;border-radius:50%;background:#1a1a1e;border:1px dashed #2a2a2e;display:flex;align-items:center;justify-content:center">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+          </div>
+          <span style="font-size:13px;color:#333">Add a person to track</span>
+        </div>
+
+        <div class="ai-card">
+          <div class="ac-dot"></div>
+          <div class="ac-body">
+            <div class="ac-text">Relationships had zero activity this week — it's the one domain that went completely cold. Dad is 3 weeks since last contact. Kwame is 2 weeks. One message to either of them today closes the gap before the weekend.</div>
+            <div class="ac-chips">
+              <div class="ac-chip" onclick="sendPrompt('Help me draft a message to Dad for a Sunday call')">Message Dad ↗</div>
+              <div class="ac-chip" onclick="sendPrompt('Draft a Life OS progress update for Kwame my mentor')">Update Kwame ↗</div>
+              <div class="ac-chip" onclick="sendPrompt('Show me my relationship health over the last 30 days')">30-day view</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTENTIONS VIEW -->
+    <div id="view-intentions" style="display:none;padding:10px 24px 0">
+      <div class="section-head">
+        <span class="sh-label">This week</span>
+        <span class="sh-action" onclick="sendPrompt('Add a new relationship intention for this week')">+ Add</span>
+      </div>
+
+      <div class="intention-card" onclick="toggleIntention(this)">
+        <div class="ic-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+        <div class="ic-body">
+          <div class="ic-title">Call Dad — Sunday morning catch-up</div>
+          <div class="ic-meta">Family · 20–30 min</div>
+        </div>
+        <span class="ic-when" style="color:#e24b4a">Overdue</span>
+      </div>
+
+      <div class="intention-card" onclick="toggleIntention(this)">
+        <div class="ic-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+        <div class="ic-body">
+          <div class="ic-title">Send Kwame a Life OS screen update</div>
+          <div class="ic-meta">Mentor · message · show progress</div>
+        </div>
+        <span class="ic-when" style="color:#ba7517">Today</span>
+      </div>
+
+      <div class="intention-card" onclick="toggleIntention(this)">
+        <div class="ic-check done" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+        <div class="ic-body">
+          <div class="ic-title">Pray with Efe — meetup</div>
+          <div class="ic-meta">Friend · in person</div>
+        </div>
+        <span class="ic-when" style="color:#1d9e75">Done · Mar 9</span>
+      </div>
+
+      <div class="section-head" style="margin-top:4px">
+        <span class="sh-label">Next week</span>
+        <span class="sh-action" onclick="sendPrompt('Plan my relationship intentions for next week')">Plan ↗</span>
+      </div>
+
+      <div style="background:#141418;border:0.5px solid #1e1e22;border-radius:14px;padding:14px;text-align:center;cursor:pointer" onclick="sendPrompt('Generate relationship intentions for next week based on who needs a touchpoint')">
+        <div style="font-size:13px;color:#444;margin-bottom:6px">No intentions set yet</div>
+        <div style="font-size:12px;color:#6b5fff">Ask AI to suggest intentions ↗</div>
+      </div>
+
+      <div class="ai-card" style="margin-top:14px">
+        <div class="ac-dot"></div>
+        <div class="ac-body">
+          <div class="ac-text">Setting one intention per week per person you care about is the lowest-friction way to keep relationships warm. Two calls, one message, one prayer meetup — that's a full week.</div>
+          <div class="ac-chips">
+            <div class="ac-chip" onclick="sendPrompt('Generate relationship intentions for next week for all 4 people I track')">Generate for next week ↗</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RHYTHM VIEW -->
+    <div id="view-rhythm" style="display:none;padding:10px 24px 0">
+      <div class="section-head"><span class="sh-label">Contact rhythm · last 4 weeks</span></div>
+
+      <div style="background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-size:12px;font-weight:500;color:#888">Person</span>
+          <div style="display:flex;gap:4px">
+            <span style="font-size:10px;color:#333;width:36px;text-align:center">W1</span>
+            <span style="font-size:10px;color:#333;width:36px;text-align:center">W2</span>
+            <span style="font-size:10px;color:#333;width:36px;text-align:center">W3</span>
+            <span style="font-size:10px;color:#9b8fff;width:36px;text-align:center">Now</span>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #1a1a1e">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1a1408;color:#ba7517;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0">DA</div>
+          <span style="font-size:12px;color:#888;flex:1">Dad</span>
+          <div style="display:flex;gap:4px">
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#2a1a0e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#2a1a0e;border:1px solid #5a3a1a"></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #1a1a1e">
+          <div style="width:28px;height:28px;border-radius:50%;background:#0e1a26;color:#378add;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0">KA</div>
+          <span style="font-size:12px;color:#888;flex:1">Kwame A.</span>
+          <div style="display:flex;gap:4px">
+            <div style="width:36px;height:22px;background:#141418;border-radius:6px"></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#2a1a0e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#2a1a0e;border:1px solid #5a3a1a"></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #1a1a1e">
+          <div style="width:28px;height:28px;border-radius:50%;background:#2a1020;color:#ed93b1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0">AB</div>
+          <span style="font-size:12px;color:#888;flex:1">Abena B.</span>
+          <div style="display:flex;gap:4px">
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#141418;border-radius:6px"></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1a2a1e;color:#6fcf97;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0">EO</div>
+          <span style="font-size:12px;color:#888;flex:1">Efe O.</span>
+          <div style="display:flex;gap:4px">
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+            <div style="width:36px;height:22px;background:#1a2a1e;border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#1d9e75"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#13131f;border:0.5px solid #2a2a36;border-radius:12px;padding:11px 14px;display:flex;gap:8px;margin-bottom:10px">
+        <div style="width:5px;height:5px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s infinite"></div>
+        <div style="font-size:12px;color:#6b5fff;line-height:1.5">Efe is your most consistent connection — 4 of 4 weeks touched. Dad and Kwame both have a gap this week. Abena is on a healthy bi-weekly rhythm naturally.</div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ac-dot"></div>
+        <div class="ac-body">
+          <div class="ac-text">Your strongest relationship week was 3 weeks ago — all 4 people had touchpoints. This week broke the streak. The pattern is there; this week is the exception, not the trend.</div>
+          <div class="ac-chips">
+            <div class="ac-chip" onclick="sendPrompt('Generate relationship intentions for next week to restore my contact rhythm')">Restore rhythm ↗</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="sendPrompt('Show me the Today screen')">
+      <div class="nav-icon" style="background:#2a2040"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Planner screen')">
+      <div class="nav-icon" style="background:#1a2a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#1d9e75"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div>
+      <span class="nav-label">Planner</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon" style="background:#2a1a1a"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#d85a30" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#d85a30"/></svg></div>
+      <div class="nav-dot"></div>
+      <span class="nav-label">Domains</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the AI tab')">
+      <div class="nav-icon" style="background:#2a2010"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#ba7517"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div>
+      <span class="nav-label">AI</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Profile screen')">
+      <div class="nav-icon" style="background:#0e1a26"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#378add"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#378add" stroke-width="1.5"/></svg></div>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function setView(v){
+  ['people','intentions','rhythm'].forEach(function(n){
+    document.getElementById('vt-'+n).classList.toggle('active',n===v);
+    document.getElementById('view-'+n).style.display=n===v?'block':'none';
+  });
+}
+function togglePerson(id){
+  var open=document.getElementById(id).classList.contains('open');
+  ['pc-dad','pc-mentor','pc-sis','pc-friend'].forEach(function(p){
+    document.getElementById(p).classList.remove('open');
+  });
+  if(!open)document.getElementById(id).classList.add('open');
+}
+function toggleIntention(card){
+  // no-op for demo
+}
+setView('people');
+</script>

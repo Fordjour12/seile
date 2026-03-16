@@ -444,6 +444,48 @@ export function AiHomeScreen() {
                 theme={theme}
               />
             </View>
+
+            <View style={{ gap: 10, marginTop: 4 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <Text selectable variant="muted" style={{ letterSpacing: 1, textTransform: "uppercase", fontFamily: "Geist", fontWeight: "700" }}>
+                  AI utilities
+                </Text>
+                <Pressable onPress={() => router.push("/search" as never)}>
+                  <Text selectable variant="small" style={{ color: theme.primary, fontFamily: "Geist", fontWeight: "700" }}>
+                    Search
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={{ flexDirection: compactCards ? "column" : "row", gap: 10 }}>
+                <SessionCard
+                  title="Approval inbox"
+                  subtitle="Review pending changes before AI updates anything."
+                  meta="3 pending · Finance, Faith, Health"
+                  badgeLabel="Inbox"
+                  badgeColor="#f0a07b"
+                  badgeBackground="rgba(208, 122, 54, 0.14)"
+                  icon="check-square-o"
+                  iconColor="#f0a07b"
+                  iconBackground="rgba(208, 122, 54, 0.14)"
+                  onPress={() => router.push("/(tabs)/ai/approvals" as never)}
+                  theme={theme}
+                />
+                <SessionCard
+                  title="Memory viewer"
+                  subtitle="Inspect what the AI reads before generating suggestions."
+                  meta="8 domains · 53 tables · 7-day window"
+                  badgeLabel="Context"
+                  badgeColor="#91bfff"
+                  badgeBackground="rgba(47, 125, 209, 0.14)"
+                  icon="database"
+                  iconColor="#91bfff"
+                  iconBackground="rgba(47, 125, 209, 0.14)"
+                  onPress={() => router.push("/(tabs)/ai/memory" as never)}
+                  theme={theme}
+                />
+              </View>
+            </View>
           </Animated.View>
         ) : (
           <Animated.View entering={FadeInDown.delay(100).duration(420)} style={{ gap: 12 }}>

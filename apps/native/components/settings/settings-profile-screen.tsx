@@ -9,6 +9,7 @@ import {
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import {
@@ -90,6 +91,7 @@ const CRON_ROWS = [
 export function SettingsProfileScreen() {
   const { colorScheme, isDarkColorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, signOut } = useAuth();
 
@@ -672,12 +674,7 @@ export function SettingsProfileScreen() {
                 variant="outline"
                 size="md"
                 style={{ flex: 1 }}
-                onPress={() =>
-                  showStubAction(
-                    "AI context",
-                    "This action will later open a detailed context viewer backed by the AI memory and approval surfaces.",
-                  )
-                }
+                onPress={() => router.push("/(tabs)/ai/memory" as never)}
               />
               <Button
                 title="Clear context"

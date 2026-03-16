@@ -7,6 +7,7 @@ import {
   PiggyBank,
   Safari,
   Bridge3d,
+  ProjectCurve3d,
 } from "iconoir-react-native";
 
 import { Avatar } from "@/components";
@@ -79,6 +80,18 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <TabBarIcon2 color={color} width={size}>
               <Erase />
+            </TabBarIcon2>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="balance"
+        options={{
+          title: "Balance",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <TabBarIcon2 color={color} width={size}>
+              <ProjectCurve3d />
             </TabBarIcon2>
           ),
         }}

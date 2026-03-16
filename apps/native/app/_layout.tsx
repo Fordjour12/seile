@@ -200,6 +200,10 @@ function StackLayout() {
           options={{ title: "Actions", headerShown: false }}
         />
         <Stack.Screen
+          name="search"
+          options={{ title: "Search", headerShown: false, presentation: "fullScreenModal" }}
+        />
+        <Stack.Screen
           name="modal"
           options={{ title: "Modal", presentation: "modal" }}
         />

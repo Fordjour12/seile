@@ -40,6 +40,26 @@ const ACTIONS = [
     background: "rgba(208, 122, 54, 0.14)",
     badge: "Modal",
   },
+  {
+    key: "check-in",
+    title: "Check-In Sheet",
+    subtitle: "Morning, midday, and evening pulse logging with lightweight AI guidance.",
+    route: "/actions/check-in",
+    icon: "heartbeat",
+    color: "#ed93b1",
+    background: "rgba(212, 83, 126, 0.14)",
+    badge: "Sheet",
+  },
+  {
+    key: "goal",
+    title: "Goal Creation Sheet",
+    subtitle: "Multi-step goal setup for domain, target, timeline, and AI tracking behavior.",
+    route: "/actions/goal",
+    icon: "flag-o",
+    color: "#b8abff",
+    background: "rgba(123, 109, 246, 0.16)",
+    badge: "Sheet",
+  },
 ] as const;
 
 export function ActionsLauncherScreen() {
@@ -81,10 +101,10 @@ export function ActionsLauncherScreen() {
                   Native overlays and sheets
                 </Text>
                 <Text selectable variant="small" style={{ color: theme.mutedForeground }}>
-                  View the three action UI mocks in app: quick add, approval, and execution preview.
+                  View the action UI mocks in app: quick add, approval, preview, check-in, and goal creation.
                 </Text>
               </View>
-              <Badge color="primary">3 views</Badge>
+              <Badge color="primary">5 views</Badge>
             </View>
           </Card>
         </Animated.View>
