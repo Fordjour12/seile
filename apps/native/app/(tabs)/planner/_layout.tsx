@@ -69,6 +69,13 @@ export default function PlannerLayout() {
           headerShown: true,
         }}
       />
+      <Stack.Screen
+        name="goals/[id]"
+        options={{
+          title: "Goal",
+          headerShown: true,
+        }}
+      />
     </Stack>
   );
 }

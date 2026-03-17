@@ -361,12 +361,7 @@ export function SettingsProfileScreen() {
               title="Planning style"
               subtitle="How the AI structures your week"
               value="Balanced"
-              onPress={() =>
-                showStubAction(
-                  "Planning style",
-                  "This preference UI is visual-first for now.",
-                )
-              }
+              onPress={() => router.push("/(tabs)/settings/planning-style" as never)}
             />
             <Separator />
             <SettingRow
@@ -380,12 +375,7 @@ export function SettingsProfileScreen() {
               title="AI tone"
               subtitle="How the AI communicates with you"
               value="Direct"
-              onPress={() =>
-                showStubAction(
-                  "AI tone",
-                  "Tone presets will be wired next after the UI pass.",
-                )
-              }
+              onPress={() => router.push("/(tabs)/settings/ai-tone" as never)}
             />
             <Separator />
             <SettingRow
@@ -435,12 +425,7 @@ export function SettingsProfileScreen() {
               title="Insight refresh cadence"
               subtitle="How often cron jobs regenerate your context"
               value="Daily · 6 AM"
-              onPress={() =>
-                showStubAction(
-                  "Insight refresh cadence",
-                  "Cron scheduling controls are not wired yet.",
-                )
-              }
+              onPress={() => router.push("/(tabs)/settings/timezone-sync" as never)}
             />
           </Card>
         </Animated.View>
@@ -780,12 +765,7 @@ export function SettingsProfileScreen() {
               title="Check-in reminder"
               subtitle="Daily mood + energy prompt"
               value="8:00 AM"
-              onPress={() =>
-                showStubAction(
-                  "Check-in reminder",
-                  "Reminder scheduling UI can be wired on top of this shell next.",
-                )
-              }
+              onPress={() => router.push("/(tabs)/settings/notification-timing" as never)}
             />
           </Card>
         </Animated.View>
@@ -867,12 +847,7 @@ export function SettingsProfileScreen() {
                 24 total · 23 healthy · 1 pending
               </Text>
               <Pressable
-                onPress={() =>
-                  showStubAction(
-                    "Cron job status",
-                    "A full job-health detail screen can be attached here later.",
-                  )
-                }
+                onPress={() => router.push("/(tabs)/settings/timezone-sync" as never)}
               >
                 <Text style={{ ...Typography.labelSM, color: theme.primary }}>
                   View all
@@ -906,12 +881,7 @@ export function SettingsProfileScreen() {
               }
               title="Export my data"
               subtitle="Download everything as JSON or CSV"
-              onPress={() =>
-                showStubAction(
-                  "Export my data",
-                  "Export flows can be wired to a data package builder after the UI pass.",
-                )
-              }
+              onPress={() => router.push("/(tabs)/settings/data-export" as never)}
             />
             <Separator />
             <SettingRow

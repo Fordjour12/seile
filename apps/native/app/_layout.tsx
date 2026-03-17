@@ -164,6 +164,8 @@ function useBetterAuthForConvex() {
 function StackLayout() {
   const router = useRouter();
   const { user, hasHydrated, isLoading } = useAuth();
+  const { colorScheme } = useColorScheme();
+  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const isReady = hasHydrated && !isLoading;
   const isLoggedIn = Boolean(user);
   const wasAuthenticatedRef = useRef(false);
@@ -202,6 +204,26 @@ function StackLayout() {
         <Stack.Screen
           name="search"
           options={{ title: "Search", headerShown: false, presentation: "fullScreenModal" }}
+        />
+        <Stack.Screen
+          name="notifications"
+          options={{
+            title: "Notifications",
+            headerShown: true,
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.foreground,
+          }}
+        />
+        <Stack.Screen
+          name="error-states"
+          options={{
+            title: "Edge States",
+            headerShown: true,
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.foreground,
+          }}
         />
         <Stack.Screen
           name="modal"

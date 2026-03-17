@@ -60,6 +60,16 @@ const ACTIONS = [
     background: "rgba(123, 109, 246, 0.16)",
     badge: "Sheet",
   },
+  {
+    key: "error-states",
+    title: "Error Edge States",
+    subtitle: "Fallback, loading, offline, and recovery screens for first-run and AI flows.",
+    route: "/error-states",
+    icon: "exclamation-triangle",
+    color: "#f0a07b",
+    background: "rgba(208, 122, 54, 0.14)",
+    badge: "Preview",
+  },
 ] as const;
 
 export function ActionsLauncherScreen() {
@@ -101,10 +111,10 @@ export function ActionsLauncherScreen() {
                   Native overlays and sheets
                 </Text>
                 <Text selectable variant="small" style={{ color: theme.mutedForeground }}>
-                  View the action UI mocks in app: quick add, approval, preview, check-in, and goal creation.
+                  View the action and system-state mocks in app: quick add, approval, preview, check-in, goals, and edge states.
                 </Text>
               </View>
-              <Badge color="primary">5 views</Badge>
+              <Badge color="primary">6 views</Badge>
             </View>
           </Card>
         </Animated.View>
