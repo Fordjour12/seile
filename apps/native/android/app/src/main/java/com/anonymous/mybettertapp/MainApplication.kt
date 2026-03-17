@@ -30,9 +30,10 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
-    // @generated begin xml-fonts-init - expo prebuild (DO NOT MODIFY) sync-706903c6af1c4708456e70597ac6c6c26c60be87
+    // @generated begin xml-fonts-init - expo prebuild (DO NOT MODIFY) sync-1337fb9b82e63f392ecb7593699f40523253aaf7
     ReactFontManager.getInstance().addCustomFont(this, "Geist", R.font.xml_geist)
     ReactFontManager.getInstance().addCustomFont(this, "Figtree", R.font.xml_figtree)
+    ReactFontManager.getInstance().addCustomFont(this, "Manrope", R.font.xml_manrope)
     // @generated end xml-fonts-init
     DefaultNewArchitectureEntryPoint.releaseLevel = try {
       ReleaseLevel.valueOf(BuildConfig.REACT_NATIVE_RELEASE_LEVEL.uppercase())

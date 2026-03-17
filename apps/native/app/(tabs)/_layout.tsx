@@ -96,30 +96,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="faith"
-        options={{
-          title: "Faith",
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <TabBarIcon2 color={color} width={size}>
-              <Safari />
-            </TabBarIcon2>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="scheduler"
-        options={{
-          title: "Scheduler",
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <TabBarIcon2 color={color} width={size}>
-              <Calendar />
-            </TabBarIcon2>
-          ),
-        }}
-      />
 
       <Tabs.Screen
         name="domains"
