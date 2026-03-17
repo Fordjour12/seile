@@ -68,7 +68,7 @@ const SAVINGS_GOALS: SavingsGoal[] = [
     color: "#1fa97f",
     icon: "shield",
     iconBackground: "rgba(31, 169, 127, 0.14)",
-    route: "/(tabs)/finance/savings",
+    route: "/(tabs)/domains/finance",
   },
   {
     id: "equipment",
@@ -79,7 +79,7 @@ const SAVINGS_GOALS: SavingsGoal[] = [
     color: "#2f7dd1",
     icon: "briefcase",
     iconBackground: "rgba(47, 125, 209, 0.14)",
-    route: "/(tabs)/finance/savings",
+    route: "/(tabs)/domains/finance",
   },
 ];
 
@@ -227,7 +227,7 @@ export function FinanceDomainScreen() {
               <Button
                 title="Add entry"
                 size="sm"
-                onPress={() => navigateTo("/(tabs)/finance/transactions/create")}
+                onPress={() => navigateTo("/(tabs)/domains/finance")}
                 style={{
                   minHeight: 34,
                   paddingHorizontal: 14,
@@ -284,7 +284,7 @@ export function FinanceDomainScreen() {
 
         <Animated.View entering={FadeInDown.delay(60).duration(420)}>
           <Pressable
-            onPress={() => navigateTo("/(tabs)/finance/budget")}
+            onPress={() => navigateTo("/(tabs)/domains/finance")}
             style={({ pressed }) => ({
               opacity: pressed ? 0.92 : 1,
             })}
@@ -636,7 +636,7 @@ export function FinanceDomainScreen() {
           ))}
 
           <Pressable
-            onPress={() => navigateTo("/(tabs)/finance/savings/create")}
+            onPress={() => navigateTo("/(tabs)/domains/finance")}
             style={({ pressed }) => ({
               opacity: pressed ? 0.88 : 1,
             })}
@@ -679,7 +679,7 @@ export function FinanceDomainScreen() {
             }}
           >
             <SectionHeading title="Recurring this month" />
-            <Pressable onPress={() => navigateTo("/(tabs)/finance/recurring")}>
+            <Pressable onPress={() => navigateTo("/(tabs)/domains/finance")}>
               <Text
                 selectable
                 variant="small"
@@ -724,7 +724,7 @@ export function FinanceDomainScreen() {
               {group.items.map((item) => (
                 <Pressable
                   key={item.id}
-                  onPress={() => navigateTo("/(tabs)/finance/recurring")}
+                  onPress={() => navigateTo("/(tabs)/domains/finance")}
                   style={({ pressed }) => ({
                     opacity: pressed ? 0.94 : 1,
                   })}
@@ -817,7 +817,7 @@ export function FinanceDomainScreen() {
                   Clear it today and the Finance score recovers fast.
                 </Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  <ActionChip label="Do the review" onPress={() => navigateTo("/(tabs)/finance/budget")} theme={theme} />
+                  <ActionChip label="Do the review" onPress={() => navigateTo("/(tabs)/domains/finance")} theme={theme} />
                   <ActionChip
                     label="Approve savings goal"
                     onPress={() =>
@@ -828,7 +828,7 @@ export function FinanceDomainScreen() {
                     }
                     theme={theme}
                   />
-                  <ActionChip label="3-month trends" onPress={() => navigateTo("/(tabs)/finance")} theme={theme} />
+                  <ActionChip label="3-month trends" onPress={() => navigateTo("/(tabs)/domains/finance")} theme={theme} />
                 </View>
               </View>
             </View>

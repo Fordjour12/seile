@@ -1,11 +1,7 @@
 import { Tabs } from "expo-router";
 import {
-  Calendar,
   Erase,
-  HealthShield,
   HomeTable,
-  PiggyBank,
-  Safari,
   Bridge3d,
   ProjectCurve3d,
 } from "iconoir-react-native";
@@ -40,31 +36,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <TabBarIcon2 color={color} width={size}>
               <HomeTable />
-            </TabBarIcon2>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="health"
-        options={{
-          title: "Health",
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <TabBarIcon2 color={color} width={size}>
-              <HealthShield />
-            </TabBarIcon2>
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="finance"
-        options={{
-          title: "Finance",
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <TabBarIcon2 color={color} width={size}>
-              <PiggyBank />
             </TabBarIcon2>
           ),
         }}

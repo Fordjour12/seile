@@ -484,7 +484,7 @@ export function HealthDomainScreen() {
                       Sleep quality is improving and resting HR is down. The main lever now is consistency: hit 3 weekly sessions and this domain moves into strong territory.
                     </Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                      <ActionChip label="30-day trends" onPress={() => navigateTo("/(tabs)/health")} theme={theme} />
+                      <ActionChip label="30-day trends" onPress={() => navigateTo("/(tabs)/domains/health")} theme={theme} />
                       <ActionChip label="Adjust goals" onPress={() => openStub("Adjust goals", "Goal tuning is not connected yet.")} theme={theme} />
                     </View>
                   </View>

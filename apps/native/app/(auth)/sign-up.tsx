@@ -39,14 +39,18 @@ export default function SignUpScreen() {
   const { colorScheme } = useColorScheme();
   const { height } = useWindowDimensions();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-  const { clearError, error, hasHydrated, isLoading, signUp, user } = useAuth();
+  const { clearError, error, hasCompletedOnboarding, hasHydrated, isLoading, signUp, user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const busy = isLoading;
 
   if (hasHydrated && user) {
-    return <Redirect href="/(tabs)/finance" />;
+    return (
+      <Redirect
+        href={hasCompletedOnboarding ? "/(tabs)/domains" : "/(auth)/first-run-today"}
+      />
+    );
   }
 
   const canSubmit =

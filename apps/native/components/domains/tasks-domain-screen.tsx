@@ -55,7 +55,7 @@ const TASKS: TaskItem[] = [
     badgeBackground: "rgba(225, 105, 105, 0.14)",
     notes: "Deferred 4 days. Linked to Finance domain health dropping to 55%. GHc 1,240 is still unreviewed.",
     actions: [
-      { id: "do-now", label: "Do it now", route: "/(tabs)/finance/budget" },
+      { id: "do-now", label: "Do it now", route: "/(tabs)/domains/finance" },
       { id: "move", label: "Move to next week", message: "This move is not wired yet, but the rescheduling pattern is now in place." },
       { id: "delete", label: "Delete", destructive: true, message: "Delete flow for this task card is not wired yet." },
     ],
@@ -667,7 +667,7 @@ export function TasksDomainScreen() {
                     overall domain health down.
                   </Text>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                    <ActionChip label="Do the review now" onPress={() => navigateTo("/(tabs)/finance/budget")} theme={theme} />
+                    <ActionChip label="Do the review now" onPress={() => navigateTo("/(tabs)/domains/finance")} theme={theme} />
                     <ActionChip
                       label="Defer overdue"
                       onPress={() =>

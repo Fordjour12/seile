@@ -2,9 +2,15 @@ import { useState } from "react";
 import { Alert as RNAlert, Pressable, ScrollView, View } from "react-native";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { useRouter } from "expo-router";
+import Animated, { LinearTransition } from "react-native-reanimated";
 
 import { Badge, Button, Card, Text } from "@/components";
+import {
+  AnimatedProgressBar,
+  AnimatedStage,
+} from "@/components/auth/onboarding-flow-motion";
+import { useAuth } from "@/lib/auth-context";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -67,12 +73,19 @@ const STATE_META: Record<
 
 export function FirstRunTodayScreen() {
   const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const { completeOnboarding } = useAuth();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const router = useRouter();
   const [state, setState] = useState<FirstRunState>("day1Morning");
   const current = STATE_META[state];
 
   function showStub(title: string, message: string) {
     RNAlert.alert(title, message);
+  }
+
+  async function handleFinishSetup() {
+    await completeOnboarding();
+    router.replace("/(tabs)/domains");
   }
 
   return (
@@ -87,7 +100,10 @@ export function FirstRunTodayScreen() {
           gap: 16,
         }}
       >
-        <Animated.View entering={FadeInDown.duration(420)} style={{ gap: 10 }}>
+        <Animated.View
+          layout={LinearTransition.springify().damping(20).stiffness(180)}
+          style={{ gap: 10 }}
+        >
           <Text selectable variant="muted" style={{ color: theme.mutedForeground, fontFamily: "Geist", fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>
             {current.chip}
           </Text>
@@ -99,39 +115,43 @@ export function FirstRunTodayScreen() {
             ] as Array<[FirstRunState, string]>).map(([id, label]) => {
               const active = state === id;
               return (
-                <Pressable
+                <Animated.View
                   key={id}
-                  onPress={() => setState(id)}
-                  style={({ pressed }) => ({
-                    borderRadius: 999,
-                    borderCurve: "continuous",
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    backgroundColor: active ? "rgba(123, 109, 246, 0.18)" : theme.card,
-                    borderWidth: 1,
-                    borderColor: active ? "rgba(123, 109, 246, 0.32)" : theme.border,
-                    opacity: pressed ? 0.84 : 1,
-                  })}
+                  layout={LinearTransition.springify().damping(20).stiffness(180)}
                 >
-                  <Text selectable variant="small" style={{ color: active ? "#c8c0ff" : theme.mutedForeground, fontFamily: "Geist", fontWeight: "700" }}>
-                    {label}
-                  </Text>
-                </Pressable>
+                  <Pressable
+                    onPress={() => setState(id)}
+                    style={({ pressed }) => ({
+                      borderRadius: 999,
+                      borderCurve: "continuous",
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      backgroundColor: active ? "rgba(123, 109, 246, 0.18)" : theme.card,
+                      borderWidth: 1,
+                      borderColor: active ? "rgba(123, 109, 246, 0.32)" : theme.border,
+                      opacity: pressed ? 0.84 : 1,
+                    })}
+                  >
+                    <Text selectable variant="small" style={{ color: active ? "#c8c0ff" : theme.mutedForeground, fontFamily: "Geist", fontWeight: "700" }}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                </Animated.View>
               );
             })}
           </ScrollView>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(40).duration(420)} style={{ gap: 6 }}>
-          <Text selectable style={{ color: theme.foreground, fontFamily: "Geist", fontSize: 28, fontWeight: "700", lineHeight: 32 }}>
-            {current.greeting}
-          </Text>
-          <Text selectable variant="small" style={{ color: theme.mutedForeground, lineHeight: 20 }}>
-            {current.sub}
-          </Text>
-        </Animated.View>
+        <AnimatedStage stageKey={`first-run-${state}`} style={{ gap: 16 }}>
+          <View style={{ gap: 6 }}>
+            <Text selectable style={{ color: theme.foreground, fontFamily: "Geist", fontSize: 28, fontWeight: "700", lineHeight: 32 }}>
+              {current.greeting}
+            </Text>
+            <Text selectable variant="small" style={{ color: theme.mutedForeground, lineHeight: 20 }}>
+              {current.sub}
+            </Text>
+          </View>
 
-        <Animated.View entering={FadeInDown.delay(70).duration(420)}>
           <Card
             style={{
               borderRadius: 20,
@@ -174,9 +194,7 @@ export function FirstRunTodayScreen() {
               ) : null}
             </View>
           </Card>
-        </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(90).duration(420)}>
           <Card style={{ borderRadius: 16, borderCurve: "continuous", padding: 14, gap: 8, borderWidth: 1, borderColor: theme.border }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700" }}>
@@ -186,17 +204,14 @@ export function FirstRunTodayScreen() {
                 {state === "day1Evening" ? "Day 1 complete" : state === "day3Morning" ? "Day 3 of 7" : "Day 1 of 7"}
               </Text>
             </View>
-            <View style={{ height: 4, borderRadius: 999, backgroundColor: theme.border, overflow: "hidden" }}>
-              <View style={{ width: `${current.progress}%`, height: "100%", borderRadius: 999, backgroundColor: "#9b8fff" }} />
-            </View>
+            <AnimatedProgressBar progress={current.progress} trackColor={theme.border} fillColor="#9b8fff" />
             <Text selectable variant="muted" style={{ color: theme.mutedForeground, lineHeight: 18 }}>
               {current.progressSub}
             </Text>
           </Card>
-        </Animated.View>
 
-        {state === "day1Morning" ? (
-          <>
+          {state === "day1Morning" ? (
+            <>
             <SectionTitle label="Suggested to start" subtitle="From your setup" />
             <TaskCard title="Morning devotional + prayer" domain="Faith" domainColor="#b4adf5" domainBackground="#2a2040" note="Suggested · from your setup" onPress={() => showStub("Faith start", "This would log the first Faith action.")} />
             <TaskCard title="Log your first check-in" domain="Wellness" domainColor="#ed93b1" domainBackground="#2a1020" note="Teaches AI your patterns" onPress={() => showStub("First check-in", "This would launch the first wellness check-in.")} />
@@ -220,11 +235,11 @@ export function FirstRunTodayScreen() {
             <SectionTitle label="Activate domains" />
             <SetupCard title="Career" subtitle="Add a project or goal to activate" badge="+ Setup" accent="#85b7eb" background="#1a1e2a" onPress={() => showStub("Career setup", "This would activate Career with the first project or goal.")} />
             <SetupCard title="Health" subtitle="Log a session to activate" badge="+ Setup" accent="#f0997b" background="#2a1510" onPress={() => showStub("Health setup", "This would activate Health with the first training session.")} />
-          </>
-        ) : null}
+            </>
+          ) : null}
 
-        {state === "day1Evening" ? (
-          <>
+          {state === "day1Evening" ? (
+            <>
             <SectionTitle label="Day 1 snapshot" />
             <View style={{ flexDirection: "row", gap: 8 }}>
               <MetricBox value="2" label="Done" color="#1d9e75" />
@@ -251,11 +266,11 @@ export function FirstRunTodayScreen() {
               </View>
               <Button title="Close the day" onPress={() => showStub("Day closed", "This preview would submit the first evening check-in.")} style={{ borderRadius: 12, borderCurve: "continuous" }} />
             </Card>
-          </>
-        ) : null}
+            </>
+          ) : null}
 
-        {state === "day3Morning" ? (
-          <>
+          {state === "day3Morning" ? (
+            <>
             <SectionTitle label="Today · 3 priorities" />
             <TaskCard title="Morning prayer" domain="Faith" domainColor="#b4adf5" domainBackground="#2a2040" note="AI-suggested · energy pattern" onPress={() => showStub("Morning prayer", "This would log the first AI-informed priority.")} />
             <TaskCard title="Life OS · schema design" domain="Career" domainColor="#85b7eb" domainBackground="#1a1e2a" note="9:00 AM · deep work" onPress={() => showStub("Career focus", "This would open the morning deep work block.")} />
@@ -290,8 +305,16 @@ export function FirstRunTodayScreen() {
                 ))}
               </View>
             </Card>
-          </>
-        ) : null}
+            <Button
+              title="Finish setup"
+              onPress={() => {
+                void handleFinishSetup();
+              }}
+              style={{ borderRadius: 14, borderCurve: "continuous" }}
+            />
+            </>
+          ) : null}
+        </AnimatedStage>
       </ScrollView>
 
       <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: UI_PRESETS.spacing.section, paddingTop: 10, paddingBottom: 28, backgroundColor: theme.background, borderTopWidth: 1, borderTopColor: theme.border }}>

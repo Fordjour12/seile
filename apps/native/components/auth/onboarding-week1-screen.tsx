@@ -2,10 +2,16 @@ import { useState } from "react";
 import { Alert as RNAlert, Pressable, ScrollView, View } from "react-native";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { useRouter } from "expo-router";
+import Animated, { LinearTransition } from "react-native-reanimated";
 
 import { Badge, Button, Card, Text } from "@/components";
 import { Container } from "@/components/container";
+import {
+  AnimatedProgressBar,
+  AnimatedStage,
+} from "@/components/auth/onboarding-flow-motion";
+import { useAuth } from "@/lib/auth-context";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -95,12 +101,19 @@ const DAY_META: Record<
 
 export function OnboardingWeek1Screen() {
   const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const { completeOnboarding } = useAuth();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const router = useRouter();
   const [day, setDay] = useState<WeekDay>("day2");
   const current = DAY_META[day];
 
   function showStub(title: string, message: string) {
     RNAlert.alert(title, message);
+  }
+
+  async function handleFinishSetup() {
+    await completeOnboarding();
+    router.replace("/(tabs)/domains");
   }
 
   return (
@@ -115,7 +128,10 @@ export function OnboardingWeek1Screen() {
           gap: 16,
         }}
       >
-        <Animated.View entering={FadeInDown.duration(420)} style={{ gap: 10 }}>
+        <Animated.View
+          layout={LinearTransition.springify().damping(20).stiffness(180)}
+          style={{ gap: 10 }}
+        >
           <Text selectable variant="muted" style={{ color: theme.mutedForeground, fontFamily: "Geist", fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" }}>
             Onboarding week 1
           </Text>
@@ -130,30 +146,35 @@ export function OnboardingWeek1Screen() {
             ] as Array<[WeekDay, string]>).map(([id, label]) => {
               const active = day === id;
               return (
-                <Pressable
+                <Animated.View
                   key={id}
-                  onPress={() => setDay(id)}
-                  style={({ pressed }) => ({
-                    borderRadius: 999,
-                    borderCurve: "continuous",
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    backgroundColor: active ? "rgba(123, 109, 246, 0.18)" : theme.card,
-                    borderWidth: 1,
-                    borderColor: active ? "rgba(123, 109, 246, 0.32)" : theme.border,
-                    opacity: pressed ? 0.84 : 1,
-                  })}
+                  layout={LinearTransition.springify().damping(20).stiffness(180)}
                 >
-                  <Text selectable variant="small" style={{ color: active ? "#c8c0ff" : theme.mutedForeground, fontFamily: "Geist", fontWeight: "700" }}>
-                    {label}
-                  </Text>
-                </Pressable>
+                  <Pressable
+                    onPress={() => setDay(id)}
+                    style={({ pressed }) => ({
+                      borderRadius: 999,
+                      borderCurve: "continuous",
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      backgroundColor: active ? "rgba(123, 109, 246, 0.18)" : theme.card,
+                      borderWidth: 1,
+                      borderColor: active ? "rgba(123, 109, 246, 0.32)" : theme.border,
+                      opacity: pressed ? 0.84 : 1,
+                    })}
+                  >
+                    <Text selectable variant="small" style={{ color: active ? "#c8c0ff" : theme.mutedForeground, fontFamily: "Geist", fontWeight: "700" }}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                </Animated.View>
               );
             })}
           </ScrollView>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(40).duration(420)} style={{ gap: 4 }}>
+        <AnimatedStage stageKey={`week-1-${day}`} style={{ gap: 16 }}>
+          <View style={{ gap: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <Text selectable variant="small" style={{ color: theme.mutedForeground }}>
               Today
@@ -169,9 +190,8 @@ export function OnboardingWeek1Screen() {
           <Text selectable variant="small" style={{ color: theme.mutedForeground, lineHeight: 20 }}>
             {current.sub}
           </Text>
-        </Animated.View>
+          </View>
 
-        <Animated.View entering={FadeInDown.delay(70).duration(420)}>
           <Card
             style={{
               borderRadius: 20,
@@ -213,9 +233,7 @@ export function OnboardingWeek1Screen() {
               ) : null}
             </View>
           </Card>
-        </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(90).duration(420)}>
           <Card style={{ borderRadius: 16, borderCurve: "continuous", padding: 14, gap: 8, borderWidth: 1, borderColor: theme.border }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700" }}>
@@ -225,14 +243,11 @@ export function OnboardingWeek1Screen() {
                 {current.progressText}
               </Text>
             </View>
-            <View style={{ height: 4, borderRadius: 999, backgroundColor: theme.border, overflow: "hidden" }}>
-              <View style={{ width: `${current.progress}%`, height: "100%", borderRadius: 999, backgroundColor: "#9b8fff" }} />
-            </View>
+            <AnimatedProgressBar progress={current.progress} trackColor={theme.border} fillColor="#9b8fff" />
             <Text selectable variant="muted" style={{ color: theme.mutedForeground, lineHeight: 18 }}>
               {current.progressSub}
             </Text>
           </Card>
-        </Animated.View>
 
         {day === "day2" ? (
           <>
@@ -381,8 +396,16 @@ export function OnboardingWeek1Screen() {
                 Faith is your strongest domain. Career is your most active. Your morning is your best time and everything next week will protect it.
               </Text>
             </Card>
+            <Button
+              title="Finish setup"
+              onPress={() => {
+                void handleFinishSetup();
+              }}
+              style={{ borderRadius: 14, borderCurve: "continuous" }}
+            />
           </>
         ) : null}
+        </AnimatedStage>
       </ScrollView>
     </Container>
   );

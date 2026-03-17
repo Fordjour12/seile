@@ -62,6 +62,7 @@ import {
   sharedGoalSourceDomainValidator,
   sharedGoalStatusValidator,
 } from "./schema/shared_goals";
+import { onboardingStageValidator, onboardingStateTable } from "./schema/onboarding";
 import {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
@@ -121,12 +122,14 @@ export {
   schedulerTaskStatusValidator,
   prayerStatusValidator,
   spiritualGoalStatusValidator,
+  onboardingStageValidator,
 };
 
 export default defineSchema({
   accounts: accountsTable,
   aiMemory: aiMemoryTable,
   approvalRequests: approvalRequestsTable,
+  onboardingState: onboardingStateTable,
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,
   categories: categoriesTable,
