@@ -1,0 +1,461 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:40px}
+.screen::-webkit-scrollbar{display:none}
+
+/* Selector */
+.demo-sel{display:flex;gap:6px;padding:0 0 16px;overflow-x:auto}
+.demo-sel::-webkit-scrollbar{display:none}
+.ds-btn{font-size:11px;padding:5px 12px;border-radius:16px;cursor:pointer;color:#555;border:0.5px solid #222;background:#1a1a1e;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.ds-btn.active{background:#1e1a30;color:#c8c0ff;border-color:#3d3570}
+
+.top-bar{padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+.top-menu{font-size:20px;color:#444;cursor:pointer;padding:0 4px;transition:color .15s}
+.top-menu:hover{color:#888}
+
+/* Hero */
+.goal-hero{padding:14px 24px 0}
+.gh-domain-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.gh-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gh-domain{font-size:12px;font-weight:500}
+.gh-type{font-size:11px;color:#444;padding:2px 8px;background:#1e1e22;border-radius:20px}
+.gh-name{font-size:22px;font-weight:500;color:#fff;line-height:1.3;margin-bottom:6px}
+.gh-meta{font-size:12px;color:#444;margin-bottom:14px}
+
+/* Big ring progress */
+.progress-ring-wrap{display:flex;align-items:center;gap:20px;margin-bottom:14px;padding:16px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:18px}
+.ring-wrap{position:relative;width:80px;height:80px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#1e1e22;stroke-width:7}
+.ring-fill{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .6s}
+.ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{font-size:18px;font-weight:500;color:#e0e0ec;line-height:1}
+.ring-sub{font-size:9px;color:#555;margin-top:2px}
+.ring-stats{flex:1}
+.rs-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #1e1e22}
+.rs-row:last-child{border-bottom:none}
+.rs-key{font-size:12px;color:#555}
+.rs-val{font-size:12px;font-weight:500;color:#d0d0dc}
+
+/* Status chip */
+.status-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;margin-bottom:12px}
+
+/* Weekly chart */
+.week-chart-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.wcc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.wcc-label{font-size:12px;font-weight:500;color:#888}
+.wcc-range{font-size:11px;color:#444}
+.chart-bars{display:flex;align-items:flex-end;gap:5px;height:52px;margin-bottom:6px}
+.cb{flex:1;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s;cursor:pointer}
+.cb:hover{opacity:.75}
+.chart-labels{display:flex;gap:5px}
+.cl{flex:1;text-align:center;font-size:9px;color:#333}
+
+/* Milestone list */
+.milestone-list{display:flex;flex-direction:column;gap:0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;overflow:hidden;margin-bottom:10px}
+.milestone-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:0.5px solid #1e1e22;cursor:pointer;transition:background .15s}
+.milestone-item:last-child{border-bottom:none}
+.milestone-item:hover{background:#1e1e24}
+.mi-timeline{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;width:20px}
+.mi-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:1.5px solid transparent}
+.mi-dot.done{background:currentColor;border-color:currentColor}
+.mi-dot.active{background:#0e0e10;border-color:currentColor;box-shadow:0 0 0 2px currentColor}
+.mi-dot.upcoming{background:#1a1a1e;border-color:#2a2a2e}
+.mi-line{width:1.5px;flex:1;min-height:12px;background:#1e1e22}
+.mi-body{flex:1;min-width:0;padding-top:1px}
+.mi-title{font-size:13px;font-weight:500;color:#ccc;margin-bottom:2px}
+.mi-sub{font-size:11px;color:#555}
+.mi-date{font-size:10px;color:#333;flex-shrink:0;margin-top:2px}
+
+/* Log entries */
+.log-entry{display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid #1a1a1e}
+.log-entry:last-child{border-bottom:none}
+.le-date{font-size:11px;color:#333;width:36px;flex-shrink:0;padding-top:1px}
+.le-body{flex:1}
+.le-event{font-size:13px;color:#888;line-height:1.4}
+.le-event strong{color:#c0c0cc;font-weight:500}
+.le-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:20px;margin-top:4px}
+
+/* Streak dots */
+.streak-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
+.sd{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500}
+.sd.done{background:#1a2a1e;color:#6fcf97;border:0.5px solid #2a4030}
+.sd.skip{background:#141418;color:#333;border:0.5px solid #1e1e22}
+.sd.today{border:1.5px solid currentColor}
+
+/* Action row */
+.action-row{display:flex;gap:8px;padding:14px 24px 0}
+.ar-btn{flex:1;padding:12px 0;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;border:none;text-align:center;transition:opacity .15s}
+.ar-btn.primary{background:#9b8fff;color:#0e0e10}
+.ar-btn.secondary{background:#1e1e28;color:#888;border:0.5px solid #2a2a2e}
+.ar-btn:hover{opacity:.8}
+
+/* AI insight */
+.ai-insight{margin:10px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ai-body{flex:1}
+.ai-text{font-size:13px;color:#8888a0;line-height:1.5;margin-bottom:8px}
+.ai-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ai-chip{font-size:11px;padding:5px 10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer}
+
+/* Danger */
+.danger-row{display:flex;gap:8px;padding:14px 24px 0}
+.dr-btn{flex:1;padding:10px 0;border-radius:12px;font-size:13px;cursor:pointer;border:0.5px solid #2a2a2e;background:#141418;color:#555;text-align:center;transition:all .15s}
+.dr-btn:hover{color:#888}
+.dr-btn.del{border-color:#3a1a1a;background:#1a0e0e;color:#e24b4a}
+
+/* Section heads */
+.section-head{padding:14px 24px 0;display:flex;justify-content:space-between;align-items:center}
+.sh-label{font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase}
+.sh-action{font-size:12px;color:#6b5fff;cursor:pointer}
+.section-body{padding:8px 24px 0}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+
+<!-- Demo selector -->
+<div class="demo-sel">
+  <div class="ds-btn active" id="db-habit" onclick="loadGoal('habit')">Prayer habit</div>
+  <div class="ds-btn" id="db-project" onclick="loadGoal('project')">Life OS project</div>
+  <div class="ds-btn" id="db-metric" onclick="loadGoal('metric')">Emergency fund</div>
+</div>
+
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span></div>
+  </div>
+  <div class="screen">
+
+    <div class="top-bar">
+      <div class="back-btn" onclick="sendPrompt('Go back to the Faith domain screen')">
+        <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+        <span id="back-label">Faith</span>
+      </div>
+      <div class="top-menu" onclick="sendPrompt('Show options for this goal — edit, pause, or archive')">···</div>
+    </div>
+
+    <!-- Hero -->
+    <div class="goal-hero">
+      <div class="gh-domain-row">
+        <div class="gh-dot" id="domain-dot" style="background:#534AB7"></div>
+        <span class="gh-domain" id="domain-name" style="color:#b4adf5">Faith</span>
+        <span class="gh-type" id="goal-type">Habit goal</span>
+      </div>
+      <div class="gh-name" id="goal-name">Pray every morning</div>
+      <div class="gh-meta" id="goal-meta">Started Mar 1 · ends Mar 31 · 31 days</div>
+      <div class="status-chip" id="status-chip" style="background:#1a2a1e;color:#1d9e75;border:0.5px solid #2a4030">
+        <div style="width:5px;height:5px;border-radius:50%;background:#1d9e75"></div>
+        On track
+      </div>
+    </div>
+
+    <!-- Progress ring -->
+    <div style="padding:0 24px">
+      <div class="progress-ring-wrap">
+        <div class="ring-wrap">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="ring-bg" cx="40" cy="40" r="33"/>
+            <circle class="ring-fill" id="ring-fill" cx="40" cy="40" r="33"
+              stroke="#534AB7" stroke-dasharray="207.3"
+              stroke-dashoffset="56"/>
+          </svg>
+          <div class="ring-label">
+            <span class="ring-pct" id="ring-pct">73%</span>
+            <span class="ring-sub">complete</span>
+          </div>
+        </div>
+        <div class="ring-stats" id="ring-stats">
+          <div class="rs-row"><span class="rs-key">Target</span><span class="rs-val" id="rs-target">7 days / week</span></div>
+          <div class="rs-row"><span class="rs-key">This week</span><span class="rs-val" id="rs-week" style="color:#1d9e75">5 of 7 days</span></div>
+          <div class="rs-row"><span class="rs-key">Best streak</span><span class="rs-val" id="rs-streak">8 days</span></div>
+          <div class="rs-row"><span class="rs-key">Time left</span><span class="rs-val" id="rs-left">17 days</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly chart -->
+    <div style="padding:0 24px">
+      <div class="week-chart-card">
+        <div class="wcc-header">
+          <span class="wcc-label" id="chart-label">Daily completions · last 4 weeks</span>
+          <span class="wcc-range" id="chart-range">Feb 17 – Mar 14</span>
+        </div>
+        <div class="chart-bars" id="chart-bars">
+          <!-- filled by JS -->
+        </div>
+        <div class="chart-labels" id="chart-labels">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Streak dots -->
+    <div class="section-head">
+      <span class="sh-label" id="streak-label">This month · day by day</span>
+      <span class="sh-action" onclick="sendPrompt('Show me my full prayer habit history')">Full history ↗</span>
+    </div>
+    <div class="section-body">
+      <div class="streak-row" id="streak-dots"></div>
+      <div style="font-size:11px;color:#444;margin-top:6px" id="streak-sub">14 of 14 days logged · current streak 5</div>
+    </div>
+
+    <!-- Milestones -->
+    <div class="section-head" id="milestone-section-head">
+      <span class="sh-label">Milestones</span>
+      <span class="sh-action" onclick="sendPrompt('Add a milestone to this goal')">+ Add</span>
+    </div>
+    <div class="section-body" id="milestone-body">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Log -->
+    <div class="section-head">
+      <span class="sh-label">Activity log</span>
+      <span class="sh-action" onclick="sendPrompt('Log a manual entry for this goal')">+ Log</span>
+    </div>
+    <div style="padding:8px 24px 0;background:#1a1a1e;margin:0 24px;border-radius:14px;border:0.5px solid #2a2a2e" id="log-body">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- AI insight -->
+    <div class="ai-insight">
+      <div class="ai-dot"></div>
+      <div class="ai-body">
+        <div class="ai-text" id="ai-text">You're at 73% with 17 days remaining. If you hit 6 of the next 7 days you'll finish above target. The pattern holds strongest Monday–Wednesday — Thursday and Friday tend to slip.</div>
+        <div class="ai-chips" id="ai-chips">
+          <div class="ai-chip" onclick="sendPrompt('Show me the full AI analysis of my prayer habit goal')">Full analysis ↗</div>
+          <div class="ai-chip" onclick="sendPrompt('What can I do to close this goal strong?')">Close strong</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-row">
+      <div class="ar-btn primary" id="primary-action" onclick="sendPrompt('Log a prayer entry for today — mark this goal progressed')">Log today ↗</div>
+      <div class="ar-btn secondary" onclick="sendPrompt('Edit this goal — change target, timeline or tracking')">Edit goal</div>
+    </div>
+
+    <!-- Danger -->
+    <div class="danger-row">
+      <div class="dr-btn" onclick="sendPrompt('Pause this goal — keep the data but stop tracking for now')">Pause goal</div>
+      <div class="dr-btn" onclick="sendPrompt('Archive this goal — mark it complete or abandoned')">Archive</div>
+      <div class="dr-btn del" onclick="sendPrompt('Delete this goal — explain what happens to the data first')">Delete</div>
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
+</div>
+</div>
+
+<script>
+var goals={
+  habit:{
+    backLabel:'Faith',
+    domainColor:'#534AB7',
+    domainTextColor:'#b4adf5',
+    domainName:'Faith',
+    type:'Habit goal',
+    name:'Pray every morning',
+    meta:'Started Mar 1 · ends Mar 31 · 31 days',
+    statusText:'On track',
+    statusBg:'#1a2a1e',statusFg:'#1d9e75',statusBorder:'#2a4030',
+    ringStroke:'#534AB7',
+    ringPct:'73%',ringOffset:56,
+    stats:[['Target','7 days / week'],['This week','5 of 7 days','#1d9e75'],['Best streak','8 days'],['Time left','17 days']],
+    chartLabel:'Daily completions · last 4 weeks',
+    chartRange:'Feb 17 – Mar 14',
+    bars:[0,1,1,0,1,1,1, 1,1,0,1,1,0,1, 1,0,1,1,1,1,0, 1,1,1,0,1,0,0],
+    barColor:'#534AB7',
+    streakLabel:'This month · day by day',
+    streakSub:'14 of 14 days logged · current streak 5',
+    streakDots:[1,1,1,1,1,1,0,1,1,0,1,1,1,1],
+    streakColor:'#534AB7',
+    milestones:[
+      {title:'First 7-day streak',sub:'Hit the first full week',date:'Mar 7',done:true},
+      {title:'50% of month logged',sub:'15 of 30 days',date:'Mar 15',done:false,active:true},
+      {title:'Complete the month',sub:'30 of 31 days logged',date:'Mar 31',done:false}
+    ],
+    log:[
+      {date:'Mar 14',event:'<strong>Prayer logged</strong> · 6:12 AM · morning session',tag:'',tagBg:'',tagFg:''},
+      {date:'Mar 13',event:'<strong>Prayer logged</strong> · 7:04 AM · with gratitude',tag:'',tagBg:'',tagFg:''},
+      {date:'Mar 12',event:'Day missed · fasting day — lower energy',tag:'Missed',tagBg:'#2a1e08',tagFg:'#ba7517'},
+      {date:'Mar 11',event:'<strong>Prayer logged</strong> · 6:45 AM',tag:'',tagBg:'',tagFg:''}
+    ],
+    aiText:'You\'re at 73% with 17 days remaining. If you hit 6 of the next 7 days you\'ll finish above target. The pattern holds strongest Monday–Wednesday — Thursday and Friday tend to slip.',
+    aiChips:['Full analysis ↗','Close strong'],
+    primaryAction:'Log today ↗',
+    primaryPrompt:'Log a prayer entry for today — mark this goal progressed'
+  },
+  project:{
+    backLabel:'Career',
+    domainColor:'#185FA5',
+    domainTextColor:'#85b7eb',
+    domainName:'Career',
+    type:'Project goal',
+    name:'Life OS v0.1 launch',
+    meta:'Started Jan 1 · target Jun 30 · 6 months',
+    statusText:'On track',
+    statusBg:'#1a2a1e',statusFg:'#1d9e75',statusBorder:'#2a4030',
+    ringStroke:'#185FA5',
+    ringPct:'68%',ringOffset:66,
+    stats:[['Phase','UI/UX sprint'],['Screens done','12 of 18','#1d9e75'],['Deferred','2 tasks'],['Days remaining','108']],
+    chartLabel:'Weekly task completion · last 4 weeks',
+    chartRange:'Feb 17 – Mar 14',
+    bars:[3,5,4,3,5,4,2, 4,6,5,3,4,5,4, 5,7,6,4,5,4,3, 6,7,5,3,8,7,5],
+    barColor:'#185FA5',
+    streakLabel:'Deep work days this month',
+    streakSub:'12 of 14 days with at least one deep work block',
+    streakDots:[1,1,1,1,0,1,1,1,1,1,1,0,1,1],
+    streakColor:'#185FA5',
+    milestones:[
+      {title:'Architecture finalized',sub:'53 tables, 24 cron jobs, AI layer',date:'Feb 15',done:true},
+      {title:'UI/UX sprint complete',sub:'All 18 screens designed',date:'Apr 1',done:false,active:true},
+      {title:'Backend implementation',sub:'Convex schema + cron jobs live',date:'May 15',done:false},
+      {title:'v0.1 launch',sub:'Deployed and in use',date:'Jun 30',done:false}
+    ],
+    log:[
+      {date:'Mar 14',event:'<strong>Domains hub screen</strong> designed and reviewed',tag:'Done',tagBg:'#1a2a1e',tagFg:'#6fcf97'},
+      {date:'Mar 13',event:'<strong>Career domain screen</strong> completed',tag:'Done',tagBg:'#1a2a1e',tagFg:'#6fcf97'},
+      {date:'Mar 12',event:'Cron monitoring task deferred to next week',tag:'Deferred',tagBg:'#2a1e08',tagFg:'#ba7517'},
+      {date:'Mar 11',event:'<strong>AI tab V2</strong> thread switcher variation built',tag:'Done',tagBg:'#1a2a1e',tagFg:'#6fcf97'}
+    ],
+    aiText:'68% complete at week 10 of 26. Current pace of 1.5 screens/day puts v0.1 launch on track. The deferred Convex monitoring task is the one item that could compound if it slips further.',
+    aiChips:['Sprint status ↗','Unblock deferred'],
+    primaryAction:'Log progress ↗',
+    primaryPrompt:'Log progress on the Life OS project — what did I complete today?'
+  },
+  metric:{
+    backLabel:'Finance',
+    domainColor:'#0F6E56',
+    domainTextColor:'#6fcf97',
+    domainName:'Finance',
+    type:'Metric goal',
+    name:'Save GH₵ 8,000 emergency fund',
+    meta:'Started Jan 1 · target Jun 30 · 6 months',
+    statusText:'Ahead of pace',
+    statusBg:'#0e1e14',statusFg:'#1d9e75',statusBorder:'#1a3a24',
+    ringStroke:'#0F6E56',
+    ringPct:'40%',ringOffset:124,
+    stats:[['Saved','GH₵ 3,200 of 8,000'],['Monthly','GH₵ 400 / month'],['Pace','Ahead ↑','#1d9e75'],['Est. done','Jun 2026']],
+    chartLabel:'Monthly savings · GH₵',
+    chartRange:'Jan – Mar 2026',
+    bars:[0,0,0,0,0,0,1, 0,0,0,0,0,0,1, 0,0,0,0,0,0,1, 0,0,0,0,0,0,0.5],
+    barColor:'#0F6E56',
+    streakLabel:'Monthly contributions',
+    streakSub:'3 of 3 months hit target · GH₵ 1,200 total contributed',
+    streakDots:[1,1,1,0],
+    streakColor:'#0F6E56',
+    milestones:[
+      {title:'First GH₵ 1,000 saved',sub:'Month 1 milestone',date:'Jan 31',done:true},
+      {title:'25% of target — GH₵ 2,000',sub:'Two months in',date:'Feb 28',done:true},
+      {title:'50% of target — GH₵ 4,000',sub:'Halfway milestone',date:'Apr 30',done:false,active:true},
+      {title:'Goal complete — GH₵ 8,000',sub:'Emergency fund fully funded',date:'Jun 30',done:false}
+    ],
+    log:[
+      {date:'Mar 1',event:'<strong>GH₵ 400</strong> allocated to emergency fund · auto-tracked',tag:'Auto',tagBg:'#1a2a1e',tagFg:'#6fcf97'},
+      {date:'Feb 1',event:'<strong>GH₵ 400</strong> allocated · month-end surplus',tag:'Auto',tagBg:'#1a2a1e',tagFg:'#6fcf97'},
+      {date:'Jan 1',event:'<strong>Goal created</strong> · GH₵ 400/month · AI proposed',tag:'Created',tagBg:'#1e1a30',tagFg:'#9b8fff'},
+    ],
+    aiText:'You\'re 3 months in and 40% complete — exactly on pace. Your actual month-end surplus has averaged GH₵ 440, slightly above the GH₵ 400 target. At this rate you\'ll finish 2 weeks early.',
+    aiChips:['Adjust target ↗','See surplus history'],
+    primaryAction:'Log contribution ↗',
+    primaryPrompt:'Log a manual contribution to my emergency fund savings goal'
+  }
+};
+
+function loadGoal(key){
+  Object.keys(goals).forEach(function(k){
+    document.getElementById('db-'+k).classList.toggle('active',k===key);
+  });
+  var g=goals[key];
+  document.getElementById('back-label').textContent=g.backLabel;
+  document.getElementById('domain-dot').style.background=g.domainColor;
+  document.getElementById('domain-name').textContent=g.domainName;
+  document.getElementById('domain-name').style.color=g.domainTextColor;
+  document.getElementById('goal-type').textContent=g.type;
+  document.getElementById('goal-name').textContent=g.name;
+  document.getElementById('goal-meta').textContent=g.meta;
+  var sc=document.getElementById('status-chip');
+  sc.textContent='';
+  var dot=document.createElement('div');
+  dot.style.cssText='width:5px;height:5px;border-radius:50%;background:'+g.statusFg;
+  sc.appendChild(dot);
+  sc.appendChild(document.createTextNode(' '+g.statusText));
+  sc.style.background=g.statusBg;
+  sc.style.color=g.statusFg;
+  sc.style.border='0.5px solid '+g.statusBorder;
+  document.getElementById('ring-fill').setAttribute('stroke',g.ringStroke);
+  document.getElementById('ring-fill').setAttribute('stroke-dashoffset',g.ringOffset);
+  document.getElementById('ring-pct').textContent=g.ringPct;
+  var stats=document.getElementById('ring-stats');
+  stats.innerHTML=g.stats.map(function(s){
+    return '<div class="rs-row"><span class="rs-key">'+s[0]+'</span><span class="rs-val"'+(s[2]?' style="color:'+s[2]+'"':'')+'>'+s[1]+'</span></div>';
+  }).join('');
+  document.getElementById('chart-label').textContent=g.chartLabel;
+  document.getElementById('chart-range').textContent=g.chartRange;
+  var maxBar=Math.max.apply(null,g.bars.map(Number));
+  var bars=document.getElementById('chart-bars');
+  var labels=document.getElementById('chart-labels');
+  bars.innerHTML='';labels.innerHTML='';
+  var weekLabels=['W1','','','','','','','W2','','','','','','','W3','','','','','','','W4','','','','','',''];
+  g.bars.forEach(function(v,i){
+    var b=document.createElement('div');
+    b.className='cb';
+    b.style.height=((v/Math.max(maxBar,1))*100)+'%';
+    b.style.background=v>0?g.barColor:'#1e1e22';
+    b.style.opacity=v>0?(.5+v/maxBar*.5):.3;
+    bars.appendChild(b);
+    var l=document.createElement('div');
+    l.className='cl';
+    l.textContent=weekLabels[i]||'';
+    labels.appendChild(l);
+  });
+  document.getElementById('streak-label').textContent=g.streakLabel;
+  document.getElementById('streak-sub').textContent=g.streakSub;
+  var sd=document.getElementById('streak-dots');
+  sd.innerHTML='';
+  var dayLetters=['M','T','W','T','F','S','S'];
+  g.streakDots.forEach(function(v,i){
+    var d=document.createElement('div');
+    d.className='sd '+(v===1?'done':v===0.5?'today':'skip');
+    d.style.color=v?g.streakColor:'#333';
+    if(v===1){d.style.background=g.streakColor+'22';d.style.borderColor=g.streakColor+'44';}
+    else if(v===0.5){d.style.background='transparent';d.style.borderColor=g.streakColor;d.style.color=g.streakColor;}
+    d.textContent=dayLetters[i%7];
+    sd.appendChild(d);
+  });
+  var mb=document.getElementById('milestone-body');
+  mb.innerHTML='';
+  var mlist=document.createElement('div');
+  mlist.style.cssText='background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;overflow:hidden';
+  g.milestones.forEach(function(m,idx){
+    var item=document.createElement('div');
+    item.className='milestone-item';
+    var dotColor=m.done?g.domainColor:(m.active?g.domainColor:'#2a2a2e');
+    var lineHtml=idx<g.milestones.length-1?'<div class="mi-line"></div>':'';
+    item.innerHTML='<div class="mi-timeline"><div class="mi-dot '+(m.done?'done':m.active?'active':'upcoming')+'" style="color:'+dotColor+'"></div>'+lineHtml+'</div><div class="mi-body"><div class="mi-title" style="color:'+(m.done?'#555':m.active?'#e0e0ec':'#555')+'">'+m.title+'</div><div class="mi-sub">'+m.sub+'</div></div><div class="mi-date" style="color:'+(m.done?'#1d9e75':'#333')+'">'+m.date+'</div>';
+    item.onclick=function(){sendPrompt('Tell me about the milestone: '+m.title)};
+    mlist.appendChild(item);
+  });
+  mb.appendChild(mlist);
+  var lb=document.getElementById('log-body');
+  lb.innerHTML=g.log.map(function(l){
+    return '<div class="log-entry"><span class="le-date">'+l.date+'</span><div class="le-body"><div class="le-event">'+l.event+'</div>'+(l.tag?'<span class="le-tag" style="background:'+l.tagBg+';color:'+l.tagFg+'">'+l.tag+'</span>':'')+'</div></div>';
+  }).join('');
+  document.getElementById('ai-text').textContent=g.aiText;
+  var chips=document.getElementById('ai-chips');
+  chips.innerHTML=g.aiChips.map(function(c){
+    return '<div class="ai-chip" onclick="sendPrompt(\''+c.replace(' ↗','').replace(/'/g,"\\'")+'\')">' +c+'</div>';
+  }).join('');
+  document.getElementById('primary-action').textContent=g.primaryAction;
+  document.getElementById('primary-action').onclick=function(){sendPrompt(g.primaryPrompt)};
+}
+
+loadGoal('habit');
+</script>

@@ -504,7 +504,7 @@ export function GoalCreationSheetScreen() {
                 </View>
                 <View style={{ flexDirection: "row", gap: 8, width: "100%" }}>
                   <Button title="Add another" variant="outline" onPress={() => loadPreset("habit")} style={{ flex: 1, borderRadius: 12, borderCurve: "continuous" }} />
-                  <Button title="View in domain" onPress={() => router.push(domainRoute(selectedDomain.id) as never)} style={{ flex: 1, borderRadius: 12, borderCurve: "continuous" }} />
+                  <Button title="Open goal" onPress={() => router.push(goalPreviewRoute(preset) as never)} style={{ flex: 1, borderRadius: 12, borderCurve: "continuous" }} />
                 </View>
               </Animated.View>
             ) : null}
@@ -549,11 +549,8 @@ function ReviewRow({
   );
 }
 
-function domainRoute(domain: DomainId) {
-  if (domain === "faith") return "/(tabs)/domains/faith";
-  if (domain === "career") return "/(tabs)/domains/career";
-  if (domain === "finance") return "/(tabs)/domains/finance";
-  if (domain === "health") return "/(tabs)/domains/health";
-  if (domain === "wellness") return "/(tabs)/domains/wellness";
-  return "/(tabs)/domains/tasks";
+function goalPreviewRoute(preset: PresetId) {
+  if (preset === "habit") return "/(tabs)/planner/goals/prayer-habit";
+  if (preset === "project") return "/(tabs)/planner/goals/life-os-project";
+  return "/(tabs)/planner/goals/emergency-fund";
 }

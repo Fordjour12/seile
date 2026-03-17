@@ -1,0 +1,507 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{display:flex;flex-direction:column;gap:28px;padding:8px 0}
+.phone{width:375px;background:#0e0e10;border-radius:44px;overflow:hidden;border:1px solid #2a2a2e;position:relative}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500}
+.pscreen{padding:0 0 32px;overflow-y:auto;max-height:680px}
+.pscreen::-webkit-scrollbar{display:none}
+
+/* Top bar */
+.top-bar{padding:14px 24px 0;display:flex;align-items:center;gap:10px}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+.top-action{margin-left:auto;font-size:13px;color:#9b8fff;cursor:pointer;font-weight:500}
+
+/* Header */
+.sh{padding:10px 24px 0}
+.sh-title{font-size:22px;font-weight:500;color:#fff}
+.sh-sub{font-size:13px;color:#444;margin-top:4px;line-height:1.4}
+
+/* Section */
+.section{padding:16px 24px 0}
+.section-label{font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
+.sg-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;overflow:hidden}
+
+/* Row */
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:0.5px solid #1e1e22;cursor:pointer;transition:background .15s}
+.row:last-child{border-bottom:none}
+.row:hover{background:#1e1e24}
+.row-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.row-body{flex:1;min-width:0}
+.row-title{font-size:14px;color:#ccc;font-weight:500}
+.row-sub{font-size:12px;color:#444;margin-top:2px;line-height:1.3}
+.row-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.row-val{font-size:12px;color:#555}
+.row-arrow{font-size:16px;color:#2a2a2e}
+
+/* Toggle */
+.toggle{width:36px;height:20px;border-radius:10px;background:#252530;flex-shrink:0;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:#9b8fff}
+.toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none}
+.toggle.on .toggle-knob{transform:translateX(16px)}
+
+/* Option selector (radio style) */
+.option-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 16px;margin-bottom:7px;cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:12px}
+.option-card:hover{background:#1e1e24}
+.option-card.sel{background:#1e1a30;border-color:#3d3570}
+.oc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.oc-body{flex:1}
+.oc-name{font-size:14px;font-weight:500;color:#ccc;margin-bottom:3px}
+.oc-desc{font-size:12px;color:#444;line-height:1.4}
+.oc-example{font-size:11px;color:#3a3a4a;font-style:italic;margin-top:4px;padding:6px 8px;background:#141418;border-radius:7px}
+.oc-radio{width:18px;height:18px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;transition:all .15s;margin-top:2px}
+.option-card.sel .oc-radio{background:#9b8fff;border-color:#9b8fff;box-shadow:inset 0 0 0 3px #1e1a30}
+
+/* Time picker */
+.time-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;margin-bottom:7px;cursor:pointer;transition:border-color .15s}
+.time-row:hover{border-color:#333}
+.time-label{font-size:13px;color:#ccc;flex:1;font-weight:500}
+.time-val{font-size:13px;color:#9b8fff;font-weight:500}
+.time-sub{font-size:11px;color:#444;margin-top:2px}
+
+/* Day picker */
+.day-row{display:flex;gap:6px;margin-bottom:8px}
+.day-btn{flex:1;padding:8px 0;border-radius:10px;background:#1a1a1e;border:0.5px solid #222;font-size:12px;font-weight:500;color:#555;cursor:pointer;text-align:center;transition:all .15s}
+.day-btn.on{background:#1e1a30;border-color:#3d3570;color:#c8c0ff}
+
+/* Slider */
+.slider-wrap{padding:0 14px;margin-bottom:14px}
+.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.slider-label{font-size:13px;color:#ccc;font-weight:500}
+.slider-val{font-size:15px;font-weight:500;color:#9b8fff}
+.slider-track{position:relative;height:40px;display:flex;align-items:center;cursor:pointer}
+.st-bg{position:absolute;left:0;right:0;height:6px;background:#1e1e22;border-radius:3px}
+.st-fill{position:absolute;left:0;height:6px;border-radius:3px;background:#9b8fff;transition:width .1s}
+.st-thumb{position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid #9b8fff;transform:translateX(-50%);transition:left .1s}
+
+/* Info note */
+.info-note{margin:10px 24px 0;padding:10px 12px;background:#13131f;border:0.5px solid #1e1e28;border-radius:10px;display:flex;gap:8px}
+.in-dot{width:5px;height:5px;border-radius:50%;background:#555;flex-shrink:0;margin-top:3px}
+.in-text{font-size:11px;color:#444;line-height:1.5}
+
+/* Danger */
+.danger-btn{width:calc(100% - 48px);margin:10px 24px 0;padding:12px;border-radius:12px;background:#1a0e0e;color:#e24b4a;border:0.5px solid #3a1a1a;font-size:14px;font-weight:500;cursor:pointer;text-align:center;transition:opacity .15s}
+.danger-btn:hover{opacity:.8}
+
+/* Screen label chip */
+.screen-chip{font-size:10px;color:#444;font-weight:500;padding:0 4px;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="wrap">
+
+  <!-- ─── 1. PLANNING STYLE ─── -->
+  <div>
+    <div class="screen-chip">1 · Planning style</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span></div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div class="back-btn" onclick="sendPrompt('Go back to Profile AI behavior settings')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+            AI behavior
+          </div>
+          <div class="top-action" onclick="saveAndBack('planning style')">Save</div>
+        </div>
+        <div class="sh">
+          <div class="sh-title">Planning style</div>
+          <div class="sh-sub">How the AI distributes priorities and habits across your week.</div>
+        </div>
+        <div class="section">
+          <div class="option-card" id="ps-light" onclick="pickOption('ps','light')">
+            <div class="oc-dot" style="background:#1d9e75"></div>
+            <div class="oc-body">
+              <div class="oc-name">Light</div>
+              <div class="oc-desc">2–3 priorities per day. Habits only. Space for rest and the unexpected.</div>
+              <div class="oc-example">Best for recovery weeks, low energy periods, or when life is unpredictable.</div>
+            </div>
+            <div class="oc-radio"></div>
+          </div>
+          <div class="option-card sel" id="ps-balanced" onclick="pickOption('ps','balanced')">
+            <div class="oc-dot" style="background:#ba7517"></div>
+            <div class="oc-body">
+              <div class="oc-name">Balanced</div>
+              <div class="oc-desc">3–4 priorities per day. Full habit stack. One deep work block daily.</div>
+              <div class="oc-example">Your current setting. Sustainable pace with consistent progress.</div>
+            </div>
+            <div class="oc-radio"></div>
+          </div>
+          <div class="option-card" id="ps-intensive" onclick="pickOption('ps','intensive')">
+            <div class="oc-dot" style="background:#e24b4a"></div>
+            <div class="oc-body">
+              <div class="oc-name">Intensive</div>
+              <div class="oc-desc">4–5 priorities per day. Multiple deep work blocks. Stretch goals included.</div>
+              <div class="oc-example">Best for sprint weeks when you're energised and have a clear goal.</div>
+            </div>
+            <div class="oc-radio"></div>
+          </div>
+        </div>
+        <div class="info-note">
+          <div class="in-dot"></div>
+          <div class="in-text">This also controls how the AI responds to your energy check-ins — low energy scores will nudge the AI toward a lighter day even on Intensive.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 2. AI TONE ─── -->
+  <div>
+    <div class="screen-chip">2 · AI tone</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span></div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div class="back-btn" onclick="sendPrompt('Go back to Profile AI behavior settings')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+            AI behavior
+          </div>
+          <div class="top-action" onclick="saveAndBack('AI tone')">Save</div>
+        </div>
+        <div class="sh">
+          <div class="sh-title">AI tone</div>
+          <div class="sh-sub">How Claude communicates across suggestions, nudges, summaries, and the weekly review.</div>
+        </div>
+        <div class="section">
+          <div class="option-card sel" id="tone-direct" onclick="pickOption('tone','direct')">
+            <div class="oc-body">
+              <div class="oc-name">Direct</div>
+              <div class="oc-desc">Short, clear, action-oriented. No softening.</div>
+              <div class="oc-example">"Finance review is 4 days overdue. Do it today."</div>
+            </div>
+            <div class="oc-radio"></div>
+          </div>
+          <div class="option-card" id="tone-coaching" onclick="pickOption('tone','coaching')">
+            <div class="oc-body">
+              <div class="oc-name">Coaching</div>
+              <div class="oc-desc">Warmer framing. Context before action. Better for wellness and faith domains.</div>
+              <div class="oc-example">"The finance review has been waiting — finishing it today would close the week cleanly."</div>
+            </div>
+            <div class="oc-radio"></div>
+          </div>
+          <div class="option-card" id="tone-minimal" onclick="pickOption('tone','minimal')">
+            <div class="oc-body">
+              <div class="oc-name">Minimal</div>
+              <div class="oc-desc">Numbers and facts only. No interpretive language.</div>
+              <div class="oc-example">"Finance: review due. 4 days elapsed."</div>
+            </div>
+            <div class="oc-radio"></div>
+          </div>
+        </div>
+        <div class="info-note">
+          <div class="in-dot"></div>
+          <div class="in-text">Applies to: Today suggestions · domain nudges · plan summaries · weekly review language · approval descriptions · cross-domain observations.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 3. NOTIFICATION TIMING ─── -->
+  <div>
+    <div class="screen-chip">3 · Notification timing</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span></div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div class="back-btn" onclick="sendPrompt('Go back to Profile notification settings')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+            Notifications
+          </div>
+          <div class="top-action" onclick="saveAndBack('notification timing')">Save</div>
+        </div>
+        <div class="sh">
+          <div class="sh-title">Notification timing</div>
+          <div class="sh-sub">When Life OS checks in with you each day.</div>
+        </div>
+        <div class="section">
+          <div class="section-label">Morning briefing</div>
+          <div class="sg-card">
+            <div class="row">
+              <div class="row-icon" style="background:#1e1a30"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><path d="M8 5v3l2 1.5" stroke="#9b8fff" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+              <div class="row-body"><div class="row-title">Enabled</div><div class="row-sub">Today screen summary on wake-up</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.transform=this.classList.contains('on')?'translateX(16px)':''"><div class="toggle-knob"></div></div>
+            </div>
+            <div class="row">
+              <div class="row-icon" style="background:#1e1a30"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><path d="M8 5v3l2 1.5" stroke="#9b8fff" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+              <div class="row-body"><div class="row-title">Time</div><div class="row-sub">When to send the morning briefing</div></div>
+              <div class="row-right"><span class="row-val" style="color:#9b8fff" id="morning-time">8:00 AM</span></div>
+            </div>
+          </div>
+          <div class="slider-wrap" style="margin-top:10px">
+            <div class="slider-header">
+              <span class="slider-label">Morning time</span>
+              <span class="slider-val" id="morning-val">8:00 AM</span>
+            </div>
+            <div class="slider-track" id="morning-track" onmousedown="startSlider(event,'morning')" ontouchstart="startSlider(event,'morning')">
+              <div class="st-bg"></div>
+              <div class="st-fill" id="morning-fill" style="width:47%"></div>
+              <div class="st-thumb" id="morning-thumb" style="left:47%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#333;padding:0 2px">
+              <span>5 AM</span><span>8 AM</span><span>10 AM</span><span>Noon</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Check-in reminders</div>
+          <div class="time-row" onclick="sendPrompt('Change my morning check-in reminder time')">
+            <div><div class="time-label">Morning check-in</div><div class="time-sub">Mood, energy, focus prompt</div></div>
+            <span class="time-val">8:30 AM</span>
+          </div>
+          <div class="time-row" onclick="sendPrompt('Change my evening check-in reminder time')">
+            <div><div class="time-label">Evening check-in</div><div class="time-sub">Day rating and reflection</div></div>
+            <span class="time-val">9:00 PM</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Weekly review</div>
+          <div class="sg-card">
+            <div class="row">
+              <div class="row-body"><div class="row-title">Review day</div><div class="row-sub">When the review unlocks and you're notified</div></div>
+              <div class="row-right"><span class="row-val" style="color:#9b8fff">Friday</span></div>
+            </div>
+            <div class="row">
+              <div class="row-body"><div class="row-title">Review time</div><div class="row-sub">Evening reminder</div></div>
+              <div class="row-right"><span class="row-val">8:00 PM</span></div>
+            </div>
+          </div>
+          <div class="section-label" style="margin-top:12px">Review days</div>
+          <div class="day-row">
+            <div class="day-btn" onclick="this.classList.toggle('on')">M</div>
+            <div class="day-btn" onclick="this.classList.toggle('on')">T</div>
+            <div class="day-btn" onclick="this.classList.toggle('on')">W</div>
+            <div class="day-btn" onclick="this.classList.toggle('on')">T</div>
+            <div class="day-btn on" onclick="this.classList.toggle('on')">F</div>
+            <div class="day-btn" onclick="this.classList.toggle('on')">S</div>
+            <div class="day-btn" onclick="this.classList.toggle('on')">S</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Quiet hours</div>
+          <div class="sg-card">
+            <div class="row">
+              <div class="row-body"><div class="row-title">Quiet hours</div><div class="row-sub">No notifications during this window</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.transform=this.classList.contains('on')?'translateX(16px)':''"><div class="toggle-knob"></div></div>
+            </div>
+            <div class="row">
+              <div class="row-body"><div class="row-title">Start</div></div>
+              <div class="row-right"><span class="row-val">10:00 PM</span></div>
+            </div>
+            <div class="row">
+              <div class="row-body"><div class="row-title">End</div></div>
+              <div class="row-right"><span class="row-val">7:00 AM</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 4. TIMEZONE + SYNC ─── -->
+  <div>
+    <div class="screen-chip">4 · Timezone and sync</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span></div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div class="back-btn" onclick="sendPrompt('Go back to Profile settings')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+            Profile
+          </div>
+        </div>
+        <div class="sh">
+          <div class="sh-title">Timezone &amp; sync</div>
+          <div class="sh-sub">All cron jobs run in UTC. Display times are converted to your local timezone.</div>
+        </div>
+        <div class="section">
+          <div class="section-label">Timezone</div>
+          <div class="sg-card">
+            <div class="row" onclick="sendPrompt('Change my timezone in Life OS settings')">
+              <div class="row-icon" style="background:#1e1a30"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><path d="M8 3c-1.5 2-1.5 6 0 10M8 3c1.5 2 1.5 6 0 10M3 8h10" stroke="#9b8fff" stroke-width="1"/></svg></div>
+              <div class="row-body"><div class="row-title">Display timezone</div><div class="row-sub">Times shown in the app</div></div>
+              <div class="row-right"><span class="row-val" style="color:#9b8fff">GMT+0 · Accra</span><span class="row-arrow">›</span></div>
+            </div>
+            <div class="row">
+              <div class="row-icon" style="background:#1e1a30"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><path d="M8 5v3l2 1.5" stroke="#9b8fff" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+              <div class="row-body"><div class="row-title">Cron timezone</div><div class="row-sub">All jobs run in UTC — never changes</div></div>
+              <div class="row-right"><span class="row-val">UTC · locked</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-label">Cron schedule</div>
+          <div class="sg-card">
+            <div class="row">
+              <div class="row-body"><div class="row-title">Daily context sync</div><div class="row-sub">Aggregates all domain data</div></div>
+              <div class="row-right"><span class="row-val" style="color:#1d9e75">06:00 UTC</span></div>
+            </div>
+            <div class="row">
+              <div class="row-body"><div class="row-title">Insight refresh</div><div class="row-sub">Generates AI suggestions</div></div>
+              <div class="row-right"><span class="row-val" style="color:#1d9e75">06:15 UTC</span></div>
+            </div>
+            <div class="row">
+              <div class="row-body"><div class="row-title">Habit streak calc</div><div class="row-sub">Updates streaks and completions</div></div>
+              <div class="row-right"><span class="row-val">23:55 UTC</span></div>
+            </div>
+            <div class="row">
+              <div class="row-body"><div class="row-title">Weekly review prep</div><div class="row-sub">Generates Friday review data</div></div>
+              <div class="row-right"><span class="row-val">Fri 20:00 UTC</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-label">Context window</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <div class="day-btn" style="border-radius:20px;padding:7px 14px;flex:none" onclick="pickWindow(this,'3d')">3 days</div>
+            <div class="day-btn on" style="border-radius:20px;padding:7px 14px;flex:none" onclick="pickWindow(this,'7d')">7 days</div>
+            <div class="day-btn" style="border-radius:20px;padding:7px 14px;flex:none" onclick="pickWindow(this,'14d')">14 days</div>
+            <div class="day-btn" style="border-radius:20px;padding:7px 14px;flex:none" onclick="pickWindow(this,'30d')">30 days</div>
+          </div>
+          <div style="font-size:12px;color:#444;line-height:1.5;padding:0 2px">How far back the cron jobs read when generating your AI context. Longer windows = deeper patterns. Shorter = more current focus.</div>
+        </div>
+        <div class="section">
+          <div class="section-label">Manual sync</div>
+          <div style="background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="sendPrompt('Manually trigger the daily context sync now')">
+            <div style="width:30px;height:30px;border-radius:9px;background:#1e1a30;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M13 8A5 5 0 113 8" stroke="#9b8fff" stroke-width="1.4" stroke-linecap="round"/><path d="M13 4v4h-4" stroke="#9b8fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div style="font-size:13px;color:#c8c0ff;font-weight:500">Sync now</div><div style="font-size:11px;color:#555;margin-top:2px">Last synced today · 6:00 AM UTC</div></div>
+            <span style="margin-left:auto;font-size:13px;color:#555">↗</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 5. DATA EXPORT ─── -->
+  <div>
+    <div class="screen-chip">5 · Data export</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span></div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div class="back-btn" onclick="sendPrompt('Go back to Profile account settings')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+            Account
+          </div>
+        </div>
+        <div class="sh">
+          <div class="sh-title">Export my data</div>
+          <div class="sh-sub">Your data belongs to you. Download everything or select specific domains.</div>
+        </div>
+        <div class="section">
+          <div class="section-label">Export format</div>
+          <div class="sg-card">
+            <div class="row" onclick="pickFormat(this)">
+              <div class="row-body"><div class="row-title">JSON</div><div class="row-sub">Full structured data — ideal for developers or importing elsewhere</div></div>
+              <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #9b8fff;background:#9b8fff;box-shadow:inset 0 0 0 3px #1a1a1e;flex-shrink:0"></div>
+            </div>
+            <div class="row" onclick="pickFormat(this)">
+              <div class="row-body"><div class="row-title">CSV</div><div class="row-sub">Spreadsheet-friendly — open in Excel or Google Sheets</div></div>
+              <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #333;flex-shrink:0"></div>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-label">What to include</div>
+          <div class="sg-card">
+            <div class="row" onclick="toggleExport(this)">
+              <div class="row-body"><div class="row-title">All domains</div><div class="row-sub">Faith, Career, Finance, Health, Wellness, Tasks, Relationships, Space</div></div>
+              <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on');this.querySelector('.toggle-knob').style.transform=this.classList.contains('on')?'translateX(16px)':''"><div class="toggle-knob"></div></div>
+            </div>
+            <div class="row" onclick="toggleExport(this)">
+              <div class="row-body"><div class="row-title">Check-in history</div><div class="row-sub">Mood, energy, focus, stress · 47 entries</div></div>
+              <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on');this.querySelector('.toggle-knob').style.transform=this.classList.contains('on')?'translateX(16px)':''"><div class="toggle-knob"></div></div>
+            </div>
+            <div class="row" onclick="toggleExport(this)">
+              <div class="row-body"><div class="row-title">AI context snapshots</div><div class="row-sub">Pre-aggregated userContext rows — what Claude read</div></div>
+              <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('on');this.querySelector('.toggle-knob').style.transform=this.classList.contains('on')?'translateX(16px)':''"><div class="toggle-knob"></div></div>
+            </div>
+            <div class="row" onclick="toggleExport(this)">
+              <div class="row-body"><div class="row-title">Planner history</div><div class="row-sub">All weekly plans, priorities, completions</div></div>
+              <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on');this.querySelector('.toggle-knob').style.transform=this.classList.contains('on')?'translateX(16px)':''"><div class="toggle-knob"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="info-note">
+          <div class="in-dot"></div>
+          <div class="in-text">Your export will be prepared and sent to your account email. Large exports (30+ days) may take a few minutes to generate.</div>
+        </div>
+        <div style="padding:14px 24px 0">
+          <button class="btn-primary" onclick="sendPrompt('Generate my data export — JSON format, all domains, full history')">Generate export</button>
+          <div style="font-size:12px;color:#333;text-align:center;margin-top:6px">Last export: never</div>
+        </div>
+        <div class="danger-btn" onclick="sendPrompt('I want to delete my account and all data — explain what happens first')">Delete account and all data</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+var dragging=null;
+
+function pickOption(group,val){
+  document.querySelectorAll('[id^="'+group+'-"]').forEach(function(el){
+    el.classList.remove('sel');
+    el.querySelector('.oc-radio').style.background='';
+    el.querySelector('.oc-radio').style.borderColor='#333';
+    el.querySelector('.oc-radio').style.boxShadow='';
+  });
+  var el=document.getElementById(group+'-'+val);
+  if(el){
+    el.classList.add('sel');
+    el.querySelector('.oc-radio').style.background='#9b8fff';
+    el.querySelector('.oc-radio').style.borderColor='#9b8fff';
+    el.querySelector('.oc-radio').style.boxShadow='inset 0 0 0 3px #1e1a30';
+  }
+}
+
+function saveAndBack(name){
+  sendPrompt('Settings saved — '+name+' updated. Go back to Profile.');
+}
+
+function startSlider(e,id){
+  dragging=id;
+  updateSlider(e,id);
+  e.preventDefault();
+}
+document.addEventListener('mousemove',function(e){if(dragging)updateSlider(e,dragging)});
+document.addEventListener('touchmove',function(e){if(dragging)updateSlider(e,dragging)},{passive:false});
+document.addEventListener('mouseup',function(){dragging=null});
+document.addEventListener('touchend',function(){dragging=null});
+
+function updateSlider(e,id){
+  var track=document.getElementById(id+'-track');
+  if(!track)return;
+  var rect=track.getBoundingClientRect();
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var pct=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
+  document.getElementById(id+'-fill').style.width=(pct*100)+'%';
+  document.getElementById(id+'-thumb').style.left=(pct*100)+'%';
+  // Map pct to time 5am–12pm
+  var hour=5+Math.round(pct*7);
+  var ampm=hour>=12?'PM':'AM';
+  var h=hour>12?hour-12:hour;
+  var timeStr=h+':00 '+ampm;
+  var valEl=document.getElementById(id+'-val');
+  var timeEl=document.getElementById(id+'-time');
+  if(valEl)valEl.textContent=timeStr;
+  if(timeEl)timeEl.textContent=timeStr;
+}
+
+function pickWindow(el,w){
+  document.querySelectorAll('.day-btn[style*="border-radius:20px"]').forEach(function(b){b.classList.remove('on')});
+  el.classList.add('on');
+}
+
+function pickFormat(row){
+  row.closest('.sg-card').querySelectorAll('.row').forEach(function(r){
+    var dot=r.querySelector('[style*="border-radius:50%"]');
+    if(dot){dot.style.background='';dot.style.borderColor='#333';dot.style.boxShadow='';}
+  });
+  var d=row.querySelector('[style*="border-radius:50%"]');
+  if(d){d.style.background='#9b8fff';d.style.borderColor='#9b8fff';d.style.boxShadow='inset 0 0 0 3px #1a1a1e';}
+}
+</script>
