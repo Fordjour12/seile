@@ -604,6 +604,10 @@ export function OnboardingScreen() {
             </View>
 
             <View style={{ gap: 8 }}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <Button title="Preview Day 1" variant="outline" onPress={() => router.push("/(auth)/first-run-today")} style={{ flex: 1, borderRadius: 14, borderCurve: "continuous" }} />
+                <Button title="Preview Week 1" variant="outline" onPress={() => router.push("/(auth)/week-1")} style={{ flex: 1, borderRadius: 14, borderCurve: "continuous" }} />
+              </View>
               <Button title="Create account" onPress={() => router.push("/(auth)/sign-up")} style={{ borderRadius: 14, borderCurve: "continuous" }} />
               <Button title="I already have one" variant="outline" onPress={() => router.push("/(auth)/sign-in")} style={{ borderRadius: 14, borderCurve: "continuous" }} />
               <Button title="Back" variant="ghost" onPress={previousStep} style={{ borderRadius: 14, borderCurve: "continuous" }} />
