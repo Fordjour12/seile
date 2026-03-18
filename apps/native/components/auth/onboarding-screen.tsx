@@ -52,6 +52,8 @@ const STEP_PROGRESS: Record<Step, number> = {
   7: 100,
 };
 
+const MAX_PINNED_DOMAINS = 4;
+
 const DOMAIN_OPTIONS = [
   {
     id: "faith",
@@ -60,7 +62,6 @@ const DOMAIN_OPTIONS = [
     color: "#534AB7",
     background: "#2a2040",
     icon: "bullseye",
-    pinned: true,
   },
   {
     id: "career",
@@ -215,6 +216,7 @@ export function OnboardingScreen() {
     "finance",
     "health",
   ]);
+  const [pinnedDomainIds, setPinnedDomainIds] = useState<string[]>(["faith"]);
   const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
   const [aiTone, setAiTone] = useState<AiTone>("direct");
   const [notifications, setNotifications] = useState({
@@ -229,8 +231,25 @@ export function OnboardingScreen() {
   const displayName = name.trim() || "Bobie";
 
   const summaryDomains = useMemo(
-    () => DOMAIN_OPTIONS.filter((item) => domains.includes(item.id)),
-    [domains],
+    () =>
+      DOMAIN_OPTIONS.filter((item) => domains.includes(item.id)).sort(
+        (a, b) => {
+          const aPinnedIndex = pinnedDomainIds.indexOf(a.id);
+          const bPinnedIndex = pinnedDomainIds.indexOf(b.id);
+
+          if (aPinnedIndex !== -1 && bPinnedIndex !== -1) {
+            return aPinnedIndex - bPinnedIndex;
+          }
+          if (aPinnedIndex !== -1) {
+            return -1;
+          }
+          if (bPinnedIndex !== -1) {
+            return 1;
+          }
+          return domains.indexOf(a.id) - domains.indexOf(b.id);
+        },
+      ),
+    [domains, pinnedDomainIds],
   );
 
   if (hasHydrated && user) {
@@ -252,15 +271,40 @@ export function OnboardingScreen() {
   }
 
   function toggleDomain(id: string) {
-    if (id === "faith") {
+    setDomains((current) => {
+      const isSelected = current.includes(id);
+      if (isSelected && current.length === 1) {
+        return current;
+      }
+
+      const nextDomains = isSelected
+        ? current.filter((item) => item !== id)
+        : [...current, id];
+
+      if (isSelected) {
+        setPinnedDomainIds((currentPinned) =>
+          currentPinned.filter((item) => item !== id),
+        );
+      }
+
+      return nextDomains;
+    });
+  }
+
+  function togglePinnedDomain(id: string) {
+    if (!domains.includes(id)) {
       return;
     }
 
-    setDomains((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id],
-    );
+    setPinnedDomainIds((current) => {
+      if (current.includes(id)) {
+        return current.filter((item) => item !== id);
+      }
+      if (current.length >= MAX_PINNED_DOMAINS) {
+        return current;
+      }
+      return [...current, id];
+    });
   }
 
   function toggleNotification(key: keyof typeof notifications) {
@@ -454,6 +498,10 @@ export function OnboardingScreen() {
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {DOMAIN_OPTIONS.map((item, index) => {
                 const selected = domains.includes(item.id);
+                const isOnlySelected = selected && domains.length === 1;
+                const isPinned = pinnedDomainIds.includes(item.id);
+                const hasReachedPinLimit =
+                  !isPinned && pinnedDomainIds.length >= MAX_PINNED_DOMAINS;
                 return (
                   <Animated.View
                     key={item.id}
@@ -487,7 +535,9 @@ export function OnboardingScreen() {
                           borderRadius: 999,
                           borderWidth: 1.5,
                           borderColor: selected ? item.color : theme.border,
-                          backgroundColor: selected ? item.color : "transparent",
+                          backgroundColor: selected
+                            ? item.color
+                            : "transparent",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
@@ -536,15 +586,72 @@ export function OnboardingScreen() {
                       >
                         {item.subtitle}
                       </Text>
-                      {item.id === "faith" ? (
-                        <Badge
-                          variant="outline"
-                          color="secondary"
-                          style={{ alignSelf: "flex-start", marginTop: 10 }}
-                        >
-                          Pinned
-                        </Badge>
-                      ) : null}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          flexWrap: "wrap",
+                          gap: 8,
+                          marginTop: 10,
+                        }}
+                      >
+                        {selected ? (
+                          <Pressable
+                            onPress={(event) => {
+                              event.stopPropagation();
+                              togglePinnedDomain(item.id);
+                            }}
+                            style={({ pressed }) => ({
+                              borderRadius: 999,
+                              borderCurve: "continuous",
+                              paddingHorizontal: 10,
+                              paddingVertical: 5,
+                              borderWidth: 1,
+                              borderColor: isPinned
+                                ? item.color
+                                : hasReachedPinLimit
+                                  ? theme.border
+                                  : theme.border,
+                              backgroundColor: isPinned
+                                ? `${item.color}22`
+                                : theme.card,
+                              opacity: pressed
+                                ? 0.82
+                                : hasReachedPinLimit
+                                  ? 0.56
+                                  : 1,
+                            })}
+                          >
+                            <Text
+                              selectable
+                              variant="muted"
+                              style={{
+                                color: isPinned
+                                  ? item.color
+                                  : theme.mutedForeground,
+                                fontFamily: "Geist",
+                                fontWeight: "700",
+                              }}
+                            >
+                              {isPinned ? "Unpin" : "Pin"}
+                            </Text>
+                          </Pressable>
+                        ) : null}
+                        {isPinned ? (
+                          <Badge variant="outline" color="secondary">
+                            Pinned
+                          </Badge>
+                        ) : null}
+                        {hasReachedPinLimit ? (
+                          <Badge variant="outline" color="secondary">
+                            Max 4
+                          </Badge>
+                        ) : null}
+                        {isOnlySelected ? (
+                          <Badge variant="outline" color="secondary">
+                            Keep 1+
+                          </Badge>
+                        ) : null}
+                      </View>
                     </Pressable>
                   </Animated.View>
                 );
@@ -555,7 +662,8 @@ export function OnboardingScreen() {
               variant="muted"
               style={{ color: theme.mutedForeground, textAlign: "center" }}
             >
-              Faith is always active and pinned first.
+              Pick the domains that matter most right now. Keep at least one
+              selected, and pin up to four to feature them first.
             </Text>
           </StepShell>
         ) : null}
@@ -622,7 +730,10 @@ export function OnboardingScreen() {
                         <Text
                           selectable
                           variant="small"
-                          style={{ color: theme.mutedForeground, lineHeight: 18 }}
+                          style={{
+                            color: theme.mutedForeground,
+                            lineHeight: 18,
+                          }}
                         >
                           {item.description}
                         </Text>
@@ -1017,7 +1128,9 @@ export function OnboardingScreen() {
                     ],
                     [
                       "#534AB7",
-                      "Faith is pinned first - log your first prayer anytime",
+                      pinnedDomainIds.length > 0
+                        ? `${pinnedDomainIds.length} pinned domain${pinnedDomainIds.length === 1 ? "" : "s"} will be featured first across the app`
+                        : "Your selected domains shape the first week of suggestions",
                     ],
                   ].map(([color, label]) => (
                     <View
@@ -1165,9 +1278,7 @@ function StepShell({
           <Animated.View
             key={`${stepLabel}-child-${index}`}
             entering={FadeInDown.delay(90 + index * 70).duration(280)}
-            layout={LinearTransition.springify()
-              .damping(18)
-              .stiffness(180)}
+            layout={LinearTransition.springify().damping(18).stiffness(180)}
           >
             {child}
           </Animated.View>
@@ -1175,7 +1286,9 @@ function StepShell({
       </View>
 
       <Animated.View
-        entering={FadeInDown.delay(180 + stepChildren.length * 50).duration(280)}
+        entering={FadeInDown.delay(180 + stepChildren.length * 50).duration(
+          280,
+        )}
         style={{ flexDirection: "row", gap: 8, paddingTop: 8 }}
       >
         <Button
