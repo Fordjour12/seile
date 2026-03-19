@@ -24,12 +24,14 @@ export function usePlannerPlan() {
   const planId = rawId ? asId<"plans">(rawId) : undefined;
 
   const plan = useQuery(
-    plannerApi["planner/queries"].getPlanById,
+    plannerApi["productivity/planner/queries"].getPlanById,
     planId ? { id: planId } : "skip",
   );
-  const setPlanItemStatus = useMutation(plannerApi["planner/mutations"].setPlanItemStatus);
-  const replanWeeklyPlan = useAction(plannerApi["planner/actions"].replanWeeklyPlan);
-  const reviewWeeklyPlan = useAction(plannerApi["planner/actions"].reviewWeeklyPlan);
+  const setPlanItemStatus = useMutation(
+    plannerApi["productivity/planner/mutations"].setPlanItemStatus,
+  );
+  const replanWeeklyPlan = useAction(plannerApi["productivity/planner/actions"].replanWeeklyPlan);
+  const reviewWeeklyPlan = useAction(plannerApi["productivity/planner/actions"].reviewWeeklyPlan);
 
   const [status, setStatus] = useState("Plan ready.");
   const [busyKey, setBusyKey] = useState<string | null>(null);

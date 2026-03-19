@@ -80,7 +80,7 @@ function mapBackendTransaction(transaction: BackendTransaction): TransactionReco
 export function useTransactions(
   params: ListTransactionsParams = {},
 ): TransactionRecord[] | undefined {
-  const rows = useQuery(api.transactions.queries.listTransactions, {
+  const rows = useQuery(api.finance.transactions.queries.listTransactions, {
     limit: params.limit,
     before: params.before,
   });
@@ -92,7 +92,7 @@ export function useTransaction(
   transactionId?: string,
 ): TransactionRecord | null | undefined {
   const row = useQuery(
-    api.transactions.queries.getTransactionById,
+    api.finance.transactions.queries.getTransactionById,
     transactionId ? { id: asId<"transactions">(transactionId) } : "skip",
   );
 
@@ -102,7 +102,7 @@ export function useTransaction(
 export function useCreateTransaction(): (
   payload: CreateTransactionPayload,
 ) => Promise<TransactionRecord> {
-  const createTransaction = useMutation(api.transactions.mutations.createTransaction);
+  const createTransaction = useMutation(api.finance.transactions.mutations.createTransaction);
 
   return async (payload) => {
     const row = await createTransaction({
@@ -125,7 +125,7 @@ export function useUpdateTransaction(): (
   transactionId: string,
   payload: UpdateTransactionPayload,
 ) => Promise<TransactionRecord> {
-  const updateTransaction = useMutation(api.transactions.mutations.updateTransaction);
+  const updateTransaction = useMutation(api.finance.transactions.mutations.updateTransaction);
 
   return async (transactionId, payload) => {
     const row = await updateTransaction({
@@ -144,7 +144,7 @@ export function useDeleteTransaction(): (
   transactionId: string,
   reverseAccountDelta?: boolean,
 ) => Promise<boolean> {
-  const deleteTransaction = useMutation(api.transactions.mutations.deleteTransaction);
+  const deleteTransaction = useMutation(api.finance.transactions.mutations.deleteTransaction);
 
   return (transactionId, reverseAccountDelta = true) =>
     deleteTransaction({
@@ -156,7 +156,7 @@ export function useDeleteTransaction(): (
 export function useReverseTransaction(): (
   transactionId: string,
 ) => Promise<TransactionRecord> {
-  const reverseTransaction = useMutation(api.transactions.mutations.reverseTransaction);
+  const reverseTransaction = useMutation(api.finance.transactions.mutations.reverseTransaction);
 
   return async (transactionId) => {
     const row = await reverseTransaction({
@@ -172,7 +172,7 @@ export function useTransactionSummary(
   to?: string,
 ): SummaryResponse | undefined {
   return useQuery(
-    api.transactions.queries.getTransactionSummary,
+    api.finance.transactions.queries.getTransactionSummary,
     from && to
       ? {
           from: new Date(from).getTime(),

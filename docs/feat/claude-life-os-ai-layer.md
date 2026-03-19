@@ -561,7 +561,7 @@ export const getWeekSnapshot = createTool({
   description: "Get the user's current week snapshot across all planning domains",
   args: z.object({}),
   handler: async (ctx) => {
-    return await ctx.runQuery(api.productivity.planner.getWeekSnapshotForAI, {});
+    return await ctx.runQuery(api.productivity.ai.getWeekSnapshotForAI, {});
   },
 });
 

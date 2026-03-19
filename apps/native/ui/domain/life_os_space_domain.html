@@ -1,0 +1,521 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:110px}
+.screen::-webkit-scrollbar{display:none}
+
+.top-bar{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+
+.header{padding:10px 24px 0}
+.h-row{display:flex;justify-content:space-between;align-items:center}
+.h-left{display:flex;align-items:center;gap:10px}
+.h-dot{width:10px;height:10px;border-radius:50%;background:#854F0B;flex-shrink:0}
+.h-title{font-size:26px;font-weight:500;color:#fff}
+.h-sub{font-size:13px;color:#444;margin-top:4px}
+.h-add{width:32px;height:32px;border-radius:50%;background:#1a1408;border:0.5px solid #3d2a08;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.h-add:hover{background:#251e0a}
+
+/* View toggle */
+.view-toggle{display:flex;gap:0;margin:14px 24px 0;background:#141418;border-radius:10px;padding:3px;border:0.5px solid #222}
+.vt-btn{flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:500;color:#555;cursor:pointer;text-align:center;transition:all .2s;border:none;background:transparent}
+.vt-btn.active{background:#1a1408;color:#e8a84a;border:0.5px solid #3d2a08}
+
+/* Zone map — single room visual */
+.zone-map{margin:14px 24px 0;background:#141418;border:0.5px solid #2a2a2e;border-radius:18px;padding:16px;position:relative}
+.zm-label{font-size:11px;color:#444;font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between}
+.zm-room{position:relative;width:100%;height:200px;background:#0e0e10;border:1px solid #2a2a2e;border-radius:12px;overflow:hidden}
+
+/* Zone areas inside room */
+.zone{position:absolute;border-radius:8px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 8px}
+.zone:hover{opacity:.85}
+.zone-label{font-size:10px;font-weight:500;white-space:nowrap}
+.zone-sub{font-size:9px;opacity:.7;margin-top:1px;white-space:nowrap}
+.zone-status{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%}
+
+/* Zone colors — muted amber palette with semantic variance */
+.z-sleep{background:#1a1408;border:1px solid #3d2a08}
+.z-work{background:#0e1a0e;border:1px solid #1a3a1a}
+.z-eat{background:#1a1610;border:1px solid #2a2818}
+.z-rest{background:#141420;border:1px solid #1e1e30}
+
+/* Zone cards list */
+.zone-cards{padding:10px 24px 0}
+.sh-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase}
+
+.zone-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.zone-card:hover{border-color:#333}
+.zone-card.active-zone{border-color:#3d2a08;background:#160f06}
+.zc-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.zc-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.zc-name{font-size:14px;font-weight:500;color:#d0d0dc;flex:1}
+.zc-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.zc-body{}
+.zc-desc{font-size:12px;color:#555;line-height:1.4;margin-bottom:8px}
+.zc-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.zc-tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.zc-progress-row{display:flex;align-items:center;gap:8px}
+.zc-track{flex:1;height:3px;background:#1e1e22;border-radius:2px}
+.zc-fill{height:100%;border-radius:2px}
+.zc-pct{font-size:11px;font-weight:500;flex-shrink:0}
+
+/* Zone expanded */
+.zc-expanded{display:none;padding:10px 0 0;border-top:0.5px solid #1e1e22;margin-top:4px}
+.zone-card.open .zc-expanded{display:block}
+.zce-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:0.5px solid #1a1a1e}
+.zce-item:last-child{border-bottom:none}
+.zce-key{font-size:11px;color:#444;width:72px;flex-shrink:0;padding-top:1px}
+.zce-val{font-size:12px;color:#888;line-height:1.4;flex:1}
+.zce-actions{display:flex;gap:6px;margin-top:8px}
+.zce-btn{flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid #2a2a2e;background:#141418;color:#666;text-align:center;transition:all .15s}
+.zce-btn:hover{color:#aaa;border-color:#444}
+.zce-btn.primary{background:#1a1408;border-color:#3d2a08;color:#e8a84a}
+
+/* Purchase/wishlist items */
+.purchase-item{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:11px 14px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s}
+.purchase-item:hover{border-color:#333}
+.pi-check{width:18px;height:18px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.pi-check.done{background:#854F0B;border-color:#854F0B}
+.pi-check.done::after{content:'';width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block}
+.pi-body{flex:1}
+.pi-name{font-size:13px;font-weight:500;color:#ccc}
+.pi-meta{font-size:11px;color:#555;margin-top:2px}
+.pi-price{font-size:13px;font-weight:500;color:#888;flex-shrink:0}
+.pi-priority{font-size:10px;padding:2px 7px;border-radius:20px;flex-shrink:0}
+
+/* Mood board section */
+.mood-section{padding:10px 24px 0}
+.mood-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mood-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px;cursor:pointer;transition:all .15s;text-align:center}
+.mood-card:hover{border-color:#3d2a08}
+.mood-card.active{background:#1a1408;border-color:#3d2a08}
+.mc-icon{font-size:22px;margin-bottom:6px;display:block}
+.mc-style{font-size:12px;font-weight:500;color:#ccc}
+.mc-desc{font-size:10px;color:#444;margin-top:2px;line-height:1.3}
+
+/* AI card */
+.ai-card{margin:10px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
+.ac-dot{width:6px;height:6px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ac-body{flex:1}
+.ac-text{font-size:13px;color:#8888a0;line-height:1.5;margin-bottom:8px}
+.ac-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ac-chip{font-size:11px;padding:5px 10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer}
+
+.section-head-row{padding:14px 24px 0;display:flex;justify-content:space-between;align-items:center}
+.shr-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase}
+.shr-action{font-size:12px;color:#6b5fff;cursor:pointer}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#0e0e10;border-top:0.5px solid #1e1e22;padding:12px 0 28px;display:flex;justify-content:space-around}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.4}
+.nav-item.active{opacity:1}
+.nav-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#d85a30}
+.nav-label{font-size:10px;color:#888;font-weight:500}
+.nav-item.active .nav-label{color:#d85a30}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="top-bar">
+      <div class="back-btn" onclick="sendPrompt('Go back to the Domains hub')">
+        <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+        Domains
+      </div>
+    </div>
+
+    <div class="header">
+      <div class="h-row">
+        <div class="h-left">
+          <div class="h-dot"></div>
+          <div class="h-title">Space</div>
+        </div>
+        <div class="h-add" onclick="sendPrompt('Add a note, purchase, or update to my Space domain')">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#e8a84a" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        </div>
+      </div>
+      <div class="h-sub">Single room · 4 zones · calm + functional</div>
+    </div>
+
+    <div class="view-toggle">
+      <div class="vt-btn active" id="vt-zones" onclick="setView('zones')">Zones</div>
+      <div class="vt-btn" id="vt-wishlist" onclick="setView('wishlist')">Wishlist</div>
+      <div class="vt-btn" id="vt-vibe" onclick="setView('vibe')">Vibe</div>
+    </div>
+
+    <!-- ZONES VIEW -->
+    <div id="view-zones">
+
+      <!-- Room map -->
+      <div class="zone-map">
+        <div class="zm-label">
+          <span>Room layout</span>
+          <span style="font-size:11px;color:#333">1 room · 4 functional zones</span>
+        </div>
+        <div class="zm-room">
+          <!-- Sleep zone — top left -->
+          <div class="zone z-sleep" style="top:8px;left:8px;width:44%;height:44%" onclick="openZone('zc-sleep')">
+            <div class="zone-status" style="background:#1d9e75"></div>
+            <div class="zone-label" style="color:#e8a84a">Sleep</div>
+            <div class="zone-sub" style="color:#ba7517">Bed · calm</div>
+          </div>
+          <!-- Work zone — top right -->
+          <div class="zone z-work" style="top:8px;right:8px;width:50%;height:44%" onclick="openZone('zc-work')">
+            <div class="zone-status" style="background:#ba7517"></div>
+            <div class="zone-label" style="color:#6fcf97">Work</div>
+            <div class="zone-sub" style="color:#4a8a4a">Desk · focus</div>
+          </div>
+          <!-- Eat zone — bottom left -->
+          <div class="zone z-eat" style="bottom:8px;left:8px;width:30%;height:42%" onclick="openZone('zc-eat')">
+            <div class="zone-status" style="background:#1d9e75"></div>
+            <div class="zone-label" style="color:#d4c080">Eat</div>
+            <div class="zone-sub" style="color:#8a7840">Table · light</div>
+          </div>
+          <!-- Rest zone — bottom right -->
+          <div class="zone z-rest" style="bottom:8px;right:8px;width:62%;height:42%" onclick="openZone('zc-rest')">
+            <div class="zone-status" style="background:#9b8fff"></div>
+            <div class="zone-label" style="color:#a0a0d0">Rest</div>
+            <div class="zone-sub" style="color:#6060a0">Reading · decompress</div>
+          </div>
+          <!-- Center label -->
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;color:#222;font-weight:500;letter-spacing:.06em;text-transform:uppercase;pointer-events:none">single room</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:6px;height:6px;border-radius:50%;background:#1d9e75"></div><span style="font-size:10px;color:#444">Good</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:6px;height:6px;border-radius:50%;background:#ba7517"></div><span style="font-size:10px;color:#444">Needs attention</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:6px;height:6px;border-radius:50%;background:#9b8fff"></div><span style="font-size:10px;color:#444">In progress</span></div>
+        </div>
+      </div>
+
+      <!-- Zone cards -->
+      <div class="zone-cards">
+        <div style="padding:10px 0 6px;font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase">Zone detail</div>
+
+        <!-- Sleep zone -->
+        <div class="zone-card" id="zc-sleep" onclick="toggleZone('zc-sleep')">
+          <div class="zc-header">
+            <div class="zc-icon" style="background:#1a1408;border:0.5px solid #3d2a08">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 9a5 5 0 009.9-1H3z" stroke="#e8a84a" stroke-width="1.3"/><path d="M6 6a2 2 0 014 0" stroke="#e8a84a" stroke-width="1.3" fill="none"/></svg>
+            </div>
+            <span class="zc-name">Sleep zone</span>
+            <div class="zc-status-dot" style="background:#1d9e75"></div>
+          </div>
+          <div class="zc-desc">Bed, bedside table, blackout curtain. Primary rest area — kept minimal and dark.</div>
+          <div class="zc-tags">
+            <span class="zc-tag" style="background:#1a2a1e;color:#6fcf97">Clean</span>
+            <span class="zc-tag" style="background:#1a1408;color:#e8a84a">Minimal</span>
+            <span class="zc-tag" style="background:#1a1408;color:#ba7517">Lamp needed</span>
+          </div>
+          <div class="zc-progress-row">
+            <div class="zc-track"><div class="zc-fill" style="width:80%;background:#854F0B"></div></div>
+            <span class="zc-pct" style="color:#e8a84a">80%</span>
+          </div>
+          <div class="zc-expanded">
+            <div class="zce-item"><span class="zce-key">Condition</span><span class="zce-val">Good · blackout curtain installed last month</span></div>
+            <div class="zce-item"><span class="zce-key">Open items</span><span class="zce-val">Bedside lamp still needed — on wishlist</span></div>
+            <div class="zce-item"><span class="zce-key">Last updated</span><span class="zce-val">Mar 5 · added blackout curtain note</span></div>
+            <div class="zce-actions">
+              <div class="zce-btn primary" onclick="event.stopPropagation();sendPrompt('Add a note or update to my Sleep zone in the Space domain')">Update zone ↗</div>
+              <div class="zce-btn" onclick="event.stopPropagation();sendPrompt('Show me wishlist items for the Sleep zone')">Wishlist</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Work zone -->
+        <div class="zone-card active-zone" id="zc-work" onclick="toggleZone('zc-work')">
+          <div class="zc-header">
+            <div class="zc-icon" style="background:#0e1a0e;border:0.5px solid #1a3a1a">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#6fcf97" stroke-width="1.3"/><path d="M5 12v2M11 12v2M4 14h8" stroke="#6fcf97" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+            <span class="zc-name">Work zone</span>
+            <div class="zc-status-dot" style="background:#ba7517"></div>
+          </div>
+          <div class="zc-desc">Desk, monitor, chair, task lamp. Active use zone — daily deep work sessions happen here.</div>
+          <div class="zc-tags">
+            <span class="zc-tag" style="background:#2a1e08;color:#ba7517">Cable mess</span>
+            <span class="zc-tag" style="background:#1a1408;color:#e8a84a">Active</span>
+            <span class="zc-tag" style="background:#1a2a1e;color:#6fcf97">Lighting good</span>
+          </div>
+          <div class="zc-progress-row">
+            <div class="zc-track"><div class="zc-fill" style="width:60%;background:#854F0B"></div></div>
+            <span class="zc-pct" style="color:#ba7517">60%</span>
+          </div>
+          <div class="zc-expanded">
+            <div class="zce-item"><span class="zce-key">Condition</span><span class="zce-val">Functional but cable management is unsolved — affects focus</span></div>
+            <div class="zce-item"><span class="zce-key">Open items</span><span class="zce-val">Cable box · monitor arm · desk organiser tray</span></div>
+            <div class="zce-item"><span class="zce-key">AI note</span><span class="zce-val">Work zone has highest daily use. Cable issue is the top friction point based on your notes.</span></div>
+            <div class="zce-item"><span class="zce-key">Last updated</span><span class="zce-val">Mar 10 · noted cable management issue</span></div>
+            <div class="zce-actions">
+              <div class="zce-btn primary" onclick="event.stopPropagation();sendPrompt('Add the cable management items to my Space wishlist')">Add to wishlist ↗</div>
+              <div class="zce-btn" onclick="event.stopPropagation();sendPrompt('Show me cable management solutions for a single room desk setup')">Get ideas ↗</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Eat zone -->
+        <div class="zone-card" id="zc-eat" onclick="toggleZone('zc-eat')">
+          <div class="zc-header">
+            <div class="zc-icon" style="background:#1a1610;border:0.5px solid #2a2818">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M6 2v4a2 2 0 002 2 2 2 0 002-2V2" stroke="#d4c080" stroke-width="1.3" stroke-linecap="round"/><path d="M8 8v6" stroke="#d4c080" stroke-width="1.3" stroke-linecap="round"/><path d="M4 6V2" stroke="#d4c080" stroke-width="1.3" stroke-linecap="round"/><path d="M4 6a2 2 0 000 4" stroke="#d4c080" stroke-width="1.3"/></svg>
+            </div>
+            <span class="zc-name">Eat zone</span>
+            <div class="zc-status-dot" style="background:#1d9e75"></div>
+          </div>
+          <div class="zc-desc">Small table, 2 chairs, window light. Used for meals and occasional reading. Compact and functional.</div>
+          <div class="zc-tags">
+            <span class="zc-tag" style="background:#1a2a1e;color:#6fcf97">Organised</span>
+            <span class="zc-tag" style="background:#1a1408;color:#e8a84a">Natural light</span>
+          </div>
+          <div class="zc-progress-row">
+            <div class="zc-track"><div class="zc-fill" style="width:90%;background:#854F0B"></div></div>
+            <span class="zc-pct" style="color:#e8a84a">90%</span>
+          </div>
+          <div class="zc-expanded">
+            <div class="zce-item"><span class="zce-key">Condition</span><span class="zce-val">Good · no open items. Table plant would add warmth — low priority.</span></div>
+            <div class="zce-item"><span class="zce-key">Open items</span><span class="zce-val">Small plant (optional)</span></div>
+            <div class="zce-actions">
+              <div class="zce-btn primary" onclick="event.stopPropagation();sendPrompt('Update the Eat zone in my Space domain')">Update ↗</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rest zone -->
+        <div class="zone-card" id="zc-rest" onclick="toggleZone('zc-rest')">
+          <div class="zc-header">
+            <div class="zc-icon" style="background:#141420;border:0.5px solid #1e1e30">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 11V7a5 5 0 0110 0v4" stroke="#a0a0d0" stroke-width="1.3"/><path d="M1 11h14" stroke="#a0a0d0" stroke-width="1.3" stroke-linecap="round"/><path d="M5 11v2M11 11v2" stroke="#a0a0d0" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+            <span class="zc-name">Rest zone</span>
+            <div class="zc-status-dot" style="background:#9b8fff"></div>
+          </div>
+          <div class="zc-desc">Reading chair, small lamp, bookshelf corner. Decompression and faith devotional space. Intentionally separated from work.</div>
+          <div class="zc-tags">
+            <span class="zc-tag" style="background:#1e1a30;color:#b4adf5">Faith space</span>
+            <span class="zc-tag" style="background:#1e1a30;color:#9b8fff">In progress</span>
+            <span class="zc-tag" style="background:#1a1408;color:#ba7517">Chair needed</span>
+          </div>
+          <div class="zc-progress-row">
+            <div class="zc-track"><div class="zc-fill" style="width:40%;background:#534AB7"></div></div>
+            <span class="zc-pct" style="color:#9b8fff">40%</span>
+          </div>
+          <div class="zc-expanded">
+            <div class="zce-item"><span class="zce-key">Condition</span><span class="zce-val">In progress — bookshelf placed, lamp acquired. Reading chair is the missing piece.</span></div>
+            <div class="zce-item"><span class="zce-key">Intent</span><span class="zce-val">Dedicated decompression corner. Separate visual identity from the work desk.</span></div>
+            <div class="zce-item"><span class="zce-key">Open items</span><span class="zce-val">Reading chair (priority 1) · small rug · devotional candle holder</span></div>
+            <div class="zce-item"><span class="zce-key">Faith link</span><span class="zce-val">This zone is where morning devotionals and evening reflection happen. Its quality directly affects the Faith domain.</span></div>
+            <div class="zce-actions">
+              <div class="zce-btn primary" onclick="event.stopPropagation();sendPrompt('Add reading chair to my Space wishlist — priority 1')">Add chair to wishlist ↗</div>
+              <div class="zce-btn" onclick="event.stopPropagation();sendPrompt('Show me reading chair options for a small single room')">Find options ↗</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ac-dot"></div>
+        <div class="ac-body">
+          <div class="ac-text">Work zone and Rest zone are the two that need attention. The cable management issue on your desk is a daily friction point — you've noted it twice. The Rest zone is 40% complete and it's the one tied directly to your Faith domain. The reading chair is the highest-leverage purchase right now.</div>
+          <div class="ac-chips">
+            <div class="ac-chip" onclick="sendPrompt('Add the reading chair and cable management items to my Space wishlist with priorities')">Update wishlist ↗</div>
+            <div class="ac-chip" onclick="sendPrompt('How does my Space domain connect to my Faith and Wellness domains?')">Space × Faith ↗</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WISHLIST VIEW -->
+    <div id="view-wishlist" style="display:none;padding:10px 24px 0">
+
+      <div class="section-head-row" style="padding:4px 0 10px">
+        <span class="shr-label">Priority items</span>
+        <span class="shr-action" onclick="sendPrompt('Add a new item to my Space wishlist')">+ Add item</span>
+      </div>
+
+      <div class="purchase-item" onclick="sendPrompt('Tell me more about the reading chair wishlist item and find options')">
+        <div class="pi-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+        <div class="pi-body">
+          <div class="pi-name">Reading chair</div>
+          <div class="pi-meta">Rest zone · compact, comfortable, neutral tone</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="pi-price">GH₵ 400–600</div>
+          <div class="pi-priority" style="background:#2a1a10;color:#e8a84a;margin-top:3px">Priority 1</div>
+        </div>
+      </div>
+
+      <div class="purchase-item" onclick="sendPrompt('Tell me more about the cable management box wishlist item')">
+        <div class="pi-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+        <div class="pi-body">
+          <div class="pi-name">Cable management box</div>
+          <div class="pi-meta">Work zone · desk cable routing solution</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="pi-price">GH₵ 80–120</div>
+          <div class="pi-priority" style="background:#2a1a10;color:#e8a84a;margin-top:3px">Priority 2</div>
+        </div>
+      </div>
+
+      <div class="purchase-item" onclick="sendPrompt('Tell me more about the bedside lamp wishlist item')">
+        <div class="pi-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+        <div class="pi-body">
+          <div class="pi-name">Bedside lamp</div>
+          <div class="pi-meta">Sleep zone · warm light, small footprint</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="pi-price">GH₵ 120–180</div>
+          <div class="pi-priority" style="background:#1a1a1e;color:#666;border:0.5px solid #222;margin-top:3px">Priority 3</div>
+        </div>
+      </div>
+
+      <div class="purchase-item" onclick="sendPrompt('Tell me more about the monitor arm wishlist item')">
+        <div class="pi-check" onclick="event.stopPropagation();this.classList.toggle('done')"></div>
+        <div class="pi-body">
+          <div class="pi-name">Monitor arm</div>
+          <div class="pi-meta">Work zone · frees desk surface, better posture</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="pi-price">GH₵ 200–300</div>
+          <div class="pi-priority" style="background:#1a1a1e;color:#555;border:0.5px solid #222;margin-top:3px">Priority 4</div>
+        </div>
+      </div>
+
+      <div class="purchase-item" style="opacity:.55" onclick="sendPrompt('Tell me about the small rug wishlist item for the rest zone')">
+        <div class="pi-check done"></div>
+        <div class="pi-body">
+          <div class="pi-name" style="text-decoration:line-through;color:#555">Bookshelf</div>
+          <div class="pi-meta">Rest zone · acquired Mar 1</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;color:#444;margin-top:3px">Done ✓</div>
+        </div>
+      </div>
+
+      <div style="background:#13131f;border:0.5px solid #2a2a36;border-radius:12px;padding:11px 14px;display:flex;gap:8px;margin-top:4px">
+        <div style="width:5px;height:5px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s infinite"></div>
+        <div style="font-size:12px;color:#6b5fff;line-height:1.5">Total wishlist budget: GH₵ 800–1,200 for all priority items. The reading chair alone would complete the Rest zone and strengthen your Faith domain anchor.</div>
+      </div>
+    </div>
+
+    <!-- VIBE VIEW -->
+    <div id="view-vibe" style="display:none">
+      <div class="mood-section">
+        <div style="padding:4px 0 10px;font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase">Current aesthetic direction</div>
+
+        <div style="background:#1a1408;border:1px solid #3d2a08;border-radius:16px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:12px;color:#ba7517;font-weight:500;margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase">Active vibe</div>
+          <div style="font-size:16px;font-weight:500;color:#e8c080;margin-bottom:6px">Calm · functional · warm minimal</div>
+          <div style="font-size:12px;color:#7a6030;line-height:1.5">Neutral tones, warm lighting, clear surfaces. Every item earns its place. Nothing decorative without function.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+            <span style="font-size:10px;padding:2px 8px;background:#252010;color:#ba7517;border-radius:20px;border:0.5px solid #3d3010">Warm neutrals</span>
+            <span style="font-size:10px;padding:2px 8px;background:#252010;color:#ba7517;border-radius:20px;border:0.5px solid #3d3010">Wood tones</span>
+            <span style="font-size:10px;padding:2px 8px;background:#252010;color:#ba7517;border-radius:20px;border:0.5px solid #3d3010">Clear surfaces</span>
+            <span style="font-size:10px;padding:2px 8px;background:#252010;color:#ba7517;border-radius:20px;border:0.5px solid #3d3010">Low clutter</span>
+            <span style="font-size:10px;padding:2px 8px;background:#2a2040;color:#9b8fff;border-radius:20px;border:0.5px solid #3d3570">Faith-intentional</span>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Zone vibe</div>
+        <div class="mood-grid">
+          <div class="mood-card active" onclick="sendPrompt('Tell me more about the Sleep zone vibe direction')">
+            <span class="mc-icon">🌙</span>
+            <div class="mc-style">Sleep</div>
+            <div class="mc-desc">Dark, minimal, zero stimulation</div>
+          </div>
+          <div class="mood-card" onclick="sendPrompt('Tell me more about the Work zone vibe direction')">
+            <span class="mc-icon">🖥</span>
+            <div class="mc-style">Work</div>
+            <div class="mc-desc">Clean, focused, functional only</div>
+          </div>
+          <div class="mood-card" onclick="sendPrompt('Tell me more about the Eat zone vibe direction')">
+            <span class="mc-icon">🌿</span>
+            <div class="mc-style">Eat</div>
+            <div class="mc-desc">Light, simple, natural</div>
+          </div>
+          <div class="mood-card" onclick="sendPrompt('Tell me more about the Rest zone vibe and how it connects to Faith')">
+            <span class="mc-icon">📖</span>
+            <div class="mc-style">Rest + Faith</div>
+            <div class="mc-desc">Warm, still, intentional</div>
+          </div>
+        </div>
+
+        <div style="background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px;margin-bottom:10px">
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Principles</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;gap:8px"><div style="width:5px;height:5px;border-radius:50%;background:#854F0B;flex-shrink:0;margin-top:4px"></div><span style="font-size:12px;color:#666;line-height:1.4">One room serves four needs — design each zone to feel distinct without physical separation</span></div>
+            <div style="display:flex;gap:8px"><div style="width:5px;height:5px;border-radius:50%;background:#854F0B;flex-shrink:0;margin-top:4px"></div><span style="font-size:12px;color:#666;line-height:1.4">The Rest zone anchors the Faith domain — it should feel like a sanctuary, not just a chair corner</span></div>
+            <div style="display:flex;gap:8px"><div style="width:5px;height:5px;border-radius:50%;background:#854F0B;flex-shrink:0;margin-top:4px"></div><span style="font-size:12px;color:#666;line-height:1.4">Buy slowly and intentionally — each item should solve a problem or serve a specific zone function</span></div>
+          </div>
+        </div>
+
+        <div class="ai-card" style="margin:0 0 8px">
+          <div class="ac-dot"></div>
+          <div class="ac-body">
+            <div class="ac-text">Your Space direction is clear and consistent. The Rest zone is the one that isn't there yet — but once it is, you'll have a room that works across all four functions without friction.</div>
+            <div class="ac-chips">
+              <div class="ac-chip" onclick="sendPrompt('Generate a complete Rest zone design brief — chair, rug, lighting, devotional setup')">Design Rest zone ↗</div>
+              <div class="ac-chip" onclick="sendPrompt('Show me Space domain ideas that fit warm minimal and a single room setup in Accra')">Space ideas ↗</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="sendPrompt('Show me the Today screen')">
+      <div class="nav-icon" style="background:#2a2040"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Planner screen')">
+      <div class="nav-icon" style="background:#1a2a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#1d9e75"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div>
+      <span class="nav-label">Planner</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon" style="background:#2a1a1a"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#d85a30" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#d85a30"/></svg></div>
+      <div class="nav-dot"></div>
+      <span class="nav-label">Domains</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the AI tab')">
+      <div class="nav-icon" style="background:#2a2010"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#ba7517"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div>
+      <span class="nav-label">AI</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Profile screen')">
+      <div class="nav-icon" style="background:#0e1a26"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#378add"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#378add" stroke-width="1.5"/></svg></div>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function setView(v){
+  ['zones','wishlist','vibe'].forEach(function(n){
+    document.getElementById('vt-'+n).classList.toggle('active',n===v);
+    document.getElementById('view-'+n).style.display=n===v?'block':'none';
+  });
+}
+function toggleZone(id){
+  var open=document.getElementById(id).classList.contains('open');
+  ['zc-sleep','zc-work','zc-eat','zc-rest'].forEach(function(z){
+    document.getElementById(z).classList.remove('open');
+  });
+  if(!open)document.getElementById(id).classList.add('open');
+}
+function openZone(id){
+  ['zc-sleep','zc-work','zc-eat','zc-rest'].forEach(function(z){
+    document.getElementById(z).classList.remove('open');
+  });
+  document.getElementById(id).classList.add('open');
+  document.getElementById(id).scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+setView('zones');
+</script>

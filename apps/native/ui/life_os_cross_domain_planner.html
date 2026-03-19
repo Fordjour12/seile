@@ -1,0 +1,391 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:110px}
+.screen::-webkit-scrollbar{display:none}
+
+/* Header */
+.header{padding:18px 24px 0}
+.h-row{display:flex;justify-content:space-between;align-items:flex-start}
+.h-title{font-size:22px;font-weight:500;color:#fff;line-height:1.2}
+.h-sub{font-size:12px;color:#444;margin-top:5px}
+.h-badge{font-size:10px;padding:4px 10px;background:#13131f;border:0.5px solid #2a2a36;border-radius:20px;color:#555;display:flex;align-items:center;gap:5px;flex-shrink:0;margin-top:2px}
+.hb-dot{width:5px;height:5px;border-radius:50%;background:#9b8fff;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Life balance wheel */
+.wheel-section{padding:16px 24px 0}
+.ws-label{font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.ws-sub{font-size:11px;color:#333;font-weight:400;letter-spacing:0;text-transform:none}
+.wheel-wrap{position:relative;width:200px;height:200px;margin:0 auto}
+
+/* Domain bars horizontal */
+.domain-bars{display:flex;flex-direction:column;gap:6px;padding:0 24px;margin-top:14px}
+.db-row{display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;transition:opacity .15s}
+.db-row:hover{opacity:.8}
+.db-name{font-size:12px;font-weight:500;width:74px;flex-shrink:0}
+.db-track{flex:1;height:6px;background:#1a1a1e;border-radius:3px;overflow:hidden}
+.db-fill{height:100%;border-radius:3px;transition:width .5s}
+.db-pct{font-size:11px;font-weight:500;width:28px;text-align:right;flex-shrink:0}
+.db-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* Cross-domain tension cards */
+.tension-section{padding:14px 24px 0}
+.ts-label{font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+
+.tension-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.tension-card:hover{border-color:#333}
+.tc-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tc-domains{display:flex;gap:-4px;align-items:center}
+.tc-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid #0e0e10;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+.tc-dot:not(:first-child){margin-left:-6px}
+.tc-arrow{font-size:10px;color:#333;margin:0 2px}
+.tc-type{font-size:11px;font-weight:500;color:#666;margin-left:4px}
+.tc-badge{margin-left:auto;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.tc-text{font-size:13px;color:#c0c0cc;line-height:1.5;margin-bottom:8px}
+.tc-actions{display:flex;gap:6px}
+.tc-btn{font-size:11px;padding:5px 12px;border-radius:20px;cursor:pointer;border:0.5px solid #2a2a2e;background:#141418;color:#666;transition:all .15s}
+.tc-btn:hover{color:#ccc;border-color:#444}
+.tc-btn.primary{background:#1e1a30;border-color:#3d3570;color:#9b8fff}
+
+/* Weekly rhythm map */
+.rhythm-section{padding:14px 24px 0}
+.rs-label{font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+
+.rhythm-map{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:12px 14px}
+.rm-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.rm-title{font-size:12px;font-weight:500;color:#888}
+.rm-legend{display:flex;gap:8px;flex-wrap:wrap}
+.rml{display:flex;align-items:center;gap:3px}
+.rml-dot{width:6px;height:6px;border-radius:50%}
+.rml-label{font-size:9px;color:#444}
+.rm-grid{display:flex;flex-direction:column;gap:4px}
+.rm-row{display:flex;gap:4px;align-items:center}
+.rm-day-label{font-size:10px;color:#444;width:14px;flex-shrink:0;text-align:right}
+.rm-cell{flex:1;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;transition:opacity .15s;cursor:pointer}
+.rm-cell:hover{opacity:.75}
+.rm-pip{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.rm-cell.empty{background:#141418}
+.rm-time-labels{display:flex;gap:4px;margin-bottom:4px;padding-left:18px}
+.rm-tl{flex:1;font-size:8px;color:#333;text-align:center}
+
+/* AI synthesis card */
+.synthesis-card{margin:14px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:16px;padding:14px 16px}
+.sy-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sy-pulse{width:6px;height:6px;border-radius:50%;background:#9b8fff;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+.sy-label{font-size:11px;font-weight:500;color:#6b5fff;letter-spacing:.06em;text-transform:uppercase}
+.sy-timestamp{margin-left:auto;font-size:11px;color:#333}
+.sy-insight{font-size:13px;color:#9090a8;line-height:1.6;margin-bottom:12px}
+.sy-insight strong{color:#c0c0cc;font-weight:500}
+.sy-chips{display:flex;gap:6px;flex-wrap:wrap}
+.sy-chip{font-size:11px;padding:5px 10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer;transition:all .15s}
+.sy-chip:hover{background:#252040}
+
+/* Focus mode toggle */
+.focus-mode{margin:12px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.fm-icon{width:32px;height:32px;border-radius:9px;background:#1e1a30;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fm-body{flex:1}
+.fm-title{font-size:13px;font-weight:500;color:#c8c0ff}
+.fm-sub{font-size:11px;color:#555;margin-top:2px}
+.fm-toggle{width:36px;height:20px;border-radius:10px;background:#252530;flex-shrink:0;position:relative;cursor:pointer;transition:background .2s}
+.fm-toggle.on{background:#9b8fff}
+.fm-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.fm-toggle.on .fm-knob{transform:translateX(16px)}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#0e0e10;border-top:0.5px solid #1e1e22;padding:12px 0 28px;display:flex;justify-content:space-around}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.4}
+.nav-item.active{opacity:1}
+.nav-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#9b8fff}
+.nav-label{font-size:10px;color:#888;font-weight:500}
+.nav-item.active .nav-label{color:#9b8fff}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="header">
+      <div class="h-row">
+        <div>
+          <div class="h-title">Life balance</div>
+          <div class="h-sub">Cross-domain view · week of Mar 10</div>
+        </div>
+        <div class="h-badge">
+          <div class="hb-dot"></div>
+          AI synthesis
+        </div>
+      </div>
+    </div>
+
+    <!-- Domain health bars -->
+    <div class="wheel-section">
+      <div class="ws-label">
+        Domain health
+        <span class="ws-sub">Overall 71%</span>
+      </div>
+    </div>
+
+    <div class="domain-bars">
+      <div class="db-row" onclick="sendPrompt('Tell me more about my Career domain this week')">
+        <div class="db-dot" style="background:#185FA5"></div>
+        <span class="db-name" style="color:#85b7eb">Career</span>
+        <div class="db-track"><div class="db-fill" style="width:90%;background:#185FA5"></div></div>
+        <span class="db-pct" style="color:#85b7eb">90%</span>
+      </div>
+      <div class="db-row" onclick="sendPrompt('Tell me more about my Faith domain this week')">
+        <div class="db-dot" style="background:#534AB7"></div>
+        <span class="db-name" style="color:#b4adf5">Faith</span>
+        <div class="db-track"><div class="db-fill" style="width:85%;background:#534AB7"></div></div>
+        <span class="db-pct" style="color:#b4adf5">85%</span>
+      </div>
+      <div class="db-row" onclick="sendPrompt('Tell me more about my Tasks domain this week')">
+        <div class="db-dot" style="background:#5F5E5A"></div>
+        <span class="db-name" style="color:#aaa">Tasks</span>
+        <div class="db-track"><div class="db-fill" style="width:72%;background:#5F5E5A"></div></div>
+        <span class="db-pct" style="color:#aaa">72%</span>
+      </div>
+      <div class="db-row" onclick="sendPrompt('Tell me more about my Health domain this week')">
+        <div class="db-dot" style="background:#993C1D"></div>
+        <span class="db-name" style="color:#f0997b">Health</span>
+        <div class="db-track"><div class="db-fill" style="width:70%;background:#993C1D"></div></div>
+        <span class="db-pct" style="color:#f0997b">70%</span>
+      </div>
+      <div class="db-row" onclick="sendPrompt('Tell me more about my Wellness domain this week')">
+        <div class="db-dot" style="background:#993556"></div>
+        <span class="db-name" style="color:#ed93b1">Wellness</span>
+        <div class="db-track"><div class="db-fill" style="width:60%;background:#993556"></div></div>
+        <span class="db-pct" style="color:#ed93b1">60%</span>
+      </div>
+      <div class="db-row" onclick="sendPrompt('Tell me more about my Finance domain this week')">
+        <div class="db-dot" style="background:#ba7517"></div>
+        <span class="db-name" style="color:#ba7517">Finance</span>
+        <div class="db-track"><div class="db-fill" style="width:55%;background:#ba7517"></div></div>
+        <span class="db-pct" style="color:#ba7517">55%</span>
+      </div>
+    </div>
+
+    <!-- Weekly rhythm map -->
+    <div class="rhythm-section">
+      <div class="rs-label">Weekly rhythm map</div>
+      <div class="rhythm-map">
+        <div class="rm-header">
+          <span class="rm-title">Activity by domain across the week</span>
+        </div>
+        <div class="rm-legend">
+          <div class="rml"><div class="rml-dot" style="background:#534AB7"></div><span class="rml-label">Faith</span></div>
+          <div class="rml"><div class="rml-dot" style="background:#185FA5"></div><span class="rml-label">Career</span></div>
+          <div class="rml"><div class="rml-dot" style="background:#0F6E56"></div><span class="rml-label">Finance</span></div>
+          <div class="rml"><div class="rml-dot" style="background:#993C1D"></div><span class="rml-label">Health</span></div>
+          <div class="rml"><div class="rml-dot" style="background:#993556"></div><span class="rml-label">Wellness</span></div>
+        </div>
+        <div style="height:8px"></div>
+        <div class="rm-grid" id="rm-grid">
+          <!-- Mon -->
+          <div class="rm-row">
+            <span class="rm-day-label">M</span>
+            <div class="rm-cell" style="background:#1e1a30" onclick="sendPrompt('What happened in my Faith domain on Monday?')"><div class="rm-pip" style="background:#534AB7"></div><div class="rm-pip" style="background:#534AB7"></div></div>
+            <div class="rm-cell" style="background:#1a2030" onclick="sendPrompt('What happened in my Career domain on Monday?')"><div class="rm-pip" style="background:#185FA5"></div><div class="rm-pip" style="background:#185FA5"></div><div class="rm-pip" style="background:#185FA5"></div></div>
+            <div class="rm-cell empty"></div>
+            <div class="rm-cell" style="background:#2a1510" onclick="sendPrompt('What health activity happened on Monday?')"><div class="rm-pip" style="background:#993C1D"></div></div>
+            <div class="rm-cell empty"></div>
+          </div>
+          <!-- Tue -->
+          <div class="rm-row">
+            <span class="rm-day-label">T</span>
+            <div class="rm-cell" style="background:#1e1a30" onclick="sendPrompt('Tell me about my Faith activities on Tuesday')"><div class="rm-pip" style="background:#534AB7"></div></div>
+            <div class="rm-cell" style="background:#1a2030" onclick="sendPrompt('Tell me about my Career work on Tuesday')"><div class="rm-pip" style="background:#185FA5"></div><div class="rm-pip" style="background:#185FA5"></div></div>
+            <div class="rm-cell empty"></div>
+            <div class="rm-cell empty"></div>
+            <div class="rm-cell" style="background:#2a1020" onclick="sendPrompt('What wellness activity happened on Tuesday?')"><div class="rm-pip" style="background:#993556"></div></div>
+          </div>
+          <!-- Wed -->
+          <div class="rm-row">
+            <span class="rm-day-label">W</span>
+            <div class="rm-cell" style="background:#2a2050" onclick="sendPrompt('Tell me about my Faith activities on Wednesday — fasting day')"><div class="rm-pip" style="background:#534AB7"></div><div class="rm-pip" style="background:#9b8fff"></div></div>
+            <div class="rm-cell" style="background:#1a2030" onclick="sendPrompt('Tell me about my Career work on Wednesday')"><div class="rm-pip" style="background:#185FA5"></div><div class="rm-pip" style="background:#185FA5"></div></div>
+            <div class="rm-cell empty"></div>
+            <div class="rm-cell" style="background:#2a1510" onclick="sendPrompt('Tell me about health on Wednesday')"><div class="rm-pip" style="background:#993C1D"></div></div>
+            <div class="rm-cell empty"></div>
+          </div>
+          <!-- Thu -->
+          <div class="rm-row">
+            <span class="rm-day-label">T</span>
+            <div class="rm-cell" style="background:#1e1a30" onclick="sendPrompt('Tell me about Faith on Thursday')"><div class="rm-pip" style="background:#534AB7"></div></div>
+            <div class="rm-cell" style="background:#1a2030" onclick="sendPrompt('Tell me about Career on Thursday')"><div class="rm-pip" style="background:#185FA5"></div><div class="rm-pip" style="background:#185FA5"></div></div>
+            <div class="rm-cell empty"></div>
+            <div class="rm-cell empty"></div>
+            <div class="rm-cell" style="background:#2a1020" onclick="sendPrompt('Tell me about wellness on Thursday')"><div class="rm-pip" style="background:#993556"></div></div>
+          </div>
+          <!-- Fri (today) -->
+          <div class="rm-row">
+            <span class="rm-day-label" style="color:#9b8fff">F</span>
+            <div class="rm-cell" style="background:#1e1a30;border:0.5px solid #3d3570" onclick="sendPrompt('Tell me about Faith today Friday')"><div class="rm-pip" style="background:#534AB7"></div></div>
+            <div class="rm-cell" style="background:#1a2030;border:0.5px solid #2a4060" onclick="sendPrompt('Tell me about Career work today')"><div class="rm-pip" style="background:#185FA5"></div></div>
+            <div class="rm-cell empty" style="border:0.5px solid #2a1e08" onclick="sendPrompt('Why is Finance empty today and what should I do about it?')"></div>
+            <div class="rm-cell empty"></div>
+            <div class="rm-cell empty"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:6px;padding-left:18px">
+          <div style="flex:1;font-size:9px;color:#3d3570;text-align:center">Faith</div>
+          <div style="flex:1;font-size:9px;color:#2a4060;text-align:center">Career</div>
+          <div style="flex:1;font-size:9px;color:#3d3010;text-align:center">Finance</div>
+          <div style="flex:1;font-size:9px;color:#3d2015;text-align:center">Health</div>
+          <div style="flex:1;font-size:9px;color:#3d1530;text-align:center">Wellness</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cross-domain tensions -->
+    <div class="tension-section">
+      <div class="ts-label">AI — cross-domain observations</div>
+
+      <div class="tension-card" onclick="sendPrompt('Tell me more about the connection between my Faith morning practice and my energy scores')">
+        <div class="tc-header">
+          <div class="tc-domains">
+            <div class="tc-dot" style="background:#2a2040;color:#9b8fff">F</div>
+            <div class="tc-dot" style="background:#1a1e2a;color:#85b7eb;margin-left:-6px">W</div>
+          </div>
+          <span class="tc-type">Pattern · Faith × Wellness</span>
+          <span class="tc-badge" style="background:#1a2a1e;color:#1d9e75;border:0.5px solid #2a4030">Positive</span>
+        </div>
+        <div class="tc-text">On days you prayed before 7 AM, your energy averaged 7.4 vs 5.9 on days you didn't. Consistent across 18 of the last 21 mornings — the strongest cross-domain signal in your data.</div>
+        <div class="tc-actions">
+          <div class="tc-btn primary" onclick="event.stopPropagation();sendPrompt('Add early morning prayer before 7AM as a locked recurring habit')">Lock this in ↗</div>
+          <div class="tc-btn" onclick="event.stopPropagation();sendPrompt('Show me the full data behind the Faith and Wellness correlation')">See data</div>
+        </div>
+      </div>
+
+      <div class="tension-card" onclick="sendPrompt('Tell me more about the tension between my Career workload and my Health domain this week')">
+        <div class="tc-header">
+          <div class="tc-domains">
+            <div class="tc-dot" style="background:#1a1e2a;color:#85b7eb">C</div>
+            <div class="tc-dot" style="background:#2a1510;color:#f0997b;margin-left:-6px">H</div>
+          </div>
+          <span class="tc-type">Tension · Career × Health</span>
+          <span class="tc-badge" style="background:#2a1e08;color:#ba7517;border:0.5px solid #3d3010">Watch</span>
+        </div>
+        <div class="tc-text">Career is your best domain at 90% — but that's 5 consecutive deep work days with only 2 training sessions. The load is sustainable for now, but a third week at this pace without hitting the training target tends to drag your energy score down.</div>
+        <div class="tc-actions">
+          <div class="tc-btn primary" onclick="event.stopPropagation();sendPrompt('Schedule a training session for today to protect my Health domain')">Train today ↗</div>
+          <div class="tc-btn" onclick="event.stopPropagation();sendPrompt('How has my Career intensity affected my Health over the past 4 weeks?')">History</div>
+        </div>
+      </div>
+
+      <div class="tension-card" onclick="sendPrompt('Tell me more about the Finance and Tasks backlog connection')">
+        <div class="tc-header">
+          <div class="tc-domains">
+            <div class="tc-dot" style="background:#1a2a1e;color:#6fcf97">$</div>
+            <div class="tc-dot" style="background:#1e1e1e;color:#888;margin-left:-6px">T</div>
+          </div>
+          <span class="tc-type">Backlog · Finance × Tasks</span>
+          <span class="tc-badge" style="background:#2a1010;color:#e24b4a;border:0.5px solid #3a1a1a">Act</span>
+        </div>
+        <div class="tc-text">The budget review is 4 days overdue and sitting in your Tasks backlog. Finance is dragging your overall life health from 75% to 71%. One hour this afternoon closes both gaps simultaneously.</div>
+        <div class="tc-actions">
+          <div class="tc-btn primary" onclick="event.stopPropagation();sendPrompt('Start the Q2 budget variance review right now')">Do it now ↗</div>
+          <div class="tc-btn" onclick="event.stopPropagation();sendPrompt('Move the budget review to Saturday morning')">Move to Sat</div>
+        </div>
+      </div>
+
+      <div class="tension-card" onclick="sendPrompt('Tell me more about the Wellness and Career balance observation')">
+        <div class="tc-header">
+          <div class="tc-domains">
+            <div class="tc-dot" style="background:#2a1020;color:#ed93b1">W</div>
+            <div class="tc-dot" style="background:#1e1e1e;color:#888;margin-left:-6px">↻</div>
+          </div>
+          <span class="tc-type">Balance · this week overall</span>
+          <span class="tc-badge" style="background:#1e1a30;color:#9b8fff;border:0.5px solid #3d3570">Note</span>
+        </div>
+        <div class="tc-text">Faith and Career are thriving. Wellness is quiet at 60% — 3 decompression walks but no structured rest time logged. Friday and the weekend are the natural window to rebalance before next week starts.</div>
+        <div class="tc-actions">
+          <div class="tc-btn primary" onclick="event.stopPropagation();sendPrompt('Plan a rest and recovery block for this weekend across Wellness and Health')">Plan rest weekend ↗</div>
+          <div class="tc-btn" onclick="event.stopPropagation();sendPrompt('What does a balanced weekend look like given this week?')">What balance looks like</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI synthesis -->
+    <div class="synthesis-card">
+      <div class="sy-header">
+        <div class="sy-pulse"></div>
+        <span class="sy-label">Week synthesis</span>
+        <span class="sy-timestamp">Updated 6:00 AM</span>
+      </div>
+      <div class="sy-insight">
+        This week has a clear shape: <strong>Faith and Career are carrying the week</strong>, Wellness is steady, Health is functional but thin, Finance is the one open wound. The pattern underneath is good — you're building something real, and the spiritual foundation is holding. The risk is not collapse, it's compounding neglect in the quieter domains. <strong>One hour on Finance today and one rest block this weekend</strong> closes the week cleanly and sets up Monday from strength.
+      </div>
+      <div class="sy-chips">
+        <div class="sy-chip" onclick="sendPrompt('Generate a cross-domain rebalancing plan for the rest of this week')">Rebalance this week ↗</div>
+        <div class="sy-chip" onclick="sendPrompt('What does a well-balanced week look like for me based on all my domains?')">What balance looks like</div>
+        <div class="sy-chip" onclick="sendPrompt('Show me cross-domain patterns over the last 30 days')">30-day patterns</div>
+      </div>
+    </div>
+
+    <!-- Focus mode -->
+    <div class="focus-mode" onclick="toggleFocus()">
+      <div class="fm-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="#9b8fff" stroke-width="1.3"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke="#9b8fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="fm-body">
+        <div class="fm-title">Focus mode</div>
+        <div class="fm-sub">Surface only the highest-leverage cross-domain action</div>
+      </div>
+      <div class="fm-toggle" id="fm-toggle"><div class="fm-knob"></div></div>
+    </div>
+
+    <!-- Focus mode result -->
+    <div id="focus-result" style="display:none;margin:10px 24px 0;background:#1a1a24;border:1px solid #2d2a40;border-radius:16px;padding:16px">
+      <div style="font-size:11px;color:#6b5fff;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Highest-leverage action right now</div>
+      <div style="font-size:15px;font-weight:500;color:#e0e0ec;margin-bottom:6px">Complete the Q2 budget review</div>
+      <div style="font-size:13px;color:#666;line-height:1.5;margin-bottom:12px">Closes the Finance backlog, clears a Tasks item, lifts overall life health from 71% → 75%, and removes the one open stressor before the weekend. Est. 45 minutes.</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:2;padding:11px;background:#9b8fff;border-radius:10px;font-size:13px;font-weight:500;color:#0e0e10;cursor:pointer;text-align:center" onclick="sendPrompt('Start the Q2 budget variance review now')">Start now ↗</div>
+        <div style="flex:1;padding:11px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:10px;font-size:13px;color:#666;cursor:pointer;text-align:center" onclick="sendPrompt('Schedule the budget review for Saturday morning instead')">Schedule</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="sendPrompt('Show me the Today screen')">
+      <div class="nav-icon" style="background:#2a2040"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Planner screen')">
+      <div class="nav-icon" style="background:#1a2a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#1d9e75"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div>
+      <span class="nav-label">Planner</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Domains hub')">
+      <div class="nav-icon" style="background:#2a1a1a"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#d85a30" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#d85a30"/></svg></div>
+      <span class="nav-label">Domains</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon" style="background:#1e1a30"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.2" fill="none"/><circle cx="8" cy="8" r="2" fill="#9b8fff"/></svg></div>
+      <div class="nav-dot"></div>
+      <span class="nav-label">Balance</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Profile screen')">
+      <div class="nav-icon" style="background:#0e1a26"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#378add"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#378add" stroke-width="1.5"/></svg></div>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function toggleFocus(){
+  var toggle=document.getElementById('fm-toggle');
+  var result=document.getElementById('focus-result');
+  toggle.classList.toggle('on');
+  result.style.display=toggle.classList.contains('on')?'block':'none';
+}
+</script>

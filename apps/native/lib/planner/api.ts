@@ -1,7 +1,7 @@
 import { api } from "@/lib/backend-api";
 
 type PlannerApiShape = {
-  "planner/queries": {
+  "productivity/planner/queries": {
     getPlannerDashboard: any;
     getPlannerChatHome: any;
     listPlannerChatMessages: any;
@@ -10,12 +10,12 @@ type PlannerApiShape = {
     listPlans: any;
     getPlanById: any;
   };
-  "planner/actions": {
+  "productivity/planner/actions": {
     sendPlannerChatMessage: any;
     replanWeeklyPlan: any;
     reviewWeeklyPlan: any;
   };
-  "planner/mutations": {
+  "productivity/planner/mutations": {
     upsertPlannerProfile: any;
     createPlanningGoal: any;
     setAgentEnabled: any;

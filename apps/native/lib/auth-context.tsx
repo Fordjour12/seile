@@ -7,8 +7,10 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 
 import { authClient } from "@/lib/auth-client";
+import { api } from "@/lib/backend-api";
 
 export type AuthUser = {
   id?: string;
@@ -23,11 +25,17 @@ type AuthContextValue = {
   isLoading: boolean;
   error: string | null;
   hasHydrated: boolean;
+  hasCompletedOnboarding: boolean;
+  needsOnboarding: boolean;
   signIn: (credentials: { email: string; password: string }) => Promise<void>;
   signInWithPasskey: () => Promise<void>;
   signUp: (credentials: { name: string; email: string; password: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  advanceOnboardingStage: (
+    stage: "first-run-today" | "week-1" | "complete",
+  ) => Promise<void>;
+  completeOnboarding: () => Promise<void>;
   clearError: () => void;
 };
 
@@ -59,10 +67,24 @@ function toAuthUser(raw: unknown): AuthUser | null {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  const { isAuthenticated: hasConvexAuth, isLoading: convexAuthLoading } =
+    useConvexAuth();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [onboardingOverride, setOnboardingOverride] = useState<boolean | null>(null);
+  const onboardingState = useQuery(
+    api.onboarding.getOnboardingState,
+    user && hasConvexAuth ? {} : "skip",
+  );
+  const markOnboardingIncomplete = useMutation(api.onboarding.markOnboardingIncomplete);
+  const completeOnboardingMutation = useMutation(api.onboarding.completeOnboarding);
+  const advanceOnboardingStageMutation = useMutation(api.onboarding.advanceOnboardingStage);
+  const onboardingLoading =
+    Boolean(user) && (convexAuthLoading || (hasConvexAuth && onboardingState === undefined));
+  const hasCompletedOnboarding =
+    onboardingOverride ?? onboardingState?.hasCompletedOnboarding ?? true;
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -71,7 +93,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setError(null);
     try {
       const session = await authClient.getSession();
-      setUser(toAuthUser(session.data?.user));
+      const nextUser = toAuthUser(session.data?.user);
+      setUser(nextUser);
     } catch {
       setUser(null);
       setError("Failed to refresh session");
@@ -84,6 +107,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     void refreshSession();
   }, [refreshSession]);
+
+  useEffect(() => {
+    if (!user || onboardingOverride !== false || !hasConvexAuth) {
+      return;
+    }
+
+    if (onboardingState?.hasCompletedOnboarding === false) {
+      return;
+    }
+
+    void markOnboardingIncomplete({}).catch(() => {
+      setError("Failed to sync onboarding state");
+    });
+  }, [
+    hasConvexAuth,
+    markOnboardingIncomplete,
+    onboardingOverride,
+    onboardingState?.hasCompletedOnboarding,
+    user,
+  ]);
 
   const signIn = useCallback(
     async (credentials: { email: string; password: string }) => {
@@ -140,6 +183,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
 
         setUser(toAuthUser(result.data?.user));
+        setOnboardingOverride(false);
         await refreshSession();
       } catch {
         setError("Failed to sign up");
@@ -159,24 +203,60 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setError("Failed to sign out");
     } finally {
       setUser(null);
+      setOnboardingOverride(null);
       setIsLoading(false);
     }
   }, []);
 
+  const completeOnboarding = useCallback(async () => {
+    setOnboardingOverride(true);
+    await completeOnboardingMutation({});
+  }, [completeOnboardingMutation]);
+
+  const advanceOnboardingStage = useCallback(
+    async (stage: "first-run-today" | "week-1" | "complete") => {
+      setOnboardingOverride(stage === "complete" ? true : false);
+      await advanceOnboardingStageMutation({ stage });
+    },
+    [advanceOnboardingStageMutation],
+  );
+
+  const needsOnboarding = Boolean(user) && !hasCompletedOnboarding;
+
   const value = useMemo(
     () => ({
       user,
-      isLoading,
+      isLoading: isLoading || onboardingLoading,
       error,
       hasHydrated,
+      hasCompletedOnboarding,
+      needsOnboarding,
       signIn,
       signInWithPasskey,
       signUp,
       signOut,
       refreshSession,
+      advanceOnboardingStage,
+      completeOnboarding,
       clearError,
     }),
-    [clearError, error, hasHydrated, isLoading, refreshSession, signIn, signInWithPasskey, signOut, signUp, user],
+    [
+      clearError,
+      completeOnboarding,
+      error,
+      advanceOnboardingStage,
+      hasCompletedOnboarding,
+      hasHydrated,
+      isLoading,
+      onboardingLoading,
+      needsOnboarding,
+      refreshSession,
+      signIn,
+      signInWithPasskey,
+      signOut,
+      signUp,
+      user,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

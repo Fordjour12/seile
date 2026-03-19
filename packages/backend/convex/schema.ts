@@ -1,6 +1,14 @@
 import { defineSchema } from "convex/server";
 
 import { accountsTable } from "./schema/accounts";
+import {
+  aiDomainValidator,
+  aiMemoryConfidenceValidator,
+  aiMemoryTable,
+  approvalModeValidator,
+  approvalRequestsTable,
+  approvalRequestStatusValidator,
+} from "./schema/ai";
 import { categoriesTable } from "./schema/categories";
 import {
   energyLogsTable,
@@ -54,6 +62,7 @@ import {
   sharedGoalSourceDomainValidator,
   sharedGoalStatusValidator,
 } from "./schema/shared_goals";
+import { onboardingStageValidator, onboardingStateTable } from "./schema/onboarding";
 import {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
@@ -71,15 +80,18 @@ import {
 } from "./schema/spiritual";
 import { transactionsTable } from "./schema/transactions";
 
-export {
-  accountStatusValidator,
-  accountTypeValidator,
-} from "./schema/validators";
+export { accountStatusValidator, accountTypeValidator } from "./schema/validators";
 export {
   recurringKindValidator,
   scheduleTypeValidator,
   subscriptionStatusValidator,
 } from "./schema/recurring_transactions";
+export {
+  aiDomainValidator,
+  aiMemoryConfidenceValidator,
+  approvalModeValidator,
+  approvalRequestStatusValidator,
+} from "./schema/ai";
 export { transactionKindValidator } from "./schema/transactions";
 export { budgetPeriodStatusValidator };
 export { debtStatusValidator, debtTypeValidator, payoffStrategyValidator, savingsStatusValidator };
@@ -110,10 +122,14 @@ export {
   schedulerTaskStatusValidator,
   prayerStatusValidator,
   spiritualGoalStatusValidator,
+  onboardingStageValidator,
 };
 
 export default defineSchema({
   accounts: accountsTable,
+  aiMemory: aiMemoryTable,
+  approvalRequests: approvalRequestsTable,
+  onboardingState: onboardingStateTable,
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,
   categories: categoriesTable,

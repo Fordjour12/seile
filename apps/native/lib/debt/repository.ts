@@ -46,13 +46,13 @@ function mapDebtPlan(item: BackendDebtPlan): DebtPlan {
 }
 
 export function useDebtPlans(status?: DebtPlanStatus): DebtPlan[] | undefined {
-  const rows = useQuery(api.debt.queries.listDebtPlans, { status });
+  const rows = useQuery(api.finance.debt.queries.listDebtPlans, { status });
   return rows?.map(mapDebtPlan);
 }
 
 export function useDebtPlan(id?: string): DebtPlan | undefined {
   const row = useQuery(
-    api.debt.queries.getDebtPlanById,
+    api.finance.debt.queries.getDebtPlanById,
     id ? { id: asId<"debtPlans">(id) } : "skip",
   );
   return row ? mapDebtPlan(row) : undefined;
@@ -61,7 +61,7 @@ export function useDebtPlan(id?: string): DebtPlan | undefined {
 export function useCreateDebtPlan(): (
   payload: CreateDebtPlanPayload & { status?: DebtPlanStatus },
   ) => Promise<void> {
-  const createDebtPlan = useMutation(api.debt.mutations.createDebtPlan);
+  const createDebtPlan = useMutation(api.finance.debt.mutations.createDebtPlan);
 
   return async (payload) => {
     await createDebtPlan({
@@ -81,7 +81,7 @@ export function useUpdateDebtPlan(): (
   id: string,
   payload: UpdateDebtPlanPayload,
 ) => Promise<void> {
-  const updateDebtPlan = useMutation(api.debt.mutations.updateDebtPlan);
+  const updateDebtPlan = useMutation(api.finance.debt.mutations.updateDebtPlan);
 
   return async (id, payload) => {
     await updateDebtPlan({
@@ -95,7 +95,7 @@ export function useUpdateDebtPlan(): (
 }
 
 export function useArchiveDebtPlan(): (id: string) => Promise<boolean> {
-  const archiveDebtPlan = useMutation(api.debt.mutations.archiveDebtPlan);
+  const archiveDebtPlan = useMutation(api.finance.debt.mutations.archiveDebtPlan);
 
   return (id) =>
     archiveDebtPlan({
@@ -104,5 +104,5 @@ export function useArchiveDebtPlan(): (id: string) => Promise<boolean> {
 }
 
 export function useDebtSnapshot(): DebtSnapshot | undefined {
-  return useQuery(api.debt.queries.getDebtSnapshot, {});
+  return useQuery(api.finance.debt.queries.getDebtSnapshot, {});
 }

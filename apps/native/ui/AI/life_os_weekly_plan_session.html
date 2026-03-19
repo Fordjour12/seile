@@ -1,0 +1,479 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:40px;display:flex;flex-direction:column}
+.screen::-webkit-scrollbar{display:none}
+
+.step-header{padding:16px 24px 0;flex-shrink:0}
+.step-back{display:flex;align-items:center;gap:6px;font-size:13px;color:#555;cursor:pointer;margin-bottom:12px}
+.step-back svg{width:14px;height:14px;fill:none}
+.step-track{display:flex;gap:4px;margin-bottom:4px}
+.step-pip{height:3px;flex:1;border-radius:2px;background:#222;transition:background .3s}
+.step-pip.done{background:#9b8fff}
+.step-pip.active{background:#6b5fff}
+.step-label{font-size:11px;color:#444;margin-top:6px}
+
+.step-panel{display:none;flex-direction:column;flex:1}
+.step-panel.active{display:flex}
+
+/* STEP 1 — context read */
+.ctx-card{margin:16px 24px 0;background:#13131a;border:0.5px solid #2d2a40;border-radius:16px;padding:16px}
+.ctx-ai-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ctx-pulse{width:7px;height:7px;border-radius:50%;background:#9b8fff;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ctx-ai-label{font-size:11px;font-weight:500;color:#6b5fff;letter-spacing:.06em;text-transform:uppercase}
+.ctx-summary{font-size:14px;color:#c8c8d8;line-height:1.6;margin-bottom:14px}
+.ctx-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.ctx-pill{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500}
+.ctx-pill.faith{background:#2a2040;color:#b4adf5}
+.ctx-pill.career{background:#1a1e2a;color:#85b7eb}
+.ctx-pill.finance{background:#1a2410;color:#6fcf97}
+.ctx-pill.health{background:#2a1510;color:#f0997b}
+.ctx-pill.warn{background:#2a1e08;color:#ba7517}
+.ctx-readmore{font-size:12px;color:#6b5fff;cursor:pointer;text-align:center;padding-top:10px;border-top:0.5px solid #1e1e28}
+
+.q-card{margin:14px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:16px}
+.q-label{font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.q-text{font-size:15px;color:#e0e0ec;line-height:1.5;margin-bottom:14px;font-weight:500}
+.q-opts{display:flex;flex-direction:column;gap:8px}
+.q-opt{background:#13131f;border:0.5px solid #222;border-radius:10px;padding:10px 14px;font-size:13px;color:#aaa;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between}
+.q-opt:hover,.q-opt.selected{background:#1e1a30;border-color:#4a3d9a;color:#c8c0ff}
+.q-opt.selected::after{content:'✓';color:#9b8fff;font-size:13px}
+
+.next-btn{margin:16px 24px 0;background:#9b8fff;color:#0e0e10;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s;width:calc(100% - 48px)}
+.next-btn:hover{opacity:.85}
+.next-btn:disabled{opacity:.3;cursor:default}
+
+/* STEP 2 — focus areas */
+.domain-grid{margin:14px 24px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dom-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px;cursor:pointer;transition:all .15s;position:relative}
+.dom-card:hover{background:#1e1e24}
+.dom-card.selected{border-width:1.5px}
+.dom-card.selected.faith{border-color:#534AB7;background:#1a1628}
+.dom-card.selected.career{border-color:#185FA5;background:#101828}
+.dom-card.selected.finance{border-color:#0F6E56;background:#0e1a14}
+.dom-card.selected.health{border-color:#993C1D;background:#1a1008}
+.dom-card.selected.wellness{border-color:#993556;background:#1a0e18}
+.dom-card.selected.tasks{border-color:#5F5E5A;background:#181818}
+.dom-card.selected.relationships{border-color:#185FA5;background:#0e1420}
+.dom-card.selected.space{border-color:#854F0B;background:#1a1408}
+.dom-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.dom-name{font-size:13px;font-weight:500;color:#ccc}
+.dom-sub{font-size:11px;color:#555;margin-top:2px}
+.dom-check{position:absolute;top:10px;right:10px;width:16px;height:16px;border-radius:50%;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .15s}
+.dom-card.selected .dom-check{color:#fff;border-color:transparent}
+.dom-card.selected.faith .dom-check{background:#534AB7}
+.dom-card.selected.career .dom-check{background:#185FA5}
+.dom-card.selected.finance .dom-check{background:#0F6E56}
+.dom-card.selected.health .dom-check{background:#993C1D}
+.dom-card.selected.wellness .dom-check{background:#993556}
+.dom-card.selected.tasks .dom-check{background:#5F5E5A}
+.dom-card.selected.relationships .dom-check{background:#185FA5}
+.dom-card.selected.space .dom-check{background:#854F0B}
+
+/* STEP 3 — intensity */
+.intensity-opts{margin:14px 24px 0;display:flex;flex-direction:column;gap:10px}
+.int-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:14px 16px;cursor:pointer;transition:all .15s}
+.int-card:hover{background:#1e1e24}
+.int-card.selected{border-color:#4a3d9a;background:#1a1628}
+.int-header{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.int-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.int-title{font-size:14px;font-weight:500;color:#ccc}
+.int-desc{font-size:12px;color:#555;line-height:1.4;padding-left:20px}
+.int-check{margin-left:auto;width:18px;height:18px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .15s}
+.int-card.selected .int-check{background:#9b8fff;border-color:#9b8fff;color:#0e0e10}
+
+/* STEP 4 — generating */
+.gen-state{margin:24px 24px 0;display:flex;flex-direction:column;align-items:center;text-align:center}
+.gen-ring{width:56px;height:56px;border-radius:50%;border:2px solid #1e1e28;border-top-color:#9b8fff;animation:spin 1s linear infinite;margin-bottom:20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-title{font-size:17px;font-weight:500;color:#e0e0ec;margin-bottom:8px}
+.gen-sub{font-size:13px;color:#555;line-height:1.5;max-width:260px}
+.gen-steps{margin:20px 0;display:flex;flex-direction:column;gap:8px;width:100%;text-align:left}
+.gen-step{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#1a1a1e;border-radius:10px;border:0.5px solid #222}
+.gen-step-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gen-step-dot.done{background:#1d9e75}
+.gen-step-dot.active{background:#9b8fff;animation:pulse 1s ease-in-out infinite}
+.gen-step-dot.wait{background:#2a2a2e}
+.gen-step-text{font-size:12px;color:#888}
+.gen-step.done-step .gen-step-text{color:#555}
+.gen-step.active-step .gen-step-text{color:#c8c0ff}
+
+/* STEP 5 — plan output */
+.plan-out{padding:14px 24px 0}
+.plan-out-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.poh-badge{font-size:11px;padding:4px 10px;background:#1e1a30;color:#9b8fff;border-radius:20px;font-weight:500}
+.poh-label{font-size:13px;color:#555}
+.week-out-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+.week-out-strip::-webkit-scrollbar{display:none}
+.wos-pill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px;border-radius:10px;cursor:pointer;flex-shrink:0;border:0.5px solid transparent;transition:all .15s}
+.wos-pill.sel{background:#1e1a30;border-color:#3d3570}
+.wos-letter{font-size:10px;color:#555;font-weight:500}
+.wos-num{font-size:14px;font-weight:500;color:#666}
+.wos-pill.sel .wos-letter{color:#9b8fff}
+.wos-pill.sel .wos-num{color:#c8c0ff}
+.wos-count{font-size:10px;color:#444}
+
+.plan-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid #1a1a1e}
+.plan-item:last-child{border-bottom:none}
+.pi-bar{width:3px;border-radius:2px;align-self:stretch;min-height:32px;flex-shrink:0}
+.pi-body{flex:1}
+.pi-title{font-size:13px;color:#ccc;font-weight:500;line-height:1.3}
+.pi-meta{display:flex;gap:6px;margin-top:3px}
+.pi-tag{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500}
+.pi-time{font-size:11px;color:#444}
+.pi-actions{display:flex;gap:6px;margin-top:8px}
+.pi-btn{font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;border:0.5px solid #2a2a2e;background:#1a1a1e;color:#666;transition:all .15s}
+.pi-btn:hover{color:#ccc;border-color:#444}
+.pi-btn.remove{color:#e24b4a;border-color:#3a1a1a;background:#1a0e0e}
+
+.plan-approval-bar{margin:14px 24px 0;background:#1a1a24;border:0.5px solid #2d2a40;border-radius:14px;padding:14px 16px}
+.pab-title{font-size:13px;font-weight:500;color:#c8c0ff;margin-bottom:4px}
+.pab-sub{font-size:12px;color:#555;margin-bottom:12px}
+.pab-btns{display:flex;gap:8px}
+.pab-btn{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:opacity .15s}
+.pab-btn.approve{background:#9b8fff;color:#0e0e10}
+.pab-btn.adjust{background:#1e1e2a;color:#888;border:0.5px solid #2a2a3a}
+.pab-btn:hover{opacity:.8}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;align-items:center;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="step-header">
+      <div class="step-back" onclick="prevStep()">
+        <svg viewBox="0 0 14 14" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3L5 7l4 4"/></svg>
+        AI · Plan
+      </div>
+      <div class="step-track">
+        <div class="step-pip active" id="pip0"></div>
+        <div class="step-pip" id="pip1"></div>
+        <div class="step-pip" id="pip2"></div>
+        <div class="step-pip" id="pip3"></div>
+        <div class="step-pip" id="pip4"></div>
+      </div>
+      <div class="step-label" id="step-label">Step 1 of 5 — Reading your context</div>
+    </div>
+
+    <!-- STEP 1: Context read -->
+    <div class="step-panel active" id="step0">
+      <div class="ctx-card">
+        <div class="ctx-ai-row">
+          <div class="ctx-pulse"></div>
+          <span class="ctx-ai-label">What I know heading into next week</span>
+        </div>
+        <div class="ctx-summary">You finished this week strong on faith and career. Finance needs a dedicated session — the budget review slipped 4 days. Energy averaged 6.2/10, dipping mid-week. Two deferred tasks need a home next week.</div>
+        <div class="ctx-pills">
+          <span class="ctx-pill faith">5/7 prayer days</span>
+          <span class="ctx-pill career">Life OS — active build</span>
+          <span class="ctx-pill finance">Budget review deferred</span>
+          <span class="ctx-pill health">Avg energy 6.2</span>
+          <span class="ctx-pill warn">2 deferred tasks</span>
+        </div>
+        <div class="ctx-readmore" onclick="sendPrompt('Show me the full context breakdown used for this planning session')">View full context ↗</div>
+      </div>
+
+      <div class="q-card">
+        <div class="q-label">Quick question</div>
+        <div class="q-text">How do you want to approach next week overall?</div>
+        <div class="q-opts">
+          <div class="q-opt" id="q0a" onclick="selectQ('q0',this)"><span>Maintain — same pace as this week</span></div>
+          <div class="q-opt" id="q0b" onclick="selectQ('q0',this)"><span>Lighter — I need some recovery space</span></div>
+          <div class="q-opt" id="q0c" onclick="selectQ('q0',this)"><span>Push — I want a more intensive week</span></div>
+        </div>
+      </div>
+
+      <button class="next-btn" id="btn0" onclick="nextStep()" disabled>Continue</button>
+    </div>
+
+    <!-- STEP 2: Focus areas -->
+    <div class="step-panel" id="step1">
+      <div style="padding:16px 24px 0">
+        <div style="font-size:15px;font-weight:500;color:#e0e0ec;margin-bottom:4px">Which domains get focus next week?</div>
+        <div style="font-size:13px;color:#555">Select all that apply. I'll weight your plan accordingly.</div>
+      </div>
+      <div class="domain-grid">
+        <div class="dom-card faith selected" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#2a2040"><svg width="14" height="14" viewBox="0 0 16 16" fill="#9b8fff"><circle cx="8" cy="8" r="5" fill="none" stroke="#9b8fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2"/></svg></div>
+          <div class="dom-name">Faith</div>
+          <div class="dom-sub">Prayer, fasting</div>
+          <div class="dom-check">✓</div>
+        </div>
+        <div class="dom-card career selected" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#1a1e2a"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="1.5" rx=".75" fill="#85b7eb"/><rect x="2" y="7" width="9" height="1.5" rx=".75" fill="#85b7eb"/><rect x="2" y="11" width="11" height="1.5" rx=".75" fill="#85b7eb"/></svg></div>
+          <div class="dom-name">Career</div>
+          <div class="dom-sub">Life OS build</div>
+          <div class="dom-check">✓</div>
+        </div>
+        <div class="dom-card finance selected" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#1a2a1e"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#6fcf97" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="dom-name">Finance</div>
+          <div class="dom-sub">Budget review due</div>
+          <div class="dom-check">✓</div>
+        </div>
+        <div class="dom-card health" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#2a1510"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 13s-5-3.5-5-7a5 5 0 0110 0c0 3.5-5 7-5 7z" stroke="#f0997b" stroke-width="1.5"/></svg></div>
+          <div class="dom-name">Health</div>
+          <div class="dom-sub">Exercise, sleep</div>
+          <div class="dom-check">✓</div>
+        </div>
+        <div class="dom-card wellness" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#2a1020"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#ed93b1" stroke-width="1.5"/><path d="M6 8s.5 2 2 2 2-2 2-2" stroke="#ed93b1" stroke-width="1" stroke-linecap="round"/></svg></div>
+          <div class="dom-name">Wellness</div>
+          <div class="dom-sub">Mood, rest</div>
+          <div class="dom-check">✓</div>
+        </div>
+        <div class="dom-card tasks" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#1e1e1e"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="3" width="10" height="10" rx="2" stroke="#888" stroke-width="1.5"/><path d="M6 8l1.5 1.5L10 6" stroke="#888" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+          <div class="dom-name">Tasks</div>
+          <div class="dom-sub">2 deferred items</div>
+          <div class="dom-check">✓</div>
+        </div>
+        <div class="dom-card relationships" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#0e1420"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="6" r="2.5" stroke="#85b7eb" stroke-width="1.5"/><circle cx="10.5" cy="6" r="2.5" stroke="#85b7eb" stroke-width="1.5"/><path d="M2 13c0-2 1.6-3.5 3.5-3.5M8 13c0-2 1.6-3.5 3.5-3.5" stroke="#85b7eb" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+          <div class="dom-name">Relationships</div>
+          <div class="dom-sub">Connections</div>
+          <div class="dom-check">✓</div>
+        </div>
+        <div class="dom-card space" onclick="toggleDom(this)">
+          <div class="dom-icon" style="background:#1a1408"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="8" width="12" height="6" rx="1" stroke="#ba7517" stroke-width="1.5"/><path d="M4 8V5a4 4 0 018 0v3" stroke="#ba7517" stroke-width="1.5"/></svg></div>
+          <div class="dom-name">Space</div>
+          <div class="dom-sub">Zone, décor</div>
+          <div class="dom-check">✓</div>
+        </div>
+      </div>
+      <button class="next-btn" onclick="nextStep()" style="margin-top:16px">Continue</button>
+    </div>
+
+    <!-- STEP 3: Intensity per domain -->
+    <div class="step-panel" id="step2">
+      <div style="padding:16px 24px 0">
+        <div style="font-size:15px;font-weight:500;color:#e0e0ec;margin-bottom:4px">What's your energy budget next week?</div>
+        <div style="font-size:13px;color:#555">This helps me distribute load across the week without burning you out.</div>
+      </div>
+      <div class="intensity-opts">
+        <div class="int-card" id="int-a" onclick="selectInt('int-a')">
+          <div class="int-header">
+            <div class="int-dot" style="background:#1d9e75"></div>
+            <span class="int-title">Light — protect my energy</span>
+            <div class="int-check">✓</div>
+          </div>
+          <div class="int-desc">2–3 priorities per day. Habits only. Space for rest and the unexpected.</div>
+        </div>
+        <div class="int-card selected" id="int-b" onclick="selectInt('int-b')">
+          <div class="int-header">
+            <div class="int-dot" style="background:#ba7517"></div>
+            <span class="int-title">Balanced — steady progress</span>
+            <div class="int-check">✓</div>
+          </div>
+          <div class="int-desc">3–4 priorities per day. Full habit stack. One deep work block daily.</div>
+        </div>
+        <div class="int-card" id="int-c" onclick="selectInt('int-c')">
+          <div class="int-header">
+            <div class="int-dot" style="background:#e24b4a"></div>
+            <span class="int-title">Intensive — I want to push</span>
+            <div class="int-check">✓</div>
+          </div>
+          <div class="int-desc">4–5 priorities per day. Multiple deep work blocks. Stretch goals included.</div>
+        </div>
+      </div>
+      <button class="next-btn" onclick="nextStep()" style="margin-top:16px">Generate my plan</button>
+    </div>
+
+    <!-- STEP 4: Generating -->
+    <div class="step-panel" id="step3">
+      <div class="gen-state">
+        <div class="gen-ring" id="gen-ring"></div>
+        <div class="gen-title">Building your week</div>
+        <div class="gen-sub">Reading your context and distributing priorities across 5 days.</div>
+        <div class="gen-steps">
+          <div class="gen-step done-step" id="gs0">
+            <div class="gen-step-dot done"></div>
+            <span class="gen-step-text">Read last 7 days of userContext</span>
+          </div>
+          <div class="gen-step done-step" id="gs1">
+            <div class="gen-step-dot done"></div>
+            <span class="gen-step-text">Scored domain health across 8 areas</span>
+          </div>
+          <div class="gen-step active-step" id="gs2">
+            <div class="gen-step-dot active"></div>
+            <span class="gen-step-text">Distributing priorities by load + energy...</span>
+          </div>
+          <div class="gen-step" id="gs3">
+            <div class="gen-step-dot wait"></div>
+            <span class="gen-step-text">Slotting habits and recurring items</span>
+          </div>
+          <div class="gen-step" id="gs4">
+            <div class="gen-step-dot wait"></div>
+            <span class="gen-step-text">Generating week summary</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Plan output -->
+    <div class="step-panel" id="step4">
+      <div class="plan-out">
+        <div class="plan-out-header">
+          <span class="poh-badge">Draft plan · Mar 17–23</span>
+          <span class="poh-label">Review and adjust</span>
+        </div>
+
+        <div class="week-out-strip">
+          <div class="wos-pill sel" onclick="selectWDay(0,this)"><span class="wos-letter">M</span><span class="wos-num">17</span><span class="wos-count">4 items</span></div>
+          <div class="wos-pill" onclick="selectWDay(1,this)"><span class="wos-letter">T</span><span class="wos-num">18</span><span class="wos-count">3 items</span></div>
+          <div class="wos-pill" onclick="selectWDay(2,this)"><span class="wos-letter">W</span><span class="wos-num">19</span><span class="wos-count">4 items</span></div>
+          <div class="wos-pill" onclick="selectWDay(3,this)"><span class="wos-letter">T</span><span class="wos-num">20</span><span class="wos-count">3 items</span></div>
+          <div class="wos-pill" onclick="selectWDay(4,this)"><span class="wos-letter">F</span><span class="wos-num">21</span><span class="wos-count">2 items</span></div>
+        </div>
+
+        <div id="day-plan-body">
+          <div class="plan-item">
+            <div class="pi-bar" style="background:#534AB7"></div>
+            <div class="pi-body">
+              <div class="pi-title">Morning devotional + Bible reading</div>
+              <div class="pi-meta"><span class="pi-tag faith" style="background:#2a2040;color:#b4adf5">Faith</span><span class="pi-time">6:00 AM</span></div>
+              <div class="pi-actions"><span class="pi-btn" onclick="sendPrompt('Move morning devotional to a different time slot on Monday')">Move</span><span class="pi-btn remove" onclick="this.closest('.plan-item').remove()">Remove</span></div>
+            </div>
+          </div>
+          <div class="plan-item">
+            <div class="pi-bar" style="background:#0F6E56"></div>
+            <div class="pi-body">
+              <div class="pi-title">Q2 budget variance review (deferred)</div>
+              <div class="pi-meta"><span class="pi-tag finance" style="background:#1a2410;color:#6fcf97">Finance</span><span class="pi-time" style="color:#ba7517">Deferred · priority</span></div>
+              <div class="pi-actions"><span class="pi-btn" onclick="sendPrompt('Move the budget review to Tuesday instead')">Move to Tue</span><span class="pi-btn remove" onclick="this.closest('.plan-item').remove()">Remove</span></div>
+            </div>
+          </div>
+          <div class="plan-item">
+            <div class="pi-bar" style="background:#185FA5"></div>
+            <div class="pi-body">
+              <div class="pi-title">Life OS — Domains hub screen design</div>
+              <div class="pi-meta"><span class="pi-tag career" style="background:#1a1e2a;color:#85b7eb">Career</span><span class="pi-time">Deep work · AM</span></div>
+              <div class="pi-actions"><span class="pi-btn" onclick="sendPrompt('Move the Life OS design session on Monday to Wednesday')">Move</span><span class="pi-btn remove" onclick="this.closest('.plan-item').remove()">Remove</span></div>
+            </div>
+          </div>
+          <div class="plan-item">
+            <div class="pi-bar" style="background:#5F5E5A"></div>
+            <div class="pi-body">
+              <div class="pi-title">Clear 2 deferred tasks from last week</div>
+              <div class="pi-meta"><span class="pi-tag tasks" style="background:#252525;color:#888">Tasks</span><span class="pi-time">Afternoon</span></div>
+              <div class="pi-actions"><span class="pi-btn" onclick="sendPrompt('Which 2 tasks were deferred from last week?')">View tasks ↗</span><span class="pi-btn remove" onclick="this.closest('.plan-item').remove()">Remove</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-approval-bar">
+          <div class="pab-title">Ready to approve this plan?</div>
+          <div class="pab-sub">4 priorities on Monday · 16 total across the week</div>
+          <div class="pab-btns">
+            <button class="pab-btn approve" onclick="sendPrompt('Approve this weekly plan and save it to my Planner for the week of March 17')">Approve plan</button>
+            <button class="pab-btn adjust" onclick="sendPrompt('I want to adjust my weekly plan — regenerate with lighter Monday load')">Adjust ↗</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var cur=0;
+var q0sel=null;
+
+function selectQ(group,el){
+  document.querySelectorAll('[id^="'+group+'"]').forEach(function(e){e.classList.remove('selected')});
+  el.classList.add('selected');
+  q0sel=el;
+  document.getElementById('btn0').disabled=false;
+}
+
+function toggleDom(el){el.classList.toggle('selected')}
+
+function selectInt(id){
+  ['int-a','int-b','int-c'].forEach(function(i){document.getElementById(i).classList.remove('selected')});
+  document.getElementById(id).classList.add('selected');
+}
+
+var labels=['Step 1 of 5 — Reading your context','Step 2 of 5 — Choose focus areas','Step 3 of 5 — Energy budget','Step 4 of 5 — Generating your plan','Step 5 of 5 — Review and approve'];
+
+function updatePips(){
+  for(var i=0;i<5;i++){
+    var p=document.getElementById('pip'+i);
+    p.classList.remove('active','done');
+    if(i<cur)p.classList.add('done');
+    if(i===cur)p.classList.add('active');
+  }
+  document.getElementById('step-label').textContent=labels[cur];
+}
+
+function nextStep(){
+  if(cur===3){runGeneration();return}
+  document.getElementById('step'+cur).classList.remove('active');
+  cur++;
+  document.getElementById('step'+cur).classList.add('active');
+  updatePips();
+  if(cur===3)runGeneration();
+}
+
+function prevStep(){
+  if(cur===0){sendPrompt('Go back to the AI tab');return}
+  document.getElementById('step'+cur).classList.remove('active');
+  cur--;
+  document.getElementById('step'+cur).classList.add('active');
+  updatePips();
+}
+
+function runGeneration(){
+  var steps=[
+    {id:'gs2',delay:800,nextId:'gs3'},
+    {id:'gs3',delay:1600,nextId:'gs4'},
+    {id:'gs4',delay:2400,nextId:null}
+  ];
+  steps.forEach(function(s){
+    setTimeout(function(){
+      var el=document.getElementById(s.id);
+      el.classList.remove('active-step');
+      el.classList.add('done-step');
+      el.querySelector('.gen-step-dot').classList.remove('active');
+      el.querySelector('.gen-step-dot').classList.add('done');
+      if(s.nextId){
+        var nx=document.getElementById(s.nextId);
+        nx.classList.add('active-step');
+        nx.querySelector('.gen-step-dot').classList.remove('wait');
+        nx.querySelector('.gen-step-dot').classList.add('active');
+      }
+    },s.delay);
+  });
+  setTimeout(function(){
+    document.getElementById('gen-ring').style.display='none';
+    document.getElementById('step3').classList.remove('active');
+    cur=4;
+    document.getElementById('step4').classList.add('active');
+    updatePips();
+  },3200);
+}
+
+function selectWDay(n,el){
+  document.querySelectorAll('.wos-pill').forEach(function(p){p.classList.remove('sel')});
+  el.classList.add('sel');
+  var days=[
+    [{title:'Morning devotional + Bible reading',domain:'Faith',color:'#534AB7',tag:'faith',tagBg:'#2a2040',tagColor:'#b4adf5',time:'6:00 AM'},{title:'Q2 budget variance review (deferred)',domain:'Finance',color:'#0F6E56',tag:'finance',tagBg:'#1a2410',tagColor:'#6fcf97',time:'Priority item'},{title:'Life OS — Domains hub screen design',domain:'Career',color:'#185FA5',tag:'career',tagBg:'#1a1e2a',tagColor:'#85b7eb',time:'Deep work · AM'},{title:'Clear 2 deferred tasks from last week',domain:'Tasks',color:'#5F5E5A',tag:'tasks',tagBg:'#252525',tagColor:'#888',time:'Afternoon'}],
+    [{title:'Prayer + gratitude journaling',domain:'Faith',color:'#534AB7',tag:'faith',tagBg:'#2a2040',tagColor:'#b4adf5',time:'Morning'},{title:'Life OS — AI tab implementation',domain:'Career',color:'#185FA5',tag:'career',tagBg:'#1a1e2a',tagColor:'#85b7eb',time:'Deep work'},{title:'30 min walk or training',domain:'Health',color:'#993C1D',tag:'health',tagBg:'#2a1510',tagColor:'#f0997b',time:'5:30 PM'}],
+    [{title:'Fasting intention — full day',domain:'Faith',color:'#534AB7',tag:'faith',tagBg:'#2a2040',tagColor:'#b4adf5',time:'All day'},{title:'Life OS — Approval sheet design',domain:'Career',color:'#185FA5',tag:'career',tagBg:'#1a1e2a',tagColor:'#85b7eb',time:'Deep work'},{title:'Check in on savings goal progress',domain:'Finance',color:'#0F6E56',tag:'finance',tagBg:'#1a2410',tagColor:'#6fcf97',time:'Evening'},{title:'Decompression walk',domain:'Wellness',color:'#993556',tag:'wellness',tagBg:'#2a1020',tagColor:'#ed93b1',time:'6:30 PM'}],
+    [{title:'Bible reading — Romans 9',domain:'Faith',color:'#534AB7',tag:'faith',tagBg:'#2a2040',tagColor:'#b4adf5',time:'Morning'},{title:'Life OS — Profile screen design',domain:'Career',color:'#185FA5',tag:'career',tagBg:'#1a1e2a',tagColor:'#85b7eb',time:'Deep work'},{title:'Reach out to one person',domain:'Relationships',color:'#185FA5',tag:'relationships',tagBg:'#0e1420',tagColor:'#85b7eb',time:'Afternoon'}],
+    [{title:'Morning devotional + reflection',domain:'Faith',color:'#534AB7',tag:'faith',tagBg:'#2a2040',tagColor:'#b4adf5',time:'6:00 AM'},{title:'Life OS — wrap week, prep review',domain:'Career',color:'#185FA5',tag:'career',tagBg:'#1a1e2a',tagColor:'#85b7eb',time:'Light session'}]
+  ];
+  var items=days[n];
+  var body=document.getElementById('day-plan-body');
+  body.innerHTML=items.map(function(it){return '<div class="plan-item"><div class="pi-bar" style="background:'+it.color+'"></div><div class="pi-body"><div class="pi-title">'+it.title+'</div><div class="pi-meta"><span class="pi-tag" style="background:'+it.tagBg+';color:'+it.tagColor+'">'+it.domain+'</span><span class="pi-time">'+it.time+'</span></div><div class="pi-actions"><span class="pi-btn" onclick="sendPrompt(\'Move this item to a different day\')">Move</span><span class="pi-btn remove" onclick="this.closest(\'.plan-item\').remove()">Remove</span></div></div></div>'}).join('');
+  var counts=['4 items','3 items','4 items','3 items','2 items'];
+  document.querySelector('.pab-sub').textContent=counts[n]+' on '+['Monday','Tuesday','Wednesday','Thursday','Friday'][n]+' · 16 total across the week';
+}
+</script>

@@ -41,6 +41,7 @@ export default function SignInScreen() {
   const {
     error,
     clearError,
+    hasCompletedOnboarding,
     isLoading,
     signIn,
     signInWithPasskey,
@@ -52,7 +53,11 @@ export default function SignInScreen() {
   const busy = isLoading;
 
   if (hasHydrated && user) {
-    return <Redirect href="/(tabs)/finance" />;
+    return (
+      <Redirect
+        href={hasCompletedOnboarding ? "/(tabs)/domains" : "/(auth)/first-run-today"}
+      />
+    );
   }
 
   const canSubmit = email.trim().length > 0 && password.length > 0;

@@ -93,7 +93,7 @@ function mapEnvelope(row: BackendEnvelope): BudgetEnvelopeWithComputed {
 }
 
 export function useBudgetSummary(): BudgetSummary | undefined {
-  const payload = useQuery(api.budget.queries.getBudgetSummary, {});
+  const payload = useQuery(api.finance.budget.queries.getBudgetSummary, {});
   if (payload === undefined) {
     return undefined;
   }
@@ -109,7 +109,7 @@ export function useActiveBudgetPeriod():
   | BudgetPeriodWithComputed
   | null
   | undefined {
-  const row = useQuery(api.budget.queries.getActivePeriod, {});
+  const row = useQuery(api.finance.budget.queries.getActivePeriod, {});
   return row ? mapPeriod(row) : row;
 }
 
@@ -117,7 +117,7 @@ export function useBudgetEnvelopes(
   periodId?: string,
 ): BudgetEnvelopeWithComputed[] | undefined {
   const rows = useQuery(
-    api.budget.queries.listEnvelopes,
+    api.finance.budget.queries.listEnvelopes,
     periodId ? { periodId: asId<"budgetPeriods">(periodId) } : "skip",
   );
 
@@ -127,7 +127,7 @@ export function useBudgetEnvelopes(
 export function useBudgetPeriods(
   status?: BudgetPeriodWithComputed["status"],
 ): BudgetPeriodWithComputed[] | undefined {
-  const rows = useQuery(api.budget.queries.listBudgetPeriods, { status });
+  const rows = useQuery(api.finance.budget.queries.listBudgetPeriods, { status });
   return rows?.map(mapPeriod);
 }
 
@@ -135,7 +135,7 @@ export function useBudgetPeriod(
   id?: string,
 ): BudgetPeriodDetail | undefined {
   const row = useQuery(
-    api.budget.queries.getBudgetPeriodById,
+    api.finance.budget.queries.getBudgetPeriodById,
     id ? { id: asId<"budgetPeriods">(id) } : "skip",
   );
 
@@ -145,7 +145,7 @@ export function useBudgetPeriod(
 export function useCreateBudgetPeriod(): (
   payload: CreateBudgetPeriodPayload,
 ) => Promise<{ id: string }> {
-  const createBudgetPeriod = useMutation(api.budget.mutations.createBudgetPeriod);
+  const createBudgetPeriod = useMutation(api.finance.budget.mutations.createBudgetPeriod);
 
   return async (payload) => {
     const result = await createBudgetPeriod({
@@ -164,7 +164,7 @@ export function useUpdateBudgetPeriod(): (
   id: string,
   payload: UpdateBudgetPeriodPayload,
 ) => Promise<void> {
-  const updateBudgetPeriod = useMutation(api.budget.mutations.updateBudgetPeriod);
+  const updateBudgetPeriod = useMutation(api.finance.budget.mutations.updateBudgetPeriod);
 
   return async (id, payload) => {
     await updateBudgetPeriod({
@@ -179,7 +179,7 @@ export function useActivateBudgetPeriod(): (
   id: string,
 ) => Promise<boolean> {
   const activateBudgetPeriod = useMutation(
-    api.budget.mutations.activateBudgetPeriod,
+    api.finance.budget.mutations.activateBudgetPeriod,
   );
 
   return (id) =>
@@ -191,7 +191,7 @@ export function useActivateBudgetPeriod(): (
 export function useCloseBudgetPeriod(): (
   id: string,
 ) => Promise<boolean> {
-  const closeBudgetPeriod = useMutation(api.budget.mutations.closeBudgetPeriod);
+  const closeBudgetPeriod = useMutation(api.finance.budget.mutations.closeBudgetPeriod);
 
   return (id) =>
     closeBudgetPeriod({
@@ -203,7 +203,7 @@ export function useArchiveBudgetPeriod(): (
   id: string,
 ) => Promise<boolean> {
   const archiveBudgetPeriod = useMutation(
-    api.budget.mutations.archiveBudgetPeriod,
+    api.finance.budget.mutations.archiveBudgetPeriod,
   );
 
   return (id) =>
@@ -215,7 +215,7 @@ export function useArchiveBudgetPeriod(): (
 export function useCopyPreviousBudgetPeriod(): (
   toPeriodId: string,
 ) => Promise<{ copiedCount: number; noPreviousPeriod?: boolean }> {
-  const copyPreviousPeriod = useMutation(api.budget.mutations.copyPreviousPeriod);
+  const copyPreviousPeriod = useMutation(api.finance.budget.mutations.copyPreviousPeriod);
 
   return (toPeriodId) =>
     copyPreviousPeriod({
@@ -227,7 +227,7 @@ export function useBudgetEnvelope(
   id?: string,
 ): BudgetEnvelopeWithComputed | undefined {
   const row = useQuery(
-    api.budget.queries.getEnvelopeById,
+    api.finance.budget.queries.getEnvelopeById,
     id ? { id: asId<"budgetEnvelopes">(id) } : "skip",
   );
 
@@ -237,7 +237,7 @@ export function useBudgetEnvelope(
 export function useCreateEnvelope(): (
   payload: CreateBudgetEnvelopePayload,
 ) => Promise<{ id: string }> {
-  const createEnvelope = useMutation(api.budget.mutations.createEnvelope);
+  const createEnvelope = useMutation(api.finance.budget.mutations.createEnvelope);
 
   return async (payload) => {
     const result = await createEnvelope({
@@ -258,7 +258,7 @@ export function useUpdateEnvelope(): (
   id: string,
   payload: UpdateBudgetEnvelopePayload,
 ) => Promise<void> {
-  const updateEnvelope = useMutation(api.budget.mutations.updateEnvelope);
+  const updateEnvelope = useMutation(api.finance.budget.mutations.updateEnvelope);
 
   return async (id, payload) => {
     await updateEnvelope({
@@ -271,7 +271,7 @@ export function useUpdateEnvelope(): (
 export function useDeleteEnvelope(): (
   id: string,
 ) => Promise<{ deleted: boolean; softArchived: boolean }> {
-  const deleteEnvelope = useMutation(api.budget.mutations.deleteEnvelope);
+  const deleteEnvelope = useMutation(api.finance.budget.mutations.deleteEnvelope);
 
   return (id) =>
     deleteEnvelope({
@@ -284,7 +284,7 @@ export function useEnvelopeHistory(
   limit = 6,
 ): BudgetEnvelopeHistoryItem[] | undefined {
   return useQuery(
-    api.budget.queries.getEnvelopeHistory,
+    api.finance.budget.queries.getEnvelopeHistory,
     categoryId ? { categoryId: asId<"categories">(categoryId), limit } : "skip",
   );
 }

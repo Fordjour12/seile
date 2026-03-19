@@ -86,6 +86,10 @@
       <string>Figtree-Medium.ttf</string>
       <string>Figtree-SemiBold.ttf</string>
       <string>Figtree-Bold.ttf</string>
+      <string>Manrope-Regular.ttf</string>
+      <string>Manrope-Medium.ttf</string>
+      <string>Manrope-SemiBold.ttf</string>
+      <string>Manrope-Bold.ttf</string>
     </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>

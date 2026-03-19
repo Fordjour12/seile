@@ -1,0 +1,371 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{display:flex;flex-direction:column;gap:28px;padding:8px 0}
+
+/* Section label */
+.section-chip{font-size:10px;color:#444;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;padding:0 4px}
+
+/* ── LOCK SCREEN ── */
+.lock-screen{width:375px;background:#0a0a10;border-radius:44px;overflow:hidden;border:1px solid #2a2a2e;position:relative}
+.ls-wallpaper{padding:40px 0 24px;background:linear-gradient(180deg,#0a0816 0%,#0e0e14 60%,#0a0a10 100%);text-align:center}
+.ls-time{font-size:56px;font-weight:200;color:#fff;letter-spacing:-2px;line-height:1}
+.ls-date{font-size:15px;color:rgba(255,255,255,.5);margin-top:4px;font-weight:400}
+.ls-notifs{padding:0 16px 24px;display:flex;flex-direction:column;gap:8px}
+
+/* Lock screen notification pill */
+.ls-notif{background:rgba(30,28,40,.88);backdrop-filter:blur(20px);border-radius:16px;padding:14px 16px;border:0.5px solid rgba(255,255,255,.08);display:flex;gap:12px;align-items:flex-start}
+.ls-notif.expanded{flex-direction:column;gap:10px}
+.ln-icon-wrap{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#1a1a24;border:0.5px solid rgba(255,255,255,.08)}
+.ln-top{display:flex;gap:12px;align-items:flex-start;width:100%}
+.ln-body{flex:1;min-width:0}
+.ln-app{font-size:11px;color:rgba(255,255,255,.4);font-weight:500;margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.ln-app-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ln-title{font-size:14px;font-weight:500;color:rgba(255,255,255,.9);line-height:1.3;margin-bottom:2px}
+.ln-body-text{font-size:13px;color:rgba(255,255,255,.5);line-height:1.4}
+.ln-time{font-size:11px;color:rgba(255,255,255,.3);flex-shrink:0;margin-top:1px}
+
+/* Expanded notification actions */
+.ln-actions{display:flex;gap:8px;width:100%;padding-top:4px;border-top:0.5px solid rgba(255,255,255,.08)}
+.ln-action{flex:1;padding:9px 0;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;text-align:center;transition:opacity .15s}
+.ln-action.primary{background:rgba(155,143,255,.25);color:#c8c0ff}
+.ln-action.ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.4)}
+
+/* ── BANNER (top of screen) ── */
+.phone-frame{width:375px;background:#0e0e10;border-radius:44px;overflow:hidden;border:1px solid #2a2a2e;position:relative}
+.app-bg{height:220px;background:#0e0e10;position:relative;display:flex;flex-direction:column}
+.app-status{display:flex;justify-content:space-between;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500}
+.app-content{flex:1;padding:14px 24px;display:flex;flex-direction:column;gap:10px}
+.app-ghost-line{height:10px;border-radius:5px;background:#1a1a1e;opacity:.5}
+.app-ghost-card{background:#1a1a1e;border-radius:12px;padding:12px;opacity:.4}
+.app-ghost-cl{height:9px;border-radius:4px;background:#222;margin-bottom:6px}
+
+/* Top banner notification */
+.banner{position:absolute;top:16px;left:16px;right:16px;background:rgba(20,18,28,.96);backdrop-filter:blur(20px);border-radius:16px;padding:12px 14px;border:0.5px solid rgba(255,255,255,.08);z-index:10;display:flex;gap:10px;align-items:flex-start;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.banner-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.banner-body{flex:1;min-width:0}
+.banner-app{font-size:10px;color:rgba(255,255,255,.35);font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px}
+.banner-title{font-size:13px;font-weight:500;color:rgba(255,255,255,.9);margin-bottom:2px;line-height:1.3}
+.banner-sub{font-size:12px;color:rgba(255,255,255,.45);line-height:1.4}
+.banner-time{font-size:10px;color:rgba(255,255,255,.25);flex-shrink:0}
+
+/* ── NOTIFICATION CENTER ── */
+.notif-center{width:375px;background:#0a0a10;border-radius:44px;overflow:hidden;border:1px solid #2a2a2e}
+.nc-header{padding:50px 24px 16px;text-align:center}
+.nc-title{font-size:28px;font-weight:200;color:#fff}
+.nc-date{font-size:14px;color:rgba(255,255,255,.4);margin-top:4px}
+.nc-section-label{font-size:13px;font-weight:500;color:rgba(255,255,255,.3);padding:0 20px;margin-bottom:8px}
+.nc-group{padding:0 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:6px}
+
+/* ── GROUPED notification ── */
+.nc-notif{background:rgba(28,26,38,.9);border-radius:14px;padding:12px 14px;border:0.5px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:opacity .15s}
+.nc-notif:hover{opacity:.85}
+.nc-notif.read{opacity:.45}
+.nn-icon{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.nn-body{flex:1;min-width:0}
+.nn-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px}
+.nn-title{font-size:13px;font-weight:500;color:rgba(255,255,255,.85);line-height:1.3;flex:1;padding-right:8px}
+.nn-time{font-size:10px;color:rgba(255,255,255,.25);flex-shrink:0}
+.nn-sub{font-size:12px;color:rgba(255,255,255,.4);line-height:1.4}
+.nn-unread{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+
+/* ── WEARABLE / compact ── */
+.watch-frame{width:160px;height:195px;background:#0e0e10;border-radius:40px;overflow:hidden;border:2px solid #2a2a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px}
+.watch-time{font-size:30px;font-weight:200;color:#fff;text-align:center;margin-bottom:6px;letter-spacing:-1px}
+.watch-notif{background:rgba(28,26,38,.95);border-radius:12px;padding:8px 10px;width:100%;border:0.5px solid rgba(255,255,255,.08)}
+.wn-icon-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.wn-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.wn-app{font-size:8px;color:rgba(255,255,255,.35);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.wn-title{font-size:11px;font-weight:500;color:rgba(255,255,255,.85);line-height:1.3;margin-bottom:3px}
+.wn-sub{font-size:9px;color:rgba(255,255,255,.4);line-height:1.3}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="wrap">
+
+  <!-- ─── 1. LOCK SCREEN — morning briefing ─── -->
+  <div>
+    <div class="section-chip">1 · Lock screen — morning briefing</div>
+    <div class="lock-screen">
+      <div class="ls-wallpaper">
+        <div class="ls-time">8:00</div>
+        <div class="ls-date">Tuesday, March 14</div>
+      </div>
+      <div class="ls-notifs">
+        <!-- Morning briefing — expanded -->
+        <div class="ls-notif expanded">
+          <div class="ln-top">
+            <div class="ln-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" fill="#9b8fff" opacity=".8"/><rect x="11" y="3" width="6" height="6" rx="1.5" fill="#9b8fff" opacity=".5"/><rect x="3" y="11" width="6" height="6" rx="1.5" fill="#9b8fff" opacity=".5"/><rect x="11" y="11" width="6" height="6" rx="1.5" fill="#9b8fff" opacity=".3"/></svg>
+            </div>
+            <div class="ln-body">
+              <div class="ln-app"><div class="ln-app-dot" style="background:#9b8fff"></div>Life OS · Morning briefing</div>
+              <div class="ln-title">Good morning, Bobie.</div>
+              <div class="ln-body-text">3 priorities · 4 habits · 1 approval pending · Faith 85% this week</div>
+            </div>
+            <div class="ln-time">8:00</div>
+          </div>
+          <div class="ln-actions">
+            <div class="ln-action primary" onclick="sendPrompt('Open Life OS Today screen from morning briefing notification')">Open Today ↗</div>
+            <div class="ln-action ghost">Dismiss</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 2. LOCK SCREEN — stacked notifications ─── -->
+  <div>
+    <div class="section-chip">2 · Lock screen — multiple notifications</div>
+    <div class="lock-screen">
+      <div class="ls-wallpaper">
+        <div class="ls-time">9:41</div>
+        <div class="ls-date">Friday, March 14</div>
+      </div>
+      <div class="ls-notifs">
+        <!-- Approval alert -->
+        <div class="ls-notif">
+          <div class="ln-icon-wrap" style="background:#1a1408;border-color:rgba(186,117,23,.2)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#ba7517" stroke-width="1.3"/><path d="M8 5v3" stroke="#ba7517" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".7" fill="#ba7517"/></svg>
+          </div>
+          <div class="ln-body">
+            <div class="ln-app"><div class="ln-app-dot" style="background:#ba7517"></div>Life OS · Approval</div>
+            <div class="ln-title">AI wants to make a change</div>
+            <div class="ln-body-text">Create emergency fund · GH₵ 400/month · Finance domain</div>
+          </div>
+          <div class="ln-time">9:30</div>
+        </div>
+        <!-- Habit reminder -->
+        <div class="ls-notif">
+          <div class="ln-icon-wrap" style="background:#2a1020;border-color:rgba(237,147,177,.15)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#ed93b1" stroke-width="1.3"/><path d="M5.5 8l2 2 3-3" stroke="#ed93b1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ln-body">
+            <div class="ln-app"><div class="ln-app-dot" style="background:#ed93b1"></div>Life OS · Habits</div>
+            <div class="ln-title">2 habits still unchecked</div>
+            <div class="ln-body-text">Gratitude log · No spend day · tap to log</div>
+          </div>
+          <div class="ln-time">7:00 PM</div>
+        </div>
+        <!-- Weekly review -->
+        <div class="ls-notif">
+          <div class="ln-icon-wrap" style="background:#0e1a14;border-color:rgba(29,158,117,.15)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 8A5 5 0 113 8a5 5 0 0110 0z" fill="none" stroke="#1d9e75" stroke-width="1.3"/><path d="M8 6v2.5l1.5 1.5" stroke="#1d9e75" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="ln-body">
+            <div class="ln-app"><div class="ln-app-dot" style="background:#1d9e75"></div>Life OS · Weekly review</div>
+            <div class="ln-title">Your week is ready to review</div>
+            <div class="ln-body-text">Faith 85% · Career 90% · Finance needs attention</div>
+          </div>
+          <div class="ln-time">8:00 PM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 3. BANNERS — in-app ─── -->
+  <div>
+    <div class="section-chip">3 · Top banners — approval alert</div>
+    <div class="phone-frame">
+      <div class="app-bg">
+        <div class="app-status"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+        <div class="app-content">
+          <div class="app-ghost-line" style="width:55%"></div>
+          <div class="app-ghost-card"><div class="app-ghost-cl" style="width:80%"></div><div class="app-ghost-cl" style="width:55%"></div></div>
+          <div class="app-ghost-card"><div class="app-ghost-cl" style="width:90%"></div><div class="app-ghost-cl" style="width:60%"></div></div>
+        </div>
+        <div class="banner">
+          <div class="banner-icon" style="background:#1a1408;border:0.5px solid rgba(186,117,23,.3)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#ba7517" stroke-width="1.3"/><path d="M8 5v3" stroke="#ba7517" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".7" fill="#ba7517"/></svg>
+          </div>
+          <div class="banner-body">
+            <div class="banner-app">Life OS · Finance</div>
+            <div class="banner-title">AI wants to make a change</div>
+            <div class="banner-sub">Create emergency fund · GH₵ 400/mo</div>
+          </div>
+          <div class="banner-time">now</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Banner — morning briefing -->
+  <div>
+    <div class="section-chip">4 · Top banner — morning briefing</div>
+    <div class="phone-frame">
+      <div class="app-bg">
+        <div class="app-status"><span>8:00</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+        <div class="app-content">
+          <div class="app-ghost-line" style="width:65%"></div>
+          <div class="app-ghost-card"><div class="app-ghost-cl" style="width:75%"></div><div class="app-ghost-cl" style="width:50%"></div></div>
+        </div>
+        <div class="banner">
+          <div class="banner-icon" style="background:#1e1a30;border:0.5px solid rgba(155,143,255,.2)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" fill="#9b8fff" opacity=".8"/><rect x="9" y="2" width="5" height="5" rx="1" fill="#9b8fff" opacity=".5"/><rect x="2" y="9" width="5" height="5" rx="1" fill="#9b8fff" opacity=".5"/><rect x="9" y="9" width="5" height="5" rx="1" fill="#9b8fff" opacity=".3"/></svg>
+          </div>
+          <div class="banner-body">
+            <div class="banner-app">Life OS · Morning briefing</div>
+            <div class="banner-title">Good morning — 3 priorities today</div>
+            <div class="banner-sub">Faith 85% · 1 approval pending · energy sync at 6 AM</div>
+          </div>
+          <div class="banner-time">8:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Banner — weekly review -->
+  <div>
+    <div class="section-chip">5 · Top banner — weekly review unlocks</div>
+    <div class="phone-frame">
+      <div class="app-bg">
+        <div class="app-status"><span>8:00 PM</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+        <div class="app-content">
+          <div class="app-ghost-line" style="width:60%"></div>
+          <div class="app-ghost-card"><div class="app-ghost-cl" style="width:85%"></div><div class="app-ghost-cl" style="width:55%"></div></div>
+        </div>
+        <div class="banner">
+          <div class="banner-icon" style="background:#0e1a14;border:0.5px solid rgba(29,158,117,.2)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 8A5 5 0 113 8a5 5 0 0110 0z" fill="none" stroke="#1d9e75" stroke-width="1.3"/><path d="M8 6v2.5l1.5 1.5" stroke="#1d9e75" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="banner-body">
+            <div class="banner-app">Life OS · Weekly review</div>
+            <div class="banner-title">Your week is ready — 8 min review</div>
+            <div class="banner-sub">Faith 85% · Career 90% · Finance needs attention</div>
+          </div>
+          <div class="banner-time">8:00 PM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 6. NOTIFICATION CENTER ─── -->
+  <div>
+    <div class="section-chip">6 · Notification center — grouped by type</div>
+    <div class="notif-center">
+      <div class="nc-header">
+        <div class="nc-title">9:41</div>
+        <div class="nc-date">Friday · March 14</div>
+      </div>
+
+      <div class="nc-section-label">Life OS</div>
+      <div class="nc-group">
+        <!-- Approval — unread -->
+        <div class="nc-notif" onclick="sendPrompt('Open the approval inbox — Finance savings goal')">
+          <div class="nn-icon" style="background:#1a1408;border:0.5px solid rgba(186,117,23,.2)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#ba7517" stroke-width="1.3"/><path d="M8 5v3" stroke="#ba7517" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".7" fill="#ba7517"/></svg>
+          </div>
+          <div class="nn-body">
+            <div class="nn-header">
+              <div class="nn-title">AI wants to make a change</div>
+              <div class="nn-time">9:30 AM</div>
+            </div>
+            <div class="nn-sub">Finance · Create emergency fund · GH₵ 400/month</div>
+          </div>
+          <div class="nn-unread" style="background:#ba7517"></div>
+        </div>
+
+        <!-- Morning briefing — read -->
+        <div class="nc-notif read">
+          <div class="nn-icon" style="background:#1e1a30;border:0.5px solid rgba(155,143,255,.15)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" fill="#9b8fff" opacity=".6"/><rect x="9" y="2" width="5" height="5" rx="1" fill="#9b8fff" opacity=".4"/><rect x="2" y="9" width="5" height="5" rx="1" fill="#9b8fff" opacity=".4"/><rect x="9" y="9" width="5" height="5" rx="1" fill="#9b8fff" opacity=".2"/></svg>
+          </div>
+          <div class="nn-body">
+            <div class="nn-header">
+              <div class="nn-title">Good morning — 3 priorities today</div>
+              <div class="nn-time">8:00 AM</div>
+            </div>
+            <div class="nn-sub">Faith 85% · 1 approval pending · 4 habits due</div>
+          </div>
+        </div>
+
+        <!-- Check-in reminder — unread -->
+        <div class="nc-notif" onclick="sendPrompt('Open my morning check-in from notification')">
+          <div class="nn-icon" style="background:#2a1020;border:0.5px solid rgba(237,147,177,.15)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#ed93b1" stroke-width="1.3"/><path d="M6 9s.5 1.5 2 1.5 2-1.5 2-1.5" stroke="#ed93b1" stroke-width="1" stroke-linecap="round"/></svg>
+          </div>
+          <div class="nn-body">
+            <div class="nn-header">
+              <div class="nn-title">Morning check-in · 30 seconds</div>
+              <div class="nn-time">8:30 AM</div>
+            </div>
+            <div class="nn-sub">Mood, energy, focus · feeds your week plan</div>
+          </div>
+          <div class="nn-unread" style="background:#ed93b1"></div>
+        </div>
+
+        <!-- Habit reminder — unread -->
+        <div class="nc-notif" onclick="sendPrompt('Open Today screen to log my unchecked habits')">
+          <div class="nn-icon" style="background:#1a1e1e;border:0.5px solid rgba(29,158,117,.15)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#1d9e75" stroke-width="1.3"/><path d="M5.5 8l2 2 3-3" stroke="#1d9e75" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="nn-body">
+            <div class="nn-header">
+              <div class="nn-title">2 habits still unchecked</div>
+              <div class="nn-time">7:00 PM</div>
+            </div>
+            <div class="nn-sub">Gratitude log · No spend · tap to log quickly</div>
+          </div>
+          <div class="nn-unread" style="background:#1d9e75"></div>
+        </div>
+
+        <!-- Weekly review — unread -->
+        <div class="nc-notif" onclick="sendPrompt('Open the weekly review from notification')">
+          <div class="nn-icon" style="background:#0e1a14;border:0.5px solid rgba(29,158,117,.15)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M13 8A5 5 0 113 8" stroke="#1d9e75" stroke-width="1.3"/><path d="M8 5.5v2.5l1.5 1" stroke="#1d9e75" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="nn-body">
+            <div class="nn-header">
+              <div class="nn-title">Weekly review ready · 8 min</div>
+              <div class="nn-time">8:00 PM</div>
+            </div>
+            <div class="nn-sub">Faith 85% · Career 90% · Finance needs attention</div>
+          </div>
+          <div class="nn-unread" style="background:#1d9e75"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 7. WEARABLE ─── -->
+  <div>
+    <div class="section-chip">7 · Wearable / compact — watch notification</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:10px;color:#444;margin-bottom:6px;text-align:center">Approval alert</div>
+        <div class="watch-frame">
+          <div class="watch-time">9:41</div>
+          <div class="watch-notif">
+            <div class="wn-icon-row"><div class="wn-dot" style="background:#ba7517"></div><span class="wn-app">Life OS</span></div>
+            <div class="wn-title">AI proposal · Finance</div>
+            <div class="wn-sub">Save GH₵ 400/month — tap to review</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#444;margin-bottom:6px;text-align:center">Morning briefing</div>
+        <div class="watch-frame">
+          <div class="watch-time">8:00</div>
+          <div class="watch-notif">
+            <div class="wn-icon-row"><div class="wn-dot" style="background:#9b8fff"></div><span class="wn-app">Life OS</span></div>
+            <div class="wn-title">3 priorities today</div>
+            <div class="wn-sub">Faith · Career · Finance · 1 approval</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#444;margin-bottom:6px;text-align:center">Habit reminder</div>
+        <div class="watch-frame">
+          <div class="watch-time">7:00 PM</div>
+          <div class="watch-notif">
+            <div class="wn-icon-row"><div class="wn-dot" style="background:#1d9e75"></div><span class="wn-app">Life OS</span></div>
+            <div class="wn-title">2 habits unchecked</div>
+            <div class="wn-sub">Gratitude log · No spend day</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>

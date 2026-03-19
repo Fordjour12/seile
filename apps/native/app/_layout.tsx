@@ -69,7 +69,6 @@ export default function Layout() {
           <KeyboardProvider>
             <AuthProvider>
               <BottomSheetModalProvider>
-                <AuthenticatedAppEffects />
                 <StackLayout />
               </BottomSheetModalProvider>
               <Toaster />
@@ -163,7 +162,9 @@ function useBetterAuthForConvex() {
 
 function StackLayout() {
   const router = useRouter();
-  const { user, hasHydrated, isLoading } = useAuth();
+  const { user, hasHydrated, isLoading, needsOnboarding } = useAuth();
+  const { colorScheme } = useColorScheme();
+  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   const isReady = hasHydrated && !isLoading;
   const isLoggedIn = Boolean(user);
   const wasAuthenticatedRef = useRef(false);
@@ -190,10 +191,42 @@ function StackLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={isLoggedIn}>
+      <Stack.Protected guard={isLoggedIn && !needsOnboarding}>
         <Stack.Screen
           name="(tabs)"
           options={{ title: "Tabs", headerShown: false }}
+        />
+        <Stack.Screen
+          name="actions"
+          options={{ title: "Actions", headerShown: false }}
+        />
+        <Stack.Screen
+          name="search"
+          options={{
+            title: "Search",
+            headerShown: false,
+            presentation: "fullScreenModal",
+          }}
+        />
+        <Stack.Screen
+          name="notifications"
+          options={{
+            title: "Notifications",
+            headerShown: true,
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.foreground,
+          }}
+        />
+        <Stack.Screen
+          name="error-states"
+          options={{
+            title: "Edge States",
+            headerShown: true,
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.foreground,
+          }}
         />
         <Stack.Screen
           name="modal"
@@ -201,7 +234,7 @@ function StackLayout() {
         />
       </Stack.Protected>
 
-      <Stack.Protected guard={!isLoggedIn}>
+      <Stack.Protected guard={!isLoggedIn || needsOnboarding}>
         <Stack.Screen
           name="(auth)"
           options={{ title: "Auth", headerShown: false }}
@@ -209,14 +242,4 @@ function StackLayout() {
       </Stack.Protected>
     </Stack>
   );
-}
-
-function AuthenticatedAppEffects() {
-  const { user, hasHydrated, isLoading } = useAuth();
-
-  if (!hasHydrated || isLoading || !user) {
-    return null;
-  }
-
-  return <SchedulerAppSync />;
 }

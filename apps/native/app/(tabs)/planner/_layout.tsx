@@ -28,6 +28,20 @@ export default function PlannerLayout() {
         }}
       />
       <Stack.Screen
+        name="balance"
+        options={{
+          title: "Balance",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="weekly-review"
+        options={{
+          title: "Weekly Review",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
         name="chat"
         options={{
           title: "Chat",
@@ -52,6 +66,13 @@ export default function PlannerLayout() {
         name="plans/[id]"
         options={{
           title: "Plan",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="goals/[id]"
+        options={{
+          title: "Goal",
           headerShown: true,
         }}
       />

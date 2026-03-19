@@ -20,6 +20,6 @@ function mapCategory(row: BackendCategory): CategoryOption {
 }
 
 export function useCategories(): CategoryOption[] | undefined {
-  const rows = useQuery(api.categories.queries.listCategories, {});
+  const rows = useQuery(api.finance.categories.queries.listCategories, {});
   return rows?.map(mapCategory);
 }
