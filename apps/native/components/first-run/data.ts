@@ -133,7 +133,7 @@ export type FirstRunDomainSetupViewModel = {
   icon: "bullseye" | "briefcase" | "money" | "heartbeat" | "smile-o" | "check-square-o" | "users" | "home";
   accentColor: string;
   backgroundColor: string;
-  href: "/(tabs)/domains";
+  href: "/(tabs)/settings/activate-domains";
 };
 
 export type FirstRunEmptyStateViewModel = {
@@ -236,7 +236,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "briefcase",
       accentColor: "#85b7eb",
       backgroundColor: "#1a1e2a",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
     {
       id: "tasks",
@@ -247,7 +247,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "check-square-o",
       accentColor: "#b1b4bc",
       backgroundColor: "#252525",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
   ],
   wellbeing: [
@@ -260,7 +260,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "smile-o",
       accentColor: "#ed93b1",
       backgroundColor: "#2a1020",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
     {
       id: "relationships",
@@ -271,7 +271,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "users",
       accentColor: "#85b7eb",
       backgroundColor: "#0e1420",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
   ],
   habits: [
@@ -284,7 +284,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "bullseye",
       accentColor: "#b4adf5",
       backgroundColor: "#2a2040",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
     {
       id: "wellness",
@@ -295,7 +295,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "smile-o",
       accentColor: "#ed93b1",
       backgroundColor: "#2a1020",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
   ],
   health: [
@@ -308,7 +308,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "heartbeat",
       accentColor: "#f0997b",
       backgroundColor: "#2a1510",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
     {
       id: "finance",
@@ -319,7 +319,7 @@ const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
       icon: "money",
       accentColor: "#6fcf97",
       backgroundColor: "#1a2a1e",
-      href: "/(tabs)/domains",
+      href: "/(tabs)/settings/activate-domains",
     },
   ],
 };

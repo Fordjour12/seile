@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 import { AnimatedProgressBar, AnimatedStage } from "@/components/auth/onboarding-flow-motion";
-import { Badge, Button, Card, Text } from "@/components/ui";
+import { Badge, Button, Card, CheckInSheet, Text } from "@/components/ui";
 import type {
   FirstRunActivityViewModel,
   FirstRunCheckInViewModel,
@@ -210,31 +211,53 @@ export function CheckInCard({
   onSetMood: (value: number) => void;
   onSetEnergy: (value: number) => void;
   onSetReadiness: (value: number) => void;
-  onSubmit: () => void;
+  onSubmit: () => Promise<void> | void;
 }) {
+  const [visible, setVisible] = useState(false);
+
   return (
-    <Card style={styles.checkInCard}>
-      <View style={styles.checkInHeader}>
-        <View style={styles.checkInDot} />
-        <Text selectable variant="small" style={styles.checkInLabel}>
-          {checkIn.title}
+    <>
+      <Card style={styles.checkInLauncher}>
+        <View style={styles.checkInLauncherHeader}>
+          <View style={styles.checkInLauncherDot} />
+          <Text selectable variant="small" style={styles.checkInLauncherLabel}>
+            {checkIn.title}
+          </Text>
+          <Badge color="secondary">{checkIn.badge}</Badge>
+        </View>
+        <Text selectable variant="small" style={styles.checkInLauncherBody}>
+          {checkIn.subtitle}
         </Text>
-        <Badge color="secondary">{checkIn.badge}</Badge>
-      </View>
-      <Text selectable variant="small" style={styles.checkInBody}>
-        {checkIn.subtitle}
-      </Text>
+        <Button
+          title={checkIn.completed ? "Check-in logged" : "Open check-in"}
+          disabled={checkIn.completed}
+          onPress={() => setVisible(true)}
+        />
+      </Card>
 
-      <CheckInScale label="Mood" value={mood} onSelect={onSetMood} />
-      <CheckInScale label="Energy" value={energy} onSelect={onSetEnergy} />
-      <CheckInScale label="Ready" value={readiness} onSelect={onSetReadiness} />
-
-      <Button
-        title={checkIn.completed ? "Check-in already logged" : "Save check-in"}
-        disabled={busy || checkIn.completed}
-        onPress={onSubmit}
+      <CheckInSheet
+        visible={visible}
+        onClose={() => setVisible(false)}
+        eyebrow="Check-in"
+        badge={checkIn.badge}
+        title={checkIn.title}
+        subtitle={checkIn.subtitle}
+        mood={mood}
+        energy={energy}
+        readiness={readiness}
+        busy={busy}
+        completed={checkIn.completed}
+        contextNote="This check-in becomes part of your early wellness signal and shapes how bold the AI should be today."
+        onSetMood={onSetMood}
+        onSetEnergy={onSetEnergy}
+        onSetReadiness={onSetReadiness}
+        onSubmit={async () => {
+          await onSubmit();
+          setVisible(false);
+        }}
+        submitLabel="Save check-in"
       />
-    </Card>
+    </>
   );
 }
 
@@ -577,36 +600,6 @@ export function ErrorState({
   );
 }
 
-function CheckInScale({
-  label,
-  value,
-  onSelect,
-}: {
-  label: string;
-  value: number;
-  onSelect: (value: number) => void;
-}) {
-  return (
-    <View style={styles.scaleBlock}>
-      <Text selectable variant="muted" style={styles.scaleLabel}>
-        {label}
-      </Text>
-      <View style={styles.scaleRow}>
-        {[1, 2, 3, 4, 5].map((item) => (
-          <View key={item} style={styles.scaleButtonWrap}>
-            <Button
-              title={String(item)}
-              size="sm"
-              variant={value === item ? "primary" : "outline"}
-              onPress={() => onSelect(item)}
-            />
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   scrollContent: {
     gap: 16,
@@ -698,7 +691,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 12,
   },
-  checkInCard: {
+  checkInLauncher: {
     backgroundColor: "#1a1020",
     borderColor: "#3d1535",
     borderCurve: "continuous",
@@ -706,42 +699,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 12,
   },
-  checkInHeader: {
+  checkInLauncherHeader: {
     alignItems: "center",
     flexDirection: "row",
     gap: 8,
   },
-  checkInDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 999,
+  checkInLauncherDot: {
     backgroundColor: "#d4537e",
+    borderRadius: 999,
+    height: 6,
+    width: 6,
   },
-  checkInLabel: {
+  checkInLauncherLabel: {
     color: "#f0abc0",
+    flex: 1,
     fontFamily: "Geist",
     fontWeight: "700",
   },
-  checkInBody: {
+  checkInLauncherBody: {
     color: "#c89cb1",
     lineHeight: 20,
-  },
-  scaleBlock: {
-    gap: 6,
-  },
-  scaleLabel: {
-    color: "#8e7081",
-    fontFamily: "Geist",
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  scaleRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  scaleButtonWrap: {
-    flex: 1,
   },
   cardTitle: {
     fontFamily: "Geist",

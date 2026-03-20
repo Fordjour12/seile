@@ -275,7 +275,7 @@ export function FirstRunJourneyScreen() {
               onSetMood={setMood}
               onSetEnergy={setEnergy}
               onSetReadiness={setReadiness}
-              onSubmit={() => void handleCheckInSubmit()}
+              onSubmit={handleCheckInSubmit}
             />
           ) : null}
 

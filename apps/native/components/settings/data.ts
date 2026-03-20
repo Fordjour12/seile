@@ -121,6 +121,18 @@ export const NOTIFICATION_ROWS: SettingsRowItem[] = [
   },
 ];
 
+export const DOMAIN_SETUP_ROWS: SettingsRowItem[] = [
+  {
+    id: "activate-domains",
+    title: "Activate domains",
+    subtitle: "Turn inactive domains into usable parts of the app",
+    value: "Open",
+    icon: "bullseye",
+    iconColor: "#9b8fff",
+    iconBackgroundColor: "#1e1a30",
+  },
+] as const;
+
 export const DOMAIN_ITEMS: DomainItem[] = [
   { id: "faith", label: "Faith", accentColor: "#534AB7", status: "pinned" },
   { id: "career", label: "Career", accentColor: "#185FA5", status: "active" },

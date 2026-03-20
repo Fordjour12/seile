@@ -9,3 +9,13 @@ export { Badge } from "./badge";
 export { Separator } from "./separator";
 export { Surface } from "./surface";
 export { Switch } from "./switch";
+export { BottomSheet } from "./bottom-sheet";
+export {
+  CheckInContextNote,
+  CheckInMoodSelector,
+  CheckInScaleField,
+  CheckInSectionLabel,
+  CheckInSheet,
+  CheckInSheetBody,
+  CheckInSheetCard,
+} from "./check-in-sheet";

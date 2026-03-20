@@ -7,6 +7,7 @@ import {
   AI_BEHAVIOR_ROWS,
   CRON_ROWS,
   DOMAIN_ITEMS,
+  DOMAIN_SETUP_ROWS,
   MEMORY_STATS,
   NOTIFICATION_ROWS,
   SETTINGS_METRICS,
@@ -133,6 +134,28 @@ export function SettingsScreen() {
                 }}
               />
               {index < NOTIFICATION_ROWS.length - 1 ? <SettingsSeparator /> : null}
+            </Fragment>
+          ))}
+        </SettingsGroup>
+
+        <SectionHeader
+          title="Domain setup"
+          subtitle="Activate the parts of Life OS that are still inactive or lightly configured."
+        />
+        <SettingsGroup>
+          {DOMAIN_SETUP_ROWS.map((row, index) => (
+            <Fragment key={row.id}>
+              <SettingsRow
+                item={row}
+                onPress={() => {
+                  if (row.id === "activate-domains") {
+                    router.push("/(tabs)/settings/activate-domains");
+                    return;
+                  }
+                  showSettingsPreview(row.title, row.subtitle);
+                }}
+              />
+              {index < DOMAIN_SETUP_ROWS.length - 1 ? <SettingsSeparator /> : null}
             </Fragment>
           ))}
         </SettingsGroup>
