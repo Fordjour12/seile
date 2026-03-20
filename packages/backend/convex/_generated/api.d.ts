@@ -85,6 +85,7 @@ import type * as lib_planner from "../lib/planner.js";
 import type * as lib_recurring from "../lib/recurring.js";
 import type * as lib_validation from "../lib/validation.js";
 import type * as onboarding from "../onboarding.js";
+import type * as onboarding_actions from "../onboarding_actions.js";
 import type * as productivity_ai from "../productivity/ai.js";
 import type * as productivity_planner_actions from "../productivity/planner/actions.js";
 import type * as productivity_planner_mutations from "../productivity/planner/mutations.js";
@@ -204,6 +205,7 @@ declare const fullApi: ApiFromModules<{
   "lib/recurring": typeof lib_recurring;
   "lib/validation": typeof lib_validation;
   onboarding: typeof onboarding;
+  onboarding_actions: typeof onboarding_actions;
   "productivity/ai": typeof productivity_ai;
   "productivity/planner/actions": typeof productivity_planner_actions;
   "productivity/planner/mutations": typeof productivity_planner_mutations;

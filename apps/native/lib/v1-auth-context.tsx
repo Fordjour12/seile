@@ -2,18 +2,11 @@
  * Life OS — AuthContext
  *
  * Flow:
- *   1. Cold open → check SecureStore for onboarding flags
+ *   1. Cold open → check SecureStore for onboarding draft and migration flags
  *   2. First install → Onboarding (7-step setup)
  *   3. End of onboarding → Create Account (email/social)
- *   4. Authenticated + first-run → First Run Today (days 1-7)
- *   5. After 7 days → Weekly review unlocks, full Tabs
- *   6. Subsequent opens → straight to Tabs
- *
- * Stack:
- *   - convex-auth        server-side session management
- *   - better-auth        client-side auth (email, Google, Apple)
- *   - expo-secure-store  device-local flag persistence
- *   - react-native       navigation via Expo Router
+ *   4. Successful auth → Sync draft to Convex userProfile + initialize first-run
+ *   5. Authenticated routing resolves from Convex onboardingState
  */
 
 import React, {
@@ -26,10 +19,19 @@ import React, {
   useRef,
 } from "react";
 import * as SecureStore from "expo-secure-store";
-import { useConvexAuth } from "convex/react";
+import { useConvex, useConvexAuth } from "convex/react";
 import { router } from "expo-router";
 
+import { api } from "@seile/backend/convexApi";
+
 import { authClient } from "@/lib/auth-client";
+import {
+  type UserNotificationPreferences,
+  type UserProfileAiTone,
+  type UserProfileInput,
+  type UserProfilePlanningStyle,
+  isCompleteUserProfileInput,
+} from "@/lib/user-profile";
 
 const STORE_KEYS = {
   ONBOARDING_STARTED: "lifeos.onboarding.started",
@@ -39,19 +41,9 @@ const STORE_KEYS = {
   ONBOARDING_DRAFT: "lifeos.onboarding.draft",
 } as const;
 
-export type AppStage =
-  | "loading"
-  | "onboarding"
-  | "create-account"
-  | "first-run"
-  | "tabs";
+export type AppStage = "loading" | "onboarding" | "create-account" | "first-run" | "tabs";
 
-export interface OnboardingDraft {
-  name?: string;
-  selectedDomains?: string[];
-  planningStyle?: "light" | "balanced" | "intensive";
-  aiTone?: "direct" | "coaching" | "minimal";
-  notifications?: Record<string, boolean>;
+export interface OnboardingDraft extends Partial<UserProfileInput> {
   lastStep?: number;
 }
 
@@ -73,8 +65,9 @@ interface AuthState {
 
 type AuthAction =
   | { type: "SET_STAGE"; stage: AppStage }
-  | { type: "SET_DAYS"; days: number }
+  | { type: "SET_DAYS"; days: number | null }
   | { type: "SET_DRAFT"; draft: Partial<OnboardingDraft> }
+  | { type: "REPLACE_DRAFT"; draft: OnboardingDraft }
   | { type: "CLEAR_DRAFT" }
   | { type: "SET_ERROR"; error: string | null }
   | { type: "SET_LOADING"; loading: boolean };
@@ -89,24 +82,14 @@ export interface AuthContextValue extends AuthState {
   completeOnboardingSetup: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (
-    name: string,
-    email: string,
-    password: string,
-  ) => Promise<void>;
+  signUpWithEmail: (name: string, email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signIn: (credentials: { email: string; password: string }) => Promise<void>;
-  signUp: (credentials: {
-    name: string;
-    email: string;
-    password: string;
-  }) => Promise<void>;
+  signUp: (credentials: { name: string; email: string; password: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
-  advanceOnboardingStage: (
-    stage: "first-run-today" | "week-1" | "complete",
-  ) => Promise<void>;
+  advanceOnboardingStage: (stage: "first-run-today" | "week-1" | "complete") => Promise<void>;
   clearError: () => void;
   completeFirstRun: () => Promise<void>;
 }
@@ -130,6 +113,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         ...state,
         onboardingDraft: { ...state.onboardingDraft, ...action.draft },
       };
+    case "REPLACE_DRAFT":
+      return { ...state, onboardingDraft: action.draft };
     case "CLEAR_DRAFT":
       return { ...state, onboardingDraft: {} };
     case "SET_ERROR":
@@ -158,8 +143,7 @@ function toAuthUser(raw: unknown): AuthUser | null {
 
   return {
     id: canonicalId,
-    userId:
-      typeof user.userId === "string" ? user.userId : canonicalId,
+    userId: typeof user.userId === "string" ? user.userId : canonicalId,
     name: typeof user.name === "string" ? user.name : undefined,
     email: typeof user.email === "string" ? user.email : undefined,
     image: typeof user.image === "string" ? user.image : undefined,
@@ -182,98 +166,63 @@ async function deleteFlag(key: string): Promise<void> {
   await SecureStore.deleteItemAsync(key);
 }
 
-function daysBetween(isoTimestamp: string): number {
-  const first = new Date(isoTimestamp).getTime();
-  const now = Date.now();
-  return Math.floor((now - first) / (1000 * 60 * 60 * 24));
+function daysBetween(timestamp: number): number {
+  return Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
+}
+
+function parseTimestamp(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function parseDraft(raw: string | null): OnboardingDraft | null {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as OnboardingDraft;
+    return typeof parsed === "object" && parsed !== null ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function toUserProfileInput(draft: OnboardingDraft): UserProfileInput | null {
+  if (!isCompleteUserProfileInput(draft)) {
+    return null;
+  }
+
+  return {
+    name: draft.name.trim(),
+    selectedDomains: uniqueStrings(draft.selectedDomains),
+    pinnedDomainIds: uniqueStrings(draft.pinnedDomainIds),
+    planningStyle: draft.planningStyle,
+    aiTone: draft.aiTone,
+    notifications: draft.notifications,
+    draftCompletedAt: draft.draftCompletedAt ?? Date.now(),
+  };
+}
+
+function uniqueStrings(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, INITIAL_STATE);
 
+  const convex = useConvex();
   const { isAuthenticated, isLoading: convexLoading } = useConvexAuth();
   const { data: session, isPending: sessionLoading } = authClient.useSession();
   const user = useMemo(() => toAuthUser(session?.user), [session?.user]);
 
   const hasBooted = useRef(false);
-
-  useEffect(() => {
-    if (convexLoading) return;
-    if (hasBooted.current) return;
-    hasBooted.current = true;
-
-    (async () => {
-      try {
-        const [
-          onboardingComplete,
-          firstLoginAt,
-          firstRunComplete,
-          draftRaw,
-        ] = await Promise.all([
-          readFlag(STORE_KEYS.ONBOARDING_COMPLETE),
-          readFlag(STORE_KEYS.FIRST_LOGIN_AT),
-          readFlag(STORE_KEYS.FIRST_RUN_COMPLETE),
-          readFlag(STORE_KEYS.ONBOARDING_DRAFT),
-        ]);
-
-        if (draftRaw) {
-          try {
-            dispatch({
-              type: "SET_DRAFT",
-              draft: JSON.parse(draftRaw) as OnboardingDraft,
-            });
-          } catch {
-            await deleteFlag(STORE_KEYS.ONBOARDING_DRAFT);
-          }
-        }
-
-        if (firstLoginAt) {
-          dispatch({
-            type: "SET_DAYS",
-            days: daysBetween(firstLoginAt),
-          });
-        }
-
-        let stage: AppStage = "onboarding";
-
-        if (!onboardingComplete && !isAuthenticated) {
-          stage = "onboarding";
-        } else if (!onboardingComplete && isAuthenticated) {
-          await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
-          if (firstRunComplete === "true") {
-            stage = "tabs";
-          } else if (firstLoginAt && daysBetween(firstLoginAt) >= 7) {
-            await writeFlag(STORE_KEYS.FIRST_RUN_COMPLETE, "true");
-            stage = "tabs";
-          } else {
-            stage = "first-run";
-          }
-        } else if (!isAuthenticated) {
-          stage = "create-account";
-        } else if (firstRunComplete === "true") {
-          stage = "tabs";
-        } else if (firstLoginAt) {
-          const days = daysBetween(firstLoginAt);
-          if (days >= 7) {
-            await writeFlag(STORE_KEYS.FIRST_RUN_COMPLETE, "true");
-            stage = "tabs";
-          } else {
-            stage = "first-run";
-          }
-        } else {
-          await writeFlag(STORE_KEYS.FIRST_LOGIN_AT, new Date().toISOString());
-          dispatch({ type: "SET_DAYS", days: 0 });
-          stage = "first-run";
-        }
-
-        dispatch({ type: "SET_STAGE", stage });
-        navigateToStage(stage);
-      } catch (err) {
-        console.error("[AuthContext] boot error", err);
-        dispatch({ type: "SET_STAGE", stage: "onboarding" });
-      }
-    })();
-  }, [convexLoading, isAuthenticated]);
+  const isResolvingAuth = useRef(false);
+  const prevAuthenticated = useRef<boolean | null>(null);
 
   const navigateToStage = useCallback((stage: AppStage) => {
     switch (stage) {
@@ -294,56 +243,198 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const startOnboarding = useCallback(async () => {
-    await writeFlag(STORE_KEYS.ONBOARDING_STARTED, "true");
-  }, []);
-
   const clearError = useCallback(() => {
     dispatch({ type: "SET_ERROR", error: null });
   }, []);
 
   const saveOnboardingDraft = useCallback(
     async (draft: Partial<OnboardingDraft>) => {
-      dispatch({ type: "SET_DRAFT", draft });
       const merged = { ...state.onboardingDraft, ...draft };
+      dispatch({ type: "SET_DRAFT", draft });
       await writeFlag(STORE_KEYS.ONBOARDING_DRAFT, JSON.stringify(merged));
     },
     [state.onboardingDraft],
   );
+
+  const startOnboarding = useCallback(async () => {
+    await writeFlag(STORE_KEYS.ONBOARDING_STARTED, "true");
+  }, []);
 
   const completeOnboardingSetup = useCallback(async () => {
     await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
     dispatch({ type: "SET_STAGE", stage: "create-account" });
   }, []);
 
-  const handleSuccessfulAuth = useCallback(async () => {
-    dispatch({ type: "CLEAR_DRAFT" });
-    dispatch({ type: "SET_ERROR", error: null });
-    await deleteFlag(STORE_KEYS.ONBOARDING_DRAFT);
-    await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
-
-    const existing = await readFlag(STORE_KEYS.FIRST_LOGIN_AT);
-    const firstRunComplete = await readFlag(STORE_KEYS.FIRST_RUN_COMPLETE);
-    if (!existing) {
-      const now = new Date().toISOString();
-      await writeFlag(STORE_KEYS.FIRST_LOGIN_AT, now);
-      dispatch({ type: "SET_DAYS", days: 0 });
-      dispatch({ type: "SET_STAGE", stage: "first-run" });
-      router.replace("/(tabs)");
-    } else {
-      const days = daysBetween(existing);
-      dispatch({ type: "SET_DAYS", days });
-      let stage: AppStage = "first-run";
-      if (firstRunComplete === "true") {
-        stage = "tabs";
-      } else if (days >= 7) {
-        await writeFlag(STORE_KEYS.FIRST_RUN_COMPLETE, "true");
-        stage = "tabs";
+  const syncDraftToBackend = useCallback(
+    async (draft: OnboardingDraft) => {
+      const profile = toUserProfileInput(draft);
+      if (!profile) {
+        return false;
       }
+
+      await convex.mutation(api.onboarding.upsertUserProfile, profile);
+      await convex.mutation(api.onboarding.initializeOnboardingState, {});
+      await convex.action(api.onboarding_actions.initializeFirstRunForUser, {});
+      return true;
+    },
+    [convex],
+  );
+
+  const setFirstRunLocalClock = useCallback(async (startedAt: number | null) => {
+    const existing = await readFlag(STORE_KEYS.FIRST_LOGIN_AT);
+    const timestamp = startedAt ?? parseTimestamp(existing) ?? Date.now();
+
+    if (!existing) {
+      await writeFlag(STORE_KEYS.FIRST_LOGIN_AT, new Date(timestamp).toISOString());
+    }
+
+    dispatch({ type: "SET_DAYS", days: daysBetween(timestamp) });
+  }, []);
+
+  const resolveAuthenticatedStage = useCallback(async () => {
+    const [onboardingComplete, firstRunComplete, firstLoginAt, draftRaw] = await Promise.all([
+      readFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+      readFlag(STORE_KEYS.FIRST_RUN_COMPLETE),
+      readFlag(STORE_KEYS.FIRST_LOGIN_AT),
+      readFlag(STORE_KEYS.ONBOARDING_DRAFT),
+    ]);
+
+    const storedDraft = parseDraft(draftRaw);
+    if (storedDraft) {
+      dispatch({ type: "REPLACE_DRAFT", draft: storedDraft });
+    }
+
+    const shouldSyncDraft =
+      onboardingComplete === "true" &&
+      storedDraft !== null &&
+      isCompleteUserProfileInput(storedDraft);
+
+    if (shouldSyncDraft) {
+      await syncDraftToBackend(storedDraft);
+      await deleteFlag(STORE_KEYS.ONBOARDING_DRAFT);
+      dispatch({ type: "CLEAR_DRAFT" });
+    }
+
+    let remoteState = await convex.query(api.onboarding.getOnboardingState, {});
+
+    if (!remoteState.exists) {
+      if (firstRunComplete === "true") {
+        dispatch({ type: "SET_DAYS", days: null });
+        return "tabs" as const;
+      }
+
+      await convex.mutation(api.onboarding.initializeOnboardingState, {});
+      remoteState = await convex.query(api.onboarding.getOnboardingState, {});
+    }
+
+    if (remoteState.currentStage === "complete") {
+      await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
+      await writeFlag(STORE_KEYS.FIRST_RUN_COMPLETE, "true");
+      dispatch({ type: "SET_DAYS", days: null });
+      return "tabs" as const;
+    }
+
+    const localFirstLogin = parseTimestamp(firstLoginAt);
+    const startedAt = remoteState.startedAt ?? localFirstLogin ?? Date.now();
+    await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
+    await deleteFlag(STORE_KEYS.FIRST_RUN_COMPLETE);
+    await setFirstRunLocalClock(startedAt);
+    return "first-run" as const;
+  }, [convex, setFirstRunLocalClock, syncDraftToBackend]);
+
+  const handleSuccessfulAuth = useCallback(async () => {
+    if (isResolvingAuth.current) {
+      return;
+    }
+
+    isResolvingAuth.current = true;
+    dispatch({ type: "SET_LOADING", loading: true });
+    dispatch({ type: "SET_ERROR", error: null });
+
+    try {
+      const stage = await resolveAuthenticatedStage();
       dispatch({ type: "SET_STAGE", stage });
       navigateToStage(stage);
+    } catch (err: any) {
+      console.error("[AuthContext] auth resolution error", err);
+      dispatch({
+        type: "SET_ERROR",
+        error: err?.message ?? "Failed to sync onboarding",
+      });
+    } finally {
+      dispatch({ type: "SET_LOADING", loading: false });
+      isResolvingAuth.current = false;
     }
-  }, [navigateToStage]);
+  }, [navigateToStage, resolveAuthenticatedStage]);
+
+  useEffect(() => {
+    if (convexLoading) {
+      return;
+    }
+    if (hasBooted.current) {
+      return;
+    }
+
+    hasBooted.current = true;
+
+    (async () => {
+      try {
+        const [onboardingComplete, draftRaw] = await Promise.all([
+          readFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+          readFlag(STORE_KEYS.ONBOARDING_DRAFT),
+        ]);
+
+        const draft = parseDraft(draftRaw);
+        if (draft) {
+          dispatch({ type: "REPLACE_DRAFT", draft });
+        } else if (draftRaw) {
+          await deleteFlag(STORE_KEYS.ONBOARDING_DRAFT);
+        }
+
+        let stage: AppStage;
+        if (!isAuthenticated) {
+          stage = onboardingComplete === "true" ? "create-account" : "onboarding";
+          const firstLoginAt = parseTimestamp(await readFlag(STORE_KEYS.FIRST_LOGIN_AT));
+          dispatch({
+            type: "SET_DAYS",
+            days: firstLoginAt === null ? null : daysBetween(firstLoginAt),
+          });
+        } else {
+          stage = await resolveAuthenticatedStage();
+        }
+
+        prevAuthenticated.current = isAuthenticated;
+        dispatch({ type: "SET_STAGE", stage });
+        navigateToStage(stage);
+      } catch (err) {
+        console.error("[AuthContext] boot error", err);
+        dispatch({ type: "SET_STAGE", stage: "onboarding" });
+      }
+    })();
+  }, [convexLoading, isAuthenticated, navigateToStage, resolveAuthenticatedStage]);
+
+  useEffect(() => {
+    if (convexLoading) {
+      return;
+    }
+    if (prevAuthenticated.current === isAuthenticated) {
+      return;
+    }
+
+    prevAuthenticated.current = isAuthenticated;
+
+    if (isAuthenticated) {
+      void handleSuccessfulAuth();
+      return;
+    }
+
+    void (async () => {
+      const onboardingComplete = await readFlag(STORE_KEYS.ONBOARDING_COMPLETE);
+      const nextStage = onboardingComplete === "true" ? "create-account" : "onboarding";
+      dispatch({ type: "SET_STAGE", stage: nextStage });
+      navigateToStage(nextStage);
+    })();
+  }, [convexLoading, handleSuccessfulAuth, isAuthenticated, navigateToStage]);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     dispatch({ type: "SET_LOADING", loading: true });
@@ -358,7 +449,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      await handleSuccessfulAuth();
+      await authClient.getSession();
     } catch (err: any) {
       dispatch({
         type: "SET_ERROR",
@@ -367,34 +458,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: "SET_LOADING", loading: false });
     }
-  }, [handleSuccessfulAuth]);
+  }, []);
 
-  const signUpWithEmail = useCallback(
-    async (name: string, email: string, password: string) => {
-      dispatch({ type: "SET_LOADING", loading: true });
-      dispatch({ type: "SET_ERROR", error: null });
-      try {
-        const result = await authClient.signUp.email({ name, email, password });
-        if (result.error) {
-          dispatch({
-            type: "SET_ERROR",
-            error: result.error.message ?? "Sign up failed",
-          });
-          return;
-        }
-
-        await handleSuccessfulAuth();
-      } catch (err: any) {
+  const signUpWithEmail = useCallback(async (name: string, email: string, password: string) => {
+    dispatch({ type: "SET_LOADING", loading: true });
+    dispatch({ type: "SET_ERROR", error: null });
+    try {
+      const result = await authClient.signUp.email({ name, email, password });
+      if (result.error) {
         dispatch({
           type: "SET_ERROR",
-          error: err?.message ?? "Sign up failed",
+          error: result.error.message ?? "Sign up failed",
         });
-      } finally {
-        dispatch({ type: "SET_LOADING", loading: false });
+        return;
       }
-    },
-    [handleSuccessfulAuth],
-  );
+
+      await authClient.getSession();
+    } catch (err: any) {
+      dispatch({
+        type: "SET_ERROR",
+        error: err?.message ?? "Sign up failed",
+      });
+    } finally {
+      dispatch({ type: "SET_LOADING", loading: false });
+    }
+  }, []);
 
   const signInWithGoogle = useCallback(async () => {
     dispatch({ type: "SET_LOADING", loading: true });
@@ -409,7 +497,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      await handleSuccessfulAuth();
+      await authClient.getSession();
     } catch (err: any) {
       dispatch({
         type: "SET_ERROR",
@@ -418,7 +506,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: "SET_LOADING", loading: false });
     }
-  }, [handleSuccessfulAuth]);
+  }, []);
 
   const signInWithApple = useCallback(async () => {
     dispatch({ type: "SET_LOADING", loading: true });
@@ -433,7 +521,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      await handleSuccessfulAuth();
+      await authClient.getSession();
     } catch (err: any) {
       dispatch({
         type: "SET_ERROR",
@@ -442,7 +530,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: "SET_LOADING", loading: false });
     }
-  }, [handleSuccessfulAuth]);
+  }, []);
 
   const signIn = useCallback(
     async (credentials: { email: string; password: string }) => {
@@ -453,11 +541,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = useCallback(
     async (credentials: { name: string; email: string; password: string }) => {
-      await signUpWithEmail(
-        credentials.name,
-        credentials.email,
-        credentials.password,
-      );
+      await signUpWithEmail(credentials.name, credentials.email, credentials.password);
     },
     [signUpWithEmail],
   );
@@ -479,27 +563,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const prevAuthenticated = useRef<boolean | null>(null);
-
-  useEffect(() => {
-    if (convexLoading) return;
-    if (prevAuthenticated.current === isAuthenticated) return;
-    prevAuthenticated.current = isAuthenticated;
-
-    if (isAuthenticated && state.stage === "create-account") {
-      void handleSuccessfulAuth();
-    }
-  }, [isAuthenticated, convexLoading, state.stage, handleSuccessfulAuth]);
-
   const refreshSession = useCallback(async () => {
     await authClient.getSession();
-  }, []);
+    if (isAuthenticated) {
+      await handleSuccessfulAuth();
+    }
+  }, [handleSuccessfulAuth, isAuthenticated]);
 
   const completeFirstRun = useCallback(async () => {
+    await convex.mutation(api.onboarding.completeOnboarding, {});
     await writeFlag(STORE_KEYS.FIRST_RUN_COMPLETE, "true");
+    await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
+    dispatch({ type: "SET_DAYS", days: null });
     dispatch({ type: "SET_STAGE", stage: "tabs" });
     router.replace("/(tabs)");
-  }, []);
+  }, [convex]);
 
   const completeOnboarding = useCallback(async () => {
     await completeFirstRun();
@@ -512,9 +590,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      await convex.mutation(api.onboarding.advanceOnboardingStage, { stage });
       dispatch({ type: "SET_STAGE", stage: "first-run" });
     },
-    [completeFirstRun],
+    [completeFirstRun, convex],
   );
 
   const hasHydrated = state.stage !== "loading" && !convexLoading && !sessionLoading;
@@ -593,3 +672,5 @@ export function useOnboardingDraft(): OnboardingDraft {
   const { onboardingDraft } = useAuth();
   return onboardingDraft;
 }
+
+export type { UserNotificationPreferences, UserProfileAiTone, UserProfilePlanningStyle };

@@ -26,10 +26,7 @@ import {
 } from "./schema/health";
 import { budgetEnvelopesTable } from "./schema/budget_envelopes";
 import { budgetPeriodStatusValidator, budgetPeriodsTable } from "./schema/budget_periods";
-import {
-  financeAgentAuditLogTable,
-  financeAgentStateTable,
-} from "./schema/finance_agent";
+import { financeAgentAuditLogTable, financeAgentStateTable } from "./schema/finance_agent";
 import {
   burnoutStateValidator,
   plannerChatCommandsTable,
@@ -53,7 +50,12 @@ import {
   plansTable,
 } from "./schema/planner";
 import { recurringTransactionsTable } from "./schema/recurring_transactions";
-import { debtPlansTable, debtStatusValidator, debtTypeValidator, payoffStrategyValidator } from "./schema/debt_plans";
+import {
+  debtPlansTable,
+  debtStatusValidator,
+  debtTypeValidator,
+  payoffStrategyValidator,
+} from "./schema/debt_plans";
 import { savingsGoalsTable, savingsStatusValidator } from "./schema/savings_goals";
 import {
   linkedFinanceEntityTypeValidator,
@@ -62,7 +64,14 @@ import {
   sharedGoalSourceDomainValidator,
   sharedGoalStatusValidator,
 } from "./schema/shared_goals";
-import { onboardingStageValidator, onboardingStateTable } from "./schema/onboarding";
+import {
+  onboardingStageValidator,
+  onboardingStateTable,
+  userProfileAiToneValidator,
+  userProfileNotificationsValidator,
+  userProfilePlanningStyleValidator,
+  userProfileTable,
+} from "./schema/onboarding";
 import {
   schedulerTaskPriorityValidator,
   schedulerTaskRecurrenceValidator,
@@ -123,12 +132,16 @@ export {
   prayerStatusValidator,
   spiritualGoalStatusValidator,
   onboardingStageValidator,
+  userProfileAiToneValidator,
+  userProfileNotificationsValidator,
+  userProfilePlanningStyleValidator,
 };
 
 export default defineSchema({
   accounts: accountsTable,
   aiMemory: aiMemoryTable,
   approvalRequests: approvalRequestsTable,
+  userProfile: userProfileTable,
   onboardingState: onboardingStateTable,
   budgetPeriods: budgetPeriodsTable,
   budgetEnvelopes: budgetEnvelopesTable,

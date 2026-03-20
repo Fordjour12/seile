@@ -1,8 +1,7 @@
 import { Redirect, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, useWindowDimensions } from "react-native";
 
-import { Container } from "@/components/container";
 import { StepAiTone } from "@/components/auth/onboarding/step-ai-tone";
 import { StepDomains } from "@/components/auth/onboarding/step-domains";
 import { StepName } from "@/components/auth/onboarding/step-name";
@@ -30,8 +29,9 @@ import { useColorScheme } from "@/lib/use-color-scheme";
 export function OnboardingScreen() {
   const {
     completeOnboardingSetup,
-    hasCompletedOnboarding,
     hasHydrated,
+    onboardingDraft,
+    saveOnboardingDraft,
     startOnboarding,
     user,
   } = useAuth();
@@ -42,12 +42,7 @@ export function OnboardingScreen() {
 
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
-  const [domains, setDomains] = useState<string[]>([
-    "faith",
-    "career",
-    "finance",
-    "health",
-  ]);
+  const [domains, setDomains] = useState<string[]>(["faith", "career", "finance", "health"]);
   const [pinnedDomainIds, setPinnedDomainIds] = useState<string[]>(["faith"]);
   const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
   const [aiTone, setAiTone] = useState<AiTone>("direct");
@@ -58,6 +53,8 @@ export function OnboardingScreen() {
     weeklyReview: true,
     habitReminders: false,
   });
+  const hasHydratedDraft = useRef(false);
+  const [isDraftReady, setIsDraftReady] = useState(false);
 
   const minHeight = Math.max(height - UI_PRESETS.spacing.screen * 2, 760);
   const displayName = name.trim() || "Bobie";
@@ -82,14 +79,69 @@ export function OnboardingScreen() {
     [domains, pinnedDomainIds],
   );
 
-  if (hasHydrated && user) {
-    const redirectHref = (
-      hasCompletedOnboarding ? "/(tabs)" : "/(tabs)"
-    ) as never;
+  useEffect(() => {
+    if (hasHydratedDraft.current) {
+      return;
+    }
 
-    return (
-      <Redirect href={redirectHref} />
-    );
+    hasHydratedDraft.current = true;
+
+    if (typeof onboardingDraft.name === "string") {
+      setName(onboardingDraft.name);
+    }
+    if (
+      Array.isArray(onboardingDraft.selectedDomains) &&
+      onboardingDraft.selectedDomains.length > 0
+    ) {
+      setDomains(onboardingDraft.selectedDomains);
+    }
+    if (Array.isArray(onboardingDraft.pinnedDomainIds)) {
+      setPinnedDomainIds(onboardingDraft.pinnedDomainIds);
+    }
+    if (onboardingDraft.planningStyle) {
+      setPlanningStyle(onboardingDraft.planningStyle);
+    }
+    if (onboardingDraft.aiTone) {
+      setAiTone(onboardingDraft.aiTone);
+    }
+    if (onboardingDraft.notifications) {
+      setNotifications(onboardingDraft.notifications as OnboardingNotifications);
+    }
+    if (typeof onboardingDraft.lastStep === "number") {
+      const nextStep = Math.max(1, Math.min(7, onboardingDraft.lastStep)) as Step;
+      setStep(nextStep);
+    }
+    setIsDraftReady(true);
+  }, [onboardingDraft]);
+
+  useEffect(() => {
+    if (!isDraftReady) {
+      return;
+    }
+
+    void saveOnboardingDraft({
+      name,
+      selectedDomains: domains,
+      pinnedDomainIds,
+      planningStyle,
+      aiTone,
+      notifications,
+      lastStep: step,
+    });
+  }, [
+    aiTone,
+    domains,
+    name,
+    notifications,
+    pinnedDomainIds,
+    planningStyle,
+    isDraftReady,
+    saveOnboardingDraft,
+    step,
+  ]);
+
+  if (hasHydrated && user) {
+    return <Redirect href="/(tabs)" />;
   }
 
   function nextStep() {
@@ -117,14 +169,10 @@ export function OnboardingScreen() {
         return current;
       }
 
-      const nextDomains = isSelected
-        ? current.filter((item) => item !== id)
-        : [...current, id];
+      const nextDomains = isSelected ? current.filter((item) => item !== id) : [...current, id];
 
       if (isSelected) {
-        setPinnedDomainIds((currentPinned) =>
-          currentPinned.filter((item) => item !== id),
-        );
+        setPinnedDomainIds((currentPinned) => currentPinned.filter((item) => item !== id));
       }
 
       return nextDomains;
