@@ -211,7 +211,7 @@ export function FirstRunJourneyScreen() {
           </View>
 
           <Pressable
-            onPress={() => router.push("/(tabs)/two")}
+            onPress={() => router.push("/(tabs)/settings")}
             style={({ pressed }) => [
               styles.avatarButton,
               {

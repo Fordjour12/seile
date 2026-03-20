@@ -29,7 +29,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="settings"
         options={{
           title: "Settings",
           href: hideTabs ? null : undefined,

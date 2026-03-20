@@ -1,3 +1,4 @@
+export { Avatar } from "./avatar";
 export { Card } from "./card";
 export { Button } from "./button";
 export { Chip } from "./chip";
@@ -7,3 +8,4 @@ export { View } from "./view";
 export { Badge } from "./badge";
 export { Separator } from "./separator";
 export { Surface } from "./surface";
+export { Switch } from "./switch";
