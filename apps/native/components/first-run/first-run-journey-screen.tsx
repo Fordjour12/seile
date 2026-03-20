@@ -1,476 +1,394 @@
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { View } from "react-native";
 
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 
+import { api } from "@seile/backend/convexApi";
+
+import { Container } from "@/components/container";
 import {
-  FIRST_RUN_TODAY_STATES,
-  WEEK_ONE_STATES,
-  type FirstRunTodayState,
-  type WeekOneState,
+  buildFirstRunViewModel,
+  type FirstRunReflectionOptionViewModel,
+  type FirstRunSuggestionVerdict,
 } from "@/components/first-run/data";
 import {
-  ActionCard,
-  ApprovalCard,
-  CelebrationCard,
-  ContextCard,
-  EmptyHabitCard,
+  ActivityCard,
+  CheckInCard,
+  ConfidenceCard,
+  DomainSetupCard,
+  EmptyStateCard,
+  ErrorState,
   ExperienceStage,
   FirstRunScroll,
-  HabitRail,
   InsightCard,
-  MetricsRow,
+  LoadingState,
+  ProfileSummaryCard,
   ProgressCard,
-  PromptCard,
   ScreenHeader,
   SectionTitle,
-  SetupCard,
-  useFirstRunTheme,
+  SnapshotCard,
+  SuggestionCard,
+  WeekTwoPlanCard,
 } from "@/components/first-run/shared";
-import { Container } from "@/components/container";
-import { Button, Chip, Text } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/v1-auth-context";
 
-type JourneyDay = {
-  day: number;
-  label: string;
-  states: Array<
-    | {
-        id: string;
-        label: string;
-        kind: "day-one";
-        content: FirstRunTodayState;
-      }
-    | {
-        id: string;
-        label: string;
-        kind: "week-one";
-        content: WeekOneState;
-      }
-  >;
-};
-
-const JOURNEY_DAYS: JourneyDay[] = [
-  {
-    day: 1,
-    label: "Day 1",
-    states: [
-      {
-        id: "day1-morning",
-        label: "AM",
-        kind: "day-one",
-        content: FIRST_RUN_TODAY_STATES.find((state) => state.id === "day1-morning")!,
-      },
-      {
-        id: "day1-evening",
-        label: "PM",
-        kind: "day-one",
-        content: FIRST_RUN_TODAY_STATES.find((state) => state.id === "day1-evening")!,
-      },
-    ],
-  },
-  {
-    day: 2,
-    label: "Day 2",
-    states: [
-      {
-        id: "day2",
-        label: "Today",
-        kind: "week-one",
-        content: WEEK_ONE_STATES.find((state) => state.id === "day2")!,
-      },
-    ],
-  },
-  {
-    day: 3,
-    label: "Day 3",
-    states: [
-      {
-        id: "day3",
-        label: "Today",
-        kind: "week-one",
-        content: WEEK_ONE_STATES.find((state) => state.id === "day3")!,
-      },
-    ],
-  },
-  {
-    day: 4,
-    label: "Day 4",
-    states: [
-      {
-        id: "day4",
-        label: "Today",
-        kind: "week-one",
-        content: WEEK_ONE_STATES.find((state) => state.id === "day4")!,
-      },
-    ],
-  },
-  {
-    day: 5,
-    label: "Day 5",
-    states: [
-      {
-        id: "day5",
-        label: "Today",
-        kind: "week-one",
-        content: WEEK_ONE_STATES.find((state) => state.id === "day5")!,
-      },
-    ],
-  },
-  {
-    day: 6,
-    label: "Day 6",
-    states: [
-      {
-        id: "day6",
-        label: "Today",
-        kind: "week-one",
-        content: WEEK_ONE_STATES.find((state) => state.id === "day6")!,
-      },
-    ],
-  },
-  {
-    day: 7,
-    label: "Day 7",
-    states: [
-      {
-        id: "day7",
-        label: "Today",
-        kind: "week-one",
-        content: WEEK_ONE_STATES.find((state) => state.id === "day7")!,
-      },
-    ],
-  },
-];
-
-function getCurrentJourneyDay(daysSinceFirstLogin: number | null): number {
-  return Math.max(1, Math.min(7, (daysSinceFirstLogin ?? 0) + 1));
-}
-
 export function FirstRunJourneyScreen() {
-  const { daysSinceFirstLogin, user, completeFirstRun } = useAuth();
+  const { user, completeFirstRun } = useAuth();
   const router = useRouter();
-  const { theme } = useFirstRunTheme();
+  const dashboard = useQuery(api.onboarding.getFirstRunDashboard, {});
+  const syncFirstRunDay = useMutation(api.onboarding.syncFirstRunDay);
+  const generateDailySuggestions = useMutation(api.onboarding.generateDailySuggestions);
+  const recordActivityEvent = useMutation(api.onboarding.recordActivityEvent);
+  const recordActivityReflection = useMutation(api.onboarding.recordActivityReflection);
+  const submitSuggestionFeedback = useMutation(api.onboarding.submitSuggestionFeedback);
 
-  const maxUnlockedDay = getCurrentJourneyDay(daysSinceFirstLogin);
-  const availableDays = useMemo(
-    () => JOURNEY_DAYS.filter((day) => day.day <= maxUnlockedDay),
-    [maxUnlockedDay],
-  );
+  const hasSynced = useRef(false);
+  const hasRequestedSuggestions = useRef(false);
 
-  const [selectedDay, setSelectedDay] = useState<number>(maxUnlockedDay);
-  const [selectedStageId, setSelectedStageId] = useState<string>(
-    availableDays[availableDays.length - 1]?.states[0]?.id ?? "day1-morning",
-  );
+  const [busyAssignmentId, setBusyAssignmentId] = useState<string | null>(null);
+  const [busySuggestionId, setBusySuggestionId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isRefreshingSuggestions, setIsRefreshingSuggestions] = useState(false);
+  const [isCompletingFirstRun, setIsCompletingFirstRun] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mood, setMood] = useState(3);
+  const [energy, setEnergy] = useState(3);
+  const [readiness, setReadiness] = useState(3);
 
   useEffect(() => {
-    const nextDay = Math.min(selectedDay, maxUnlockedDay);
-    const dayGroup =
-      availableDays.find((day) => day.day === nextDay) ??
-      availableDays[availableDays.length - 1];
+    if (hasSynced.current) {
+      return;
+    }
 
-    setSelectedDay(dayGroup.day);
-    setSelectedStageId((current) =>
-      dayGroup.states.some((state) => state.id === current)
-        ? current
-        : dayGroup.states[0].id,
+    hasSynced.current = true;
+    void handleSyncFirstRun();
+  }, []);
+
+  useEffect(() => {
+    if (!dashboard || hasRequestedSuggestions.current) {
+      return;
+    }
+    if (dashboard.state.dayNumber < 3 || dashboard.suggestions.length > 0) {
+      return;
+    }
+
+    hasRequestedSuggestions.current = true;
+    void handleRefreshSuggestions();
+  }, [dashboard]);
+
+  const displayName = user?.name?.trim() || user?.email?.split("@")[0] || "there";
+  const viewModel = useMemo(
+    () => (dashboard ? buildFirstRunViewModel(dashboard, displayName) : null),
+    [dashboard, displayName],
+  );
+
+  async function runGuarded<T>(
+    fn: () => Promise<T>,
+    failureMessage: string,
+  ) {
+    try {
+      setErrorMessage(null);
+      return await fn();
+    } catch (error) {
+      console.error("[FirstRunJourneyScreen]", failureMessage, error);
+      setErrorMessage(failureMessage);
+      return null;
+    }
+  }
+
+  async function handleSyncFirstRun() {
+    setIsSyncing(true);
+    try {
+      await runGuarded(
+        () => syncFirstRunDay({}),
+        "Couldn't refresh first-run context.",
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
+  async function handleRefreshSuggestions() {
+    setIsRefreshingSuggestions(true);
+    try {
+      await runGuarded(
+        () => generateDailySuggestions({}),
+        "Couldn't refresh first-run suggestions.",
+      );
+    } finally {
+      setIsRefreshingSuggestions(false);
+    }
+  }
+
+  async function handleActivityAction(
+    assignmentId: string,
+    action: "start" | "done" | "skip",
+  ) {
+    const actionMap = {
+      start: {
+        backendAction: "started" as const,
+        errorMessage: "Couldn't mark this activity as started.",
+      },
+      done: {
+        backendAction: "completed" as const,
+        errorMessage: "Couldn't mark this activity complete.",
+      },
+      skip: {
+        backendAction: "skipped" as const,
+        errorMessage: "Couldn't skip this activity.",
+      },
+    };
+
+    setBusyAssignmentId(assignmentId);
+    try {
+      await runGuarded(
+        () =>
+          recordActivityEvent({
+            assignmentId: assignmentId as any,
+            action: actionMap[action].backendAction,
+          }),
+        actionMap[action].errorMessage,
+      );
+    } finally {
+      setBusyAssignmentId(null);
+    }
+  }
+
+  async function handleReflection(
+    assignmentId: string,
+    option: FirstRunReflectionOptionViewModel,
+  ) {
+    setBusyAssignmentId(assignmentId);
+    try {
+      await runGuarded(
+        () =>
+          recordActivityReflection({
+            assignmentId: assignmentId as any,
+            usefulnessRating: option.usefulnessRating,
+            difficultyRating: option.difficultyRating,
+          }),
+        "Couldn't save this reflection.",
+      );
+    } finally {
+      setBusyAssignmentId(null);
+    }
+  }
+
+  async function handleCheckInSubmit() {
+    if (!viewModel?.checkIn) {
+      setErrorMessage("Couldn't find a check-in assignment for today.");
+      return;
+    }
+
+    setBusyAssignmentId(viewModel.checkIn.assignmentId);
+    try {
+      await runGuarded(
+        () =>
+          recordActivityEvent({
+            assignmentId: viewModel.checkIn!.assignmentId as any,
+            action: "completed",
+            metadata: {
+              mood,
+              energy,
+              readiness,
+              source: "first-run-check-in",
+            },
+          }),
+        "Couldn't save today's check-in.",
+      );
+    } finally {
+      setBusyAssignmentId(null);
+    }
+  }
+
+  async function handleSuggestionAction(
+    suggestionId: string,
+    verdict: FirstRunSuggestionVerdict,
+  ) {
+    const errorByVerdict: Record<FirstRunSuggestionVerdict, string> = {
+      accepted: "Couldn't send acceptance feedback for this suggestion.",
+      dismissed: "Couldn't dismiss this suggestion.",
+      snoozed: "Couldn't snooze this suggestion.",
+    };
+
+    setBusySuggestionId(suggestionId);
+    try {
+      await runGuarded(
+        () =>
+          submitSuggestionFeedback({
+            suggestionId: suggestionId as any,
+            verdict,
+          }),
+        errorByVerdict[verdict],
+      );
+    } finally {
+      setBusySuggestionId(null);
+    }
+  }
+
+  async function handleCompleteFirstRun() {
+    setIsCompletingFirstRun(true);
+    try {
+      await runGuarded(
+        () => completeFirstRun(),
+        "Couldn't finish the first-run onboarding flow.",
+      );
+    } finally {
+      setIsCompletingFirstRun(false);
+    }
+  }
+
+  if (!viewModel) {
+    return (
+      <Container>
+        <FirstRunScroll>
+          <LoadingState />
+        </FirstRunScroll>
+      </Container>
     );
-  }, [availableDays, maxUnlockedDay, selectedDay]);
-
-  const selectedDayGroup =
-    availableDays.find((day) => day.day === selectedDay) ?? availableDays[0];
-  const selectedStage =
-    selectedDayGroup.states.find((state) => state.id === selectedStageId) ??
-    selectedDayGroup.states[0];
-
-  const initials = (user?.name ?? user?.email ?? "BO")
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  }
 
   return (
     <Container>
       <FirstRunScroll>
-        <View style={styles.topRow}>
-          <View style={styles.dayHeader}>
-            <Text
-              selectable
-              variant="muted"
-              style={[
-                styles.dayLabel,
-                { color: theme.mutedForeground },
-              ]}
-            >
-              First run
-            </Text>
-            <Text selectable variant="small" style={{ color: theme.foreground }}>
-              Day {maxUnlockedDay} of 7
-            </Text>
+        <ExperienceStage stageKey={viewModel.stageKey}>
+          <ScreenHeader header={viewModel.header} />
+
+          {errorMessage ? (
+            <ErrorState message={errorMessage} onRetry={handleSyncFirstRun} busy={isSyncing} />
+          ) : null}
+
+          <InsightCard insight={viewModel.insight} />
+          <ProgressCard progress={viewModel.progress} />
+          <SnapshotCard snapshot={viewModel.snapshot} />
+          <ProfileSummaryCard profile={viewModel.profile} />
+
+          {viewModel.checkIn ? (
+            <CheckInCard
+              checkIn={viewModel.checkIn}
+              mood={mood}
+              energy={energy}
+              readiness={readiness}
+              busy={busyAssignmentId === viewModel.checkIn.assignmentId}
+              onSetMood={setMood}
+              onSetEnergy={setEnergy}
+              onSetReadiness={setReadiness}
+              onSubmit={() => void handleCheckInSubmit()}
+            />
+          ) : null}
+
+          <View style={{ gap: 10 }}>
+            <SectionTitle
+              label={viewModel.header.badge === "Seed" ? "Suggested to start" : "Today's activities"}
+              subtitle={
+                viewModel.header.badge === "Seed"
+                  ? "From your setup and the domains you want the app to learn first."
+                  : "Real assignments for today's first-run learning loop."
+              }
+              action={
+                viewModel.activitiesEmpty?.ctaLabel ? (
+                  <Button
+                    title={viewModel.activitiesEmpty.ctaLabel}
+                    size="sm"
+                    variant="outline"
+                    disabled={isSyncing}
+                    onPress={handleSyncFirstRun}
+                  />
+                ) : undefined
+              }
+            />
+            {viewModel.activitiesEmpty ? (
+              <EmptyStateCard
+                state={viewModel.activitiesEmpty}
+                busy={isSyncing}
+                onPressCta={handleSyncFirstRun}
+              />
+            ) : (
+              viewModel.activities.map((activity) => (
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  busy={busyAssignmentId === activity.id}
+                  onAction={(actionId) => void handleActivityAction(activity.id, actionId)}
+                  onReflection={(option) => void handleReflection(activity.id, option)}
+                />
+              ))
+            )}
           </View>
 
-          <Pressable
-            onPress={() => router.push("/(tabs)/settings")}
-            style={({ pressed }) => [
-              styles.avatarButton,
-              {
-                backgroundColor: theme.card,
-                borderColor: theme.border,
-              },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700" }}>
-              {initials}
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.dayChipRow}>
-          {availableDays.map((day) => (
-            <Chip
-              key={day.day}
-              label={day.label}
-              selected={selectedDay === day.day}
-              onSelect={() => {
-                setSelectedDay(day.day);
-                setSelectedStageId(day.states[0].id);
-              }}
+          <View style={{ gap: 10 }}>
+            <SectionTitle
+              label="Activate domains"
+              subtitle="The app is domain-shaped. Early actions determine where the AI earns confidence first."
             />
-          ))}
-        </View>
-
-        {selectedDayGroup.states.length > 1 ? (
-          <View style={styles.segmentRow}>
-            {selectedDayGroup.states.map((state) => (
-              <Chip
-                key={state.id}
-                label={state.label}
-                selected={selectedStageId === state.id}
-                onSelect={() => setSelectedStageId(state.id)}
+            {viewModel.domains.map((domain) => (
+              <DomainSetupCard
+                key={domain.id}
+                domain={domain}
+                onPress={() => router.push(domain.href as never)}
               />
             ))}
           </View>
-        ) : null}
 
-        <ExperienceStage stageKey={selectedStage.id}>
-          {selectedStage.kind === "day-one" ? (
-            <DayOneStageView stage={selectedStage.content} />
-          ) : (
-            <WeekOneStageView
-              stage={selectedStage.content}
-              onComplete={() => {
-                void completeFirstRun();
-              }}
+          <View style={{ gap: 10 }}>
+            <SectionTitle
+              label="Suggestions"
+              action={
+                <Button
+                  title="Refresh"
+                  size="sm"
+                  variant="outline"
+                  disabled={isRefreshingSuggestions}
+                  onPress={handleRefreshSuggestions}
+                />
+              }
             />
-          )}
+            {viewModel.suggestionsEmpty ? (
+              <EmptyStateCard
+                state={viewModel.suggestionsEmpty}
+                busy={isRefreshingSuggestions}
+                onPressCta={
+                  viewModel.suggestionsEmpty.ctaLabel
+                    ? handleRefreshSuggestions
+                    : undefined
+                }
+              />
+            ) : (
+              viewModel.suggestions.map((suggestion) => (
+                <SuggestionCard
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  busy={busySuggestionId === suggestion.id}
+                  onAction={(actionId) =>
+                    void handleSuggestionAction(suggestion.id, actionId)
+                  }
+                />
+              ))
+            )}
+          </View>
+
+          <View style={{ gap: 10 }}>
+            <SectionTitle label="Confidence" />
+            {viewModel.confidenceEmpty ? (
+              <EmptyStateCard state={viewModel.confidenceEmpty} />
+            ) : (
+              <ConfidenceCard items={viewModel.confidence} />
+            )}
+          </View>
+
+          {viewModel.weekTwo ? <WeekTwoPlanCard plan={viewModel.weekTwo} /> : null}
+
+          {viewModel.completeCtaLabel ? (
+            <Button
+              title={viewModel.completeCtaLabel}
+              disabled={isCompletingFirstRun}
+              onPress={handleCompleteFirstRun}
+            />
+          ) : null}
         </ExperienceStage>
       </FirstRunScroll>
     </Container>
   );
 }
-
-function DayOneStageView({ stage }: { stage: FirstRunTodayState }) {
-  return (
-    <>
-      <ScreenHeader
-        eyebrow={stage.eyebrow}
-        title={stage.title}
-        subtitle={stage.subtitle}
-      />
-
-      <InsightCard
-        label={stage.insightLabel}
-        badge={stage.insightBadge}
-        body={stage.insightBody}
-        actions={stage.insightActions}
-      />
-
-      <ProgressCard
-        label={stage.progressLabel}
-        progress={stage.progress}
-        subtitle={stage.progressSubtitle}
-      />
-
-      {stage.actions?.length ? (
-        <>
-          <SectionTitle label="Suggested to start" />
-          {stage.actions.map((item) => (
-            <ActionCard key={item.title} item={item} previewTitle={item.title} />
-          ))}
-        </>
-      ) : null}
-
-      {stage.metrics?.length ? (
-        <>
-          <SectionTitle label="Day 1 snapshot" />
-          <MetricsRow items={stage.metrics} />
-        </>
-      ) : null}
-
-      {stage.habits?.length ? (
-        <>
-          <SectionTitle label="Habits" />
-          <HabitRail items={stage.habits} />
-        </>
-      ) : null}
-
-      {stage.prompt ? (
-        stage.id === "day1-morning" ? (
-          <>
-            <SectionTitle label="Habits" />
-            <EmptyHabitCard
-              title={stage.prompt.title}
-              subtitle={stage.prompt.subtitle}
-            />
-          </>
-        ) : (
-          <PromptCard
-            title={stage.prompt.title}
-            subtitle={stage.prompt.subtitle}
-            accentColor={stage.prompt.accentColor}
-          />
-        )
-      ) : null}
-
-      {stage.setupItems?.length ? (
-        <>
-          <SectionTitle label="Activate domains" />
-          {stage.setupItems.map((item) => (
-            <SetupCard key={item.title} item={item} />
-          ))}
-        </>
-      ) : null}
-    </>
-  );
-}
-
-function WeekOneStageView({
-  stage,
-  onComplete,
-}: {
-  stage: WeekOneState;
-  onComplete: () => void;
-}) {
-  return (
-    <>
-      <ScreenHeader
-        badge={stage.badge}
-        dateLabel={stage.dateLabel}
-        title={stage.title}
-        subtitle={stage.subtitle}
-      />
-
-      <InsightCard
-        label={stage.insightLabel}
-        body={stage.insightBody}
-        actions={stage.insightActions}
-      />
-
-      <ProgressCard
-        label={stage.progressLabel}
-        progress={stage.progress}
-        subtitle={stage.progressSubtitle}
-      />
-
-      {stage.actions?.length ? (
-        <>
-          <SectionTitle label="Today's priorities" />
-          {stage.actions.map((item) => (
-            <ActionCard key={item.title} item={item} previewTitle={item.title} />
-          ))}
-        </>
-      ) : null}
-
-      {stage.prompt ? (
-        <PromptCard
-          title={stage.prompt.title}
-          subtitle={stage.prompt.subtitle}
-          accentColor={stage.prompt.accentColor}
-        />
-      ) : null}
-
-      {stage.contextItems?.length ? <ContextCard items={stage.contextItems} /> : null}
-
-      {stage.habits?.length ? (
-        <>
-          <SectionTitle label="Habits" />
-          <HabitRail items={stage.habits} />
-        </>
-      ) : null}
-
-      {stage.setupItems?.length ? (
-        <>
-          <SectionTitle label="Next unlocks" />
-          {stage.setupItems.map((item) => (
-            <SetupCard key={item.title} item={item} />
-          ))}
-        </>
-      ) : null}
-
-      {stage.approval ? (
-        <ApprovalCard
-          title={stage.approval.title}
-          subtitle={stage.approval.subtitle}
-          details={stage.approval.details}
-        />
-      ) : null}
-
-      {stage.celebration ? (
-        <CelebrationCard
-          title={stage.celebration.title}
-          subtitle={stage.celebration.subtitle}
-        />
-      ) : null}
-
-      {stage.metrics?.length ? (
-        <>
-          <SectionTitle label="Your first week" />
-          <MetricsRow items={stage.metrics} />
-        </>
-      ) : null}
-
-      {stage.id === "day7" ? (
-        <Button title="Unlock weekly review" onPress={onComplete} />
-      ) : null}
-    </>
-  );
-}
-
-const styles = StyleSheet.create({
-  topRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  dayHeader: {
-    gap: 4,
-  },
-  dayLabel: {
-    fontFamily: "Geist",
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  avatarButton: {
-    alignItems: "center",
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 42,
-    justifyContent: "center",
-    width: 42,
-  },
-  dayChipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  segmentRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  pressed: {
-    opacity: 0.84,
-  },
-});

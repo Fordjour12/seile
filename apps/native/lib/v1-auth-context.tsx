@@ -26,10 +26,12 @@ import { api } from "@seile/backend/convexApi";
 
 import { authClient } from "@/lib/auth-client";
 import {
-  type UserNotificationPreferences,
-  type UserProfileAiTone,
+  type UserProfileBiggestBlocker,
+  type UserProfileCommitmentLevel,
+  type UserProfileEnergyPattern,
   type UserProfileInput,
-  type UserProfilePlanningStyle,
+  type UserProfilePreferredStyle,
+  type UserProfilePrimaryGoal,
   isCompleteUserProfileInput,
 } from "@/lib/user-profile";
 
@@ -198,18 +200,13 @@ function toUserProfileInput(draft: OnboardingDraft): UserProfileInput | null {
   }
 
   return {
-    name: draft.name.trim(),
-    selectedDomains: uniqueStrings(draft.selectedDomains),
-    pinnedDomainIds: uniqueStrings(draft.pinnedDomainIds),
-    planningStyle: draft.planningStyle,
-    aiTone: draft.aiTone,
-    notifications: draft.notifications,
-    draftCompletedAt: draft.draftCompletedAt ?? Date.now(),
+    primaryGoal: draft.primaryGoal,
+    energyPattern: draft.energyPattern,
+    biggestBlocker: draft.biggestBlocker,
+    preferredStyle: draft.preferredStyle,
+    commitmentLevel: draft.commitmentLevel,
+    timezone: draft.timezone,
   };
-}
-
-function uniqueStrings(values: string[]) {
-  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -274,8 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      await convex.mutation(api.onboarding.upsertUserProfile, profile);
-      await convex.mutation(api.onboarding.initializeOnboardingState, {});
+      await convex.mutation(api.onboarding.completeSeedOnboarding, profile);
       return true;
     },
     [convex],
@@ -674,4 +670,10 @@ export function useOnboardingDraft(): OnboardingDraft {
   return onboardingDraft;
 }
 
-export type { UserNotificationPreferences, UserProfileAiTone, UserProfilePlanningStyle };
+export type {
+  UserProfileBiggestBlocker,
+  UserProfileCommitmentLevel,
+  UserProfileEnergyPattern,
+  UserProfilePreferredStyle,
+  UserProfilePrimaryGoal,
+};

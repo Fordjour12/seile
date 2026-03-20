@@ -1,575 +1,658 @@
-export type FirstRunTodayKey =
-  | "day1-morning"
-  | "day1-evening"
-  | "day3-morning";
+export type FirstRunPhase = "seed" | "learn" | "act";
+export type FirstRunAssignmentStatus =
+  | "pending"
+  | "started"
+  | "completed"
+  | "skipped";
+export type FirstRunSuggestionVerdict =
+  | "accepted"
+  | "dismissed"
+  | "snoozed";
 
-export type WeekOneDayKey =
-  | "day2"
-  | "day3"
-  | "day4"
-  | "day5"
-  | "day6"
-  | "day7";
-
-export type DomainTone = {
-  label: string;
-  backgroundColor: string;
-  color: string;
-};
-
-export type InsightAction = {
-  label: string;
-  message: string;
-};
-
-export type ActionItem = {
-  title: string;
-  note: string;
-  tone: DomainTone;
-  accentColor: string;
-};
-
-export type SetupItem = {
-  title: string;
-  subtitle: string;
-  badge: string;
-  accentColor: string;
-  backgroundColor: string;
-};
-
-export type MetricItem = {
-  label: string;
-  value: string;
-  color: string;
-};
-
-export type ContextItem = {
-  label: string;
-  color: string;
-  isNew?: boolean;
-};
-
-export type FirstRunTodayState = {
-  id: FirstRunTodayKey;
-  pickerLabel: string;
+export type FirstRunHeaderViewModel = {
   eyebrow: string;
   title: string;
   subtitle: string;
-  insightLabel: string;
-  insightBadge?: string;
-  insightBody: string;
-  progress: number;
-  progressLabel: string;
-  progressSubtitle: string;
-  insightActions: InsightAction[];
-  actions?: ActionItem[];
-  setupItems?: SetupItem[];
-  metrics?: MetricItem[];
-  habits?: string[];
-  prompt?: {
-    title: string;
-    subtitle: string;
-    accentColor: string;
-  };
+  badge: string;
 };
 
-export type WeekOneState = {
-  id: WeekOneDayKey;
-  pickerLabel: string;
-  badge: string;
-  dateLabel: string;
+export type FirstRunProgressViewModel = {
+  progress: number;
+  label: string;
+  subtitle: string;
+};
+
+export type FirstRunProfileItemViewModel = {
+  label: string;
+  value: string;
+};
+
+export type FirstRunProfileViewModel = {
   title: string;
   subtitle: string;
-  insightLabel: string;
-  insightBody: string;
-  insightActions: InsightAction[];
-  progress: number;
-  progressLabel: string;
-  progressSubtitle: string;
-  actions?: ActionItem[];
-  habits?: string[];
-  setupItems?: SetupItem[];
-  metrics?: MetricItem[];
-  prompt?: {
-    title: string;
-    subtitle: string;
-    accentColor: string;
-  };
-  contextItems?: ContextItem[];
-  celebration?: {
-    title: string;
-    subtitle: string;
-  };
-  approval?: {
-    title: string;
-    subtitle: string;
-    details: string[];
-  };
+  items: FirstRunProfileItemViewModel[];
 };
 
-export const DOMAIN_TONES = {
-  faith: {
-    label: "Faith",
-    backgroundColor: "#2a2040",
-    color: "#b4adf5",
+export type FirstRunActivityActionViewModel = {
+  id: "start" | "done" | "skip";
+  label: string;
+  variant: "primary" | "outline" | "ghost";
+  disabled: boolean;
+};
+
+export type FirstRunReflectionOptionViewModel = {
+  id: "useful" | "easy" | "hard";
+  label: string;
+  usefulnessRating: number;
+  difficultyRating: number;
+};
+
+export type FirstRunActivityViewModel = {
+  id: string;
+  title: string;
+  instructions: string;
+  durationLabel: string;
+  statusLabel: string;
+  phaseLabel: string;
+  categoryLabel: string;
+  categoryColor: string;
+  categoryBackground: string;
+  actions: FirstRunActivityActionViewModel[];
+  showReflection: boolean;
+  reflectionSummary: string | null;
+  reflectionOptions: FirstRunReflectionOptionViewModel[];
+};
+
+export type FirstRunSuggestionActionViewModel = {
+  id: FirstRunSuggestionVerdict;
+  label: string;
+  variant: "primary" | "outline" | "ghost";
+  disabled: boolean;
+};
+
+export type FirstRunSuggestionViewModel = {
+  id: string;
+  categoryLabel: string;
+  categoryColor: string;
+  categoryBackground: string;
+  confidenceLabel: string;
+  content: string;
+  feedbackLabel: string | null;
+  actions: FirstRunSuggestionActionViewModel[];
+};
+
+export type FirstRunConfidenceViewModel = {
+  id: string;
+  label: string;
+  score: number;
+  signalCount: number;
+  completions: number;
+  skips: number;
+  tierLabel: string;
+  color: string;
+};
+
+export type FirstRunWeekTwoViewModel = {
+  title: string;
+  subtitle: string;
+};
+
+export type FirstRunInsightViewModel = {
+  title: string;
+  badge?: string;
+  body: string;
+};
+
+export type FirstRunCheckInViewModel = {
+  assignmentId: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  completed: boolean;
+};
+
+export type FirstRunSnapshotMetricViewModel = {
+  id: string;
+  value: string;
+  label: string;
+  color: string;
+};
+
+export type FirstRunSnapshotViewModel = {
+  title: string;
+  subtitle: string;
+  metrics: FirstRunSnapshotMetricViewModel[];
+};
+
+export type FirstRunDomainSetupViewModel = {
+  id: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  statusLine: string;
+  icon: "bullseye" | "briefcase" | "money" | "heartbeat" | "smile-o" | "check-square-o" | "users" | "home";
+  accentColor: string;
+  backgroundColor: string;
+  href: "/(tabs)/domains";
+};
+
+export type FirstRunEmptyStateViewModel = {
+  title: string;
+  subtitle: string;
+  ctaLabel?: string;
+};
+
+export type FirstRunScreenViewModel = {
+  stageKey: string;
+  header: FirstRunHeaderViewModel;
+  progress: FirstRunProgressViewModel;
+  insight: FirstRunInsightViewModel;
+  profile: FirstRunProfileViewModel;
+  checkIn: FirstRunCheckInViewModel | null;
+  snapshot: FirstRunSnapshotViewModel;
+  activities: FirstRunActivityViewModel[];
+  activitiesEmpty: FirstRunEmptyStateViewModel | null;
+  domains: FirstRunDomainSetupViewModel[];
+  suggestions: FirstRunSuggestionViewModel[];
+  suggestionsEmpty: FirstRunEmptyStateViewModel | null;
+  confidence: FirstRunConfidenceViewModel[];
+  confidenceEmpty: FirstRunEmptyStateViewModel | null;
+  weekTwo: FirstRunWeekTwoViewModel | null;
+  completeCtaLabel: string | null;
+};
+
+const CATEGORY_META: Record<
+  string,
+  { label: string; color: string; background: string }
+> = {
+  focus: {
+    label: "Focus",
+    color: "#ba7517",
+    background: "#2f2210",
   },
-  wellness: {
-    label: "Wellness",
-    backgroundColor: "#2a1020",
-    color: "#ed93b1",
+  sleep: {
+    label: "Sleep",
+    color: "#9b8fff",
+    background: "#1f1a2f",
   },
-  career: {
-    label: "Career",
-    backgroundColor: "#1a1e2a",
-    color: "#85b7eb",
-  },
-  finance: {
-    label: "Finance",
-    backgroundColor: "#1a2a1e",
-    color: "#6fcf97",
-  },
-  health: {
-    label: "Health",
-    backgroundColor: "#2a1510",
+  exercise: {
+    label: "Exercise",
     color: "#f0997b",
+    background: "#2a1510",
   },
-  relationships: {
-    label: "Relationships",
-    backgroundColor: "#0e1420",
+  tasks: {
+    label: "Tasks",
     color: "#85b7eb",
+    background: "#142033",
   },
-} as const satisfies Record<string, DomainTone>;
+  habits: {
+    label: "Habits",
+    color: "#6fcf97",
+    background: "#16271d",
+  },
+  reflection: {
+    label: "Reflection",
+    color: "#ed93b1",
+    background: "#2a1020",
+  },
+};
 
-export const FIRST_RUN_TODAY_STATES: FirstRunTodayState[] = [
-  {
-    id: "day1-morning",
-    pickerLabel: "Day 1 AM",
-    eyebrow: "State 1 · First open",
-    title: "Good morning, Bobie.",
-    subtitle: "Day 1. Let's start simply.",
-    insightLabel: "Your AI · first message",
-    insightBadge: "Day 1 of 7",
-    insightBody:
-      "I don't know much about you yet, and that's the right place to start. Log your first check-in, complete one priority, and I'll begin building your picture. I won't suggest anything I haven't earned the right to suggest.",
-    progress: 2,
-    progressLabel: "Day 1 of 7",
-    progressSubtitle:
-      "Complete your first check-in and one priority to start the learning loop. Full weekly planning unlocks after 7 days.",
-    insightActions: [
-      {
-        label: "Start check-in",
-        message:
-          "This preview will later open the real first check-in flow.",
-      },
-      {
-        label: "How you learn",
-        message:
-          "This preview explains the seven-day ramp into personalized context.",
-      },
-    ],
-    actions: [
-      {
-        title: "Morning devotional + prayer",
-        note: "Suggested · from your setup",
-        tone: DOMAIN_TONES.faith,
-        accentColor: "#534AB7",
-      },
-      {
-        title: "Log your first check-in",
-        note: "Teaches AI your patterns",
-        tone: DOMAIN_TONES.wellness,
-        accentColor: "#993556",
-      },
-      {
-        title: "Set your first budget cap",
-        note: "Unlocks Finance insights",
-        tone: DOMAIN_TONES.finance,
-        accentColor: "#0F6E56",
-      },
-    ],
-    setupItems: [
-      {
-        title: "Career",
-        subtitle: "Add a project or goal to activate",
-        badge: "+ Setup",
-        accentColor: "#85b7eb",
-        backgroundColor: "#1a1e2a",
-      },
-      {
-        title: "Health",
-        subtitle: "Log a session to activate",
-        badge: "+ Setup",
-        accentColor: "#f0997b",
-        backgroundColor: "#2a1510",
-      },
-    ],
-    prompt: {
-      title: "No habits yet",
-      subtitle: "Add a habit and it will appear here every day.",
-      accentColor: "#666a7a",
-    },
-  },
-  {
-    id: "day1-evening",
-    pickerLabel: "Day 1 PM",
-    eyebrow: "State 2 · End of day 1",
-    title: "Good evening, Bobie.",
-    subtitle: "Day 1 wrapping up. You made a start.",
-    insightLabel: "End of day 1",
-    insightBody:
-      "You logged prayer, completed 2 priorities, and did your first check-in. That's enough for me to make my first small adjustment. I've shifted your default morning block earlier based on what you actually did.",
-    progress: 14,
-    progressLabel: "Day 1 complete",
-    progressSubtitle:
-      "Good start. Six more days of check-ins and the full picture comes together. Tomorrow the first pattern starts to emerge.",
-    insightActions: [
-      {
-        label: "Looks right",
-        message:
-          "The AI would keep the updated morning timing if you approve it.",
-      },
-      {
-        label: "Adjust timing",
-        message:
-          "This preview will later open the timing adjustment flow.",
-      },
-    ],
-    metrics: [
-      { label: "Done", value: "2", color: "#1d9e75" },
-      { label: "Check-in", value: "1", color: "#9b8fff" },
-      { label: "Prayer", value: "1", color: "#b4adf5" },
-      { label: "Days left", value: "6", color: "#ba7517" },
-    ],
-    prompt: {
-      title: "Evening check-in",
-      subtitle:
-        "How did day 1 end? Your answer shapes tomorrow's suggestions.",
-      accentColor: "#d4537e",
-    },
-  },
-  {
-    id: "day3-morning",
-    pickerLabel: "Day 3",
-    eyebrow: "State 3 · Day 3 morning",
-    title: "Good morning, Bobie.",
-    subtitle: "Day 3. I noticed something.",
-    insightLabel: "First pattern",
-    insightBadge: "Day 3",
-    insightBody:
-      "Both mornings you logged prayer before 7 AM and your energy was above 7. Yesterday when prayer was later, energy dropped to 5. Want me to protect that morning slot?",
-    progress: 36,
-    progressLabel: "Day 3 of 7",
-    progressSubtitle:
-      "Four more days until your first personalized week plan. Faith is already emerging as your anchor.",
-    insightActions: [
-      {
-        label: "Lock it in",
-        message:
-          "This preview would protect that morning slot as a recurring priority.",
-      },
-      {
-        label: "Keep watching",
-        message:
-          "The AI would keep observing before turning the pattern into a routine.",
-      },
-    ],
-    actions: [
-      {
-        title: "Morning prayer",
-        note: "AI-suggested · energy pattern",
-        tone: DOMAIN_TONES.faith,
-        accentColor: "#534AB7",
-      },
-      {
-        title: "Life OS · schema design",
-        note: "9:00 AM · deep work",
-        tone: DOMAIN_TONES.career,
-        accentColor: "#185FA5",
-      },
-      {
-        title: "Morning check-in",
-        note: "Feeds AI learning · day 3",
-        tone: DOMAIN_TONES.wellness,
-        accentColor: "#993556",
-      },
-    ],
-    habits: ["Prayer", "Water · 2L"],
-  },
-];
+const STATUS_META: Record<
+  FirstRunAssignmentStatus,
+  { label: string; color: string }
+> = {
+  pending: { label: "Pending", color: "#ba7517" },
+  started: { label: "Started", color: "#85b7eb" },
+  completed: { label: "Completed", color: "#1d9e75" },
+  skipped: { label: "Skipped", color: "#d4537e" },
+};
 
-export const WEEK_ONE_STATES: WeekOneState[] = [
-  {
-    id: "day2",
-    pickerLabel: "Day 2",
-    badge: "Day 2",
-    dateLabel: "Tuesday · Mar 3",
-    title: "Morning, Bobie.",
-    subtitle: "I'm still building your picture. Keep logging.",
-    insightLabel: "From AI · day 2",
-    insightBody:
-      "Yesterday you logged prayer and completed 2 priorities. That's enough for me to know you're a morning person with a faith practice. I've set your deep work block to 9 AM until you tell me otherwise.",
-    insightActions: [
-      {
-        label: "Adjust timing",
-        message:
-          "This preview would let you move the default deep work block.",
-      },
-      {
-        label: "Looks right",
-        message:
-          "This preview would confirm the learned timing.",
-      },
-    ],
-    progress: 14,
-    progressLabel: "Day 2 of 7",
-    progressSubtitle:
-      "After 7 days the app can generate your first real weekly plan. For now it's working from setup plus yesterday's data.",
-    actions: [
-      {
-        title: "Morning devotional + prayer",
-        note: "6:00 AM · suggested",
-        tone: DOMAIN_TONES.faith,
-        accentColor: "#534AB7",
-      },
-      {
-        title: "Log your morning check-in",
-        note: "Helps AI learn",
-        tone: DOMAIN_TONES.wellness,
-        accentColor: "#993556",
-      },
-    ],
-    prompt: {
-      title: "Check-in · 30 seconds",
-      subtitle: "Mood, energy, focus · feeds AI learning",
-      accentColor: "#d4537e",
+const PHASE_COPY: Record<
+  FirstRunPhase,
+  { label: string; subtitle: string }
+> = {
+  seed: {
+    label: "Seed",
+    subtitle: "The AI is collecting clean baseline signal from your first actions.",
+  },
+  learn: {
+    label: "Learn",
+    subtitle: "The AI has enough signal to start making small, testable suggestions.",
+  },
+  act: {
+    label: "Act",
+    subtitle: "The AI has earned confidence in some categories and can go bolder there.",
+  },
+};
+
+const DOMAIN_SETUP_MAP: Record<string, FirstRunDomainSetupViewModel[]> = {
+  productivity: [
+    {
+      id: "career",
+      title: "Career",
+      subtitle: "Add a project or goal to activate",
+      badge: "+ Setup",
+      statusLine: "Projects, deep work, and outcome tracking start here",
+      icon: "briefcase",
+      accentColor: "#85b7eb",
+      backgroundColor: "#1a1e2a",
+      href: "/(tabs)/domains",
     },
-  },
-  {
-    id: "day3",
-    pickerLabel: "Day 3",
-    badge: "Day 3",
-    dateLabel: "Wednesday · Mar 4",
-    title: "Two days down.",
-    subtitle: "I noticed something already.",
-    insightLabel: "First pattern",
-    insightBody:
-      "Both mornings you logged prayer before 7 AM and your energy check-in was 7 or above. That might be nothing, or it might be your first reliable pattern. I'll keep watching.",
-    insightActions: [
-      {
-        label: "Tell me more",
-        message:
-          "This preview would explain the prayer and energy pattern in more detail.",
-      },
-    ],
-    progress: 36,
-    progressLabel: "Day 3 of 7",
-    progressSubtitle:
-      "Patterns are starting to show. Faith is becoming your anchor and your mornings are clearly stronger.",
-    contextItems: [
-      {
-        label: "Prayer logged both mornings · streak started",
-        color: "#534AB7",
-      },
-      {
-        label: "Deep work active · 2 sessions logged",
-        color: "#185FA5",
-      },
-      {
-        label: "Energy avg 7.0 · mood avg 7.5",
-        color: "#9b8fff",
-        isNew: true,
-      },
-    ],
-    habits: ["Prayer", "Water · 2L", "Gratitude log"],
-  },
-  {
-    id: "day4",
-    pickerLabel: "Day 4",
-    badge: "Day 4",
-    dateLabel: "Thursday · Mar 5",
-    title: "Getting clearer.",
-    subtitle: "I have enough to make a first real suggestion.",
-    insightLabel: "First suggestion",
-    insightBody:
-      "Your energy on prayer mornings averages 7.2. On non-prayer mornings it drops. Want me to lock in morning prayer as a non-negotiable habit?",
-    insightActions: [
-      {
-        label: "Yes · lock it in",
-        message:
-          "This preview would create the recurring habit suggestion.",
-      },
-      {
-        label: "Not yet",
-        message:
-          "The AI would keep observing before making it permanent.",
-      },
-    ],
-    progress: 43,
-    progressLabel: "Day 4 of 7",
-    progressSubtitle:
-      "Three more days until your first personalized week plan. The app now understands your energy pattern and faith rhythm.",
-    setupItems: [
-      {
-        title: "Set up Finance domain",
-        subtitle: "Add a budget cap to unlock spending insights",
-        badge: "+ Setup",
-        accentColor: "#6fcf97",
-        backgroundColor: "#1a2a1e",
-      },
-      {
-        title: "Log first training session",
-        subtitle: "Activate the Health domain",
-        badge: "+ Activate",
-        accentColor: "#f0997b",
-        backgroundColor: "#2a1510",
-      },
-    ],
-  },
-  {
-    id: "day5",
-    pickerLabel: "Day 5",
-    badge: "Day 5",
-    dateLabel: "Friday · Mar 6",
-    title: "Something new today.",
-    subtitle: "I want to make a change, but only with your permission.",
-    insightLabel: "Your first AI proposal",
-    insightBody:
-      "Based on 4 days of data, your morning spiritual routine is your strongest anchor. I want to add it to your weekly plan as a recurring block, but only if you approve it.",
-    insightActions: [
-      {
-        label: "Approve",
-        message:
-          "This preview would accept the first AI schedule proposal.",
-      },
-      {
-        label: "Not yet",
-        message:
-          "This preview would keep the proposal pending without applying it.",
-      },
-    ],
-    progress: 57,
-    progressLabel: "Day 5 of 7",
-    progressSubtitle:
-      "This is your first approval moment. The AI never changes your plan without surfacing the proposal first.",
-    approval: {
-      title: "What will be added",
-      subtitle:
-        "Prayer + devotional + Bible reading · recurring weekday block",
-      details: [
-        "6:00-6:45 AM · Mon-Fri",
-        "Based on 4 days of check-in and faith log data",
+    {
+      id: "tasks",
+      title: "Tasks",
+      subtitle: "Capture your first actionable backlog item",
+      badge: "+ Add",
+      statusLine: "Use this domain to turn loose work into something schedulable",
+      icon: "check-square-o",
+      accentColor: "#b1b4bc",
+      backgroundColor: "#252525",
+      href: "/(tabs)/domains",
+    },
+  ],
+  wellbeing: [
+    {
+      id: "wellness",
+      title: "Wellness",
+      subtitle: "Check-ins, mood, and rest patterns live here",
+      badge: "+ Activate",
+      statusLine: "This domain captures how your days actually feel",
+      icon: "smile-o",
+      accentColor: "#ed93b1",
+      backgroundColor: "#2a1020",
+      href: "/(tabs)/domains",
+    },
+    {
+      id: "relationships",
+      title: "Relationships",
+      subtitle: "Add one person or touchpoint to make it active",
+      badge: "+ Add",
+      statusLine: "People, follow-ups, and care rhythms are tracked here",
+      icon: "users",
+      accentColor: "#85b7eb",
+      backgroundColor: "#0e1420",
+      href: "/(tabs)/domains",
+    },
+  ],
+  habits: [
+    {
+      id: "faith",
+      title: "Faith",
+      subtitle: "Prayer, devotionals, and reflections can anchor your week",
+      badge: "+ Setup",
+      statusLine: "One early action here can become a strong anchor signal",
+      icon: "bullseye",
+      accentColor: "#b4adf5",
+      backgroundColor: "#2a2040",
+      href: "/(tabs)/domains",
+    },
+    {
+      id: "wellness",
+      title: "Wellness",
+      subtitle: "Track how routines affect mood and energy",
+      badge: "+ Activate",
+      statusLine: "Check-ins connect your routines to your actual state",
+      icon: "smile-o",
+      accentColor: "#ed93b1",
+      backgroundColor: "#2a1020",
+      href: "/(tabs)/domains",
+    },
+  ],
+  health: [
+    {
+      id: "health",
+      title: "Health",
+      subtitle: "Log a session to activate movement and sleep tracking",
+      badge: "+ Activate",
+      statusLine: "Training, energy, and recovery trends compound here",
+      icon: "heartbeat",
+      accentColor: "#f0997b",
+      backgroundColor: "#2a1510",
+      href: "/(tabs)/domains",
+    },
+    {
+      id: "finance",
+      title: "Finance",
+      subtitle: "Budget caps and spending patterns feed future nudges",
+      badge: "+ Setup",
+      statusLine: "Money decisions become more useful once this domain has signal",
+      icon: "money",
+      accentColor: "#6fcf97",
+      backgroundColor: "#1a2a1e",
+      href: "/(tabs)/domains",
+    },
+  ],
+};
+
+export function buildFirstRunViewModel(dashboard: any, userName: string): FirstRunScreenViewModel {
+  const dayNumber = dashboard.state.dayNumber;
+  const phase = dashboard.state.currentPhase as FirstRunPhase;
+  const phaseCopy = PHASE_COPY[phase] ?? PHASE_COPY.seed;
+  const progress = Math.round((Math.min(dayNumber, 7) / 7) * 100);
+  const checkInAssignment = (dashboard.assignments ?? []).find((assignment: any) =>
+    assignment.template.title.toLowerCase().includes("check-in"),
+  );
+
+  const activities = (dashboard.assignments ?? [])
+    .filter((assignment: any) => assignment._id !== checkInAssignment?._id)
+    .map((assignment: any) => mapAssignmentToActivityCard(assignment));
+  const suggestions = (dashboard.suggestions ?? []).map((suggestion: any) =>
+    mapSuggestionToCard(suggestion),
+  );
+  const confidence = (dashboard.confidence ?? []).map((entry: any) =>
+    mapConfidenceRow(entry),
+  );
+  const domains =
+    DOMAIN_SETUP_MAP[dashboard.profile.primaryGoal] ?? DOMAIN_SETUP_MAP.productivity;
+
+  return {
+    stageKey: `day-${dayNumber}-${phase}`,
+    header: {
+      eyebrow: "First run",
+      title: `Day ${dayNumber} of 7, ${userName}.`,
+      subtitle: phaseCopy.subtitle,
+      badge: phaseCopy.label,
+    },
+    progress: {
+      progress,
+      label: `${progress}% of first run`,
+      subtitle: `Day-based progress stays tied to the seven-day arc. Phase: ${phaseCopy.label}.`,
+    },
+    insight: buildInsight(dashboard, dayNumber, phase),
+    profile: {
+      title: "Seed profile",
+      subtitle: "These answers seeded the model. Behavior will override them over time.",
+      items: [
+        { label: "Goal", value: formatLabel(dashboard.profile.primaryGoal) },
+        { label: "Energy", value: formatLabel(dashboard.profile.energyPattern) },
+        { label: "Blocker", value: formatLabel(dashboard.profile.biggestBlocker) },
+        { label: "Style", value: formatLabel(dashboard.profile.preferredStyle) },
+        { label: "Commitment", value: formatLabel(dashboard.profile.commitmentLevel) },
       ],
     },
-  },
-  {
-    id: "day6",
-    pickerLabel: "Day 6",
-    badge: "Day 6",
-    dateLabel: "Saturday · Mar 7",
-    title: "Five days straight.",
-    subtitle: "That's a real streak, not a lucky start.",
-    insightLabel: "What I now know",
-    insightBody:
-      "Morning faith practice is your anchor. Deep work is strongest between 9 and 11 AM. Energy dips after 2 PM. That's enough signal to start protecting your best hours.",
-    insightActions: [
-      {
-        label: "Add relationship",
-        message:
-          "This preview would add the first person to your Relationships domain.",
-      },
-    ],
-    progress: 71,
-    progressLabel: "Day 6 of 7",
-    progressSubtitle:
-      "You now have real streaks, active domains, and enough signal for stronger suggestions.",
-    celebration: {
-      title: "5-day check-in streak",
-      subtitle:
-        "Every morning, every check-in. Your consistency is what makes the AI useful.",
-    },
-    contextItems: [
-      {
-        label: "Morning faith practice is your anchor",
-        color: "#534AB7",
-      },
-      {
-        label: "Deep work peaks between 9 and 11 AM",
-        color: "#185FA5",
-      },
-      {
-        label: "Energy dips after 2 PM",
-        color: "#9b8fff",
-        isNew: true,
-      },
-      {
-        label: "Finance domain active · budget cap set",
-        color: "#0F6E56",
-        isNew: true,
-      },
-      {
-        label: "Health domain active · first training session logged",
-        color: "#993C1D",
-        isNew: true,
-      },
-    ],
-    setupItems: [
-      {
-        title: "Add to Relationships",
-        subtitle: "Who matters most to you right now?",
-        badge: "+ Add",
-        accentColor: "#85b7eb",
-        backgroundColor: "#0e1420",
-      },
-    ],
-  },
-  {
-    id: "day7",
-    pickerLabel: "Day 7",
-    badge: "Day 7 ✓",
-    dateLabel: "Sunday · Mar 8",
-    title: "One week in, Bobie.",
-    subtitle: "I know you well enough now. Here's what I found.",
-    insightLabel: "Week 2 plan · ready",
-    insightBody:
-      "I've generated your first full personalized week plan. It's built around your real patterns, not defaults. Review it, adjust it, and approve what fits.",
-    insightActions: [
-      {
-        label: "Open week plan",
-        message:
-          "This preview would open the first personalized week plan.",
-      },
-      {
-        label: "What you learned",
-        message:
-          "This preview would summarize the first week of learning.",
-      },
-    ],
-    progress: 100,
-    progressLabel: "Complete ✓",
-    progressSubtitle:
-      "Full personalized context is now active. Suggestions and plans come from your actual behavior from here on.",
-    metrics: [
-      { label: "Check-ins", value: "7", color: "#1d9e75" },
-      { label: "Prayer days", value: "6", color: "#9b8fff" },
-      { label: "Tasks done", value: "14", color: "#85b7eb" },
-      { label: "Approvals", value: "1", color: "#b4adf5" },
-    ],
-  },
-];
+    checkIn: checkInAssignment
+      ? {
+          assignmentId: checkInAssignment._id,
+          title:
+            dayNumber <= 1 ? "Log your first check-in" : "Daily check-in",
+          subtitle:
+            dayNumber <= 1
+              ? "Mood, energy, and readiness teach the AI how your days actually feel."
+              : "A quick check-in keeps suggestions grounded in how today is actually going.",
+          badge: dayNumber <= 1 ? "Day 1 signal" : "High-value signal",
+          completed: checkInAssignment.status === "completed",
+        }
+      : null,
+    snapshot: buildSnapshot(dashboard, dayNumber),
+    activities,
+    activitiesEmpty:
+      activities.length === 0
+        ? {
+            title: "No activities assigned yet",
+            subtitle: "Sync the day to seed the next batch of onboarding activities.",
+            ctaLabel: "Sync first run",
+          }
+        : null,
+    domains,
+    suggestions,
+    suggestionsEmpty:
+      suggestions.length === 0
+        ? dayNumber < 3
+          ? {
+              title: "Suggestions are still locked",
+              subtitle: "The AI stays in observe mode first. Suggestions start after enough early signal is collected.",
+            }
+          : {
+              title: "No suggestions yet",
+              subtitle: "Confidence has not crossed the suggestion threshold yet, or no fresh suggestion has been generated for today.",
+              ctaLabel: "Refresh suggestions",
+            }
+        : null,
+    confidence,
+    confidenceEmpty:
+      confidence.length === 0
+        ? {
+            title: "Confidence starts at zero",
+            subtitle: "Views, starts, completions, skips, and feedback will fill this section in.",
+          }
+        : null,
+    weekTwo:
+      typeof dashboard.weekTwoPlan === "string" && dashboard.weekTwoPlan.length > 0
+        ? {
+            title: "Week 2 preview",
+            subtitle: dashboard.weekTwoPlan,
+          }
+        : null,
+    completeCtaLabel: dashboard.readyToComplete ? "Finish first run" : null,
+  };
+}
 
-export function getWeekOneDay(daysSinceFirstLogin: number | null): WeekOneDayKey {
-  switch (daysSinceFirstLogin) {
-    case 1:
-      return "day2";
-    case 2:
-      return "day3";
-    case 3:
-      return "day4";
-    case 4:
-      return "day5";
-    case 5:
-      return "day6";
-    default:
-      return "day7";
+export function mapAssignmentToActivityCard(assignment: any): FirstRunActivityViewModel {
+  const category = CATEGORY_META[assignment.template.category] ?? CATEGORY_META.habits;
+  const status = STATUS_META[assignment.status as FirstRunAssignmentStatus] ?? STATUS_META.pending;
+
+  return {
+    id: assignment._id,
+    title: assignment.template.title,
+    instructions: assignment.template.instructions,
+    durationLabel: `${assignment.template.durationMinutes} min`,
+    statusLabel: status.label,
+    phaseLabel: formatLabel(assignment.phase),
+    categoryLabel: category.label,
+    categoryColor: category.color,
+    categoryBackground: category.background,
+    actions: buildActivityActions(assignment.status as FirstRunAssignmentStatus),
+    showReflection: assignment.status === "completed" && !assignment.reflection,
+    reflectionSummary: assignment.reflection
+      ? buildReflectionSummary(assignment.reflection)
+      : null,
+    reflectionOptions: [
+      {
+        id: "useful",
+        label: "Useful",
+        usefulnessRating: 5,
+        difficultyRating: 3,
+      },
+      {
+        id: "easy",
+        label: "Easy",
+        usefulnessRating: 4,
+        difficultyRating: 1,
+      },
+      {
+        id: "hard",
+        label: "Hard",
+        usefulnessRating: 3,
+        difficultyRating: 5,
+      },
+    ],
+  };
+}
+
+export function mapSuggestionToCard(suggestion: any): FirstRunSuggestionViewModel {
+  const category = CATEGORY_META[suggestion.category] ?? CATEGORY_META.habits;
+
+  return {
+    id: suggestion._id,
+    categoryLabel: category.label,
+    categoryColor: category.color,
+    categoryBackground: category.background,
+    confidenceLabel: `${suggestion.confidenceAtTime} confidence`,
+    content: suggestion.content,
+    feedbackLabel: suggestion.feedbackVerdict
+      ? `Marked ${formatLabel(suggestion.feedbackVerdict)}`
+      : null,
+    actions: buildSuggestionActions(Boolean(suggestion.feedbackVerdict)),
+  };
+}
+
+export function mapConfidenceRow(entry: any): FirstRunConfidenceViewModel {
+  const category = CATEGORY_META[entry.category] ?? CATEGORY_META.habits;
+
+  return {
+    id: entry.category,
+    label: category.label,
+    score: entry.score,
+    signalCount: entry.signalCount,
+    completions: entry.completions,
+    skips: entry.skips,
+    tierLabel: getConfidenceTierLabel(entry.score),
+    color: category.color,
+  };
+}
+
+export function getConfidenceTierLabel(score: number) {
+  if (score >= 80) {
+    return "Act";
   }
+  if (score >= 56) {
+    return "Recommend";
+  }
+  if (score >= 31) {
+    return "Suggest";
+  }
+  return "Observe";
+}
+
+function buildActivityActions(status: FirstRunAssignmentStatus): FirstRunActivityActionViewModel[] {
+  switch (status) {
+    case "pending":
+      return [
+        { id: "start", label: "Start", variant: "outline", disabled: false },
+        { id: "done", label: "Done", variant: "primary", disabled: false },
+        { id: "skip", label: "Skip", variant: "ghost", disabled: false },
+      ];
+    case "started":
+      return [
+        { id: "done", label: "Done", variant: "primary", disabled: false },
+        { id: "skip", label: "Skip", variant: "ghost", disabled: false },
+      ];
+    default:
+      return [];
+  }
+}
+
+function buildSuggestionActions(
+  hasFeedback: boolean,
+): FirstRunSuggestionActionViewModel[] {
+  return [
+    {
+      id: "accepted",
+      label: "Accept",
+      variant: "primary",
+      disabled: hasFeedback,
+    },
+    {
+      id: "dismissed",
+      label: "Dismiss",
+      variant: "outline",
+      disabled: hasFeedback,
+    },
+    {
+      id: "snoozed",
+      label: "Snooze",
+      variant: "ghost",
+      disabled: hasFeedback,
+    },
+  ];
+}
+
+function buildReflectionSummary(reflection: any) {
+  const parts = [
+    typeof reflection.usefulnessRating === "number"
+      ? `usefulness ${reflection.usefulnessRating}/5`
+      : null,
+    typeof reflection.difficultyRating === "number"
+      ? `difficulty ${reflection.difficultyRating}/5`
+      : null,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? `Reflection saved: ${parts.join(" · ")}` : "Reflection saved";
+}
+
+function buildInsight(dashboard: any, dayNumber: number, phase: FirstRunPhase): FirstRunInsightViewModel {
+  if (dayNumber <= 1) {
+    return {
+      title: "Your AI · first message",
+      badge: "Day 1 of 7",
+      body:
+        "I don't know much about you yet, and that's the right place to start. Log your first check-in, complete one activity, and I'll begin building your picture without pretending to know more than I do.",
+    };
+  }
+
+  if (phase === "learn") {
+    return {
+      title: "First patterns",
+      badge: `Day ${dayNumber}`,
+      body:
+        "You are past the observation-only phase. I have enough signal to start making smaller suggestions, but I still need clean feedback before I go bold.",
+    };
+  }
+
+  if (phase === "act") {
+    return {
+      title: "Confidence is earned",
+      badge: `Day ${dayNumber}`,
+      body:
+        "The strongest categories now have enough signal for more assertive recommendations. Weak categories still stay cautious until the data says otherwise.",
+    };
+  }
+
+  return {
+    title: "Still learning you",
+    badge: `Day ${dayNumber}`,
+    body:
+      "These first few days are a controlled experiment. The goal is not volume. It is learning what you actually follow through on.",
+  };
+}
+
+function buildSnapshot(dashboard: any, dayNumber: number): FirstRunSnapshotViewModel {
+  const assignments = dashboard.assignments ?? [];
+  const completed = assignments.filter((assignment: any) => assignment.status === "completed").length;
+  const started = assignments.filter((assignment: any) => assignment.status === "started").length;
+  const signals = (dashboard.confidence ?? []).reduce(
+    (sum: number, entry: any) => sum + (entry.signalCount ?? 0),
+    0,
+  );
+  const suggestions = (dashboard.suggestions ?? []).length;
+
+  return {
+    title: dayNumber <= 1 ? "Suggested to start" : `Day ${dayNumber} snapshot`,
+    subtitle:
+      dayNumber <= 1
+        ? "The app learns from mood, completions, and the domains you activate first."
+        : "This first-run summary stays compact on purpose. It shows what the model can actually defend already.",
+    metrics: [
+      {
+        id: "done",
+        value: String(completed),
+        label: "Done",
+        color: "#1d9e75",
+      },
+      {
+        id: "started",
+        value: String(started),
+        label: "Started",
+        color: "#85b7eb",
+      },
+      {
+        id: "signals",
+        value: String(signals),
+        label: "Signals",
+        color: "#9b8fff",
+      },
+      {
+        id: "suggestions",
+        value: String(suggestions),
+        label: "Suggestions",
+        color: "#ba7517",
+      },
+    ],
+  };
+}
+
+function formatLabel(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

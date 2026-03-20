@@ -1,7 +1,8 @@
 import type {
-  AiTone,
-  OnboardingNotificationKey,
-  PlanningStyle,
+  CommitmentLevel,
+  OnboardingQuestionKey,
+  OnboardingDraftAnswers,
+  PreferredStyle,
   Step,
 } from "@/components/auth/onboarding/types";
 
@@ -15,166 +16,127 @@ export const STEP_PROGRESS: Record<Step, number> = {
   7: 100,
 };
 
-export const MAX_PINNED_DOMAINS = 4;
-
-export const DOMAIN_OPTIONS = [
-  {
-    id: "faith",
-    label: "Faith",
-    subtitle: "Prayer, fasting, devotionals",
-    color: "#534AB7",
-    background: "#2a2040",
-    icon: "bullseye",
-  },
-  {
-    id: "career",
-    label: "Career",
-    subtitle: "Projects, skills, goals",
-    color: "#185FA5",
-    background: "#1a1e2a",
-    icon: "briefcase",
-  },
-  {
-    id: "finance",
-    label: "Finance",
-    subtitle: "Budget, savings, spending",
-    color: "#0F6E56",
-    background: "#1a2a1e",
-    icon: "money",
-  },
-  {
-    id: "health",
-    label: "Health",
-    subtitle: "Training, sleep, energy",
-    color: "#993C1D",
-    background: "#2a1510",
-    icon: "heartbeat",
-  },
-  {
-    id: "wellness",
-    label: "Wellness",
-    subtitle: "Mood, stress, rest",
-    color: "#993556",
-    background: "#2a1020",
-    icon: "moon-o",
-  },
-  {
-    id: "tasks",
-    label: "Tasks",
-    subtitle: "To-dos, projects, inbox",
-    color: "#5F5E5A",
-    background: "#252525",
-    icon: "check-square-o",
-  },
-  {
-    id: "relationships",
-    label: "Relationships",
-    subtitle: "Connections, family, friends",
-    color: "#185FA5",
-    background: "#0e1420",
-    icon: "users",
-  },
-  {
-    id: "space",
-    label: "Space",
-    subtitle: "Home, zones, decor",
-    color: "#854F0B",
-    background: "#1a1408",
-    icon: "home",
-  },
-] as const;
-
-export const STYLE_OPTIONS: ReadonlyArray<{
-  id: PlanningStyle;
-  label: string;
-  description: string;
-  color: string;
-}> = [
-  {
-    id: "balanced",
-    label: "Balanced",
-    description:
-      "3-4 priorities per day. Full habits. One deep work block. Sustainable and steady.",
-    color: "#ba7517",
-  },
-  {
-    id: "light",
-    label: "Light",
-    description:
-      "2-3 priorities per day. Habits only. Space for the unexpected and recovery.",
-    color: "#1d9e75",
-  },
-  {
-    id: "intensive",
-    label: "Intensive",
-    description:
-      "4-5 priorities per day. Multiple deep work blocks. Stretch goals included.",
-    color: "#e24b4a",
-  },
-];
-
-export const TONE_OPTIONS: ReadonlyArray<{
-  id: AiTone;
-  label: string;
-  example: string;
-}> = [
-  {
-    id: "direct",
-    label: "Direct",
-    example: '"Finance review is 4 days overdue. Do it today."',
-  },
-  {
-    id: "coaching",
-    label: "Coaching",
-    example:
-      '"The finance review has been waiting - finishing it today would close the week cleanly."',
-  },
-  {
-    id: "minimal",
-    label: "Minimal",
-    example: '"Finance: review due. 4 days elapsed."',
-  },
-];
-
-export const TONE_MESSAGES: Record<AiTone, string> = {
-  direct:
-    "I don't know much about you yet - and that's fine. I'll start light. Check-ins, habits, completions - I'll read them all. Nothing changes without your approval.",
-  coaching:
-    "I'm starting without much context, and that's okay. The best way I learn is by watching what you actually do. I'll offer gentle suggestions early on and sharpen them as the picture fills in.",
-  minimal:
-    "No data yet. Will build context from check-ins and completions. Approval required for all changes.",
+export const DEFAULT_ONBOARDING_ANSWERS: OnboardingDraftAnswers = {
+  primaryGoal: "productivity",
+  energyPattern: "morning",
+  biggestBlocker: "follow_through",
+  preferredStyle: "gentle",
+  commitmentLevel: "moderate",
 };
 
-export const NOTIFICATION_OPTIONS: ReadonlyArray<{
-  key: OnboardingNotificationKey;
+export const ONBOARDING_QUESTIONS: Array<{
+  key: OnboardingQuestionKey;
   title: string;
-  subtitle: string;
+  hint: string;
+  options: Array<{
+    label: string;
+    sub?: string;
+    value: string;
+  }>;
 }> = [
   {
-    key: "morningBriefing",
-    title: "Morning briefing",
-    subtitle: "Today screen summary - 8:00 AM",
+    key: "primaryGoal",
+    title: "What brings you here?",
+    hint: "Pick the one that feels most urgent right now.",
+    options: [
+      {
+        label: "Get more done each day",
+        sub: "Focus, tasks, deep work",
+        value: "productivity",
+      },
+      {
+        label: "Feel less overwhelmed",
+        sub: "Stress, clarity, calm",
+        value: "wellbeing",
+      },
+      {
+        label: "Build better habits",
+        sub: "Consistency, routines",
+        value: "habits",
+      },
+      {
+        label: "Improve my health",
+        sub: "Sleep, movement, energy",
+        value: "health",
+      },
+    ],
   },
   {
-    key: "approvalAlerts",
-    title: "Approval alerts",
-    subtitle: "Notify when AI has a change to propose",
+    key: "energyPattern",
+    title: "When do you feel sharpest?",
+    hint: "This shapes when we suggest your hardest tasks.",
+    options: [
+      { label: "Morning", sub: "I peak before noon", value: "morning" },
+      { label: "Afternoon", sub: "I warm up slowly", value: "afternoon" },
+      { label: "Evening", sub: "I come alive late", value: "evening" },
+      { label: "It varies a lot", value: "variable" },
+    ],
   },
   {
-    key: "eveningCheckin",
-    title: "Evening check-in",
-    subtitle: "Quick mood + day rating - 9:00 PM",
+    key: "biggestBlocker",
+    title: "What usually gets in the way?",
+    hint: "Be honest. This is just for you.",
+    options: [
+      {
+        label: "I start things but do not finish",
+        value: "follow_through",
+      },
+      {
+        label: "I get distracted easily",
+        value: "distraction",
+      },
+      {
+        label: "I do not know where to start",
+        value: "overwhelm",
+      },
+      {
+        label: "I run out of energy",
+        value: "energy",
+      },
+    ],
   },
   {
-    key: "weeklyReview",
-    title: "Weekly review reminder",
-    subtitle: "Friday evening - review unlocks",
+    key: "preferredStyle",
+    title: "How do you want to be coached?",
+    hint: "This shapes the AI tone across your first seven days.",
+    options: [
+      {
+        label: "Gentle nudges",
+        sub: "Low pressure, optional",
+        value: "gentle",
+      },
+      {
+        label: "Clear and direct",
+        sub: "Tell me what to do",
+        value: "direct",
+      },
+      {
+        label: "Structured plans",
+        sub: "Steps, schedules, systems",
+        value: "structured",
+      },
+    ],
   },
   {
-    key: "habitReminders",
-    title: "Habit reminders",
-    subtitle: "Nudge for unchecked habits - evening",
+    key: "commitmentLevel",
+    title: "How much time can you give this?",
+    hint: "Honest beats ambitious. The daily activity count adapts to this.",
+    options: [
+      { label: "5-10 min/day", value: "light" },
+      { label: "15-20 min/day", value: "moderate" },
+      { label: "30+ min/day", value: "committed" },
+    ],
   },
 ];
 
-export type DomainOption = (typeof DOMAIN_OPTIONS)[number];
+export const COMMITMENT_SUMMARIES: Record<CommitmentLevel, string> = {
+  light: "You will start with two small activities a day.",
+  moderate: "You will start with a balanced stack of three activities a day.",
+  committed: "You will start with four stronger activities a day.",
+};
+
+export const STYLE_SUMMARIES: Record<PreferredStyle, string> = {
+  gentle: "Suggestions stay soft until the AI earns confidence.",
+  direct: "Suggestions become blunt and specific as confidence rises.",
+  structured: "The AI will prefer sequences, systems, and clear next actions.",
+};

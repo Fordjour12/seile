@@ -1,35 +1,43 @@
-export type UserNotificationPreferences = {
-  morningBriefing: boolean;
-  approvalAlerts: boolean;
-  eveningCheckin: boolean;
-  weeklyReview: boolean;
-  habitReminders: boolean;
-};
+export type UserProfilePrimaryGoal =
+  | "productivity"
+  | "wellbeing"
+  | "habits"
+  | "health";
 
-export type UserProfilePlanningStyle = "light" | "balanced" | "intensive";
-export type UserProfileAiTone = "direct" | "coaching" | "minimal";
+export type UserProfileEnergyPattern =
+  | "morning"
+  | "afternoon"
+  | "evening"
+  | "variable";
+
+export type UserProfileBiggestBlocker =
+  | "follow_through"
+  | "distraction"
+  | "overwhelm"
+  | "energy";
+
+export type UserProfilePreferredStyle = "gentle" | "direct" | "structured";
+export type UserProfileCommitmentLevel = "light" | "moderate" | "committed";
 
 export type UserProfileInput = {
-  name: string;
-  selectedDomains: string[];
-  pinnedDomainIds: string[];
-  planningStyle: UserProfilePlanningStyle;
-  aiTone: UserProfileAiTone;
-  notifications: UserNotificationPreferences;
-  draftCompletedAt?: number;
+  primaryGoal: UserProfilePrimaryGoal;
+  energyPattern: UserProfileEnergyPattern;
+  biggestBlocker: UserProfileBiggestBlocker;
+  preferredStyle: UserProfilePreferredStyle;
+  commitmentLevel: UserProfileCommitmentLevel;
+  timezone: string;
 };
 
 export function isCompleteUserProfileInput(
   value: Partial<UserProfileInput>,
 ): value is UserProfileInput {
   return (
-    typeof value.name === "string" &&
-    value.name.trim().length > 0 &&
-    Array.isArray(value.selectedDomains) &&
-    value.selectedDomains.length > 0 &&
-    Array.isArray(value.pinnedDomainIds) &&
-    typeof value.planningStyle === "string" &&
-    typeof value.aiTone === "string" &&
-    value.notifications !== undefined
+    typeof value.primaryGoal === "string" &&
+    typeof value.energyPattern === "string" &&
+    typeof value.biggestBlocker === "string" &&
+    typeof value.preferredStyle === "string" &&
+    typeof value.commitmentLevel === "string" &&
+    typeof value.timezone === "string" &&
+    value.timezone.length > 0
   );
 }

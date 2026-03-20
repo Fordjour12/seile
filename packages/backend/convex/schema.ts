@@ -10,11 +10,28 @@ import {
 } from "./schema/ai";
 import {
   onboardingStageValidator,
+  onboardingPhaseValidator,
   onboardingStateTable,
-  userProfileAiToneValidator,
-  userProfileNotificationsValidator,
-  userProfilePlanningStyleValidator,
+  onboardingBiggestBlockerValidator,
+  onboardingCommitmentLevelValidator,
+  onboardingEnergyPatternValidator,
+  onboardingPreferredStyleValidator,
+  onboardingPrimaryGoalValidator,
   userProfileTable,
+  activityCategoryValidator,
+  activityTemplatesTable,
+  activityAssignmentsTable,
+  activityEventsTable,
+  activityReflectionsTable,
+  activityDifficultyValidator,
+  activitySourceValidator,
+  activityAssignmentStatusValidator,
+  activityAssignedByValidator,
+  suggestionVerdictValidator,
+  signalsTable,
+  suggestionsTable,
+  feedbackTable,
+  confidenceScoresTable,
 } from "./schema/onboarding";
 export {
   aiDomainValidator,
@@ -24,9 +41,18 @@ export {
 } from "./schema/ai";
 export {
   onboardingStageValidator,
-  userProfileAiToneValidator,
-  userProfileNotificationsValidator,
-  userProfilePlanningStyleValidator,
+  onboardingPhaseValidator,
+  onboardingBiggestBlockerValidator,
+  onboardingCommitmentLevelValidator,
+  onboardingEnergyPatternValidator,
+  onboardingPreferredStyleValidator,
+  onboardingPrimaryGoalValidator,
+  activityCategoryValidator,
+  activityDifficultyValidator,
+  activitySourceValidator,
+  activityAssignmentStatusValidator,
+  activityAssignedByValidator,
+  suggestionVerdictValidator,
 };
 
 export default defineSchema({
@@ -34,4 +60,12 @@ export default defineSchema({
   approvalRequests: approvalRequestsTable,
   userProfile: userProfileTable,
   onboardingState: onboardingStateTable,
-  });
+  activityTemplates: activityTemplatesTable,
+  activityAssignments: activityAssignmentsTable,
+  activityEvents: activityEventsTable,
+  activityReflections: activityReflectionsTable,
+  signals: signalsTable,
+  suggestions: suggestionsTable,
+  feedback: feedbackTable,
+  confidenceScores: confidenceScoresTable,
+});
