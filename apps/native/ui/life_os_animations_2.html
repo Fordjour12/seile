@@ -1,0 +1,677 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.page{padding:16px 0;display:flex;flex-direction:column;gap:36px}
+.anim-section{display:flex;flex-direction:column;gap:12px}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.07em;text-transform:uppercase;padding:0 4px}
+.section-meta{font-size:12px;color:var(--color-text-tertiary);padding:0 4px;margin-top:-6px;line-height:1.5}
+.demo-row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.code-block{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary);line-height:1.65;overflow-x:auto;white-space:pre;flex:1;min-width:220px}
+.kw{color:#9b8fff}.fn{color:#85b7eb}.str{color:#6fcf97}.cm{color:var(--color-text-tertiary)}.num{color:#e8a84a}
+.play-btn{padding:6px 14px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;font-size:12px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;transition:all .15s;margin-top:8px}
+.play-btn:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.play-btn.on{border-color:#9b8fff;color:#9b8fff}
+</style>
+
+<div class="page">
+
+<!-- 1. CHECK-IN SLIDER — haptic snap -->
+<div class="anim-section">
+  <div class="section-label">1 · Check-in slider — haptic snap with value pop</div>
+  <div class="section-meta">Mood and energy sliders snap to integer values with a micro spring bounce on the thumb. The number pops scale-up when the value changes.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:20px;padding:4px 0">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:500;color:var(--color-text-primary)">Energy</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end">
+            <span id="energy-val" style="font-size:24px;font-weight:500;color:#ba7517;line-height:1;transition:transform .15s cubic-bezier(.34,1.56,.64,1),color .2s">6</span>
+            <span id="energy-desc" style="font-size:11px;color:#ba7517;margin-top:2px">Moderate</span>
+          </div>
+        </div>
+        <div style="position:relative;height:44px;display:flex;align-items:center;cursor:pointer" id="energy-track" onmousedown="startSnap(event,'energy')" ontouchstart="startSnap(event,'energy')">
+          <div style="position:absolute;left:0;right:0;height:7px;background:#1e1e22;border-radius:4px"></div>
+          <div id="energy-fill" style="position:absolute;left:0;height:7px;background:#ba7517;border-radius:4px;width:55%"></div>
+          <div id="energy-thumb" style="position:absolute;width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid #ba7517;left:55%;transform:translateX(-50%);transition:transform .12s cubic-bezier(.34,1.56,.64,1),left .08s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--color-text-tertiary);padding:0 2px">
+          <span>1</span><span>3</span><span>5</span><span>7</span><span>9</span><span>10</span>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:500;color:var(--color-text-primary)">Focus</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end">
+            <span id="focus-val" style="font-size:24px;font-weight:500;color:#1d9e75;line-height:1;transition:transform .15s cubic-bezier(.34,1.56,.64,1)">8</span>
+            <span id="focus-desc" style="font-size:11px;color:#1d9e75;margin-top:2px">Sharp</span>
+          </div>
+        </div>
+        <div style="position:relative;height:44px;display:flex;align-items:center;cursor:pointer" id="focus-track" onmousedown="startSnap(event,'focus')" ontouchstart="startSnap(event,'focus')">
+          <div style="position:absolute;left:0;right:0;height:7px;background:#1e1e22;border-radius:4px"></div>
+          <div id="focus-fill" style="position:absolute;left:0;height:7px;background:#1d9e75;border-radius:4px;width:77%"></div>
+          <div id="focus-thumb" style="position:absolute;width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid #1d9e75;left:77%;transform:translateX(-50%);transition:transform .12s cubic-bezier(.34,1.56,.64,1),left .08s"></div>
+        </div>
+      </div>
+    </div>
+    <div class="code-block"><span class="cm">// Snapping slider with value pop</span>
+<span class="kw">const</span> raw = <span class="fn">useSharedValue</span>(<span class="num">5</span>)
+<span class="kw">const</span> snapped = <span class="fn">useSharedValue</span>(<span class="num">5</span>)
+<span class="kw">const</span> thumbScale = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+<span class="kw">const</span> labelScale = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+
+<span class="kw">const</span> gesture = Gesture.<span class="fn">Pan</span>()
+  .<span class="fn">onUpdate</span>(e => {
+    raw.value = <span class="fn">clamp</span>(
+      (e.x / TRACK_WIDTH) * <span class="num">10</span>, <span class="num">1</span>, <span class="num">10</span>
+    )
+    <span class="kw">const</span> newSnap = <span class="fn">Math.round</span>(raw.value)
+    <span class="kw">if</span> (newSnap !== snapped.value) {
+      snapped.value = newSnap
+      <span class="cm">// thumb micro-bounce on snap</span>
+      thumbScale.value = <span class="fn">withSequence</span>(
+        <span class="fn">withSpring</span>(<span class="num">1.15</span>, {
+          damping: <span class="num">8</span>, stiffness: <span class="num">400</span> }),
+        <span class="fn">withSpring</span>(<span class="num">1</span>, {
+          damping: <span class="num">12</span>, stiffness: <span class="num">300</span> })
+      )
+      <span class="cm">// label pop</span>
+      labelScale.value = <span class="fn">withSequence</span>(
+        <span class="fn">withSpring</span>(<span class="num">1.3</span>, {
+          damping: <span class="num">6</span>, stiffness: <span class="num">500</span> }),
+        <span class="fn">withSpring</span>(<span class="num">1</span>, {
+          damping: <span class="num">14</span>, stiffness: <span class="num">300</span> })
+      )
+      <span class="cm">// haptic on native</span>
+      <span class="fn">runOnJS</span>(Haptics.<span class="fn">selectionAsync</span>)()
+    }
+  })</div>
+  </div>
+</div>
+
+<!-- 2. FAB EXPAND -->
+<div class="anim-section">
+  <div class="section-label">2 · FAB expand — quick-add radial burst</div>
+  <div class="section-meta">Holding the FAB expands radial action buttons with spring fan. Each orbiting button enters on a different angle with staggered delay.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:220px;position:relative;height:240px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden">
+      <div style="position:absolute;inset:0;padding:16px;opacity:.3">
+        <div style="height:9px;background:var(--color-border-tertiary);border-radius:5px;width:65%;margin-bottom:8px"></div>
+        <div style="height:40px;background:var(--color-border-tertiary);border-radius:10px;margin-bottom:8px"></div>
+        <div style="height:40px;background:var(--color-border-tertiary);border-radius:10px"></div>
+      </div>
+      <div id="fab-orb-wrap" style="position:absolute;bottom:20px;right:20px;width:48px;height:48px">
+        <div id="fab-orbit-task" style="position:absolute;width:36px;height:36px;border-radius:50%;background:#1e1e28;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0) translate(0px,0px);transition:all .3s cubic-bezier(.34,1.56,.64,1);bottom:0;right:0">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="3" width="10" height="10" rx="2" stroke="#9b8fff" stroke-width="1.4"/><path d="M6 8l1.5 1.5L10 6" stroke="#9b8fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div id="fab-orbit-prayer" style="position:absolute;width:36px;height:36px;border-radius:50%;background:#2a2040;border:0.5px solid #534AB7;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0) translate(0px,0px);transition:all .3s cubic-bezier(.34,1.56,.64,1);transition-delay:.04s;bottom:0;right:0">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="#9b8fff" opacity=".5"/></svg>
+        </div>
+        <div id="fab-orbit-expense" style="position:absolute;width:36px;height:36px;border-radius:50%;background:#1a2a1e;border:0.5px solid #0F6E56;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0) translate(0px,0px);transition:all .3s cubic-bezier(.34,1.56,.64,1);transition-delay:.08s;bottom:0;right:0">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#6fcf97" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div id="fab-orbit-note" style="position:absolute;width:36px;height:36px;border-radius:50%;background:#2a1020;border:0.5px solid #993556;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0) translate(0px,0px);transition:all .3s cubic-bezier(.34,1.56,.64,1);transition-delay:.12s;bottom:0;right:0">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3h10v8H3z" stroke="#ed93b1" stroke-width="1.3"/><path d="M5 6h6M5 9h4" stroke="#ed93b1" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div id="fab-main" style="position:absolute;bottom:0;right:0;width:48px;height:48px;border-radius:50%;background:#9b8fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .25s cubic-bezier(.34,1.56,.64,1),background .2s" onclick="toggleFab()">
+          <svg id="fab-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" style="transition:transform .25s cubic-bezier(.34,1.2,.64,1)">
+            <path d="M10 4v12M4 10h12" stroke="#0e0e10" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div id="fab-labels" style="position:absolute;bottom:20px;right:80px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;opacity:0;transition:opacity .2s;pointer-events:none">
+        <span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 8px;border-radius:10px;border:0.5px solid var(--color-border-tertiary)">Note</span>
+        <span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 8px;border-radius:10px;border:0.5px solid var(--color-border-tertiary)">Expense</span>
+        <span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 8px;border-radius:10px;border:0.5px solid var(--color-border-tertiary)">Prayer</span>
+        <span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 8px;border-radius:10px;border:0.5px solid var(--color-border-tertiary)">Task</span>
+      </div>
+    </div>
+    <div class="code-block"><span class="cm">// FAB radial burst spring</span>
+<span class="kw">const</span> ACTIONS = [
+  { angle: -<span class="num">90</span>, radius: <span class="num">70</span>, icon: <span class="str">'task'</span> },
+  { angle: -<span class="num">135</span>, radius: <span class="num">70</span>, icon: <span class="str">'prayer'</span> },
+  { angle: <span class="num">180</span>, radius: <span class="num">70</span>, icon: <span class="str">'expense'</span> },
+  { angle: -<span class="num">45</span>, radius: <span class="num">70</span>, icon: <span class="str">'note'</span> },
+]
+
+ACTIONS.<span class="fn">forEach</span>((action, i) => {
+  <span class="kw">const</span> rad = action.angle * (Math.PI / <span class="num">180</span>)
+  <span class="kw">const</span> tx = <span class="fn">Math.cos</span>(rad) * action.radius
+  <span class="kw">const</span> ty = <span class="fn">Math.sin</span>(rad) * action.radius
+
+  translateX[i].value = <span class="fn">withDelay</span>(
+    i * <span class="num">40</span>,
+    <span class="fn">withSpring</span>(isOpen ? tx : <span class="num">0</span>, {
+      damping: <span class="num">14</span>, stiffness: <span class="num">200</span>
+    })
+  )
+  scale[i].value = <span class="fn">withDelay</span>(
+    i * <span class="num">40</span>,
+    <span class="fn">withSpring</span>(isOpen ? <span class="num">1</span> : <span class="num">0</span>, {
+      damping: <span class="num">16</span>, stiffness: <span class="num">260</span>
+    })
+  )
+})
+
+<span class="cm">// FAB rotation 45° → becomes ✕</span>
+fabRotation.value = <span class="fn">withSpring</span>(
+  isOpen ? <span class="num">45</span> : <span class="num">0</span>,
+  { damping: <span class="num">18</span>, stiffness: <span class="num">300</span> }
+)</div>
+  </div>
+</div>
+
+<!-- 3. APPROVAL CARD — approve flash -->
+<div class="anim-section">
+  <div class="section-label">3 · Approval card — approve flash + exit</div>
+  <div class="section-meta">On approve, the card border flashes green and the background briefly tints before the card scales down and fades out with a spring. Rejection flashes red.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px;max-width:300px">
+      <div id="approval-card" style="background:#1a1a24;border:1px solid #2d2a40;border-radius:14px;padding:14px;transition:border-color .15s,background .15s,transform .35s cubic-bezier(.34,1,.64,1),opacity .3s">
+        <div style="font-size:13px;font-weight:500;color:#c8c0ff;margin-bottom:4px">Create emergency fund</div>
+        <div style="font-size:12px;color:#555;margin-bottom:12px">Finance · GH₵ 400/month · approval required</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;padding:9px;background:#9b8fff;border-radius:10px;font-size:12px;font-weight:500;color:#0e0e10;cursor:pointer;text-align:center" onclick="flashApprove()">Approve</div>
+          <div style="flex:1;padding:9px;background:#1a0e0e;border:0.5px solid #3a1a1a;border-radius:10px;font-size:12px;color:#e24b4a;cursor:pointer;text-align:center" onclick="flashReject()">Reject</div>
+        </div>
+      </div>
+      <div id="approval-done" style="display:none;padding:14px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:14px;text-align:center">
+        <div style="font-size:13px;color:var(--color-text-secondary)" id="approval-done-text">Approved — writing to your plan</div>
+        <button class="play-btn" onclick="resetApproval()">Reset</button>
+      </div>
+    </div>
+    <div class="code-block"><span class="cm">// Flash + spring exit sequence</span>
+<span class="kw">const</span> borderColor = <span class="fn">useSharedValue</span>(<span class="str">'#2d2a40'</span>)
+<span class="kw">const</span> bgTint = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+<span class="kw">const</span> scale = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+<span class="kw">const</span> opacity = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+
+<span class="kw">const</span> onApprove = () => {
+  <span class="cm">// 1. flash green border</span>
+  borderColor.value = <span class="fn">withSequence</span>(
+    <span class="fn">withTiming</span>(<span class="str">'#1d9e75'</span>, { duration: <span class="num">80</span> }),
+    <span class="fn">withDelay</span>(<span class="num">300</span>,
+      <span class="fn">withTiming</span>(<span class="str">'#2d2a40'</span>, { duration: <span class="num">200</span> }))
+  )
+  <span class="cm">// 2. bg tint fades in then out</span>
+  bgTint.value = <span class="fn">withSequence</span>(
+    <span class="fn">withTiming</span>(<span class="num">1</span>, { duration: <span class="num">100</span> }),
+    <span class="fn">withDelay</span>(<span class="num">200</span>,
+      <span class="fn">withTiming</span>(<span class="num">0</span>, { duration: <span class="num">200</span> }))
+  )
+  <span class="cm">// 3. spring exit after flash</span>
+  scale.value = <span class="fn">withDelay</span>(<span class="num">350</span>,
+    <span class="fn">withSpring</span>(<span class="num">0.94</span>, {
+      damping: <span class="num">20</span>, stiffness: <span class="num">300</span> }))
+  opacity.value = <span class="fn">withDelay</span>(<span class="num">400</span>,
+    <span class="fn">withTiming</span>(<span class="num">0</span>, { duration: <span class="num">250</span> }))
+}</div>
+  </div>
+</div>
+
+<!-- 4. STREAK NUMBER — count up on new streak -->
+<div class="anim-section">
+  <div class="section-label">4 · Streak counter — count-up with spring overshoot</div>
+  <div class="section-meta">When a new streak milestone is hit, the number counts up with an elastic overshoot — briefly overshoots the target, then settles. Used on habit streak cards and domain health.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:180px;max-width:240px;display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;text-align:center">
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">Prayer streak</div>
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+          <span id="streak-num" style="font-size:48px;font-weight:500;color:#9b8fff;line-height:1;transition:transform .3s cubic-bezier(.34,1.56,.64,1)">5</span>
+          <span style="font-size:16px;color:var(--color-text-tertiary)">days</span>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:4px" id="streak-sub">Best: 8 days</div>
+      </div>
+      <div style="display:flex;gap:4px" id="streak-dots-anim">
+        <div style="flex:1;height:6px;border-radius:3px;background:#534AB7;opacity:.3" class="sdot-anim"></div>
+        <div style="flex:1;height:6px;border-radius:3px;background:#534AB7;opacity:.5" class="sdot-anim"></div>
+        <div style="flex:1;height:6px;border-radius:3px;background:#534AB7;opacity:.7" class="sdot-anim"></div>
+        <div style="flex:1;height:6px;border-radius:3px;background:#534AB7;opacity:.85" class="sdot-anim"></div>
+        <div style="flex:1;height:6px;border-radius:3px;background:#9b8fff" class="sdot-anim"></div>
+        <div style="flex:1;height:6px;border-radius:3px;background:#1e1e22" class="sdot-anim"></div>
+        <div style="flex:1;height:6px;border-radius:3px;background:#1e1e22" class="sdot-anim"></div>
+      </div>
+      <button class="play-btn" onclick="animateStreak()">Log today ↗</button>
+    </div>
+    <div class="code-block"><span class="cm">// Elastic count-up on milestone</span>
+<span class="kw">const</span> displayVal = <span class="fn">useSharedValue</span>(prev)
+<span class="kw">const</span> scale = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+
+<span class="kw">const</span> onNewStreak = (next) => {
+  <span class="cm">// number springs to target + overshoot</span>
+  displayVal.value = <span class="fn">withSpring</span>(next, {
+    damping: <span class="num">10</span>,
+    stiffness: <span class="num">100</span>,
+    mass: <span class="num">0.6</span>,
+    overshootClamping: <span class="kw">false</span>
+  })
+  <span class="cm">// scale pop on the whole card</span>
+  scale.value = <span class="fn">withSequence</span>(
+    <span class="fn">withSpring</span>(<span class="num">1.08</span>, {
+      damping: <span class="num">8</span>, stiffness: <span class="num">400</span> }),
+    <span class="fn">withSpring</span>(<span class="num">1</span>, {
+      damping: <span class="num">14</span>, stiffness: <span class="num">200</span> })
+  )
+}
+
+<span class="kw">const</span> style = <span class="fn">useAnimatedStyle</span>(() => ({
+  transform: [{ scale: scale.value }]
+}))
+
+<span class="cm">// In JSX use a derived display value:</span>
+<span class="cm">// Math.round(displayVal.value)</span></div>
+  </div>
+</div>
+
+<!-- 5. DOMAIN CARD — press scale -->
+<div class="anim-section">
+  <div class="section-label">5 · Domain card — press feedback scale</div>
+  <div class="section-meta">All tappable cards use a subtle press-down scale (0.97) on Pressable with a fast spring release. Gives every tap a physical click feel without delay.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px;max-width:280px;display:flex;flex-direction:column;gap:8px">
+      <div class="pressable-card" id="pc-faith" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;cursor:pointer;transition:transform .12s cubic-bezier(.34,1.56,.64,1);user-select:none" onmousedown="pressCard(this)" onmouseup="releaseCard(this)" onmouseleave="releaseCard(this)" ontouchstart="pressCard(this)" ontouchend="releaseCard(this)" onclick="sendPrompt('Open my Faith domain')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#534AB7;flex-shrink:0"></div>
+          <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);flex:1">Faith</span>
+          <span style="font-size:13px;font-weight:500;color:#b4adf5">85%</span>
+        </div>
+      </div>
+      <div class="pressable-card" id="pc-career" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;cursor:pointer;transition:transform .12s cubic-bezier(.34,1.56,.64,1);user-select:none" onmousedown="pressCard(this)" onmouseup="releaseCard(this)" onmouseleave="releaseCard(this)" ontouchstart="pressCard(this)" ontouchend="releaseCard(this)" onclick="sendPrompt('Open my Career domain')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#185FA5;flex-shrink:0"></div>
+          <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);flex:1">Career</span>
+          <span style="font-size:13px;font-weight:500;color:#85b7eb">90%</span>
+        </div>
+      </div>
+      <div class="pressable-card" id="pc-finance" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;cursor:pointer;transition:transform .12s cubic-bezier(.34,1.56,.64,1);user-select:none" onmousedown="pressCard(this)" onmouseup="releaseCard(this)" onmouseleave="releaseCard(this)" ontouchstart="pressCard(this)" ontouchend="releaseCard(this)" onclick="sendPrompt('Open my Finance domain')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#ba7517;flex-shrink:0"></div>
+          <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);flex:1">Finance</span>
+          <span style="font-size:13px;font-weight:500;color:#e8a84a">55%</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);padding:0 2px">press and hold any card</div>
+    </div>
+    <div class="code-block"><span class="cm">// Universal Pressable scale</span>
+<span class="kw">const</span> <span class="fn">PressableCard</span> = ({ children, onPress }) => {
+  <span class="kw">const</span> scale = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+
+  <span class="kw">const</span> gesture = Gesture.<span class="fn">Tap</span>()
+    .<span class="fn">maxDuration</span>(<span class="num">10000</span>)
+    .<span class="fn">onBegin</span>(() => {
+      scale.value = <span class="fn">withSpring</span>(<span class="num">0.97</span>, {
+        damping: <span class="num">20</span>, stiffness: <span class="num">400</span>
+      })
+    })
+    .<span class="fn">onFinalize</span>(() => {
+      scale.value = <span class="fn">withSpring</span>(<span class="num">1</span>, {
+        damping: <span class="num">16</span>, stiffness: <span class="num">300</span>
+      })
+    })
+    .<span class="fn">onEnd</span>(() => <span class="fn">runOnJS</span>(onPress)())
+
+  <span class="kw">const</span> style = <span class="fn">useAnimatedStyle</span>(() => ({
+    transform: [{ scale: scale.value }]
+  }))
+}</div>
+  </div>
+</div>
+
+<!-- 6. SKELETON SHIMMER — loading state -->
+<div class="anim-section">
+  <div class="section-label">6 · Skeleton shimmer — cron loading state</div>
+  <div class="section-meta">While the 6 AM cron sync runs, Today shows shimmer placeholders. A shared shimmer value runs once and is passed to all skeleton items as a prop — no per-item timers.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px;max-width:300px;display:flex;flex-direction:column;gap:10px;padding:4px 0">
+      <div style="height:20px;border-radius:6px;overflow:hidden;width:55%"><div class="shimmer"></div></div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="height:10px;border-radius:5px;overflow:hidden;width:80%"><div class="shimmer"></div></div>
+        <div style="height:9px;border-radius:5px;overflow:hidden;width:50%"><div class="shimmer" style="animation-delay:.15s"></div></div>
+      </div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="height:10px;border-radius:5px;overflow:hidden;width:70%"><div class="shimmer" style="animation-delay:.1s"></div></div>
+        <div style="height:9px;border-radius:5px;overflow:hidden;width:45%"><div class="shimmer" style="animation-delay:.25s"></div></div>
+      </div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="height:10px;border-radius:5px;overflow:hidden;width:85%"><div class="shimmer" style="animation-delay:.05s"></div></div>
+        <div style="height:9px;border-radius:5px;overflow:hidden;width:60%"><div class="shimmer" style="animation-delay:.2s"></div></div>
+      </div>
+    </div>
+    <div class="code-block"><span class="cm">// Shared shimmer — one value, all skeletons</span>
+<span class="kw">const</span> shimmerX = <span class="fn">useSharedValue</span>(-<span class="num">1</span>)
+
+<span class="fn">useEffect</span>(() => {
+  shimmerX.value = <span class="fn">withRepeat</span>(
+    <span class="fn">withTiming</span>(<span class="num">1</span>, {
+      duration: <span class="num">1200</span>,
+      easing: Easing.<span class="fn">inOut</span>(Easing.ease)
+    }),
+    -<span class="num">1</span>, <span class="kw">false</span>
+  )
+}, [])
+
+<span class="kw">const</span> <span class="fn">SkeletonLine</span> = ({ shimmerX, width }) => {
+  <span class="kw">const</span> style = <span class="fn">useAnimatedStyle</span>(() => ({
+    transform: [{
+      translateX: shimmerX.value *
+        (width + SCREEN_WIDTH)
+    }]
+  }))
+
+  <span class="kw">return</span> (
+    &lt;View style={[styles.line, { width }]}&gt;
+      &lt;Animated.View style={[
+        styles.shimmerGradient, style
+      ]} /&gt;
+    &lt;/View&gt;
+  )
+}</div>
+  </div>
+</div>
+
+<!-- 7. WEEKLY REVIEW PHASE TRANSITION -->
+<div class="anim-section">
+  <div class="section-label">7 · Weekly review phase — cross-fade with slide</div>
+  <div class="section-meta">Each phase of the weekly review fades out upward while the incoming phase fades in from below. The progress bar fills with a spring between phases.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px;max-width:300px">
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden">
+        <div style="height:2px;background:var(--color-border-tertiary);margin:0"><div id="phase-bar" style="height:100%;background:#9b8fff;transition:width .5s cubic-bezier(.34,1.2,.64,1);width:20%"></div></div>
+        <div style="padding:16px;min-height:140px;position:relative;overflow:hidden">
+          <div id="phase-content" style="transition:opacity .25s,transform .3s cubic-bezier(.4,0,.2,1)">
+            <div style="font-size:10px;color:var(--color-text-tertiary);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px" id="phase-eyebrow">Phase 1 · AI pre-read</div>
+            <div style="font-size:15px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px" id="phase-title">Here's your week.</div>
+            <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.5" id="phase-sub">Faith and Career carried it. Finance was the open wound. Everything else held steady.</div>
+          </div>
+        </div>
+        <div style="padding:0 16px 14px;display:flex;gap:8px">
+          <button class="play-btn" style="margin:0" id="phase-skip" onclick="nextPhase(-1)">← Back</button>
+          <button class="play-btn on" style="margin:0;flex:1;text-align:center" id="phase-next" onclick="nextPhase(1)">Continue →</button>
+        </div>
+      </div>
+    </div>
+    <div class="code-block"><span class="cm">// Phase cross-fade transition</span>
+<span class="kw">const</span> opacity = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+<span class="kw">const</span> translateY = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+<span class="kw">const</span> barWidth = <span class="fn">useSharedValue</span>(phase / total)
+
+<span class="kw">const</span> goToPhase = (next, dir) => {
+  <span class="cm">// exit: fade + slide direction</span>
+  opacity.value = <span class="fn">withTiming</span>(<span class="num">0</span>, {
+    duration: <span class="num">160</span> })
+  translateY.value = <span class="fn">withTiming</span>(
+    dir * -<span class="num">12</span>, { duration: <span class="num">180</span> })
+
+  <span class="fn">setTimeout</span>(() => {
+    <span class="cm">// swap content while invisible</span>
+    <span class="fn">setPhase</span>(next)
+    translateY.value = dir * <span class="num">16</span>
+
+    <span class="cm">// enter: spring up from below</span>
+    opacity.value = <span class="fn">withSpring</span>(<span class="num">1</span>, {
+      damping: <span class="num">22</span>, stiffness: <span class="num">200</span> })
+    translateY.value = <span class="fn">withSpring</span>(<span class="num">0</span>, {
+      damping: <span class="num">20</span>, stiffness: <span class="num">180</span> })
+
+    <span class="cm">// progress bar springs to new %</span>
+    barWidth.value = <span class="fn">withSpring</span>(
+      next / total, {
+        damping: <span class="num">18</span>, stiffness: <span class="num">160</span> })
+  }, <span class="num">170</span>)
+}</div>
+  </div>
+</div>
+
+<!-- 8. NUMBER TICKER — balance / savings update -->
+<div class="anim-section">
+  <div class="section-label">8 · Number ticker — finance balance update</div>
+  <div class="section-meta">When a transaction is logged or a savings goal updates, the balance number ticks through intermediate values with a spring easing. Each digit rolls independently.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:180px;max-width:260px">
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px;text-align:center">
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">Budget remaining</div>
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:2px">
+          <span style="font-size:16px;color:var(--color-text-tertiary);margin-right:2px">GH₵</span>
+          <span id="balance-num" style="font-size:36px;font-weight:500;color:#1d9e75;line-height:1;font-variant-numeric:tabular-nums">1,240</span>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:6px">of GH₵ 4,000 budget</div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <div style="flex:1;padding:8px;background:#1a0e0e;border:0.5px solid #3a1a1a;border-radius:9px;font-size:12px;color:#e24b4a;cursor:pointer;text-align:center" onclick="spendAmount(320)">- GH₵ 320</div>
+          <div style="flex:1;padding:8px;background:#0e1a0e;border:0.5px solid #1a3a1a;border-radius:9px;font-size:12px;color:#1d9e75;cursor:pointer;text-align:center" onclick="addAmount(400)">+ GH₵ 400</div>
+        </div>
+      </div>
+    </div>
+    <div class="code-block"><span class="cm">// Animated number ticker</span>
+<span class="kw">const</span> animatedVal = <span class="fn">useSharedValue</span>(balance)
+
+<span class="kw">const</span> updateBalance = (newVal) => {
+  animatedVal.value = <span class="fn">withSpring</span>(newVal, {
+    damping: <span class="num">18</span>,
+    stiffness: <span class="num">120</span>,
+    mass: <span class="num">0.8</span>
+  })
+}
+
+<span class="kw">const</span> displayText = <span class="fn">useDerivedValue</span>(() => {
+  <span class="kw">const</span> v = <span class="fn">Math.round</span>(animatedVal.value)
+  <span class="kw">return</span> v.<span class="fn">toLocaleString</span>(<span class="str">'en-GH'</span>)
+})
+
+<span class="cm">// AnimatedText from react-native-reanimated</span>
+<span class="cm">// or TextAnimator for per-digit rolling</span>
+<span class="kw">return</span> (
+  &lt;AnimatedText
+    style={[styles.balance, {
+      color: <span class="fn">interpolateColor</span>(
+        animatedVal.value,
+        [<span class="num">0</span>, <span class="num">500</span>, <span class="num">2000</span>],
+        [<span class="str">'#e24b4a'</span>, <span class="str">'#ba7517'</span>, <span class="str">'#1d9e75'</span>]
+      )
+    }]}
+    text={displayText}
+  /&gt;
+)</div>
+  </div>
+</div>
+
+</div>
+
+<style>
+.shimmer{width:200%;height:100%;background:linear-gradient(90deg,var(--color-border-tertiary) 0%,var(--color-background-secondary) 40%,var(--color-border-tertiary) 80%);animation:shimmer-move 1.4s ease-in-out infinite;transform:translateX(-50%)}
+@keyframes shimmer-move{0%{transform:translateX(-50%)}100%{transform:translateX(50%)}}
+</style>
+
+<script>
+var snapDragging=null,snapLastVal={energy:6,focus:8};
+var energyDescs=['','Very low','Low','Low','Moderate','Moderate','Moderate','Good','Sharp','High','Peak'];
+var focusDescs=['','Scattered','Poor','Poor','Okay','Okay','Decent','Good','Sharp','Sharp','Laser'];
+function startSnap(e,id){
+  snapDragging=id;
+  document.addEventListener('mousemove',doSnap);
+  document.addEventListener('mouseup',stopSnap);
+  document.addEventListener('touchmove',doSnap,{passive:false});
+  document.addEventListener('touchend',stopSnap);
+  doSnap(e);
+  e.preventDefault();
+}
+function doSnap(e){
+  if(!snapDragging)return;
+  var id=snapDragging;
+  var track=document.getElementById(id+'-track');
+  var rect=track.getBoundingClientRect();
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var pct=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
+  var val=Math.max(1,Math.min(10,Math.round(pct*10)));
+  var p=(val/10)*100;
+  document.getElementById(id+'-fill').style.width=p+'%';
+  document.getElementById(id+'-thumb').style.left=p+'%';
+  if(val!==snapLastVal[id]){
+    var vEl=document.getElementById(id+'-val');
+    vEl.style.transform='scale(1.35)';
+    setTimeout(function(){vEl.style.transform='scale(1)'},160);
+    snapLastVal[id]=val;
+  }
+  document.getElementById(id+'-val').textContent=val;
+  var desc=id==='energy'?energyDescs[val]:focusDescs[val];
+  document.getElementById(id+'-desc').textContent=desc;
+}
+function stopSnap(){snapDragging=null;document.removeEventListener('mousemove',doSnap);document.removeEventListener('mouseup',stopSnap);document.removeEventListener('touchmove',doSnap);document.removeEventListener('touchend',stopSnap);}
+
+var fabOpen=false;
+var fabPositions=[
+  {tx:-56,ty:-56,el:'fab-orbit-task'},
+  {tx:-80,ty:-20,el:'fab-orbit-prayer'},
+  {tx:-56,ty:12,el:'fab-orbit-expense'},
+  {tx:-16,ty:-80,el:'fab-orbit-note'}
+];
+function toggleFab(){
+  fabOpen=!fabOpen;
+  fabPositions.forEach(function(p){
+    var el=document.getElementById(p.el);
+    el.style.opacity=fabOpen?'1':'0';
+    el.style.transform=fabOpen?'scale(1) translate('+p.tx+'px,'+p.ty+'px)':'scale(0) translate(0px,0px)';
+  });
+  document.getElementById('fab-icon').style.transform=fabOpen?'rotate(45deg)':'rotate(0deg)';
+  document.getElementById('fab-main').style.background=fabOpen?'#7a6ef0':'#9b8fff';
+  document.getElementById('fab-labels').style.opacity=fabOpen?'1':'0';
+}
+
+function flashApprove(){
+  var card=document.getElementById('approval-card');
+  var done=document.getElementById('approval-done');
+  card.style.borderColor='#1d9e75';
+  card.style.background='#0e1a14';
+  setTimeout(function(){
+    card.style.borderColor='';
+    card.style.background='';
+    setTimeout(function(){
+      card.style.transform='scale(0.94)';
+      card.style.opacity='0';
+      setTimeout(function(){
+        card.style.display='none';
+        done.style.display='block';
+        document.getElementById('approval-done-text').textContent='Approved — writing to your plan';
+      },300);
+    },200);
+  },400);
+}
+function flashReject(){
+  var card=document.getElementById('approval-card');
+  var done=document.getElementById('approval-done');
+  card.style.borderColor='#e24b4a';
+  card.style.background='#1a0e0e';
+  setTimeout(function(){
+    card.style.borderColor='';
+    card.style.background='';
+    setTimeout(function(){
+      card.style.transform='scale(0.94)';
+      card.style.opacity='0';
+      setTimeout(function(){
+        card.style.display='none';
+        done.style.display='block';
+        document.getElementById('approval-done-text').textContent='Rejected — no changes made';
+      },300);
+    },200);
+  },400);
+}
+function resetApproval(){
+  var card=document.getElementById('approval-card');
+  var done=document.getElementById('approval-done');
+  card.style.display='block';
+  card.style.transform='scale(1)';
+  card.style.opacity='1';
+  card.style.borderColor='';
+  card.style.background='';
+  done.style.display='none';
+}
+
+var streakVal=5,streakAnimating=false;
+function animateStreak(){
+  if(streakAnimating)return;
+  streakAnimating=true;
+  var next=streakVal+1;
+  var el=document.getElementById('streak-num');
+  var start=null,from=streakVal,dur=600;
+  function tick(ts){
+    if(!start)start=ts;
+    var prog=Math.min((ts-start)/dur,1);
+    var ease=1-Math.pow(1-prog,2.5);
+    var v=from+(next-from)*ease;
+    var overshoot=next+(next-from)*0.08*Math.sin(ease*Math.PI);
+    el.textContent=Math.round(prog<0.85?v:overshoot);
+    if(prog<1){requestAnimationFrame(tick);}
+    else{
+      el.textContent=next;
+      el.style.transform='scale(1.12)';
+      setTimeout(function(){el.style.transform='scale(1)';},200);
+      streakVal=next;streakAnimating=false;
+      document.getElementById('streak-sub').textContent='Best: '+(next>8?next:8)+' days';
+      updateStreakDots(next);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+function updateStreakDots(val){
+  var dots=document.querySelectorAll('.sdot-anim');
+  dots.forEach(function(d,i){
+    d.style.background=i<val?'#534AB7':'#1e1e22';
+    d.style.opacity=i<val?Math.min(.3+i*.15,1):'1';
+  });
+}
+
+function pressCard(el){el.style.transform='scale(0.97)';}
+function releaseCard(el){el.style.transform='scale(1)';}
+
+var phaseIdx=0;
+var phases=[
+  {eyebrow:'Phase 1 · AI pre-read',title:"Here's your week.",sub:'Faith and Career carried it. Finance was the open wound. Everything else held steady.',bar:'20%'},
+  {eyebrow:'Phase 2 · Reflection',title:'Your turn.',sub:'Three questions. Honest answers only — this shapes your next week.',bar:'40%'},
+  {eyebrow:'Phase 3 · AI proposals',title:"Here's what I'd change.",sub:'Based on your week and your reflection. Approve what fits — skip what doesn\'t.',bar:'60%'},
+  {eyebrow:'Phase 4 · Next week',title:'Next week, built.',sub:'Draft plan with your approved changes applied. 16 priorities across 5 days.',bar:'80%'},
+  {eyebrow:'Phase 5 · Complete',title:'Week reviewed.',sub:'3 changes applied. Faith routine is your strongest anchor right now.',bar:'100%'}
+];
+function nextPhase(dir){
+  var next=Math.max(0,Math.min(phases.length-1,phaseIdx+dir));
+  if(next===phaseIdx)return;
+  var content=document.getElementById('phase-content');
+  content.style.opacity='0';
+  content.style.transform='translateY('+(dir>0?'-10px':'10px')+')';
+  setTimeout(function(){
+    phaseIdx=next;
+    var p=phases[phaseIdx];
+    document.getElementById('phase-eyebrow').textContent=p.eyebrow;
+    document.getElementById('phase-title').textContent=p.title;
+    document.getElementById('phase-sub').textContent=p.sub;
+    document.getElementById('phase-bar').style.width=p.bar;
+    content.style.transition='none';
+    content.style.transform='translateY('+(dir>0?'12px':'-12px')+')';
+    content.style.opacity='0';
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        content.style.transition='opacity .25s,transform .3s cubic-bezier(.4,0,.2,1)';
+        content.style.opacity='1';
+        content.style.transform='translateY(0)';
+      });
+    });
+  },180);
+}
+
+var balanceVal=1240;
+function animBalance(target){
+  var el=document.getElementById('balance-num');
+  var from=balanceVal,start=null,dur=700;
+  function tick(ts){
+    if(!start)start=ts;
+    var prog=Math.min((ts-start)/dur,1);
+    var ease=1-Math.pow(1-prog,3);
+    var v=Math.round(from+(target-from)*ease);
+    el.textContent=v.toLocaleString('en-GH');
+    el.style.color=v<500?'#e24b4a':v<1000?'#ba7517':'#1d9e75';
+    if(prog<1)requestAnimationFrame(tick);
+    else{balanceVal=target;el.textContent=target.toLocaleString('en-GH');}
+  }
+  requestAnimationFrame(tick);
+}
+function spendAmount(amt){if(balanceVal-amt>=0)animBalance(balanceVal-amt);}
+function addAmount(amt){animBalance(balanceVal+amt);}
+</script>

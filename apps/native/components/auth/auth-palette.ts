@@ -1,0 +1,18 @@
+export const AUTH_PALETTE = {
+  screen: "#0e0e10",
+  surface: "#1a1a1e",
+  surfaceElevated: "#131317",
+  surfaceAccent: "#1e1a30",
+  border: "#2a2a2e",
+  borderStrong: "#3d3570",
+  text: "#ffffff",
+  textMuted: "#c9cad7",
+  textSubtle: "#8a8ca2",
+  textFaint: "#616373",
+  primary: "#9b8fff",
+  positive: "#1d9e75",
+  warning: "#ba7517",
+  danger: "#e24b4a",
+  faith: "#534AB7",
+  info: "#85b7eb",
+} as const;

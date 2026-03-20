@@ -1,0 +1,696 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent}
+.page{padding:16px 0;display:flex;flex-direction:column;gap:32px}
+
+.anim-section{display:flex;flex-direction:column;gap:12px}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.07em;text-transform:uppercase;padding:0 4px}
+.section-meta{font-size:12px;color:var(--color-text-tertiary);padding:0 4px;margin-top:-6px;line-height:1.5}
+
+.demo-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.demo-card{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;flex:1;min-width:140px;max-width:180px;cursor:pointer;user-select:none;display:flex;flex-direction:column;align-items:center;gap:12px;transition:border-color .15s}
+.demo-card:hover{border-color:var(--color-border-secondary)}
+.dc-label{font-size:11px;color:var(--color-text-secondary);text-align:center;font-weight:500}
+.dc-hint{font-size:10px;color:var(--color-text-tertiary);text-align:center;margin-top:-6px}
+
+.code-block{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary);line-height:1.6;overflow-x:auto;white-space:pre}
+.kw{color:#9b8fff}
+.fn{color:#85b7eb}
+.str{color:#6fcf97}
+.cm{color:var(--color-text-tertiary)}
+.num{color:#e8a84a}
+
+.phone-mini{width:160px;height:300px;background:#0e0e10;border-radius:28px;overflow:hidden;border:1px solid #2a2a2e;position:relative;flex-shrink:0}
+.pm-screen{width:100%;height:100%;position:relative;overflow:hidden}
+
+.play-btn{padding:6px 14px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;font-size:12px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;transition:all .15s}
+.play-btn:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.play-btn.running{border-color:#9b8fff;color:#9b8fff}
+</style>
+
+<div class="page">
+
+<div class="anim-section">
+  <div class="section-label">1 · Spring entrance — card items</div>
+  <div class="section-meta">Used when Today priorities load, domain cards enter, or approval items appear in the inbox.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px">
+      <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0" id="spring-demo">
+        <div class="spring-card" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px;opacity:0;transform:translateY(20px) scale(0.96);transition:opacity .4s cubic-bezier(.34,1.56,.64,1),transform .4s cubic-bezier(.34,1.56,.64,1)">
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">Morning devotional + prayer</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary)">Faith · 6:00 AM</div>
+        </div>
+        <div class="spring-card" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px;opacity:0;transform:translateY(20px) scale(0.96);transition:opacity .4s cubic-bezier(.34,1.56,.64,1),transform .4s cubic-bezier(.34,1.56,.64,1);transition-delay:.08s">
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">Life OS — schema design</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary)">Career · 9:00 AM</div>
+        </div>
+        <div class="spring-card" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px;opacity:0;transform:translateY(20px) scale(0.96);transition:opacity .4s cubic-bezier(.34,1.56,.64,1),transform .4s cubic-bezier(.34,1.56,.64,1);transition-delay:.16s">
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">Q2 budget review</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary)">Finance · overdue</div>
+        </div>
+      </div>
+      <button class="play-btn" style="margin-top:10px" id="spring-btn" onclick="runSpring()">Play ↗</button>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="code-block"><span class="cm">// RN Reanimated v4 — staggered spring</span>
+<span class="kw">import</span> { <span class="fn">useSharedValue</span>, <span class="fn">withSpring</span>,
+  <span class="fn">withDelay</span>, <span class="fn">useAnimatedStyle</span> } <span class="kw">from</span>
+  <span class="str">'react-native-reanimated'</span>
+
+<span class="kw">const</span> <span class="fn">PriorityCard</span> = ({ item, index }) => {
+  <span class="kw">const</span> opacity = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+  <span class="kw">const</span> translateY = <span class="fn">useSharedValue</span>(<span class="num">20</span>)
+  <span class="kw">const</span> scale = <span class="fn">useSharedValue</span>(<span class="num">0.96</span>)
+
+  <span class="fn">useEffect</span>(() => {
+    <span class="kw">const</span> delay = index * <span class="num">80</span>
+    opacity.value = <span class="fn">withDelay</span>(delay,
+      <span class="fn">withSpring</span>(<span class="num">1</span>, { damping: <span class="num">20</span>, stiffness: <span class="num">200</span> }))
+    translateY.value = <span class="fn">withDelay</span>(delay,
+      <span class="fn">withSpring</span>(<span class="num">0</span>, { damping: <span class="num">18</span>, stiffness: <span class="num">180</span> }))
+    scale.value = <span class="fn">withDelay</span>(delay,
+      <span class="fn">withSpring</span>(<span class="num">1</span>, { damping: <span class="num">22</span>, stiffness: <span class="num">300</span> }))
+  }, [])
+}</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-section">
+  <div class="section-label">2 · Habit ring completion</div>
+  <div class="section-meta">Tapping a habit ring fills it with a spring pop and a radial SVG stroke. The check animates in with a draw-on effect.</div>
+  <div class="demo-row">
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:4px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:64px;height:64px;cursor:pointer" onclick="toggleHabit('h1')" id="h1-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#1e1e28" stroke-width="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#534AB7" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="163.4" stroke-dashoffset="163.4" id="h1-ring"
+              style="transition:stroke-dashoffset .5s cubic-bezier(.34,1.56,.64,1)"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" id="h1-check" style="opacity:0;transform:scale(0);transition:opacity .25s,transform .35s cubic-bezier(.34,1.56,.64,1)">
+              <path d="M4 10l4.5 4.5 7.5-9" stroke="#9b8fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-secondary)">Prayer</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">tap</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:64px;height:64px;cursor:pointer" onclick="toggleHabit('h2')" id="h2-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#1e1e28" stroke-width="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#0F6E56" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="163.4" stroke-dashoffset="163.4" id="h2-ring"
+              style="transition:stroke-dashoffset .5s cubic-bezier(.34,1.56,.64,1)"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" id="h2-check" style="opacity:0;transform:scale(0);transition:opacity .25s,transform .35s cubic-bezier(.34,1.56,.64,1)">
+              <path d="M4 10l4.5 4.5 7.5-9" stroke="#1d9e75" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-secondary)">Water</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">tap</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:64px;height:64px;cursor:pointer" onclick="toggleHabit('h3')" id="h3-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#1e1e28" stroke-width="4"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#993556" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="163.4" stroke-dashoffset="163.4" id="h3-ring"
+              style="transition:stroke-dashoffset .5s cubic-bezier(.34,1.56,.64,1)"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" id="h3-check" style="opacity:0;transform:scale(0);transition:opacity .25s,transform .35s cubic-bezier(.34,1.56,.64,1)">
+              <path d="M4 10l4.5 4.5 7.5-9" stroke="#ed93b1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-secondary)">Gratitude</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">tap</div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:220px">
+      <div class="code-block"><span class="cm">// Ring fill + check draw-on</span>
+<span class="kw">const</span> CIRCUMFERENCE = <span class="num">2</span> * Math.PI * <span class="num">26</span>
+
+<span class="kw">const</span> ringProgress = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+<span class="kw">const</span> checkScale = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+
+<span class="kw">const</span> onPress = () => {
+  ringProgress.value = <span class="fn">withSpring</span>(<span class="num">1</span>, {
+    damping: <span class="num">16</span>, stiffness: <span class="num">220</span>,
+    overshootClamping: <span class="kw">false</span>
+  })
+  checkScale.value = <span class="fn">withDelay</span>(<span class="num">200</span>,
+    <span class="fn">withSpring</span>(<span class="num">1</span>, { damping: <span class="num">12</span>, stiffness: <span class="num">400</span> }))
+}
+
+<span class="kw">const</span> ringStyle = <span class="fn">useAnimatedProps</span>(() => ({
+  strokeDashoffset: CIRCUMFERENCE *
+    (<span class="num">1</span> - ringProgress.value)
+}))</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-section">
+  <div class="section-label">3 · Bottom sheet spring — drag handle</div>
+  <div class="section-meta">Approval sheets, check-in sheets, and quick-add use a gesture-driven spring. Drag down to dismiss, snap to rest position on release.</div>
+  <div class="demo-row">
+    <div style="position:relative;width:200px;height:280px;background:#141418;border-radius:20px;overflow:hidden;border:0.5px solid #2a2a2e;flex-shrink:0">
+      <div style="position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="height:10px;background:#1e1e22;border-radius:5px;width:65%"></div>
+        <div style="height:40px;background:#1e1e22;border-radius:10px"></div>
+        <div style="height:40px;background:#1e1e22;border-radius:10px"></div>
+      </div>
+      <div id="sheet-demo" style="position:absolute;bottom:0;left:0;right:0;background:#1a1a1e;border-top:0.5px solid #2a2a2e;border-radius:16px 16px 0 0;padding:12px;cursor:grab;transition:transform .35s cubic-bezier(.34,1.2,.64,1)" onmousedown="startSheet(event)" ontouchstart="startSheet(event)">
+        <div style="width:32px;height:4px;background:#252530;border-radius:2px;margin:0 auto 12px"></div>
+        <div style="font-size:12px;color:#c8c0ff;font-weight:500;margin-bottom:4px">Morning spiritual block</div>
+        <div style="font-size:11px;color:#555;margin-bottom:10px">Faith · recurring · 6:00 AM</div>
+        <div style="display:flex;gap:6px">
+          <div style="flex:1;padding:8px;background:#9b8fff;border-radius:8px;font-size:11px;font-weight:500;color:#0e0e10;text-align:center">Approve</div>
+          <div style="flex:1;padding:8px;background:#1e1e28;border:0.5px solid #2a2a2e;border-radius:8px;font-size:11px;color:#555;text-align:center">Skip</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:220px">
+      <div class="code-block"><span class="cm">// Gesture-driven spring sheet</span>
+<span class="kw">import</span> { <span class="fn">Gesture</span>, <span class="fn">GestureDetector</span> }
+  <span class="kw">from</span> <span class="str">'react-native-gesture-handler'</span>
+
+<span class="kw">const</span> translateY = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+<span class="kw">const</span> context = <span class="fn">useSharedValue</span>({ y: <span class="num">0</span> })
+
+<span class="kw">const</span> gesture = Gesture.<span class="fn">Pan</span>()
+  .<span class="fn">onStart</span>(() => {
+    context.value = { y: translateY.value }
+  })
+  .<span class="fn">onUpdate</span>(e => {
+    translateY.value = <span class="fn">Math.max</span>(<span class="num">0</span>,
+      context.value.y + e.translationY)
+  })
+  .<span class="fn">onEnd</span>(e => {
+    <span class="kw">if</span> (e.translationY > <span class="num">80</span> ||
+        e.velocityY > <span class="num">500</span>) {
+      translateY.value =
+        <span class="fn">withSpring</span>(SHEET_HEIGHT)
+      <span class="fn">runOnJS</span>(onDismiss)()
+    } <span class="kw">else</span> {
+      translateY.value =
+        <span class="fn">withSpring</span>(<span class="num">0</span>, {
+          damping: <span class="num">20</span>,
+          stiffness: <span class="num">200</span>
+        })
+    }
+  })</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-section">
+  <div class="section-label">4 · Progress ring — domain health</div>
+  <div class="section-meta">Domain health rings animate from 0 on mount with a spring overshoot. Used on domain screens and the goal detail screen.</div>
+  <div class="demo-row">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;padding:4px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:80px;height:80px">
+          <svg width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+            <circle cx="40" cy="40" r="33" fill="none" stroke="#1e1e28" stroke-width="6"/>
+            <circle cx="40" cy="40" r="33" fill="none" stroke="#534AB7" stroke-width="6" stroke-linecap="round"
+              stroke-dasharray="207.3" id="ring-faith"
+              style="transition:stroke-dashoffset .8s cubic-bezier(.34,1.3,.64,1)"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span style="font-size:16px;font-weight:500;color:#e0e0ec" id="pct-faith">0%</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#b4adf5">Faith</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:80px;height:80px">
+          <svg width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+            <circle cx="40" cy="40" r="33" fill="none" stroke="#1e1e28" stroke-width="6"/>
+            <circle cx="40" cy="40" r="33" fill="none" stroke="#185FA5" stroke-width="6" stroke-linecap="round"
+              stroke-dasharray="207.3" id="ring-career"
+              style="transition:stroke-dashoffset .8s cubic-bezier(.34,1.3,.64,1);transition-delay:.1s"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span style="font-size:16px;font-weight:500;color:#e0e0ec" id="pct-career">0%</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#85b7eb">Career</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:80px;height:80px">
+          <svg width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+            <circle cx="40" cy="40" r="33" fill="none" stroke="#1e1e28" stroke-width="6"/>
+            <circle cx="40" cy="40" r="33" fill="none" stroke="#ba7517" stroke-width="6" stroke-linecap="round"
+              stroke-dasharray="207.3" id="ring-finance"
+              style="transition:stroke-dashoffset .8s cubic-bezier(.34,1.3,.64,1);transition-delay:.2s"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span style="font-size:16px;font-weight:500;color:#e0e0ec" id="pct-finance">0%</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#e8a84a">Finance</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:200px">
+      <button class="play-btn" onclick="runRings()">Animate ↗</button>
+      <div class="code-block"><span class="cm">// Spring ring on mount</span>
+<span class="kw">const</span> progress = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+
+<span class="fn">useEffect</span>(() => {
+  progress.value = <span class="fn">withDelay</span>(
+    index * <span class="num">100</span>,
+    <span class="fn">withSpring</span>(targetPct, {
+      damping: <span class="num">14</span>,
+      stiffness: <span class="num">120</span>,
+      mass: <span class="num">0.8</span>
+    })
+  )
+}, [])
+
+<span class="kw">const</span> ringProps = <span class="fn">useAnimatedProps</span>(() => ({
+  strokeDashoffset: CIRCUMFERENCE *
+    (<span class="num">1</span> - progress.value / <span class="num">100</span>)
+}))</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-section">
+  <div class="section-label">5 · Approval card swipe dismiss</div>
+  <div class="section-meta">Approval items in the inbox swipe right to approve (green), left to reject (red). Velocity-aware — fast swipe dismisses, slow swipe snaps back.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px;max-width:280px">
+      <div style="position:relative;height:72px;border-radius:var(--border-radius-lg);overflow:hidden;margin-bottom:8px" id="swipe-wrap">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;border-radius:var(--border-radius-lg)">
+          <div id="approve-bg" style="position:absolute;left:0;right:50%;top:0;bottom:0;background:#1a2a1e;display:flex;align-items:center;padding:0 16px;opacity:0;transition:opacity .15s">
+            <span style="font-size:12px;font-weight:500;color:#1d9e75">Approve</span>
+          </div>
+          <div id="reject-bg" style="position:absolute;left:50%;right:0;top:0;bottom:0;background:#1a0e0e;display:flex;align-items:center;justify-content:flex-end;padding:0 16px;opacity:0;transition:opacity .15s">
+            <span style="font-size:12px;font-weight:500;color:#e24b4a">Reject</span>
+          </div>
+        </div>
+        <div id="swipe-card" style="position:absolute;inset:0;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px;cursor:grab;display:flex;align-items:center;justify-content:space-between;touch-action:pan-y"
+          onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">Create emergency fund</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary)">Finance · GH₵ 400/month</div>
+          </div>
+          <div style="font-size:11px;color:var(--color-text-tertiary)">← →</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);text-align:center">drag the card left or right</div>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="code-block"><span class="cm">// Swipe-to-approve gesture</span>
+<span class="kw">const</span> translateX = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+
+<span class="kw">const</span> gesture = Gesture.<span class="fn">Pan</span>()
+  .<span class="fn">activeOffsetX</span>([-<span class="num">10</span>, <span class="num">10</span>])
+  .<span class="fn">onUpdate</span>(e => {
+    translateX.value = e.translationX
+  })
+  .<span class="fn">onEnd</span>(e => {
+    <span class="kw">const</span> { translationX, velocityX } = e
+    <span class="kw">if</span> (translationX > <span class="num">100</span> ||
+        velocityX > <span class="num">800</span>) {
+      translateX.value = <span class="fn">withSpring</span>(<span class="num">500</span>)
+      <span class="fn">runOnJS</span>(onApprove)()
+    } <span class="kw">else if</span> (translationX < -<span class="num">100</span> ||
+               velocityX < -<span class="num">800</span>) {
+      translateX.value = <span class="fn">withSpring</span>(-<span class="num">500</span>)
+      <span class="fn">runOnJS</span>(onReject)()
+    } <span class="kw">else</span> {
+      translateX.value = <span class="fn">withSpring</span>(<span class="num">0</span>, {
+        damping: <span class="num">18</span>, stiffness: <span class="num">200</span>
+      })
+    }
+  })</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-section">
+  <div class="section-label">6 · AI pulse — thinking state</div>
+  <div class="section-meta">The AI orb pulses while generating — opacity breathes with a withRepeat loop. Color shifts from purple to amber when an approval is ready.</div>
+  <div class="demo-row">
+    <div style="display:flex;gap:24px;align-items:center;padding:8px 0;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:56px;height:56px">
+          <div id="orb-outer" style="position:absolute;inset:0;border-radius:50%;background:rgba(155,143,255,.12);animation:orb-breathe 2s ease-in-out infinite"></div>
+          <div style="position:absolute;inset:8px;border-radius:50%;background:#1e1a30;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center">
+            <div style="width:14px;height:14px;border-radius:50%;background:#9b8fff;animation:orb-core 2s ease-in-out infinite"></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-tertiary)">thinking</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:56px;height:56px">
+          <div style="position:absolute;inset:0;border-radius:50%;background:rgba(186,117,23,.15);animation:orb-breathe 1.4s ease-in-out infinite"></div>
+          <div style="position:absolute;inset:8px;border-radius:50%;background:#1a1408;border:0.5px solid #3d2a08;display:flex;align-items:center;justify-content:center">
+            <div style="width:14px;height:14px;border-radius:50%;background:#ba7517;animation:orb-core 1.4s ease-in-out infinite"></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-tertiary)">approval ready</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="position:relative;width:56px;height:56px">
+          <div style="position:absolute;inset:0;border-radius:50%;background:rgba(29,158,117,.12)"></div>
+          <div style="position:absolute;inset:8px;border-radius:50%;background:#0e1a14;border:0.5px solid #1a3a24;display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-6" stroke="#1d9e75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-tertiary)">done</div>
+      </div>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="code-block"><span class="cm">// Breathing orb — withRepeat</span>
+<span class="kw">const</span> scale = <span class="fn">useSharedValue</span>(<span class="num">1</span>)
+<span class="kw">const</span> opacity = <span class="fn">useSharedValue</span>(<span class="num">0.4</span>)
+
+<span class="fn">useEffect</span>(() => {
+  scale.value = <span class="fn">withRepeat</span>(
+    <span class="fn">withSequence</span>(
+      <span class="fn">withTiming</span>(<span class="num">1.18</span>, { duration: <span class="num">1000</span>,
+        easing: Easing.<span class="fn">inOut</span>(Easing.ease) }),
+      <span class="fn">withTiming</span>(<span class="num">1</span>, { duration: <span class="num">1000</span>,
+        easing: Easing.<span class="fn">inOut</span>(Easing.ease) })
+    ),
+    -<span class="num">1</span>, <span class="kw">false</span>
+  )
+  opacity.value = <span class="fn">withRepeat</span>(
+    <span class="fn">withSequence</span>(
+      <span class="fn">withTiming</span>(<span class="num">1</span>, { duration: <span class="num">1000</span> }),
+      <span class="fn">withTiming</span>(<span class="num">0.4</span>, { duration: <span class="num">1000</span> })
+    ),
+    -<span class="num">1</span>, <span class="kw">false</span>
+  )
+}, [])</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-section">
+  <div class="section-label">7 · Tab switch — page transition</div>
+  <div class="section-meta">Switching between Today, Planner, Domains uses a shared X-axis spring. The incoming screen slides in from the correct direction based on tab index delta.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px">
+      <div style="background:#141418;border:0.5px solid #2a2a2e;border-radius:var(--border-radius-lg);overflow:hidden">
+        <div id="tab-viewport" style="position:relative;height:120px;overflow:hidden">
+          <div id="tab-screen" style="position:absolute;inset:0;padding:16px;transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .25s">
+            <div id="tab-content-label" style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px">Today</div>
+            <div style="height:8px;background:#1e1e28;border-radius:4px;width:80%;margin-bottom:6px"></div>
+            <div style="height:8px;background:#1e1e28;border-radius:4px;width:55%"></div>
+          </div>
+        </div>
+        <div style="display:flex;border-top:0.5px solid #1e1e22">
+          <div class="tab-btn active" id="tab-today" onclick="switchTab(0,'Today')" style="flex:1;padding:10px 0;font-size:11px;font-weight:500;text-align:center;color:#9b8fff;cursor:pointer;border-bottom:1.5px solid #9b8fff">Today</div>
+          <div class="tab-btn" id="tab-planner" onclick="switchTab(1,'Planner')" style="flex:1;padding:10px 0;font-size:11px;font-weight:500;text-align:center;color:var(--color-text-tertiary);cursor:pointer;border-bottom:1.5px solid transparent">Planner</div>
+          <div class="tab-btn" id="tab-domains" onclick="switchTab(2,'Domains')" style="flex:1;padding:10px 0;font-size:11px;font-weight:500;text-align:center;color:var(--color-text-tertiary);cursor:pointer;border-bottom:1.5px solid transparent">Domains</div>
+          <div class="tab-btn" id="tab-ai" onclick="switchTab(3,'AI')" style="flex:1;padding:10px 0;font-size:11px;font-weight:500;text-align:center;color:var(--color-text-tertiary);cursor:pointer;border-bottom:1.5px solid transparent">AI</div>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="code-block"><span class="cm">// Directional tab spring</span>
+<span class="kw">const</span> translateX = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+
+<span class="kw">const</span> navigateTo = (next) => {
+  <span class="kw">const</span> dir = next > current ? <span class="num">1</span> : -<span class="num">1</span>
+
+  translateX.value = dir * WIDTH
+  translateX.value = <span class="fn">withSpring</span>(<span class="num">0</span>, {
+    damping: <span class="num">24</span>,
+    stiffness: <span class="num">220</span>,
+    mass: <span class="num">0.9</span>
+  })
+  current = next
+}
+
+<span class="kw">const</span> animStyle = <span class="fn">useAnimatedStyle</span>(() => ({
+  transform: [{
+    translateX: translateX.value
+  }]
+}))</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-section">
+  <div class="section-label">8 · Weekly review progress — bar fill</div>
+  <div class="section-meta">Domain health bars in the weekly review pre-read fill sequentially with a stagger. Each bar uses withSpring with slight overshoot for life.</div>
+  <div class="demo-row">
+    <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px;padding:4px 0" id="bars-demo">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:11px;font-weight:500;color:#b4adf5;width:52px;flex-shrink:0">Faith</div>
+        <div style="flex:1;height:5px;background:#1e1e22;border-radius:3px;overflow:hidden">
+          <div id="bar-faith" style="height:100%;background:#534AB7;border-radius:3px;width:0%;transition:width .7s cubic-bezier(.34,1.2,.64,1)"></div>
+        </div>
+        <div id="pct-bar-faith" style="font-size:11px;font-weight:500;color:#b4adf5;width:28px;text-align:right">0%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:11px;font-weight:500;color:#85b7eb;width:52px;flex-shrink:0">Career</div>
+        <div style="flex:1;height:5px;background:#1e1e22;border-radius:3px;overflow:hidden">
+          <div id="bar-career" style="height:100%;background:#185FA5;border-radius:3px;width:0%;transition:width .7s cubic-bezier(.34,1.2,.64,1);transition-delay:.1s"></div>
+        </div>
+        <div id="pct-bar-career" style="font-size:11px;font-weight:500;color:#85b7eb;width:28px;text-align:right">0%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:11px;font-weight:500;color:#f0997b;width:52px;flex-shrink:0">Health</div>
+        <div style="flex:1;height:5px;background:#1e1e22;border-radius:3px;overflow:hidden">
+          <div id="bar-health" style="height:100%;background:#993C1D;border-radius:3px;width:0%;transition:width .7s cubic-bezier(.34,1.2,.64,1);transition-delay:.2s"></div>
+        </div>
+        <div id="pct-bar-health" style="font-size:11px;font-weight:500;color:#f0997b;width:28px;text-align:right">0%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:11px;font-weight:500;color:#ed93b1;width:52px;flex-shrink:0">Wellness</div>
+        <div style="flex:1;height:5px;background:#1e1e22;border-radius:3px;overflow:hidden">
+          <div id="bar-wellness" style="height:100%;background:#993556;border-radius:3px;width:0%;transition:width .7s cubic-bezier(.34,1.2,.64,1);transition-delay:.3s"></div>
+        </div>
+        <div id="pct-bar-wellness" style="font-size:11px;font-weight:500;color:#ed93b1;width:28px;text-align:right">0%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:11px;font-weight:500;color:#e8a84a;width:52px;flex-shrink:0">Finance</div>
+        <div style="flex:1;height:5px;background:#1e1e22;border-radius:3px;overflow:hidden">
+          <div id="bar-finance2" style="height:100%;background:#ba7517;border-radius:3px;width:0%;transition:width .7s cubic-bezier(.34,1.2,.64,1);transition-delay:.4s"></div>
+        </div>
+        <div id="pct-bar-finance2" style="font-size:11px;font-weight:500;color:#e8a84a;width:28px;text-align:right">0%</div>
+      </div>
+      <button class="play-btn" style="margin-top:4px" onclick="runBars()">Play ↗</button>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="code-block"><span class="cm">// Staggered bar fill</span>
+<span class="kw">const</span> DomainBar = ({ domain, pct, index }) => {
+  <span class="kw">const</span> width = <span class="fn">useSharedValue</span>(<span class="num">0</span>)
+
+  <span class="fn">useEffect</span>(() => {
+    width.value = <span class="fn">withDelay</span>(
+      index * <span class="num">100</span>,
+      <span class="fn">withSpring</span>(pct, {
+        damping: <span class="num">16</span>,
+        stiffness: <span class="num">140</span>,
+        overshootClamping: <span class="kw">false</span>
+      })
+    )
+  }, [pct])
+
+  <span class="kw">const</span> style = <span class="fn">useAnimatedStyle</span>(() => ({
+    width: <span class="str">`${width.value}%`</span>
+  }))
+}</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<style>
+@keyframes orb-breathe{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.2);opacity:.85}}
+@keyframes orb-core{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(.75);opacity:.4}}
+</style>
+
+<script>
+var springDone=false;
+function runSpring(){
+  var cards=document.querySelectorAll('.spring-card');
+  var btn=document.getElementById('spring-btn');
+  springDone=!springDone;
+  cards.forEach(function(c){
+    c.style.opacity=springDone?'1':'0';
+    c.style.transform=springDone?'translateY(0) scale(1)':'translateY(20px) scale(0.96)';
+  });
+  btn.textContent=springDone?'Reset':'Play ↗';
+  btn.classList.toggle('running',springDone);
+}
+setTimeout(runSpring,400);
+
+var habitState={h1:false,h2:false,h3:false};
+function toggleHabit(id){
+  habitState[id]=!habitState[id];
+  var ring=document.getElementById(id+'-ring');
+  var check=document.getElementById(id+'-check');
+  var on=habitState[id];
+  ring.style.strokeDashoffset=on?'0':'163.4';
+  check.style.opacity=on?'1':'0';
+  check.style.transform=on?'scale(1)':'scale(0)';
+}
+
+var sheetDragging=false,sheetStartY=0,sheetOffset=0;
+function startSheet(e){
+  sheetDragging=true;
+  sheetStartY=e.touches?e.touches[0].clientY:e.clientY;
+  sheetOffset=0;
+  document.addEventListener('mousemove',moveSheet);
+  document.addEventListener('mouseup',endSheet);
+  document.addEventListener('touchmove',moveSheet,{passive:false});
+  document.addEventListener('touchend',endSheet);
+}
+function moveSheet(e){
+  if(!sheetDragging)return;
+  var y=(e.touches?e.touches[0].clientY:e.clientY)-sheetStartY;
+  sheetOffset=Math.max(0,y);
+  var s=document.getElementById('sheet-demo');
+  s.style.transition='none';
+  s.style.transform='translateY('+sheetOffset+'px)';
+}
+function endSheet(){
+  sheetDragging=false;
+  document.removeEventListener('mousemove',moveSheet);
+  document.removeEventListener('mouseup',endSheet);
+  document.removeEventListener('touchmove',moveSheet);
+  document.removeEventListener('touchend',endSheet);
+  var s=document.getElementById('sheet-demo');
+  s.style.transition='transform .35s cubic-bezier(.34,1.2,.64,1)';
+  s.style.transform='translateY(0)';
+}
+
+var ringsAnimated=false;
+function runRings(){
+  ringsAnimated=!ringsAnimated;
+  var targets={faith:{pct:85,ring:'ring-faith',pctEl:'pct-faith'},career:{pct:90,ring:'ring-career',pctEl:'pct-career'},finance:{pct:55,ring:'ring-finance',pctEl:'pct-finance'}};
+  Object.values(targets).forEach(function(t){
+    var c=207.3;
+    var r=document.getElementById(t.ring);
+    var p=document.getElementById(t.pctEl);
+    if(ringsAnimated){
+      r.style.strokeDashoffset=''+(c*(1-t.pct/100));
+      animCount(p,0,t.pct,700);
+    } else {
+      r.style.strokeDashoffset=''+c;
+      p.textContent='0%';
+    }
+  });
+}
+function animCount(el,from,to,dur){
+  var start=null;
+  function step(ts){
+    if(!start)start=ts;
+    var prog=Math.min((ts-start)/dur,1);
+    var ease=1-Math.pow(1-prog,3);
+    el.textContent=Math.round(from+(to-from)*ease)+'%';
+    if(prog<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+var swipeDragging=false,swipeStartX=0,swipeX=0;
+function startSwipe(e){
+  swipeDragging=true;
+  swipeStartX=e.touches?e.touches[0].clientX:e.clientX;
+  document.addEventListener('mousemove',moveSwipe);
+  document.addEventListener('mouseup',endSwipe);
+  document.addEventListener('touchmove',moveSwipe,{passive:false});
+  document.addEventListener('touchend',endSwipe);
+}
+function moveSwipe(e){
+  if(!swipeDragging)return;
+  swipeX=(e.touches?e.touches[0].clientX:e.clientX)-swipeStartX;
+  var card=document.getElementById('swipe-card');
+  var ab=document.getElementById('approve-bg');
+  var rb=document.getElementById('reject-bg');
+  card.style.transition='none';
+  card.style.transform='translateX('+swipeX+'px) rotate('+(swipeX*0.04)+'deg)';
+  ab.style.opacity=swipeX>0?Math.min(swipeX/80,1):'0';
+  rb.style.opacity=swipeX<0?Math.min(-swipeX/80,1):'0';
+}
+function endSwipe(){
+  swipeDragging=false;
+  document.removeEventListener('mousemove',moveSwipe);
+  document.removeEventListener('mouseup',endSwipe);
+  var card=document.getElementById('swipe-card');
+  var ab=document.getElementById('approve-bg');
+  var rb=document.getElementById('reject-bg');
+  card.style.transition='transform .35s cubic-bezier(.34,1.2,.64,1)';
+  card.style.transform='translateX(0) rotate(0deg)';
+  ab.style.opacity='0';
+  rb.style.opacity='0';
+  document.removeEventListener('touchmove',moveSwipe);
+  document.removeEventListener('touchend',endSwipe);
+}
+
+var currentTab=0;
+var tabNames=['Today','Planner','Domains','AI'];
+function switchTab(idx,name){
+  if(idx===currentTab)return;
+  var dir=idx>currentTab?1:-1;
+  var screen=document.getElementById('tab-screen');
+  var label=document.getElementById('tab-content-label');
+  screen.style.transition='none';
+  screen.style.transform='translateX('+(dir*100)+'%)';
+  screen.style.opacity='0';
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      screen.style.transition='transform .3s cubic-bezier(.4,0,.2,1),opacity .2s';
+      screen.style.transform='translateX(0)';
+      screen.style.opacity='1';
+      label.textContent=name;
+    });
+  });
+  document.querySelectorAll('.tab-btn').forEach(function(b,i){
+    var active=i===idx;
+    b.style.color=active?'#9b8fff':'var(--color-text-tertiary)';
+    b.style.borderBottom=active?'1.5px solid #9b8fff':'1.5px solid transparent';
+  });
+  currentTab=idx;
+}
+
+var barsAnimated=false;
+function runBars(){
+  barsAnimated=!barsAnimated;
+  var items=[
+    {bar:'bar-faith',pct:'bar-faith',pctEl:'pct-bar-faith',target:85},
+    {bar:'bar-career',pct:'bar-career',pctEl:'pct-bar-career',target:90},
+    {bar:'bar-health',pct:'bar-health',pctEl:'pct-bar-health',target:70},
+    {bar:'bar-wellness',pct:'bar-wellness',pctEl:'pct-bar-wellness',target:60},
+    {bar:'bar-finance2',pct:'bar-finance2',pctEl:'pct-bar-finance2',target:55}
+  ];
+  items.forEach(function(item,i){
+    var bar=document.getElementById(item.bar);
+    var pctEl=document.getElementById(item.pctEl);
+    if(barsAnimated){
+      bar.style.width=item.target+'%';
+      setTimeout(function(){animCount(pctEl,0,item.target,700)},i*100);
+    } else {
+      bar.style.width='0%';
+      pctEl.textContent='0%';
+    }
+  });
+  document.querySelector('[onclick="runBars()"]').textContent=barsAnimated?'Reset':'Play ↗';
+}
+</script>

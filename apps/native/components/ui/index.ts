@@ -4,3 +4,5 @@ export { Input } from "./input";
 export { Text } from "./text";
 export { View } from "./view";
 export { Badge } from "./badge";
+export { Separator } from "./separator";
+export { Surface } from "./surface";

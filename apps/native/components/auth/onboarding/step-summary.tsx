@@ -17,7 +17,7 @@ export function StepSummary({
   summaryDomains,
   aiTone,
   pinnedDomainIds,
-  onCreateAccount,
+  onWelcomeScreen,
   onUseExistingAccount,
   onBack,
 }: {
@@ -27,7 +27,7 @@ export function StepSummary({
   summaryDomains: DomainOption[];
   aiTone: AiTone;
   pinnedDomainIds: string[];
-  onCreateAccount: () => void;
+  onWelcomeScreen: () => void;
   onUseExistingAccount: () => void;
   onBack: () => void;
 }) {
@@ -225,17 +225,11 @@ export function StepSummary({
 
       <View style={{ gap: 8 }}>
         <Button
-          title="Create account"
-          onPress={onCreateAccount}
+          title="Welcome To Seile OS"
+          onPress={onWelcomeScreen}
           style={{ borderRadius: 14, borderCurve: "continuous" }}
         />
-        <Button
-          title="I already have one"
-          variant="outline"
-          onPress={onUseExistingAccount}
-          style={{ borderRadius: 14, borderCurve: "continuous" }}
-        />
-        <Button
+                <Button
           title="Back"
           variant="ghost"
           onPress={onBack}

@@ -100,9 +100,9 @@ export function OnboardingScreen() {
     setStep((current) => Math.max(1, current - 1) as Step);
   }
 
-  async function handleCreateAccount() {
+  async function handleWelcomeScreen() {
     await completeOnboardingSetup();
-    router.push("/(auth)/sign-up");
+    router.push("/(auth)/welcome");
   }
 
   async function handleExistingAccount() {
@@ -225,8 +225,8 @@ export function OnboardingScreen() {
             summaryDomains={summaryDomains}
             aiTone={aiTone}
             pinnedDomainIds={pinnedDomainIds}
-            onCreateAccount={() => {
-              void handleCreateAccount();
+            onWelcomeScreen={() => {
+              void handleWelcomeScreen();
             }}
             onUseExistingAccount={() => {
               void handleExistingAccount();
@@ -240,25 +240,25 @@ export function OnboardingScreen() {
   }
 
   return (
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          minHeight,
-          paddingHorizontal: UI_PRESETS.spacing.section,
-          paddingTop: UI_PRESETS.spacing.lg,
-          paddingBottom: UI_PRESETS.spacing.section,
-          gap: 20,
-        }}
-      >
-        <AnimatedProgressBar
-          progress={STEP_PROGRESS[step]}
-          trackColor={theme.border}
-          fillColor="#9b8fff"
-          height={2}
-        />
-        {renderStep()}
-      </ScrollView>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{
+        minHeight,
+        paddingHorizontal: UI_PRESETS.spacing.section,
+        paddingTop: UI_PRESETS.spacing.lg,
+        paddingBottom: UI_PRESETS.spacing.section,
+        gap: 20,
+      }}
+    >
+      <AnimatedProgressBar
+        progress={STEP_PROGRESS[step]}
+        trackColor={theme.border}
+        fillColor="#9b8fff"
+        height={2}
+      />
+      {renderStep()}
+    </ScrollView>
   );
 }
