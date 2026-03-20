@@ -1,5 +1,6 @@
 export { Card } from "./card";
 export { Button } from "./button";
+export { Chip } from "./chip";
 export { Input } from "./input";
 export { Text } from "./text";
 export { View } from "./view";
