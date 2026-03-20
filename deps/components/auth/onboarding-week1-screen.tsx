@@ -5,13 +5,13 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useRouter } from "expo-router";
 import Animated, { LinearTransition } from "react-native-reanimated";
 
-import { Badge, Button, Card, Text } from "@/components/ui";
+import { Badge, Button, Card, Text } from "@/components";
 import { Container } from "@/components/container";
 import {
   AnimatedProgressBar,
   AnimatedStage,
 } from "@/components/auth/onboarding-flow-motion";
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
@@ -113,7 +113,7 @@ export function OnboardingWeek1Screen() {
 
   async function handleFinishSetup() {
     await completeOnboarding();
-    router.replace("/(tabs)");
+    router.replace("/(tabs)/domains");
   }
 
   return (

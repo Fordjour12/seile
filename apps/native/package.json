@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@better-auth/expo": "1.4.9",
-    "@better-auth/passkey": "1.4.9",
     "@convex-dev/better-auth": "^0.10.13",
     "@expo/metro-runtime": "~55.0.6",
     "@expo/vector-icons": "^15.0.2",

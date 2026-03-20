@@ -1,5 +1,10 @@
-import { TodayScreen } from "@/components/today/today-screen";
+import { View, Text } from 'react-native'
+import React from 'react'
 
-export default function TodayRoute() {
-  return <TodayScreen />;
+export default function Index() {
+  return (
+    <View>
+      <Text>first</Text>
+    </View>
+  )
 }

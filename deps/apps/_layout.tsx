@@ -4,17 +4,18 @@ import {
   type Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import { Stack } from "expo-router";
+    import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { Stack, useRouter } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Toaster } from "sonner-native";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import {  useEffect,  useRef,  } from "react";
 
 import { authClient } from "@/lib/auth-client";
-import { AuthProvider } from "@/lib/v1-auth-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { convex } from "@/lib/convex-client";
 
 import { NAV_THEME } from "@/lib/constants";
@@ -30,7 +31,7 @@ const DARK_THEME: Theme = {
 };
 
 export const unstable_settings = {
-  initialRouteName: "(auth)",
+  initialRouteName: "(tabs)",
 };
 
 export default function Layout() {
@@ -60,7 +61,7 @@ export default function Layout() {
   }
 
   return (
-    <ConvexBetterAuthProvider client={convex} authClient={authClient}>
+      <ConvexBetterAuthProvider client={convex} authClient={authClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
           <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
@@ -77,12 +78,88 @@ export default function Layout() {
     </ConvexBetterAuthProvider>
   );
 }
+
+
 function StackLayout() {
+  const router = useRouter();
+  const { user, hasHydrated, isLoading, needsOnboarding } = useAuth();
+  const { colorScheme } = useColorScheme();
+  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  const isReady = hasHydrated && !isLoading;
+  const isLoggedIn = Boolean(user);
+  const wasAuthenticatedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
+    if (isLoggedIn) {
+      wasAuthenticatedRef.current = true;
+      return;
+    }
+
+    if (wasAuthenticatedRef.current) {
+      router.replace("/(auth)/sign-in");
+      wasAuthenticatedRef.current = false;
+    }
+  }, [isLoggedIn, isReady, router]);
+
+  if (!isReady) {
+    return null;
+  }
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="+not-found" />
+      <Stack.Protected guard={isLoggedIn && !needsOnboarding}>
+        <Stack.Screen
+          name="(tabs)"
+          options={{ title: "Tabs", headerShown: false }}
+        />
+        <Stack.Screen
+          name="actions"
+          options={{ title: "Actions", headerShown: false }}
+        />
+        <Stack.Screen
+          name="search"
+          options={{
+            title: "Search",
+            headerShown: false,
+            presentation: "fullScreenModal",
+          }}
+        />
+        <Stack.Screen
+          name="notifications"
+          options={{
+            title: "Notifications",
+            headerShown: true,
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.foreground,
+          }}
+        />
+        <Stack.Screen
+          name="error-states"
+          options={{
+            title: "Edge States",
+            headerShown: true,
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.foreground,
+          }}
+        />
+        <Stack.Screen
+          name="modal"
+          options={{ title: "Modal", presentation: "modal" }}
+        />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!isLoggedIn || needsOnboarding}>
+        <Stack.Screen
+          name="(auth)"
+          options={{ title: "Auth", headerShown: false }}
+        />
+      </Stack.Protected>
     </Stack>
   );
 }

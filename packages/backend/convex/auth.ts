@@ -1,5 +1,4 @@
 import { expo } from "@better-auth/expo";
-import { passkey } from "@better-auth/passkey";
 import { convexAdapter, createClient } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth";
@@ -12,7 +11,6 @@ import authConfig from "./auth.config";
 
 const componentsAny = components as any;
 const authOrigin = env.CONVEX_SITE_URL.replace(/\/$/, "");
-const rpID = new URL(authOrigin).hostname;
 
 export const authComponent = createClient<DataModel>(componentsAny.betterAuth);
 
@@ -38,11 +36,6 @@ export function createAuth(ctx: unknown) {
     trustedOrigins: [authOrigin, "seile://"],
     plugins: [
       expo(),
-      passkey({
-        rpID,
-        rpName: "Seile",
-        origin: authOrigin,
-      }),
       convex({
         authConfig,
       }),
