@@ -21,8 +21,7 @@ import React, {
 import * as SecureStore from "expo-secure-store";
 import { useConvex, useConvexAuth } from "convex/react";
 import { router } from "expo-router";
-
-import { api } from "@seile/backend/convexApi";
+import { api } from "@/convex/_generated/api";
 
 import { authClient } from "@/lib/auth-client";
 import {
@@ -223,6 +222,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasBooted = useRef(false);
   const isResolvingAuth = useRef(false);
   const prevAuthenticated = useRef<boolean | null>(null);
+  const onboardingDraftRef = useRef<OnboardingDraft>(INITIAL_STATE.onboardingDraft);
+
+  useEffect(() => {
+    onboardingDraftRef.current = state.onboardingDraft;
+  }, [state.onboardingDraft]);
 
   const navigateToStage = useCallback((stage: AppStage) => {
     switch (stage) {
@@ -247,14 +251,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", error: null });
   }, []);
 
-  const saveOnboardingDraft = useCallback(
-    async (draft: Partial<OnboardingDraft>) => {
-      const merged = { ...state.onboardingDraft, ...draft };
-      dispatch({ type: "SET_DRAFT", draft });
-      await writeFlag(STORE_KEYS.ONBOARDING_DRAFT, JSON.stringify(merged));
-    },
-    [state.onboardingDraft],
-  );
+  const saveOnboardingDraft = useCallback(async (draft: Partial<OnboardingDraft>) => {
+    const merged = { ...onboardingDraftRef.current, ...draft };
+    dispatch({ type: "SET_DRAFT", draft });
+    await writeFlag(STORE_KEYS.ONBOARDING_DRAFT, JSON.stringify(merged));
+  }, []);
 
   const startOnboarding = useCallback(async () => {
     await writeFlag(STORE_KEYS.ONBOARDING_STARTED, "true");
