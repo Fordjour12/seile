@@ -21,7 +21,8 @@ import React, {
 import * as SecureStore from "expo-secure-store";
 import { useConvex, useConvexAuth } from "convex/react";
 import { router } from "expo-router";
-import { api } from "@/convex/_generated/api";
+
+import { api } from "@seile/backend/convexApi";
 
 import { authClient } from "@/lib/auth-client";
 import {
@@ -275,7 +276,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await convex.mutation(api.onboarding.upsertUserProfile, profile);
       await convex.mutation(api.onboarding.initializeOnboardingState, {});
-      await convex.action(api.onboarding_actions.initializeFirstRunForUser, {});
       return true;
     },
     [convex],

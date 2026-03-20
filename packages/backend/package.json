@@ -5,7 +5,10 @@
   "license": "ISC",
   "author": "",
   "exports": {
-    "./convexApi": "./convexApi.ts"
+    "./convexApi": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    }
   },
   "scripts": {
     "dev": "convex dev",
