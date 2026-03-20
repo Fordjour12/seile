@@ -8,24 +8,70 @@
  * @module
  */
 
-import type * as accounts from "../accounts.js";
+import type * as ai_agents_career from "../ai/agents/career.js";
+import type * as ai_agents_faith from "../ai/agents/faith.js";
+import type * as ai_agents_finance from "../ai/agents/finance.js";
+import type * as ai_agents_health from "../ai/agents/health.js";
+import type * as ai_agents_planner from "../ai/agents/planner.js";
+import type * as ai_agents_relationships from "../ai/agents/relationships.js";
+import type * as ai_agents_router from "../ai/agents/router.js";
+import type * as ai_agents_space from "../ai/agents/space.js";
+import type * as ai_agents_wellness from "../ai/agents/wellness.js";
+import type * as ai_aggregates from "../ai/aggregates.js";
+import type * as ai_approval from "../ai/approval.js";
+import type * as ai_approval_actions from "../ai/approval_actions.js";
+import type * as ai_crossDomain from "../ai/crossDomain.js";
+import type * as ai_memory from "../ai/memory.js";
+import type * as ai_model from "../ai/model.js";
+import type * as ai_policies from "../ai/policies.js";
+import type * as ai_prompts from "../ai/prompts.js";
+import type * as ai_runRouter from "../ai/runRouter.js";
+import type * as ai_runtime from "../ai/runtime.js";
+import type * as ai_streaming from "../ai/streaming.js";
+import type * as ai_tools_career from "../ai/tools/career.js";
+import type * as ai_tools_faith from "../ai/tools/faith.js";
+import type * as ai_tools_finance from "../ai/tools/finance.js";
+import type * as ai_tools_health from "../ai/tools/health.js";
+import type * as ai_tools_relationships from "../ai/tools/relationships.js";
+import type * as ai_tools_shared from "../ai/tools/shared.js";
+import type * as ai_tools_space from "../ai/tools/space.js";
+import type * as ai_tools_wellness from "../ai/tools/wellness.js";
+import type * as ai_types from "../ai/types.js";
+import type * as ai_workflows_manager from "../ai/workflows/manager.js";
+import type * as ai_workflows_monthlyReview from "../ai/workflows/monthlyReview.js";
+import type * as ai_workflows_monthlyReview_actions from "../ai/workflows/monthlyReview_actions.js";
+import type * as ai_workflows_weeklyPlanner from "../ai/workflows/weeklyPlanner.js";
+import type * as ai_workflows_weeklyPlanner_actions from "../ai/workflows/weeklyPlanner_actions.js";
 import type * as auth from "../auth.js";
 import type * as bootstrap from "../bootstrap.js";
-import type * as budget_helpers from "../budget/helpers.js";
-import type * as budget_mutations from "../budget/mutations.js";
-import type * as budget_queries from "../budget/queries.js";
-import type * as budget_validators from "../budget/validators.js";
-import type * as categories_queries from "../categories/queries.js";
+import type * as career_ai from "../career/ai.js";
+import type * as career_milestones from "../career/milestones.js";
 import type * as crons from "../crons.js";
-import type * as debt_mutations from "../debt/mutations.js";
-import type * as debt_queries from "../debt/queries.js";
-import type * as debt_validators from "../debt/validators.js";
-import type * as finance_agent_actions from "../finance_agent/actions.js";
-import type * as finance_agent_agent from "../finance_agent/agent.js";
-import type * as finance_agent_mutations from "../finance_agent/mutations.js";
-import type * as finance_agent_queries from "../finance_agent/queries.js";
-import type * as finance_agent_tools from "../finance_agent/tools.js";
-import type * as finance_agent_validators from "../finance_agent/validators.js";
+import type * as faith_ai from "../faith/ai.js";
+import type * as finance_accounts from "../finance/accounts.js";
+import type * as finance_agent_actions from "../finance/agent/actions.js";
+import type * as finance_agent_mutations from "../finance/agent/mutations.js";
+import type * as finance_agent_queries from "../finance/agent/queries.js";
+import type * as finance_ai from "../finance/ai.js";
+import type * as finance_budget_helpers from "../finance/budget/helpers.js";
+import type * as finance_budget_mutations from "../finance/budget/mutations.js";
+import type * as finance_budget_queries from "../finance/budget/queries.js";
+import type * as finance_budget_validators from "../finance/budget/validators.js";
+import type * as finance_categories_queries from "../finance/categories/queries.js";
+import type * as finance_debt_mutations from "../finance/debt/mutations.js";
+import type * as finance_debt_queries from "../finance/debt/queries.js";
+import type * as finance_debt_validators from "../finance/debt/validators.js";
+import type * as finance_recurring_generate from "../finance/recurring/generate.js";
+import type * as finance_recurring_mutations from "../finance/recurring/mutations.js";
+import type * as finance_recurring_queries from "../finance/recurring/queries.js";
+import type * as finance_savings_mutations from "../finance/savings/mutations.js";
+import type * as finance_savings_queries from "../finance/savings/queries.js";
+import type * as finance_savings_validators from "../finance/savings/validators.js";
+import type * as finance_subscriptions_mutations from "../finance/subscriptions/mutations.js";
+import type * as finance_subscriptions_queries from "../finance/subscriptions/queries.js";
+import type * as finance_transactions_mutations from "../finance/transactions/mutations.js";
+import type * as finance_transactions_queries from "../finance/transactions/queries.js";
+import type * as health_ai from "../health/ai.js";
 import type * as health_mutations from "../health/mutations.js";
 import type * as health_queries from "../health/queries.js";
 import type * as healthCheck from "../healthCheck.js";
@@ -38,26 +84,25 @@ import type * as lib_money from "../lib/money.js";
 import type * as lib_planner from "../lib/planner.js";
 import type * as lib_recurring from "../lib/recurring.js";
 import type * as lib_validation from "../lib/validation.js";
-import type * as migrations from "../migrations.js";
-import type * as planner_actions from "../planner/actions.js";
-import type * as planner_agent from "../planner/agent.js";
-import type * as planner_mutations from "../planner/mutations.js";
-import type * as planner_queries from "../planner/queries.js";
-import type * as recurring_generate from "../recurring/generate.js";
-import type * as recurring_mutations from "../recurring/mutations.js";
-import type * as recurring_queries from "../recurring/queries.js";
-import type * as savings_mutations from "../savings/mutations.js";
-import type * as savings_queries from "../savings/queries.js";
-import type * as savings_validators from "../savings/validators.js";
+import type * as onboarding from "../onboarding.js";
+import type * as productivity_ai from "../productivity/ai.js";
+import type * as productivity_planner_actions from "../productivity/planner/actions.js";
+import type * as productivity_planner_mutations from "../productivity/planner/mutations.js";
+import type * as productivity_planner_queries from "../productivity/planner/queries.js";
+import type * as productivity_tasks from "../productivity/tasks.js";
+import type * as relationships_ai from "../relationships/ai.js";
+import type * as relationships_rituals from "../relationships/rituals.js";
 import type * as scheduler_mutations from "../scheduler/mutations.js";
 import type * as scheduler_queries from "../scheduler/queries.js";
 import type * as schema_accounts from "../schema/accounts.js";
+import type * as schema_ai from "../schema/ai.js";
 import type * as schema_budget_envelopes from "../schema/budget_envelopes.js";
 import type * as schema_budget_periods from "../schema/budget_periods.js";
 import type * as schema_categories from "../schema/categories.js";
 import type * as schema_debt_plans from "../schema/debt_plans.js";
 import type * as schema_finance_agent from "../schema/finance_agent.js";
 import type * as schema_health from "../schema/health.js";
+import type * as schema_onboarding from "../schema/onboarding.js";
 import type * as schema_planner from "../schema/planner.js";
 import type * as schema_recurring_transactions from "../schema/recurring_transactions.js";
 import type * as schema_savings_goals from "../schema/savings_goals.js";
@@ -69,12 +114,11 @@ import type * as schema_validators from "../schema/validators.js";
 import type * as shared_goals_helpers from "../shared_goals/helpers.js";
 import type * as shared_goals_mutations from "../shared_goals/mutations.js";
 import type * as shared_goals_queries from "../shared_goals/queries.js";
+import type * as space_ai from "../space/ai.js";
+import type * as space_upgrades from "../space/upgrades.js";
 import type * as spiritual_mutations from "../spiritual/mutations.js";
 import type * as spiritual_queries from "../spiritual/queries.js";
-import type * as subscriptions_mutations from "../subscriptions/mutations.js";
-import type * as subscriptions_queries from "../subscriptions/queries.js";
-import type * as transactions_mutations from "../transactions/mutations.js";
-import type * as transactions_queries from "../transactions/queries.js";
+import type * as wellness_ai from "../wellness/ai.js";
 
 import type {
   ApiFromModules,
@@ -83,24 +127,70 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  accounts: typeof accounts;
+  "ai/agents/career": typeof ai_agents_career;
+  "ai/agents/faith": typeof ai_agents_faith;
+  "ai/agents/finance": typeof ai_agents_finance;
+  "ai/agents/health": typeof ai_agents_health;
+  "ai/agents/planner": typeof ai_agents_planner;
+  "ai/agents/relationships": typeof ai_agents_relationships;
+  "ai/agents/router": typeof ai_agents_router;
+  "ai/agents/space": typeof ai_agents_space;
+  "ai/agents/wellness": typeof ai_agents_wellness;
+  "ai/aggregates": typeof ai_aggregates;
+  "ai/approval": typeof ai_approval;
+  "ai/approval_actions": typeof ai_approval_actions;
+  "ai/crossDomain": typeof ai_crossDomain;
+  "ai/memory": typeof ai_memory;
+  "ai/model": typeof ai_model;
+  "ai/policies": typeof ai_policies;
+  "ai/prompts": typeof ai_prompts;
+  "ai/runRouter": typeof ai_runRouter;
+  "ai/runtime": typeof ai_runtime;
+  "ai/streaming": typeof ai_streaming;
+  "ai/tools/career": typeof ai_tools_career;
+  "ai/tools/faith": typeof ai_tools_faith;
+  "ai/tools/finance": typeof ai_tools_finance;
+  "ai/tools/health": typeof ai_tools_health;
+  "ai/tools/relationships": typeof ai_tools_relationships;
+  "ai/tools/shared": typeof ai_tools_shared;
+  "ai/tools/space": typeof ai_tools_space;
+  "ai/tools/wellness": typeof ai_tools_wellness;
+  "ai/types": typeof ai_types;
+  "ai/workflows/manager": typeof ai_workflows_manager;
+  "ai/workflows/monthlyReview": typeof ai_workflows_monthlyReview;
+  "ai/workflows/monthlyReview_actions": typeof ai_workflows_monthlyReview_actions;
+  "ai/workflows/weeklyPlanner": typeof ai_workflows_weeklyPlanner;
+  "ai/workflows/weeklyPlanner_actions": typeof ai_workflows_weeklyPlanner_actions;
   auth: typeof auth;
   bootstrap: typeof bootstrap;
-  "budget/helpers": typeof budget_helpers;
-  "budget/mutations": typeof budget_mutations;
-  "budget/queries": typeof budget_queries;
-  "budget/validators": typeof budget_validators;
-  "categories/queries": typeof categories_queries;
+  "career/ai": typeof career_ai;
+  "career/milestones": typeof career_milestones;
   crons: typeof crons;
-  "debt/mutations": typeof debt_mutations;
-  "debt/queries": typeof debt_queries;
-  "debt/validators": typeof debt_validators;
-  "finance_agent/actions": typeof finance_agent_actions;
-  "finance_agent/agent": typeof finance_agent_agent;
-  "finance_agent/mutations": typeof finance_agent_mutations;
-  "finance_agent/queries": typeof finance_agent_queries;
-  "finance_agent/tools": typeof finance_agent_tools;
-  "finance_agent/validators": typeof finance_agent_validators;
+  "faith/ai": typeof faith_ai;
+  "finance/accounts": typeof finance_accounts;
+  "finance/agent/actions": typeof finance_agent_actions;
+  "finance/agent/mutations": typeof finance_agent_mutations;
+  "finance/agent/queries": typeof finance_agent_queries;
+  "finance/ai": typeof finance_ai;
+  "finance/budget/helpers": typeof finance_budget_helpers;
+  "finance/budget/mutations": typeof finance_budget_mutations;
+  "finance/budget/queries": typeof finance_budget_queries;
+  "finance/budget/validators": typeof finance_budget_validators;
+  "finance/categories/queries": typeof finance_categories_queries;
+  "finance/debt/mutations": typeof finance_debt_mutations;
+  "finance/debt/queries": typeof finance_debt_queries;
+  "finance/debt/validators": typeof finance_debt_validators;
+  "finance/recurring/generate": typeof finance_recurring_generate;
+  "finance/recurring/mutations": typeof finance_recurring_mutations;
+  "finance/recurring/queries": typeof finance_recurring_queries;
+  "finance/savings/mutations": typeof finance_savings_mutations;
+  "finance/savings/queries": typeof finance_savings_queries;
+  "finance/savings/validators": typeof finance_savings_validators;
+  "finance/subscriptions/mutations": typeof finance_subscriptions_mutations;
+  "finance/subscriptions/queries": typeof finance_subscriptions_queries;
+  "finance/transactions/mutations": typeof finance_transactions_mutations;
+  "finance/transactions/queries": typeof finance_transactions_queries;
+  "health/ai": typeof health_ai;
   "health/mutations": typeof health_mutations;
   "health/queries": typeof health_queries;
   healthCheck: typeof healthCheck;
@@ -113,26 +203,25 @@ declare const fullApi: ApiFromModules<{
   "lib/planner": typeof lib_planner;
   "lib/recurring": typeof lib_recurring;
   "lib/validation": typeof lib_validation;
-  migrations: typeof migrations;
-  "planner/actions": typeof planner_actions;
-  "planner/agent": typeof planner_agent;
-  "planner/mutations": typeof planner_mutations;
-  "planner/queries": typeof planner_queries;
-  "recurring/generate": typeof recurring_generate;
-  "recurring/mutations": typeof recurring_mutations;
-  "recurring/queries": typeof recurring_queries;
-  "savings/mutations": typeof savings_mutations;
-  "savings/queries": typeof savings_queries;
-  "savings/validators": typeof savings_validators;
+  onboarding: typeof onboarding;
+  "productivity/ai": typeof productivity_ai;
+  "productivity/planner/actions": typeof productivity_planner_actions;
+  "productivity/planner/mutations": typeof productivity_planner_mutations;
+  "productivity/planner/queries": typeof productivity_planner_queries;
+  "productivity/tasks": typeof productivity_tasks;
+  "relationships/ai": typeof relationships_ai;
+  "relationships/rituals": typeof relationships_rituals;
   "scheduler/mutations": typeof scheduler_mutations;
   "scheduler/queries": typeof scheduler_queries;
   "schema/accounts": typeof schema_accounts;
+  "schema/ai": typeof schema_ai;
   "schema/budget_envelopes": typeof schema_budget_envelopes;
   "schema/budget_periods": typeof schema_budget_periods;
   "schema/categories": typeof schema_categories;
   "schema/debt_plans": typeof schema_debt_plans;
   "schema/finance_agent": typeof schema_finance_agent;
   "schema/health": typeof schema_health;
+  "schema/onboarding": typeof schema_onboarding;
   "schema/planner": typeof schema_planner;
   "schema/recurring_transactions": typeof schema_recurring_transactions;
   "schema/savings_goals": typeof schema_savings_goals;
@@ -144,12 +233,11 @@ declare const fullApi: ApiFromModules<{
   "shared_goals/helpers": typeof shared_goals_helpers;
   "shared_goals/mutations": typeof shared_goals_mutations;
   "shared_goals/queries": typeof shared_goals_queries;
+  "space/ai": typeof space_ai;
+  "space/upgrades": typeof space_upgrades;
   "spiritual/mutations": typeof spiritual_mutations;
   "spiritual/queries": typeof spiritual_queries;
-  "subscriptions/mutations": typeof subscriptions_mutations;
-  "subscriptions/queries": typeof subscriptions_queries;
-  "transactions/mutations": typeof transactions_mutations;
-  "transactions/queries": typeof transactions_queries;
+  "wellness/ai": typeof wellness_ai;
 }>;
 
 /**
@@ -6985,6 +7073,466 @@ export declare const components: {
           null
         >;
       };
+    };
+  };
+  workflow: {
+    event: {
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string; workflowId: string },
+        string
+      >;
+      send: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          eventId?: string;
+          name?: string;
+          result:
+            | { kind: "success"; returnValue: any }
+            | { error: string; kind: "failed" }
+            | { kind: "canceled" };
+          workflowId?: string;
+          workpoolOptions?: {
+            defaultRetryBehavior?: {
+              base: number;
+              initialBackoffMs: number;
+              maxAttempts: number;
+            };
+            logLevel?: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+            maxParallelism?: number;
+            retryActionsByDefault?: boolean;
+          };
+        },
+        string
+      >;
+    };
+    journal: {
+      load: FunctionReference<
+        "query",
+        "internal",
+        { shortCircuit?: boolean; workflowId: string },
+        {
+          blocked?: boolean;
+          journalEntries: Array<{
+            _creationTime: number;
+            _id: string;
+            step:
+              | {
+                  args: any;
+                  argsSize: number;
+                  completedAt?: number;
+                  functionType: "query" | "mutation" | "action";
+                  handle: string;
+                  inProgress: boolean;
+                  kind?: "function";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                  workId?: string;
+                }
+              | {
+                  args: any;
+                  argsSize: number;
+                  completedAt?: number;
+                  handle: string;
+                  inProgress: boolean;
+                  kind: "workflow";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                  workflowId?: string;
+                }
+              | {
+                  args: { eventId?: string };
+                  argsSize: number;
+                  completedAt?: number;
+                  eventId?: string;
+                  inProgress: boolean;
+                  kind: "event";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                };
+            stepNumber: number;
+            workflowId: string;
+          }>;
+          logLevel: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+          ok: boolean;
+          workflow: {
+            _creationTime: number;
+            _id: string;
+            args: any;
+            generationNumber: number;
+            logLevel?: any;
+            name?: string;
+            onComplete?: { context?: any; fnHandle: string };
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt?: any;
+            state?: any;
+            workflowHandle: string;
+          };
+        }
+      >;
+      startSteps: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          generationNumber: number;
+          steps: Array<{
+            retry?:
+              | boolean
+              | { base: number; initialBackoffMs: number; maxAttempts: number };
+            schedulerOptions?: { runAt?: number } | { runAfter?: number };
+            step:
+              | {
+                  args: any;
+                  argsSize: number;
+                  completedAt?: number;
+                  functionType: "query" | "mutation" | "action";
+                  handle: string;
+                  inProgress: boolean;
+                  kind?: "function";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                  workId?: string;
+                }
+              | {
+                  args: any;
+                  argsSize: number;
+                  completedAt?: number;
+                  handle: string;
+                  inProgress: boolean;
+                  kind: "workflow";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                  workflowId?: string;
+                }
+              | {
+                  args: { eventId?: string };
+                  argsSize: number;
+                  completedAt?: number;
+                  eventId?: string;
+                  inProgress: boolean;
+                  kind: "event";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                };
+          }>;
+          workflowId: string;
+          workpoolOptions?: {
+            defaultRetryBehavior?: {
+              base: number;
+              initialBackoffMs: number;
+              maxAttempts: number;
+            };
+            logLevel?: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+            maxParallelism?: number;
+            retryActionsByDefault?: boolean;
+          };
+        },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          step:
+            | {
+                args: any;
+                argsSize: number;
+                completedAt?: number;
+                functionType: "query" | "mutation" | "action";
+                handle: string;
+                inProgress: boolean;
+                kind?: "function";
+                name: string;
+                runResult?:
+                  | { kind: "success"; returnValue: any }
+                  | { error: string; kind: "failed" }
+                  | { kind: "canceled" };
+                startedAt: number;
+                workId?: string;
+              }
+            | {
+                args: any;
+                argsSize: number;
+                completedAt?: number;
+                handle: string;
+                inProgress: boolean;
+                kind: "workflow";
+                name: string;
+                runResult?:
+                  | { kind: "success"; returnValue: any }
+                  | { error: string; kind: "failed" }
+                  | { kind: "canceled" };
+                startedAt: number;
+                workflowId?: string;
+              }
+            | {
+                args: { eventId?: string };
+                argsSize: number;
+                completedAt?: number;
+                eventId?: string;
+                inProgress: boolean;
+                kind: "event";
+                name: string;
+                runResult?:
+                  | { kind: "success"; returnValue: any }
+                  | { error: string; kind: "failed" }
+                  | { kind: "canceled" };
+                startedAt: number;
+              };
+          stepNumber: number;
+          workflowId: string;
+        }>
+      >;
+    };
+    workflow: {
+      cancel: FunctionReference<
+        "mutation",
+        "internal",
+        { workflowId: string },
+        null
+      >;
+      cleanup: FunctionReference<
+        "mutation",
+        "internal",
+        { force?: boolean; workflowId: string },
+        boolean
+      >;
+      complete: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          generationNumber: number;
+          runResult:
+            | { kind: "success"; returnValue: any }
+            | { error: string; kind: "failed" }
+            | { kind: "canceled" };
+          workflowId: string;
+        },
+        null
+      >;
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          maxParallelism?: number;
+          onComplete?: { context?: any; fnHandle: string };
+          startAsync?: boolean;
+          workflowArgs: any;
+          workflowHandle: string;
+          workflowName: string;
+        },
+        string
+      >;
+      getStatus: FunctionReference<
+        "query",
+        "internal",
+        { workflowId: string },
+        {
+          inProgress: Array<{
+            _creationTime: number;
+            _id: string;
+            step:
+              | {
+                  args: any;
+                  argsSize: number;
+                  completedAt?: number;
+                  functionType: "query" | "mutation" | "action";
+                  handle: string;
+                  inProgress: boolean;
+                  kind?: "function";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                  workId?: string;
+                }
+              | {
+                  args: any;
+                  argsSize: number;
+                  completedAt?: number;
+                  handle: string;
+                  inProgress: boolean;
+                  kind: "workflow";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                  workflowId?: string;
+                }
+              | {
+                  args: { eventId?: string };
+                  argsSize: number;
+                  completedAt?: number;
+                  eventId?: string;
+                  inProgress: boolean;
+                  kind: "event";
+                  name: string;
+                  runResult?:
+                    | { kind: "success"; returnValue: any }
+                    | { error: string; kind: "failed" }
+                    | { kind: "canceled" };
+                  startedAt: number;
+                };
+            stepNumber: number;
+            workflowId: string;
+          }>;
+          logLevel: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+          workflow: {
+            _creationTime: number;
+            _id: string;
+            args: any;
+            generationNumber: number;
+            logLevel?: any;
+            name?: string;
+            onComplete?: { context?: any; fnHandle: string };
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt?: any;
+            state?: any;
+            workflowHandle: string;
+          };
+        }
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        {
+          order: "asc" | "desc";
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            args: any;
+            context?: any;
+            name?: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            workflowId: string;
+          }>;
+          pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+          splitCursor?: string | null;
+        }
+      >;
+      listByName: FunctionReference<
+        "query",
+        "internal",
+        {
+          name: string;
+          order: "asc" | "desc";
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            args: any;
+            context?: any;
+            name?: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            workflowId: string;
+          }>;
+          pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+          splitCursor?: string | null;
+        }
+      >;
+      listSteps: FunctionReference<
+        "query",
+        "internal",
+        {
+          order: "asc" | "desc";
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+          workflowId: string;
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            args: any;
+            completedAt?: number;
+            eventId?: string;
+            kind: "function" | "workflow" | "event";
+            name: string;
+            nestedWorkflowId?: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt: number;
+            stepId: string;
+            stepNumber: number;
+            workId?: string;
+            workflowId: string;
+          }>;
+          pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+          splitCursor?: string | null;
+        }
+      >;
+      restart: FunctionReference<
+        "mutation",
+        "internal",
+        { from?: number | string; startAsync?: boolean; workflowId: string },
+        null
+      >;
     };
   };
 };

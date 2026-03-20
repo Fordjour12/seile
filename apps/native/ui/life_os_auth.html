@@ -1,0 +1,370 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{display:flex;flex-direction:column;gap:28px;padding:8px 0}
+.phone{width:375px;background:#0e0e10;border-radius:44px;overflow:hidden;border:1px solid #2a2a2e;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.pscreen{padding:0 24px 40px;flex:1;display:flex;flex-direction:column}
+.day-chip{font-size:10px;color:#444;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;padding:0 4px}
+
+/* Wordmark */
+.wordmark{display:flex;align-items:center;gap:10px;margin:32px 0 0}
+.wm-icon{width:40px;height:40px;border-radius:12px;background:#1e1a30;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center}
+.wm-text{font-size:22px;font-weight:500;color:#fff;letter-spacing:-.5px}
+.wm-sub{font-size:12px;color:#444;margin-top:2px}
+
+/* Hero text */
+.hero{margin:28px 0 0}
+.hero-title{font-size:30px;font-weight:500;color:#fff;line-height:1.2;margin-bottom:8px}
+.hero-title span{color:#9b8fff}
+.hero-sub{font-size:14px;color:#444;line-height:1.6}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.divider-line{flex:1;height:0.5px;background:#1e1e22}
+.divider-text{font-size:12px;color:#333;font-weight:500}
+
+/* Social auth buttons */
+.social-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;font-size:14px;font-weight:500;color:#d0d0dc;cursor:pointer;transition:all .15s;margin-bottom:8px}
+.social-btn:hover{background:#1e1e24;border-color:#333}
+.social-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Input fields */
+.field-group{margin-bottom:12px}
+.field-label{font-size:12px;color:#555;font-weight:500;margin-bottom:6px;letter-spacing:.02em}
+.field-input{width:100%;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:12px;padding:13px 16px;font-size:15px;color:#e0e0ec;outline:none;font-family:inherit;transition:border-color .15s}
+.field-input:focus{border-color:#3d3570}
+.field-input::placeholder{color:#2a2a2e}
+.field-input.error{border-color:#3a1a1a}
+.field-error{font-size:11px;color:#e24b4a;margin-top:5px}
+.field-hint{font-size:11px;color:#444;margin-top:5px}
+
+/* Password field with show/hide */
+.field-with-action{position:relative}
+.field-action{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:#555;cursor:pointer;transition:color .15s}
+.field-action:hover{color:#888}
+
+/* Primary button */
+.btn-primary{width:100%;padding:14px;background:#9b8fff;color:#0e0e10;border:none;border-radius:14px;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s;margin-top:4px}
+.btn-primary:hover{opacity:.88}
+.btn-primary:disabled{opacity:.3;cursor:default}
+
+/* Terms */
+.terms{font-size:11px;color:#333;text-align:center;line-height:1.6;margin-top:14px}
+.terms a{color:#555;text-decoration:none}
+
+/* Switch screen */
+.switch-row{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:16px}
+.switch-text{font-size:13px;color:#444}
+.switch-link{font-size:13px;color:#9b8fff;cursor:pointer;font-weight:500}
+
+/* Forgot password */
+.forgot{text-align:right;margin-top:-6px;margin-bottom:14px}
+.forgot-link{font-size:12px;color:#555;cursor:pointer;transition:color .15s}
+.forgot-link:hover{color:#9b8fff}
+
+/* Step dots */
+.step-dots{display:flex;gap:5px;justify-content:center;margin:16px 0 0}
+.sdot{width:6px;height:6px;border-radius:50%;background:#222;transition:all .25s}
+.sdot.active{background:#9b8fff;width:18px;border-radius:3px}
+.sdot.done{background:#3d3570}
+
+/* Success state */
+.success-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 16px}
+.ss-ring{width:60px;height:60px;border-radius:50%;background:#1e1a30;border:1.5px solid #9b8fff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.ss-title{font-size:20px;font-weight:500;color:#fff;margin-bottom:8px}
+.ss-sub{font-size:13px;color:#555;line-height:1.6;max-width:260px;margin:0 auto 24px}
+
+/* Strength meter */
+.strength-meter{display:flex;gap:4px;margin-top:7px;margin-bottom:4px}
+.sm-bar{flex:1;height:3px;background:#1e1e22;border-radius:2px;transition:background .3s}
+.sm-label{font-size:11px;color:#444;margin-top:4px}
+
+/* Feature pills on welcome */
+.feature-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.fp{font-size:11px;padding:5px 10px;background:#1a1a1e;border:0.5px solid #222;border-radius:20px;color:#555;display:flex;align-items:center;gap:5px}
+.fp-dot{width:5px;height:5px;border-radius:50%}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="wrap">
+
+  <!-- ─── 1. WELCOME / SPLASH ─── -->
+  <div>
+    <div class="day-chip">1 · Welcome screen</div>
+    <div class="phone" style="min-height:700px">
+      <div class="status-bar"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div class="wordmark">
+          <div class="wm-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect x="3" y="3" width="7" height="7" rx="2" fill="#9b8fff" opacity=".9"/>
+              <rect x="12" y="3" width="7" height="7" rx="2" fill="#9b8fff" opacity=".55"/>
+              <rect x="3" y="12" width="7" height="7" rx="2" fill="#9b8fff" opacity=".55"/>
+              <rect x="12" y="12" width="7" height="7" rx="2" fill="#9b8fff" opacity=".3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="wm-text">Life OS</div>
+            <div class="wm-sub">Your personal operating system</div>
+          </div>
+        </div>
+
+        <div class="hero">
+          <div class="hero-title">One system for<br><span>every part of life.</span></div>
+          <div class="hero-sub">Faith, career, finances, health, and more — managed by an AI that learns your patterns and plans your week.</div>
+        </div>
+
+        <div class="feature-pills">
+          <div class="fp"><div class="fp-dot" style="background:#534AB7"></div>Faith-first</div>
+          <div class="fp"><div class="fp-dot" style="background:#9b8fff"></div>AI-powered</div>
+          <div class="fp"><div class="fp-dot" style="background:#1d9e75"></div>Approval-based</div>
+          <div class="fp"><div class="fp-dot" style="background:#ba7517"></div>8 life domains</div>
+          <div class="fp"><div class="fp-dot" style="background:#85b7eb"></div>Private by design</div>
+        </div>
+
+        <div style="flex:1"></div>
+
+        <div style="margin-top:32px">
+          <button class="btn-primary" onclick="sendPrompt('Show me the create account screen for Life OS')">Create account</button>
+          <div style="margin-top:10px;width:100%;padding:13px;background:transparent;border:0.5px solid #2a2a2e;border-radius:14px;font-size:15px;font-weight:500;color:#888;cursor:pointer;text-align:center;transition:all .15s" onclick="sendPrompt('Show me the login screen for Life OS')">Sign in</div>
+        </div>
+
+        <div class="terms" style="margin-top:16px">By continuing you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.<br>Your data never leaves your account.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 2. CREATE ACCOUNT ─── -->
+  <div>
+    <div class="day-chip">2 · Create account</div>
+    <div class="phone" style="min-height:780px">
+      <div class="status-bar"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div style="padding:20px 0 0;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555" onclick="sendPrompt('Go back to the welcome screen')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+            Back
+          </div>
+          <div style="font-size:13px;color:#444">Step 1 of 2</div>
+        </div>
+
+        <div style="margin:20px 0 20px">
+          <div style="font-size:22px;font-weight:500;color:#fff;margin-bottom:6px">Create your account</div>
+          <div style="font-size:13px;color:#444;line-height:1.5">You'll set up your Life OS preferences in the next step.</div>
+        </div>
+
+        <!-- Social auth -->
+        <div class="social-btn" onclick="sendPrompt('Sign up with Google for Life OS')">
+          <div class="social-icon" style="background:#fff">
+            <svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          </div>
+          Continue with Google
+        </div>
+
+        <div class="social-btn" onclick="sendPrompt('Sign up with Apple for Life OS')">
+          <div class="social-icon" style="background:#000;border:0.5px solid #333">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.32 2.99-2.53 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+          </div>
+          Continue with Apple
+        </div>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <div class="divider-text">or email</div>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Email address</div>
+          <input class="field-input" type="email" placeholder="you@example.com" id="email-create"/>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Password</div>
+          <div class="field-with-action">
+            <input class="field-input" type="password" placeholder="8+ characters" id="pw-create" oninput="checkStrength(this.value)"/>
+            <span class="field-action" onclick="togglePw('pw-create',this)">Show</span>
+          </div>
+          <div class="strength-meter">
+            <div class="sm-bar" id="sb1"></div>
+            <div class="sm-bar" id="sb2"></div>
+            <div class="sm-bar" id="sb3"></div>
+            <div class="sm-bar" id="sb4"></div>
+          </div>
+          <div class="sm-label" id="strength-label">Enter a password</div>
+        </div>
+
+        <button class="btn-primary" id="create-btn" onclick="sendPrompt('Account created — proceed to Life OS onboarding')" disabled>Create account</button>
+
+        <div class="terms">We don't sell your data or show ads. Ever.<br><a href="#">Privacy policy</a> · <a href="#">Terms of service</a></div>
+
+        <div class="switch-row">
+          <span class="switch-text">Already have an account?</span>
+          <span class="switch-link" onclick="sendPrompt('Show me the sign in screen for Life OS')">Sign in</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 3. SIGN IN ─── -->
+  <div>
+    <div class="day-chip">3 · Sign in</div>
+    <div class="phone" style="min-height:720px">
+      <div class="status-bar"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div style="padding:20px 0 0;display:flex;align-items:center">
+          <div style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555" onclick="sendPrompt('Go back to the welcome screen')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+            Back
+          </div>
+        </div>
+
+        <div style="margin:24px 0 24px">
+          <div style="font-size:22px;font-weight:500;color:#fff;margin-bottom:6px">Welcome back.</div>
+          <div style="font-size:13px;color:#444">Sign in to continue your Life OS.</div>
+        </div>
+
+        <!-- Social -->
+        <div class="social-btn" onclick="sendPrompt('Sign in with Google to Life OS')">
+          <div class="social-icon" style="background:#fff">
+            <svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          </div>
+          Continue with Google
+        </div>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <div class="divider-text">or email</div>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Email address</div>
+          <input class="field-input" type="email" placeholder="you@example.com"/>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Password</div>
+          <div class="field-with-action">
+            <input class="field-input" type="password" placeholder="Your password" id="pw-login"/>
+            <span class="field-action" onclick="togglePw('pw-login',this)">Show</span>
+          </div>
+        </div>
+
+        <div class="forgot"><span class="forgot-link" onclick="sendPrompt('Show me the forgot password flow for Life OS')">Forgot password?</span></div>
+
+        <button class="btn-primary" onclick="sendPrompt('Signed in — open Life OS Today screen')">Sign in</button>
+
+        <div class="switch-row" style="margin-top:20px">
+          <span class="switch-text">New to Life OS?</span>
+          <span class="switch-link" onclick="sendPrompt('Show me the create account screen')">Create account</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 4. SIGN IN ERROR ─── -->
+  <div>
+    <div class="day-chip">4 · Sign in — wrong password</div>
+    <div class="phone" style="min-height:620px">
+      <div class="status-bar"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div style="padding:20px 0 24px;font-size:22px;font-weight:500;color:#fff">Welcome back.</div>
+
+        <div class="field-group">
+          <div class="field-label">Email address</div>
+          <input class="field-input error" type="email" value="bobie@example.com"/>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Password</div>
+          <div class="field-with-action">
+            <input class="field-input error" type="password" value="wrongpassword"/>
+            <span class="field-action">Show</span>
+          </div>
+          <div class="field-error">Email or password is incorrect. Try again or reset your password.</div>
+        </div>
+
+        <div class="forgot"><span class="forgot-link" onclick="sendPrompt('Show me the forgot password flow')">Forgot password?</span></div>
+
+        <button class="btn-primary" onclick="sendPrompt('Retry sign in')">Try again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 5. FORGOT PASSWORD ─── -->
+  <div>
+    <div class="day-chip">5 · Forgot password</div>
+    <div class="phone" style="min-height:580px">
+      <div class="status-bar"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div style="padding:20px 0 0;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#555" onclick="sendPrompt('Go back to sign in')">
+          <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+          Sign in
+        </div>
+
+        <div style="margin:24px 0 20px">
+          <div style="font-size:22px;font-weight:500;color:#fff;margin-bottom:6px">Reset your password</div>
+          <div style="font-size:13px;color:#444;line-height:1.6">Enter your email and we'll send a reset link. It expires in 15 minutes.</div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Email address</div>
+          <input class="field-input" type="email" placeholder="you@example.com"/>
+        </div>
+
+        <button class="btn-primary" style="margin-top:8px" onclick="sendPrompt('Send password reset email for Life OS')">Send reset link</button>
+
+        <div style="margin-top:16px;padding:12px 14px;background:#1a1a1e;border:0.5px solid #222;border-radius:12px;font-size:12px;color:#444;line-height:1.5">Your Life OS data, AI context, and domain history are all safe. Resetting your password doesn't affect any of your data.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 6. EMAIL SENT ─── -->
+  <div>
+    <div class="day-chip">6 · Reset email sent</div>
+    <div class="phone" style="min-height:500px">
+      <div class="status-bar"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen" style="justify-content:center">
+        <div class="success-state">
+          <div class="ss-ring">
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M4 14l6 6L22 6" stroke="#9b8fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ss-title">Check your inbox</div>
+          <div class="ss-sub">We sent a reset link to bobie@example.com. It expires in 15 minutes.</div>
+          <button class="btn-primary" style="width:100%" onclick="sendPrompt('Go back to sign in screen')">Back to sign in</button>
+          <div style="margin-top:12px;font-size:12px;color:#333;cursor:pointer" onclick="sendPrompt('Resend the password reset email')">Didn't receive it? Resend</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function togglePw(id,btn){
+  var inp=document.getElementById(id);
+  if(!inp)return;
+  if(inp.type==='password'){inp.type='text';btn.textContent='Hide';}
+  else{inp.type='password';btn.textContent='Show';}
+}
+
+function checkStrength(v){
+  var bars=[document.getElementById('sb1'),document.getElementById('sb2'),document.getElementById('sb3'),document.getElementById('sb4')];
+  var label=document.getElementById('strength-label');
+  var btn=document.getElementById('create-btn');
+  var score=0;
+  if(v.length>=8)score++;
+  if(/[A-Z]/.test(v))score++;
+  if(/[0-9]/.test(v))score++;
+  if(/[^A-Za-z0-9]/.test(v))score++;
+  var colors=['#e24b4a','#ba7517','#9b8fff','#1d9e75'];
+  var labels=['Too short','Fair','Good','Strong'];
+  bars.forEach(function(b,i){b.style.background=i<score?colors[Math.max(0,score-1)]:'#1e1e22';});
+  if(v.length===0){label.textContent='Enter a password';label.style.color='#444';}
+  else{label.textContent=labels[Math.max(0,score-1)];label.style.color=colors[Math.max(0,score-1)];}
+  btn.disabled=score<2||v.length<8;
+}
+</script>

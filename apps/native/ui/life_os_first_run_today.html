@@ -1,0 +1,370 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{display:flex;flex-direction:column;gap:28px;padding:8px 0}
+.phone{width:375px;background:#0e0e10;border-radius:44px;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{overflow-y:auto;padding-bottom:100px;flex:1}
+.screen::-webkit-scrollbar{display:none}
+
+/* Labels */
+.day-chip{font-size:10px;color:#444;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;padding:0 4px}
+
+/* Header */
+.header{padding:20px 24px 0}
+.h-greeting{font-size:28px;font-weight:500;color:#fff;line-height:1.2;margin-bottom:4px}
+.h-greeting span{color:#9b8fff}
+.h-sub{font-size:13px;color:#444;margin-top:4px;line-height:1.5}
+
+/* First AI card — very first message */
+.first-ai{margin:14px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:18px;padding:16px}
+.fa-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fa-pulse{width:7px;height:7px;border-radius:50%;background:#9b8fff;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.fa-label{font-size:11px;color:#6b5fff;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.fa-badge{margin-left:auto;font-size:10px;color:#444;padding:2px 8px;background:#1e1e28;border-radius:10px}
+.fa-text{font-size:14px;color:#b0b0c0;line-height:1.65;margin-bottom:12px}
+.fa-chips{display:flex;gap:6px;flex-wrap:wrap}
+.fa-chip{font-size:12px;padding:6px 12px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer;transition:all .15s}
+.fa-chip:hover{background:#252040}
+
+/* Learning progress */
+.learning-card{margin:10px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:11px 14px}
+.lc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.lc-label{font-size:12px;font-weight:500;color:#888}
+.lc-day{font-size:11px;color:#444}
+.lc-track{height:3px;background:#1e1e22;border-radius:2px;overflow:hidden;margin-bottom:5px}
+.lc-fill{height:100%;border-radius:2px;background:#9b8fff;transition:width .5s}
+.lc-sub{font-size:11px;color:#333;line-height:1.4}
+
+/* Suggested first actions */
+.section-head{padding:14px 24px 0;display:flex;justify-content:space-between;align-items:center}
+.sh-label{font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase}
+.sh-sub{font-size:11px;color:#333}
+
+/* First action cards — suggested not AI-generated */
+.action-card{margin:8px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;cursor:pointer;transition:border-color .15s;display:flex;align-items:flex-start;gap:12px}
+.action-card:hover{border-color:#333}
+.ac-ring{width:22px;height:22px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ac-ring.suggested{border-color:currentColor;opacity:.5}
+.ac-body{flex:1}
+.ac-title{font-size:14px;font-weight:500;color:#d0d0dc;margin-bottom:3px}
+.ac-meta{display:flex;gap:6px;align-items:center}
+.ac-domain{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.ac-note{font-size:11px;color:#333}
+.ac-arrow{font-size:14px;color:#2a2a2e;flex-shrink:0}
+
+/* Empty habits section */
+.habits-empty{margin:10px 24px 0;background:#141418;border:0.5px solid #1e1e22;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:border-color .15s}
+.habits-empty:hover{border-color:#2a2a2e}
+.he-icon{width:32px;height:32px;border-radius:9px;background:#1a1a1e;border:1px dashed #2a2a2e;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.he-body{flex:1}
+.he-title{font-size:13px;color:#444;font-weight:500;margin-bottom:2px}
+.he-sub{font-size:11px;color:#333}
+
+/* First checkin prompt */
+.checkin-prompt{margin:10px 24px 0;background:#1a1020;border:0.5px solid #3d1535;border-radius:16px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.checkin-prompt:hover{border-color:#5d2050}
+.cp-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cp-dot{width:6px;height:6px;border-radius:50%;background:#d4537e;flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+.cp-label{font-size:12px;color:#d4537e;font-weight:500}
+.cp-badge{margin-left:auto;font-size:10px;color:#554050;padding:2px 7px;background:#2a1020;border-radius:10px}
+.cp-text{font-size:13px;color:#a08090;line-height:1.5;margin-bottom:10px}
+.cp-sliders{display:flex;gap:8px;margin-bottom:10px}
+.cp-slider{flex:1;background:#1e1020;border-radius:8px;padding:7px 8px;text-align:center}
+.cps-label{font-size:9px;color:#554050;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.cps-dots{display:flex;gap:2px;justify-content:center}
+.cps-dot{width:4px;height:4px;border-radius:50%;background:#2a1a2e}
+.cps-dot.f{background:#9b8fff}
+.cp-btn{width:100%;padding:10px;background:#d4537e;border-radius:10px;font-size:13px;font-weight:500;color:#fff;border:none;cursor:pointer;transition:opacity .15s;text-align:center}
+.cp-btn:hover{opacity:.85}
+
+/* Domain setup cards */
+.domain-setup{margin:8px 24px 0;background:#141418;border:0.5px solid #1e1e22;border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s}
+.domain-setup:hover{border-color:#2a2a2e}
+.ds-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ds-body{flex:1}
+.ds-title{font-size:13px;color:#555;font-weight:500}
+.ds-sub{font-size:11px;color:#333;margin-top:2px}
+.ds-badge{font-size:10px;padding:2px 8px;border-radius:20px;flex-shrink:0}
+
+/* Bottom nav */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#0e0e10;border-top:0.5px solid #1e1e22;padding:12px 0 28px;display:flex;justify-content:space-around}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.4}
+.nav-item.active{opacity:1}
+.nav-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#9b8fff}
+.nav-label{font-size:10px;color:#888;font-weight:500}
+.nav-item.active .nav-label{color:#9b8fff}
+
+/* FAB */
+.fab{position:absolute;bottom:88px;right:24px;width:48px;height:48px;border-radius:50%;background:#9b8fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(155,143,255,.08)}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="wrap">
+
+  <!-- ─── STATE 1: FIRST OPEN (post-onboarding, zero data) ─── -->
+  <div>
+    <div class="day-chip">State 1 · First open — just finished onboarding</div>
+    <div class="phone" style="min-height:780px">
+      <div class="status-bar"><span>9:41</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="screen">
+        <div class="header">
+          <div class="h-greeting">Good morning,<br><span>Bobie.</span></div>
+          <div class="h-sub">Day 1. Let's start simply.</div>
+        </div>
+
+        <!-- First AI message ever -->
+        <div class="first-ai">
+          <div class="fa-header">
+            <div class="fa-pulse"></div>
+            <span class="fa-label">Your AI · first message</span>
+            <span class="fa-badge">Day 1 of 7</span>
+          </div>
+          <div class="fa-text">I don't know much about you yet — and that's the right place to start. Log your first check-in, complete one priority, and I'll begin building your picture. I won't suggest anything I haven't earned the right to suggest.</div>
+          <div class="fa-chips">
+            <div class="fa-chip" onclick="sendPrompt('Start my first morning check-in in Life OS')">Start check-in ↗</div>
+            <div class="fa-chip" onclick="sendPrompt('Show me how the AI learns from my data')">How you learn</div>
+          </div>
+        </div>
+
+        <!-- Learning progress — day 1 -->
+        <div class="learning-card">
+          <div class="lc-row"><span class="lc-label">AI learning</span><span class="lc-day">Day 1 · 7 days to full context</span></div>
+          <div class="lc-track"><div class="lc-fill" style="width:2%"></div></div>
+          <div class="lc-sub">Complete your first check-in and priority to begin. Full personalised suggestions arrive after 7 days.</div>
+        </div>
+
+        <!-- Suggested priorities — from onboarding prefs, not data -->
+        <div class="section-head">
+          <span class="sh-label">Suggested to start</span>
+          <span class="sh-sub">From your setup</span>
+        </div>
+
+        <div class="action-card" onclick="sendPrompt('Log my first prayer and devotional entry in the Faith domain')">
+          <div class="ac-ring suggested" style="color:#534AB7"></div>
+          <div class="ac-body">
+            <div class="ac-title">Morning devotional + prayer</div>
+            <div class="ac-meta">
+              <span class="ac-domain" style="background:#2a2040;color:#b4adf5">Faith</span>
+              <span class="ac-note">Suggested · from your setup</span>
+            </div>
+          </div>
+          <span class="ac-arrow">›</span>
+        </div>
+
+        <div class="action-card" onclick="sendPrompt('Start my first morning check-in')">
+          <div class="ac-ring suggested" style="color:#993556"></div>
+          <div class="ac-body">
+            <div class="ac-title">Log your first check-in</div>
+            <div class="ac-meta">
+              <span class="ac-domain" style="background:#2a1020;color:#ed93b1">Wellness</span>
+              <span class="ac-note">Teaches AI your patterns</span>
+            </div>
+          </div>
+          <span class="ac-arrow">›</span>
+        </div>
+
+        <div class="action-card" onclick="sendPrompt('Set up my Finance domain — add a monthly budget cap')">
+          <div class="ac-ring suggested" style="color:#0F6E56"></div>
+          <div class="ac-body">
+            <div class="ac-title">Set your first budget cap</div>
+            <div class="ac-meta">
+              <span class="ac-domain" style="background:#1a2a1e;color:#6fcf97">Finance</span>
+              <span class="ac-note">Unlocks Finance insights</span>
+            </div>
+          </div>
+          <span class="ac-arrow">›</span>
+        </div>
+
+        <!-- Habits — empty -->
+        <div class="section-head"><span class="sh-label">Habits</span></div>
+        <div class="habits-empty" onclick="sendPrompt('Add my first habit to Life OS')">
+          <div class="he-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+          </div>
+          <div class="he-body">
+            <div class="he-title">No habits yet</div>
+            <div class="he-sub">Add a habit and it will appear here every day</div>
+          </div>
+        </div>
+
+        <!-- Domains to activate -->
+        <div class="section-head"><span class="sh-label">Activate domains</span></div>
+        <div class="domain-setup" onclick="sendPrompt('Set up my Career domain — add a project or goal')">
+          <div class="ds-icon" style="background:#1a1e2a;border:0.5px solid #2a3040"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="1.3" rx=".65" fill="#85b7eb"/><rect x="2" y="7" width="9" height="1.3" rx=".65" fill="#85b7eb"/><rect x="2" y="11" width="11" height="1.3" rx=".65" fill="#85b7eb"/></svg></div>
+          <div class="ds-body"><div class="ds-title">Career</div><div class="ds-sub">Add a project or goal to activate</div></div>
+          <span class="ds-badge" style="background:#1a1e2a;color:#85b7eb;border:0.5px solid #2a3040">+ Setup</span>
+        </div>
+        <div class="domain-setup" onclick="sendPrompt('Set up my Health domain — log a first training session')">
+          <div class="ds-icon" style="background:#2a1510;border:0.5px solid #3d2015"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 13s-5-3.5-5-7a5 5 0 0110 0c0 3.5-5 7-5 7z" stroke="#f0997b" stroke-width="1.3"/></svg></div>
+          <div class="ds-body"><div class="ds-title">Health</div><div class="ds-sub">Log a session to activate</div></div>
+          <span class="ds-badge" style="background:#2a1510;color:#f0997b;border:0.5px solid #3d2015">+ Setup</span>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-icon" style="background:#1e1a30"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div><div class="nav-dot"></div><span class="nav-label" style="color:#9b8fff">Today</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div><span class="nav-label">Planner</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#555" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#555"/></svg></div><span class="nav-label">Domains</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div><span class="nav-label">AI</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#555" stroke-width="1.5"/></svg></div><span class="nav-label">Profile</span></div>
+      </div>
+      <div class="fab" onclick="sendPrompt('Quick add my first item to Life OS')">
+        <svg viewBox="0 0 20 20" width="20" height="20"><path d="M10 4v12M4 10h12" stroke="#0e0e10" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STATE 2: END OF DAY 1 (some data logged) ─── -->
+  <div>
+    <div class="day-chip">State 2 · End of day 1 — first data logged</div>
+    <div class="phone" style="min-height:720px">
+      <div class="status-bar"><span>9:12 PM</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="screen">
+        <div class="header">
+          <div class="h-greeting">Good evening,<br><span>Bobie.</span></div>
+          <div class="h-sub">Day 1 wrapping up. You made a start.</div>
+        </div>
+
+        <!-- AI — reacting to first day data -->
+        <div class="first-ai">
+          <div class="fa-header"><div class="fa-pulse"></div><span class="fa-label">End of day 1</span></div>
+          <div class="fa-text">You logged prayer, completed 2 priorities, and did your first check-in. Energy was 7, mood 7. That's enough for me to make my first small adjustment — I've set your default morning block to 6 AM instead of the placeholder 8 AM.</div>
+          <div class="fa-chips">
+            <div class="fa-chip" onclick="sendPrompt('That timing is right for me')">Looks right ✓</div>
+            <div class="fa-chip" onclick="sendPrompt('Change my morning block time to something different')">Adjust timing</div>
+          </div>
+        </div>
+
+        <!-- Day 1 summary -->
+        <div style="margin:10px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px">
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Day 1 snapshot</div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;background:#141418;border-radius:9px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:500;color:#1d9e75">2</div><div style="font-size:10px;color:#555;margin-top:2px">Done</div></div>
+            <div style="flex:1;background:#141418;border-radius:9px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:500;color:#9b8fff">1</div><div style="font-size:10px;color:#555;margin-top:2px">Check-in</div></div>
+            <div style="flex:1;background:#141418;border-radius:9px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:500;color:#b4adf5">1</div><div style="font-size:10px;color:#555;margin-top:2px">Prayer</div></div>
+            <div style="flex:1;background:#141418;border-radius:9px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:500;color:#ba7517">5</div><div style="font-size:10px;color:#555;margin-top:2px">Days left</div></div>
+          </div>
+        </div>
+
+        <!-- Evening check-in -->
+        <div class="checkin-prompt" onclick="sendPrompt('Start my evening check-in — end of day 1')">
+          <div class="cp-header"><div class="cp-dot"></div><span class="cp-label">Evening check-in</span><span class="cp-badge">30 seconds</span></div>
+          <div class="cp-text">How did day 1 end? Your answer shapes tomorrow's suggestions.</div>
+          <div class="cp-sliders">
+            <div class="cp-slider"><div class="cps-label">Mood</div><div class="cps-dots"><div class="cps-dot f"></div><div class="cps-dot f"></div><div class="cps-dot f"></div><div class="cps-dot"></div><div class="cps-dot"></div></div></div>
+            <div class="cp-slider"><div class="cps-label">Energy</div><div class="cps-dots"><div class="cps-dot f"></div><div class="cps-dot f"></div><div class="cps-dot"></div><div class="cps-dot"></div><div class="cps-dot"></div></div></div>
+            <div class="cp-slider"><div class="cps-label">Ready</div><div class="cps-dots"><div class="cps-dot f"></div><div class="cps-dot f"></div><div class="cps-dot f"></div><div class="cps-dot f"></div><div class="cps-dot"></div></div></div>
+          </div>
+          <div class="cp-btn">Close the day ↗</div>
+        </div>
+
+        <!-- Learning progress — day 1 end -->
+        <div class="learning-card">
+          <div class="lc-row"><span class="lc-label">AI learning</span><span class="lc-day">Day 1 complete</span></div>
+          <div class="lc-track"><div class="lc-fill" style="width:14%"></div></div>
+          <div class="lc-sub">Good start. 6 more days of check-ins and the full picture comes together. Tomorrow I'll show you your first pattern.</div>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-icon" style="background:#1e1a30"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div><div class="nav-dot"></div><span class="nav-label" style="color:#9b8fff">Today</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div><span class="nav-label">Planner</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#555" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#555"/></svg></div><span class="nav-label">Domains</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div><span class="nav-label">AI</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#555" stroke-width="1.5"/></svg></div><span class="nav-label">Profile</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STATE 3: DAY 3 MORNING (partial data, first suggestion) ─── -->
+  <div>
+    <div class="day-chip">State 3 · Day 3 morning — first real suggestion appears</div>
+    <div class="phone" style="min-height:700px">
+      <div class="status-bar"><span>7:58</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="screen">
+        <div class="header">
+          <div class="h-greeting">Good morning,<br><span>Bobie.</span></div>
+          <div class="h-sub">Day 3 · I noticed something.</div>
+        </div>
+
+        <!-- First real AI suggestion -->
+        <div class="first-ai">
+          <div class="fa-header"><div class="fa-pulse"></div><span class="fa-label">First pattern</span><span class="fa-badge">Day 3</span></div>
+          <div class="fa-text">Both mornings you logged prayer before 7 AM and your energy was above 7. Yesterday when prayer was later, energy dropped to 5. Want me to protect that morning slot?</div>
+          <div class="fa-chips">
+            <div class="fa-chip" onclick="sendPrompt('Yes — lock in morning prayer before 7 AM as a recurring priority')">Lock it in ↗</div>
+            <div class="fa-chip" onclick="sendPrompt('Interesting — keep watching before locking anything in')">Keep watching</div>
+          </div>
+        </div>
+
+        <!-- Growing priorities — now AI-informed -->
+        <div class="section-head"><span class="sh-label">Today · 3 priorities</span></div>
+
+        <div class="action-card" onclick="sendPrompt('Log morning prayer for today')">
+          <div class="ac-ring" style="border-color:#534AB7;color:#534AB7"></div>
+          <div class="ac-body">
+            <div class="ac-title">Morning prayer</div>
+            <div class="ac-meta"><span class="ac-domain" style="background:#2a2040;color:#b4adf5">Faith</span><span class="ac-note" style="color:#9b8fff">AI-suggested · energy pattern</span></div>
+          </div>
+          <span class="ac-arrow">›</span>
+        </div>
+
+        <div class="action-card" onclick="sendPrompt('Work on the Life OS project — deep work session')">
+          <div class="ac-ring" style="border-color:#185FA5;color:#185FA5"></div>
+          <div class="ac-body">
+            <div class="ac-title">Life OS — schema design</div>
+            <div class="ac-meta"><span class="ac-domain" style="background:#1a1e2a;color:#85b7eb">Career</span><span class="ac-note">9:00 AM · deep work</span></div>
+          </div>
+          <span class="ac-arrow">›</span>
+        </div>
+
+        <div class="action-card" onclick="sendPrompt('Log my morning check-in for day 3')">
+          <div class="ac-ring" style="border-color:#993556;color:#993556"></div>
+          <div class="ac-body">
+            <div class="ac-title">Morning check-in</div>
+            <div class="ac-meta"><span class="ac-domain" style="background:#2a1020;color:#ed93b1">Wellness</span><span class="ac-note">Feeds AI learning · day 3</span></div>
+          </div>
+          <span class="ac-arrow">›</span>
+        </div>
+
+        <!-- Habits — first two appear -->
+        <div class="section-head"><span class="sh-label">Habits · 2 active</span></div>
+        <div style="margin:8px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px">
+          <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px">
+            <div style="display:flex;align-items:center;gap:7px;padding:7px 12px;background:#141418;border-radius:30px;flex-shrink:0;cursor:pointer" onclick="sendPrompt('Log prayer habit for today')">
+              <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #534AB7;flex-shrink:0"></div>
+              <span style="font-size:12px;color:#888;font-weight:500">Prayer</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;padding:7px 12px;background:#141418;border-radius:30px;flex-shrink:0;cursor:pointer" onclick="sendPrompt('Log water habit for today')">
+              <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #0F6E56;flex-shrink:0"></div>
+              <span style="font-size:12px;color:#888;font-weight:500">Water · 2L</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;padding:7px 12px;background:#1a1a1e;border:0.5px solid #1e1e22;border-radius:30px;flex-shrink:0;cursor:pointer" onclick="sendPrompt('Add another habit to Life OS')">
+              <span style="font-size:12px;color:#333">+ Add habit</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Learning progress — day 3 -->
+        <div class="learning-card">
+          <div class="lc-row"><span class="lc-label">AI learning</span><span class="lc-day">Day 3 of 7</span></div>
+          <div class="lc-track"><div class="lc-fill" style="width:36%"></div></div>
+          <div class="lc-sub">4 more days until your first full personalised plan. I'm starting to see patterns — faith is your anchor.</div>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-icon" style="background:#1e1a30"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div><div class="nav-dot"></div><span class="nav-label" style="color:#9b8fff">Today</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div><span class="nav-label">Planner</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#555" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#555"/></svg></div><span class="nav-label">Domains</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div><span class="nav-label">AI</span></div>
+        <div class="nav-item"><div class="nav-icon" style="background:#1a1a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#555"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#555" stroke-width="1.5"/></svg></div><span class="nav-label">Profile</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>

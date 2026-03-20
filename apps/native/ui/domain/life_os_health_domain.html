@@ -1,0 +1,474 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:110px}
+.screen::-webkit-scrollbar{display:none}
+
+.top-bar{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+
+.header{padding:10px 24px 0}
+.h-row{display:flex;justify-content:space-between;align-items:center}
+.h-left{display:flex;align-items:center;gap:10px}
+.h-dot{width:10px;height:10px;border-radius:50%;background:#993C1D}
+.h-title{font-size:26px;font-weight:500;color:#fff}
+.h-sub{font-size:13px;color:#444;margin-top:4px}
+.h-add{width:32px;height:32px;border-radius:50%;background:#2a1510;border:0.5px solid #3d2015;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.h-add:hover{background:#3a1e10}
+
+/* Health score ring */
+.score-card{margin:14px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:18px;padding:16px;display:flex;align-items:center;gap:16px}
+.ring-wrap{position:relative;width:72px;height:72px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#1e1e22;stroke-width:6}
+.ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .6s}
+.ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-size:18px;font-weight:500;color:#e0e0ec;line-height:1}
+.ring-sub{font-size:9px;color:#555;margin-top:2px}
+.score-body{flex:1}
+.sb-title{font-size:14px;font-weight:500;color:#e0e0ec;margin-bottom:4px}
+.sb-sub{font-size:12px;color:#555;line-height:1.5;margin-bottom:10px}
+.sb-stats{display:flex;gap:12px}
+.sbs{text-align:center}
+.sbs-num{font-size:15px;font-weight:500}
+.sbs-label{font-size:10px;color:#555;margin-top:1px}
+
+/* View toggle */
+.view-toggle{display:flex;gap:0;margin:14px 24px 0;background:#141418;border-radius:10px;padding:3px;border:0.5px solid #222}
+.vt-btn{flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:500;color:#555;cursor:pointer;text-align:center;transition:all .2s;border:none;background:transparent}
+.vt-btn.active{background:#2a1510;color:#f0997b;border:0.5px solid #3d2015}
+
+/* ACTIVITY VIEW */
+.act-view{padding:10px 24px 0}
+
+.section-head{display:flex;justify-content:space-between;align-items:center;padding:10px 0 8px}
+.sh-label{font-size:11px;font-weight:500;color:#555;letter-spacing:.07em;text-transform:uppercase}
+.sh-action{font-size:12px;color:#9b8fff;cursor:pointer}
+
+/* Training sessions */
+.session-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;position:relative;overflow:hidden}
+.session-card::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;background:#993C1D;border-radius:0 2px 2px 0}
+.session-card:hover{border-color:#3d2015}
+.sc-row{display:flex;align-items:flex-start;gap:10px}
+.sc-icon{width:30px;height:30px;border-radius:9px;background:#2a1510;border:0.5px solid #3d2015;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-body{flex:1}
+.sc-type{font-size:11px;font-weight:500;color:#c0604a;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
+.sc-title{font-size:13px;font-weight:500;color:#d0d0dc}
+.sc-meta{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.sc-tag{font-size:10px;padding:1px 7px;border-radius:20px;background:#2a1510;color:#f0997b}
+.sc-stat{font-size:11px;color:#555}
+.sc-check{width:18px;height:18px;border-radius:50%;background:#993C1D;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.sc-check::after{content:'';width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block}
+
+/* Week training grid */
+.training-week{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:12px 14px;margin-bottom:8px}
+.tw-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tw-title{font-size:12px;font-weight:500;color:#888}
+.tw-target{font-size:11px;color:#555}
+.tw-days{display:flex;gap:5px}
+.twd{flex:1;border-radius:8px;padding:7px 4px;text-align:center;border:0.5px solid #1e1e22}
+.twd.done{background:#2a1510;border-color:#3d2015}
+.twd.today{background:#1e1a1a;border-color:#553020}
+.twd.skip{background:#141414}
+.twd-letter{font-size:10px;color:#555;margin-bottom:4px}
+.twd.done .twd-letter{color:#c0604a}
+.twd.today .twd-letter{color:#f0997b}
+.twd-icon{font-size:11px;line-height:1}
+.twd-icon.empty{height:11px}
+
+/* Sleep card */
+.sleep-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.sleep-card:hover{border-color:#333}
+.sleep-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sleep-icon{width:30px;height:30px;border-radius:9px;background:#0e1420;border:0.5px solid #1a2a40;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sleep-title{font-size:13px;font-weight:500;color:#d0d0dc;flex:1}
+.sleep-val{font-size:20px;font-weight:500;color:#85b7eb}
+.sleep-bars{display:flex;align-items:flex-end;gap:4px;height:32px;margin-bottom:6px}
+.sb-bar{flex:1;border-radius:2px 2px 0 0;min-height:3px}
+.sb-day-labels{display:flex;gap:4px}
+.sb-day{flex:1;text-align:center;font-size:9px;color:#444}
+
+/* Hydration */
+.hydration-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:13px 14px;margin-bottom:8px}
+.hy-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.hy-icon{width:30px;height:30px;border-radius:9px;background:#0e1a26;border:0.5px solid #1a3040;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hy-title{font-size:13px;font-weight:500;color:#d0d0dc;flex:1}
+.hy-val{font-size:13px;font-weight:500;color:#85b7eb}
+.hy-cups{display:flex;gap:5px}
+.cup{width:28px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.cup.filled{background:#1a2a3a;border:0.5px solid #2a4050}
+.cup.empty{background:#141418;border:0.5px solid #1e1e22}
+.cup:hover{border-color:#3a5070}
+
+/* METRICS VIEW */
+.metrics-view{display:none;padding:10px 24px 0}
+
+.metric-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.metric-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px;cursor:pointer;transition:border-color .15s}
+.metric-card:hover{border-color:#333}
+.mc-label{font-size:10px;color:#555;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.mc-value{font-size:22px;font-weight:500;margin-bottom:2px}
+.mc-sub{font-size:11px;color:#555}
+.mc-track{height:3px;background:#1e1e22;border-radius:2px;margin-top:8px}
+.mc-fill{height:100%;border-radius:2px}
+
+.goals-section{margin-bottom:10px}
+.goal-item{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:11px 14px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s}
+.goal-item:hover{border-color:#333}
+.gi-bar{width:3px;height:22px;border-radius:2px;flex-shrink:0;background:#993C1D}
+.gi-body{flex:1}
+.gi-name{font-size:13px;font-weight:500;color:#d0d0dc}
+.gi-sub{font-size:11px;color:#555;margin-top:2px}
+.gi-pct{font-size:13px;font-weight:500;color:#f0997b;flex-shrink:0}
+
+/* AI card */
+.ai-card{margin:10px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
+.ac-dot{width:6px;height:6px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ac-body{flex:1}
+.ac-text{font-size:13px;color:#8888a0;line-height:1.5;margin-bottom:8px}
+.ac-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ac-chip{font-size:11px;padding:5px 10px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer}
+.ac-chip:hover{background:#252040}
+
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:#0e0e10;border-top:0.5px solid #1e1e22;padding:12px 0 28px;display:flex;justify-content:space-around}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.4}
+.nav-item.active{opacity:1}
+.nav-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#d85a30}
+.nav-label{font-size:10px;color:#888;font-weight:500}
+.nav-item.active .nav-label{color:#d85a30}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="screen">
+    <div class="top-bar">
+      <div class="back-btn" onclick="sendPrompt('Go back to the Domains hub')">
+        <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+        Domains
+      </div>
+    </div>
+
+    <div class="header">
+      <div class="h-row">
+        <div class="h-left">
+          <div class="h-dot"></div>
+          <div class="h-title">Health</div>
+        </div>
+        <div class="h-add" onclick="sendPrompt('Log a health entry — training, sleep, hydration, or weight')">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#f0997b" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        </div>
+      </div>
+      <div class="h-sub">Week of Mar 10 · 70% · energy avg 6.2</div>
+    </div>
+
+    <!-- Score ring -->
+    <div class="score-card">
+      <div class="ring-wrap">
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle class="ring-bg" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill" cx="36" cy="36" r="30"
+            stroke="#993C1D"
+            stroke-dasharray="188.5"
+            stroke-dashoffset="56.5"/>
+        </svg>
+        <div class="ring-label">
+          <span class="ring-num">70%</span>
+          <span class="ring-sub">health</span>
+        </div>
+      </div>
+      <div class="score-body">
+        <div class="sb-title">Consistent week</div>
+        <div class="sb-sub">2 training sessions · sleep steady · energy lower than usual mid-week</div>
+        <div class="sb-stats">
+          <div class="sbs"><div class="sbs-num" style="color:#f0997b">2</div><div class="sbs-label">Sessions</div></div>
+          <div class="sbs"><div class="sbs-num" style="color:#85b7eb">7.1h</div><div class="sbs-label">Avg sleep</div></div>
+          <div class="sbs"><div class="sbs-num" style="color:#ba7517">6.2</div><div class="sbs-label">Avg energy</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-toggle">
+      <div class="vt-btn active" id="vt-activity" onclick="setView('activity')">Activity</div>
+      <div class="vt-btn" id="vt-metrics" onclick="setView('metrics')">Metrics</div>
+    </div>
+
+    <!-- ACTIVITY VIEW -->
+    <div class="act-view" id="view-activity">
+
+      <div class="section-head">
+        <span class="sh-label">Training this week</span>
+        <span class="sh-action" onclick="sendPrompt('Log a new training session in my Health domain')">+ Log session</span>
+      </div>
+
+      <!-- Week grid -->
+      <div class="training-week">
+        <div class="tw-header">
+          <span class="tw-title">Target: 3 sessions this week</span>
+          <span class="tw-target">2 done · 1 remaining</span>
+        </div>
+        <div class="tw-days">
+          <div class="twd done"><div class="twd-letter">M</div><div class="twd-icon">💪</div></div>
+          <div class="twd skip"><div class="twd-letter">T</div><div class="twd-icon empty"></div></div>
+          <div class="twd done"><div class="twd-letter">W</div><div class="twd-icon">💪</div></div>
+          <div class="twd skip"><div class="twd-letter">T</div><div class="twd-icon empty"></div></div>
+          <div class="twd today" id="today-train" onclick="logTraining()"><div class="twd-letter">F</div><div class="twd-icon" id="fri-icon">+</div></div>
+          <div class="twd skip"><div class="twd-letter">S</div><div class="twd-icon empty"></div></div>
+          <div class="twd skip"><div class="twd-letter">S</div><div class="twd-icon empty"></div></div>
+        </div>
+      </div>
+
+      <!-- Session entries -->
+      <div class="session-card" onclick="sendPrompt('Show me the full details of my Monday strength session')">
+        <div class="sc-row">
+          <div class="sc-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h2M12 8h2M4 8h8M5 5l-1 3M11 5l1 3M5 11l-1-3M11 11l1-3" stroke="#f0997b" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="sc-type">Strength</div>
+            <div class="sc-title">Upper body + core</div>
+            <div class="sc-meta">
+              <span class="sc-tag">45 min</span>
+              <span class="sc-stat">Mon · 5:00 PM</span>
+              <span class="sc-stat">Energy after: 7/10</span>
+            </div>
+          </div>
+          <div class="sc-check"></div>
+        </div>
+      </div>
+
+      <div class="session-card" onclick="sendPrompt('Show me the full details of my Wednesday training session')">
+        <div class="sc-row">
+          <div class="sc-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h2M12 8h2M4 8h8M5 5l-1 3M11 5l1 3M5 11l-1-3M11 11l1-3" stroke="#f0997b" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="sc-type">Strength</div>
+            <div class="sc-title">Lower body + cardio</div>
+            <div class="sc-meta">
+              <span class="sc-tag">40 min</span>
+              <span class="sc-stat">Wed · 5:30 PM</span>
+              <span class="sc-stat">Energy after: 6/10</span>
+            </div>
+          </div>
+          <div class="sc-check"></div>
+        </div>
+      </div>
+
+      <!-- Sleep -->
+      <div class="section-head">
+        <span class="sh-label">Sleep</span>
+        <span class="sh-action" onclick="sendPrompt('Log my sleep for last night')">+ Log sleep</span>
+      </div>
+
+      <div class="sleep-card" onclick="sendPrompt('Show me my full sleep data for this week')">
+        <div class="sleep-header">
+          <div class="sleep-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13 9a5 5 0 01-6-6 5 5 0 106 6z" stroke="#85b7eb" stroke-width="1.3"/></svg>
+          </div>
+          <span class="sleep-title">Avg sleep this week</span>
+          <span class="sleep-val">7.1h</span>
+        </div>
+        <div class="sleep-bars">
+          <div class="sb-bar" style="height:70%;background:#1a2a3a;border:0.5px solid #2a4050"></div>
+          <div class="sb-bar" style="height:75%;background:#1a2a3a;border:0.5px solid #2a4050"></div>
+          <div class="sb-bar" style="height:60%;background:#1a2a3a;border:0.5px solid #2a4050"></div>
+          <div class="sb-bar" style="height:80%;background:#1a2a3a;border:0.5px solid #2a4050"></div>
+          <div class="sb-bar" style="height:72%;background:#185FA5;border:0.5px solid #2a5080"></div>
+          <div class="sb-bar" style="height:20%;background:#141418;border:0.5px solid #1e1e22;opacity:.4"></div>
+          <div class="sb-bar" style="height:20%;background:#141418;border:0.5px solid #1e1e22;opacity:.4"></div>
+        </div>
+        <div class="sb-day-labels">
+          <div class="sb-day">M</div><div class="sb-day">T</div><div class="sb-day">W</div>
+          <div class="sb-day">T</div><div class="sb-day" style="color:#85b7eb">F</div>
+          <div class="sb-day">S</div><div class="sb-day">S</div>
+        </div>
+      </div>
+
+      <!-- Hydration -->
+      <div class="section-head">
+        <span class="sh-label">Hydration today</span>
+      </div>
+
+      <div class="hydration-card">
+        <div class="hy-header">
+          <div class="hy-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2C8 2 4 6 4 9.5a4 4 0 008 0C12 6 8 2 8 2z" stroke="#85b7eb" stroke-width="1.3"/></svg>
+          </div>
+          <span class="hy-title">Water intake</span>
+          <span class="hy-val" id="hy-val">1.5 / 2.5L</span>
+        </div>
+        <div class="hy-cups" id="hy-cups">
+          <div class="cup filled" onclick="toggleCup(0)" data-filled="1">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none"><rect x="1" y="1" width="10" height="11" rx="2" fill="#185FA5" stroke="#2a5080" stroke-width=".8"/></svg>
+          </div>
+          <div class="cup filled" onclick="toggleCup(1)" data-filled="1">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none"><rect x="1" y="1" width="10" height="11" rx="2" fill="#185FA5" stroke="#2a5080" stroke-width=".8"/></svg>
+          </div>
+          <div class="cup filled" onclick="toggleCup(2)" data-filled="1">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none"><rect x="1" y="1" width="10" height="11" rx="2" fill="#185FA5" stroke="#2a5080" stroke-width=".8"/></svg>
+          </div>
+          <div class="cup empty" onclick="toggleCup(3)" data-filled="0">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none"><rect x="1" y="1" width="10" height="11" rx="2" fill="none" stroke="#2a2a2e" stroke-width=".8"/></svg>
+          </div>
+          <div class="cup empty" onclick="toggleCup(4)" data-filled="0">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none"><rect x="1" y="1" width="10" height="11" rx="2" fill="none" stroke="#2a2a2e" stroke-width=".8"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI card -->
+      <div class="ai-card">
+        <div class="ac-dot"></div>
+        <div class="ac-body">
+          <div class="ac-text">2 of 3 training sessions done — one more today or tomorrow closes the week at target. Energy averaged 6.2 this week, dipping on Wednesday (fasting day). Decompression walks on 3 evenings preceded higher morning energy the next day.</div>
+          <div class="ac-chips">
+            <div class="ac-chip" onclick="logTraining()">Log session today ↗</div>
+            <div class="ac-chip" onclick="sendPrompt('How does my training schedule correlate with my energy scores?')">Energy patterns</div>
+            <div class="ac-chip" onclick="sendPrompt('What should my health focus be next week?')">Next week plan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS VIEW -->
+    <div class="metrics-view" id="view-metrics">
+
+      <div class="metric-row">
+        <div class="metric-card" onclick="sendPrompt('Show me my resting heart rate trend over the last 30 days')">
+          <div class="mc-label">Resting HR</div>
+          <div class="mc-value" style="color:#e24b4a">62 <span style="font-size:13px;color:#555">bpm</span></div>
+          <div class="mc-sub">↓ 3 from last week</div>
+          <div class="mc-track"><div class="mc-fill" style="width:62%;background:#e24b4a;opacity:.7"></div></div>
+        </div>
+        <div class="metric-card" onclick="sendPrompt('Show me my weight trend over the last 30 days')">
+          <div class="mc-label">Weight</div>
+          <div class="mc-value" style="color:#f0997b">74.2 <span style="font-size:13px;color:#555">kg</span></div>
+          <div class="mc-sub">Stable this month</div>
+          <div class="mc-track"><div class="mc-fill" style="width:74%;background:#993C1D"></div></div>
+        </div>
+        <div class="metric-card" onclick="sendPrompt('Show me my VO2 max estimate and how to improve it')">
+          <div class="mc-label">VO2 estimate</div>
+          <div class="mc-value" style="color:#1d9e75">42 <span style="font-size:13px;color:#555">ml/kg</span></div>
+          <div class="mc-sub">Good for your age range</div>
+          <div class="mc-track"><div class="mc-fill" style="width:58%;background:#1d9e75"></div></div>
+        </div>
+        <div class="metric-card" onclick="sendPrompt('Show me my sleep quality score trend')">
+          <div class="mc-label">Sleep quality</div>
+          <div class="mc-value" style="color:#85b7eb">7.8 <span style="font-size:13px;color:#555">/10</span></div>
+          <div class="mc-sub">↑ from 7.1 last week</div>
+          <div class="mc-track"><div class="mc-fill" style="width:78%;background:#185FA5"></div></div>
+        </div>
+      </div>
+
+      <div class="goals-section">
+        <div class="section-head">
+          <span class="sh-label">Health goals</span>
+          <span class="sh-action" onclick="sendPrompt('Add a new health goal to my Health domain')">+ Add goal</span>
+        </div>
+        <div class="goal-item" onclick="sendPrompt('Show me my training consistency goal progress in detail')">
+          <div class="gi-bar"></div>
+          <div class="gi-body">
+            <div class="gi-name">Train 3× per week</div>
+            <div class="gi-sub">Consistency goal · this week 2/3</div>
+          </div>
+          <div class="gi-pct">67%</div>
+        </div>
+        <div class="goal-item" onclick="sendPrompt('Show me my sleep goal progress in detail')">
+          <div class="gi-bar" style="background:#185FA5"></div>
+          <div class="gi-body">
+            <div class="gi-name">Sleep 7.5h nightly</div>
+            <div class="gi-sub">Avg 7.1h this week · close</div>
+          </div>
+          <div class="gi-pct" style="color:#85b7eb">95%</div>
+        </div>
+        <div class="goal-item" onclick="sendPrompt('Show me my hydration goal progress')">
+          <div class="gi-bar" style="background:#378add"></div>
+          <div class="gi-body">
+            <div class="gi-name">2.5L water daily</div>
+            <div class="gi-sub">Today: 1.5L · 3 cups remaining</div>
+          </div>
+          <div class="gi-pct" style="color:#85b7eb">60%</div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ac-dot"></div>
+        <div class="ac-body">
+          <div class="ac-text">Sleep quality improved from 7.1 to 7.8 this week — the decompression walks are showing up in the data. Resting HR dropped 3 bpm from last week, a sign your body is adapting to the training load. Weight is stable. The main lever right now is consistency — hitting 3 sessions weekly will lift the health score to 85%+.</div>
+          <div class="ac-chips">
+            <div class="ac-chip" onclick="sendPrompt('Show me my Health domain trends over the last 30 days')">30-day trends ↗</div>
+            <div class="ac-chip" onclick="sendPrompt('What adjustments should I make to my health goals for next month?')">Adjust goals</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="sendPrompt('Show me the Today screen')">
+      <div class="nav-icon" style="background:#2a2040"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#9b8fff"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Planner screen')">
+      <div class="nav-icon" style="background:#1a2a1e"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#1d9e75"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="9" height="1.5" rx=".75"/><rect x="2" y="11" width="11" height="1.5" rx=".75"/></svg></div>
+      <span class="nav-label">Planner</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon" style="background:#2a1a1a"><svg viewBox="0 0 16 16" style="width:13px;height:13px"><circle cx="8" cy="8" r="6" fill="none" stroke="#d85a30" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="#d85a30"/></svg></div>
+      <div class="nav-dot"></div>
+      <span class="nav-label">Domains</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the AI tab')">
+      <div class="nav-icon" style="background:#2a2010"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#ba7517"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z"/></svg></div>
+      <span class="nav-label">AI</span>
+    </div>
+    <div class="nav-item" onclick="sendPrompt('Show me the Profile screen')">
+      <div class="nav-icon" style="background:#0e1a26"><svg viewBox="0 0 16 16" style="width:13px;height:13px;fill:#378add"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="#378add" stroke-width="1.5"/></svg></div>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function setView(v){
+  ['activity','metrics'].forEach(function(n){
+    document.getElementById('vt-'+n).classList.toggle('active',n===v);
+    document.getElementById('view-'+n).style.display=n===v?'block':'none';
+  });
+}
+
+var cupsFilled=3;
+function toggleCup(idx){
+  var cups=document.querySelectorAll('.cup');
+  var filled=parseInt(cups[idx].dataset.filled);
+  cups[idx].dataset.filled=filled?0:1;
+  cups[idx].className='cup '+(filled?'empty':'filled');
+  cups[idx].innerHTML=filled
+    ?'<svg width="12" height="14" viewBox="0 0 12 14" fill="none"><rect x="1" y="1" width="10" height="11" rx="2" fill="none" stroke="#2a2a2e" stroke-width=".8"/></svg>'
+    :'<svg width="12" height="14" viewBox="0 0 12 14" fill="none"><rect x="1" y="1" width="10" height="11" rx="2" fill="#185FA5" stroke="#2a5080" stroke-width=".8"/></svg>';
+  var count=Array.from(cups).filter(function(c){return parseInt(c.dataset.filled)}).length;
+  var liters=(count*0.5).toFixed(1);
+  document.getElementById('hy-val').textContent=liters+' / 2.5L';
+}
+
+function logTraining(){
+  var el=document.getElementById('today-train');
+  var icon=document.getElementById('fri-icon');
+  el.classList.add('done');
+  el.classList.remove('today');
+  icon.textContent='💪';
+  sendPrompt('Log a training session for today Friday March 14 in my Health domain');
+}
+
+setView('activity');
+</script>

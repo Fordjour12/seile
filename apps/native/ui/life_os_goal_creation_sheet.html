@@ -1,0 +1,593 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.bg-screen{flex:1;position:relative;overflow:hidden}
+.bg-dim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:10;display:flex;flex-direction:column;justify-content:flex-end}
+.today-ghost{padding:20px 24px;opacity:.3}
+.tg-greeting{font-size:22px;font-weight:500;color:#fff;margin-bottom:10px}
+.tg-line{height:10px;background:#1a1a1e;border-radius:5px;margin-bottom:8px}
+.tg-card{background:#1a1a1e;border-radius:14px;padding:14px;margin-bottom:8px}
+.tg-card-line{height:9px;background:#222;border-radius:5px;margin-bottom:6px}
+
+/* Sheet */
+.sheet{background:#141418;border-radius:24px 24px 0 0;border-top:0.5px solid #2a2a2e;z-index:20;padding-bottom:40px;max-height:88vh;overflow-y:auto}
+.sheet::-webkit-scrollbar{display:none}
+.sheet-handle{width:36px;height:4px;background:#252530;border-radius:2px;margin:12px auto 0}
+
+/* Step system */
+.step-panel{display:none;padding:0 22px}
+.step-panel.active{display:block}
+
+/* Step header */
+.step-head{padding:14px 0 4px;display:flex;align-items:flex-start;justify-content:space-between}
+.sh-left{}
+.step-eyebrow{font-size:10px;color:#555;font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.step-title{font-size:18px;font-weight:500;color:#fff;line-height:1.3}
+.step-close{font-size:18px;color:#333;cursor:pointer;padding:2px;transition:color .15s}
+.step-close:hover{color:#666}
+
+/* Progress dots */
+.step-dots{display:flex;gap:5px;margin-bottom:14px}
+.sd{width:6px;height:6px;border-radius:50%;background:#222;transition:all .25s}
+.sd.active{background:#9b8fff;width:18px;border-radius:3px}
+.sd.done{background:#3d3570}
+
+/* Goal name input */
+.goal-input{width:100%;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:14px 16px;font-size:18px;color:#e0e0ec;outline:none;font-family:inherit;transition:border-color .15s;margin-bottom:6px}
+.goal-input:focus{border-color:#3d3570}
+.goal-input::placeholder{color:#2a2a2e}
+.char-hint{font-size:11px;color:#333;margin-bottom:16px}
+
+/* Domain selector */
+.domain-select{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px}
+.ds-card{background:#1a1a1e;border:0.5px solid #222;border-radius:13px;padding:10px 12px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:8px}
+.ds-card:hover{background:#1e1e24}
+.ds-card.selected{border-width:1.5px}
+.ds-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ds-name{font-size:13px;font-weight:500;color:#888;flex:1}
+.ds-card.selected .ds-name{color:#e0e0ec}
+.ds-check{width:14px;height:14px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;color:transparent;transition:all .15s}
+.ds-card.selected .ds-check{color:#fff;border-color:transparent}
+
+/* Goal type */
+.type-grid{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.type-card{background:#1a1a1e;border:0.5px solid #222;border-radius:13px;padding:11px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:10px}
+.type-card:hover{background:#1e1e24}
+.type-card.selected{background:#1e1a30;border-color:#3d3570}
+.tc-icon{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.tc-body{flex:1}
+.tc-name{font-size:13px;font-weight:500;color:#ccc;margin-bottom:2px}
+.tc-desc{font-size:11px;color:#444;line-height:1.3}
+.tc-radio{width:16px;height:16px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;margin-top:2px;transition:all .15s}
+.type-card.selected .tc-radio{background:#9b8fff;border-color:#9b8fff;box-shadow:inset 0 0 0 3px #1e1a30}
+
+/* Target input area */
+.target-row{display:flex;gap:8px;margin-bottom:12px;align-items:stretch}
+.target-input{flex:1;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:12px;padding:11px 14px;font-size:16px;font-weight:500;color:#e0e0ec;outline:none;font-family:inherit;transition:border-color .15s}
+.target-input:focus{border-color:#3d3570}
+.target-input::placeholder{color:#2a2a2e}
+.unit-btn{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:12px;padding:11px 14px;font-size:13px;color:#666;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:all .15s}
+.unit-btn:hover{border-color:#333;color:#888}
+
+/* Timeline */
+.timeline-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tl-pill{padding:7px 14px;background:#1a1a1e;border:0.5px solid #222;border-radius:20px;font-size:12px;font-weight:500;color:#555;cursor:pointer;transition:all .15s;flex-shrink:0}
+.tl-pill.active{background:#1e1a30;border-color:#3d3570;color:#c8c0ff}
+.tl-pill:hover:not(.active){color:#888}
+
+/* Tracking method */
+.tracking-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.track-opt{background:#1a1a1e;border:0.5px solid #222;border-radius:12px;padding:10px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:10px}
+.track-opt:hover{background:#1e1e24}
+.track-opt.selected{background:#1e1a30;border-color:#3d3570}
+.to-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.to-body{flex:1}
+.to-name{font-size:13px;font-weight:500;color:#ccc}
+.to-desc{font-size:11px;color:#444;margin-top:1px}
+.to-radio{width:16px;height:16px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;transition:all .15s}
+.track-opt.selected .to-radio{background:#9b8fff;border-color:#9b8fff;box-shadow:inset 0 0 0 3px #1e1a30}
+
+/* AI assistance toggle */
+.ai-assist{background:#13131f;border:0.5px solid #2a2a36;border-radius:14px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.aa-icon{width:28px;height:28px;border-radius:8px;background:#1e1a30;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.aa-body{flex:1}
+.aa-title{font-size:13px;font-weight:500;color:#c8c0ff;margin-bottom:2px}
+.aa-sub{font-size:11px;color:#555}
+.aa-toggle{width:36px;height:20px;border-radius:10px;background:#9b8fff;flex-shrink:0;position:relative;cursor:pointer;transition:background .2s}
+.aa-toggle.off{background:#252530}
+.aa-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.aa-toggle:not(.off) .aa-knob{transform:translateX(16px)}
+
+/* Review card */
+.review-card{background:#1a1a24;border:0.5px solid #2d2a40;border-radius:16px;padding:14px 16px;margin-bottom:14px}
+.rc-label{font-size:10px;color:#6b5fff;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.rc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #1e1e28}
+.rc-row:last-child{border-bottom:none}
+.rc-key{font-size:12px;color:#555}
+.rc-val{font-size:13px;font-weight:500;color:#d0d0dc}
+.rc-val.domain-color{color:#b4adf5}
+.rc-edit{font-size:11px;color:#6b5fff;cursor:pointer}
+
+/* AI preview */
+.ai-preview{background:#13131f;border:0.5px solid #2a2a36;border-radius:12px;padding:11px 14px;margin-bottom:14px;display:flex;gap:8px}
+.ap-dot{width:5px;height:5px;border-radius:50%;background:#9b8fff;flex-shrink:0;margin-top:3px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ap-text{font-size:12px;color:#6b5fff;line-height:1.5}
+
+/* Buttons */
+.btn-row{display:flex;gap:8px;padding:0}
+.btn-primary{flex:1;padding:14px;background:#9b8fff;color:#0e0e10;border:none;border-radius:14px;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.3;cursor:default}
+.btn-back{padding:14px 16px;background:#1a1a1e;color:#555;border:0.5px solid #222;border-radius:14px;font-size:14px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.btn-back:hover{color:#888}
+
+/* Done state */
+.done-state{display:none;padding:28px 22px 0;text-align:center}
+.ds-ring{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.ds-title{font-size:18px;font-weight:500;color:#e0e0ec;margin-bottom:6px}
+.ds-sub{font-size:13px;color:#555;line-height:1.5;max-width:250px;margin:0 auto 18px}
+.ds-btns{display:flex;gap:8px}
+.ds-btn{flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;border:none;text-align:center;transition:opacity .15s}
+.ds-btn.primary{background:#9b8fff;color:#0e0e10}
+.ds-btn.ghost{background:#1a1a1e;color:#555;border:0.5px solid #222}
+.ds-btn:hover{opacity:.8}
+
+/* Demo selector */
+.demo-sel{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:5px;background:#141418;border:0.5px solid #2a2a2e;border-radius:20px;padding:4px}
+.sel-btn{font-size:11px;padding:5px 12px;border-radius:16px;cursor:pointer;color:#555;border:none;background:transparent;transition:all .15s;white-space:nowrap}
+.sel-btn.active{background:#1e1a30;color:#c8c0ff}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+
+  <div class="bg-screen">
+    <div class="today-ghost">
+      <div class="tg-greeting">Good morning, Bobie.</div>
+      <div class="tg-line" style="width:65%"></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:80%"></div><div class="tg-card-line" style="width:55%"></div></div>
+      <div class="tg-card"><div class="tg-card-line" style="width:88%"></div><div class="tg-card-line" style="width:60%"></div></div>
+    </div>
+
+    <!-- Demo selector -->
+    <div class="demo-sel">
+      <div class="sel-btn active" id="sb-habit" onclick="loadPreset('habit')">Habit goal</div>
+      <div class="sel-btn" id="sb-project" onclick="loadPreset('project')">Project goal</div>
+      <div class="sel-btn" id="sb-metric" onclick="loadPreset('metric')">Metric goal</div>
+    </div>
+
+    <div class="bg-dim">
+      <div class="sheet" id="sheet">
+        <div class="sheet-handle"></div>
+
+        <!-- STEP 1: Name + Domain -->
+        <div class="step-panel active" id="sp1">
+          <div class="step-head">
+            <div class="sh-left">
+              <div class="step-eyebrow">New goal · step 1 of 4</div>
+              <div class="step-title">What's the goal?</div>
+            </div>
+            <div class="step-close" onclick="closeSheet()">✕</div>
+          </div>
+          <div class="step-dots">
+            <div class="sd active" id="dot1"></div>
+            <div class="sd" id="dot2"></div>
+            <div class="sd" id="dot3"></div>
+            <div class="sd" id="dot4"></div>
+          </div>
+
+          <input class="goal-input" id="goal-name-input" placeholder="Name this goal…" oninput="updateGoalName(this.value)"/>
+          <div class="char-hint" id="char-hint">Specific and personal works best — "Pray every morning" not "Be more spiritual"</div>
+
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Which domain?</div>
+          <div class="domain-select">
+            <div class="ds-card selected faith-sel" id="ds-faith" onclick="pickDomain('faith',this)">
+              <div class="ds-dot" style="background:#534AB7"></div>
+              <span class="ds-name">Faith</span>
+              <div class="ds-check" style="background:#534AB7;border-color:#534AB7">✓</div>
+            </div>
+            <div class="ds-card career-sel" id="ds-career" onclick="pickDomain('career',this)">
+              <div class="ds-dot" style="background:#185FA5"></div>
+              <span class="ds-name">Career</span>
+              <div class="ds-check">✓</div>
+            </div>
+            <div class="ds-card finance-sel" id="ds-finance" onclick="pickDomain('finance',this)">
+              <div class="ds-dot" style="background:#0F6E56"></div>
+              <span class="ds-name">Finance</span>
+              <div class="ds-check">✓</div>
+            </div>
+            <div class="ds-card health-sel" id="ds-health" onclick="pickDomain('health',this)">
+              <div class="ds-dot" style="background:#993C1D"></div>
+              <span class="ds-name">Health</span>
+              <div class="ds-check">✓</div>
+            </div>
+            <div class="ds-card wellness-sel" id="ds-wellness" onclick="pickDomain('wellness',this)">
+              <div class="ds-dot" style="background:#993556"></div>
+              <span class="ds-name">Wellness</span>
+              <div class="ds-check">✓</div>
+            </div>
+            <div class="ds-card tasks-sel" id="ds-tasks" onclick="pickDomain('tasks',this)">
+              <div class="ds-dot" style="background:#5F5E5A"></div>
+              <span class="ds-name">Tasks</span>
+              <div class="ds-check">✓</div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-primary" id="step1-next" onclick="goStep(2)" disabled>Continue</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Goal type + target -->
+        <div class="step-panel" id="sp2">
+          <div class="step-head">
+            <div class="sh-left">
+              <div class="step-eyebrow">New goal · step 2 of 4</div>
+              <div class="step-title">What kind of goal?</div>
+            </div>
+            <div class="step-close" onclick="closeSheet()">✕</div>
+          </div>
+          <div class="step-dots">
+            <div class="sd done" id="dot1b"></div>
+            <div class="sd active" id="dot2b"></div>
+            <div class="sd" id="dot3b"></div>
+            <div class="sd" id="dot4b"></div>
+          </div>
+
+          <div class="type-grid">
+            <div class="type-card selected" id="tc-habit" onclick="pickType('habit')">
+              <div class="tc-icon" style="background:#2a2040">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><path d="M5.5 8l2 2 3-3" stroke="#9b8fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="tc-body">
+                <div class="tc-name">Habit goal</div>
+                <div class="tc-desc">Something you do consistently — daily, weekly, or on a cadence</div>
+              </div>
+              <div class="tc-radio"></div>
+            </div>
+            <div class="type-card" id="tc-project" onclick="pickType('project')">
+              <div class="tc-icon" style="background:#1a2030">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="1.3" rx=".65" fill="#85b7eb"/><rect x="2" y="7" width="9" height="1.3" rx=".65" fill="#85b7eb"/><rect x="2" y="11" width="11" height="1.3" rx=".65" fill="#85b7eb"/></svg>
+              </div>
+              <div class="tc-body">
+                <div class="tc-name">Project goal</div>
+                <div class="tc-desc">A defined outcome with a start and end — build, finish, launch</div>
+              </div>
+              <div class="tc-radio"></div>
+            </div>
+            <div class="type-card" id="tc-metric" onclick="pickType('metric')">
+              <div class="tc-icon" style="background:#1a2a1e">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 12l4-4 3 3 5-6" stroke="#6fcf97" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="tc-body">
+                <div class="tc-name">Metric goal</div>
+                <div class="tc-desc">A number you want to reach or maintain — savings, weight, streak</div>
+              </div>
+              <div class="tc-radio"></div>
+            </div>
+          </div>
+
+          <div id="target-section">
+            <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px" id="target-label">Target</div>
+            <div class="target-row">
+              <input class="target-input" id="target-input" placeholder="e.g. 7 days / week"/>
+              <div class="unit-btn" id="unit-btn" onclick="cycleUnit()">days/wk <span>↕</span></div>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-top:16px">
+            <button class="btn-back" onclick="goStep(1)">←</button>
+            <button class="btn-primary" onclick="goStep(3)">Continue</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Timeline + tracking -->
+        <div class="step-panel" id="sp3">
+          <div class="step-head">
+            <div class="sh-left">
+              <div class="step-eyebrow">New goal · step 3 of 4</div>
+              <div class="step-title">Timeline and tracking</div>
+            </div>
+            <div class="step-close" onclick="closeSheet()">✕</div>
+          </div>
+          <div class="step-dots">
+            <div class="sd done"></div>
+            <div class="sd done"></div>
+            <div class="sd active"></div>
+            <div class="sd"></div>
+          </div>
+
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">How long?</div>
+          <div class="timeline-row">
+            <div class="tl-pill" onclick="pickTimeline(this)">1 week</div>
+            <div class="tl-pill" onclick="pickTimeline(this)">2 weeks</div>
+            <div class="tl-pill active" onclick="pickTimeline(this)">1 month</div>
+            <div class="tl-pill" onclick="pickTimeline(this)">3 months</div>
+            <div class="tl-pill" onclick="pickTimeline(this)">6 months</div>
+            <div class="tl-pill" onclick="pickTimeline(this)">Ongoing</div>
+          </div>
+
+          <div style="font-size:11px;color:#555;font-weight:500;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">How should the AI track this?</div>
+          <div class="tracking-opts">
+            <div class="track-opt selected" id="to-auto" onclick="pickTracking('auto')">
+              <div class="to-dot" style="background:#9b8fff"></div>
+              <div class="to-body">
+                <div class="to-name">Automatic</div>
+                <div class="to-desc">AI reads your logs and updates progress daily via cron</div>
+              </div>
+              <div class="to-radio"></div>
+            </div>
+            <div class="track-opt" id="to-manual" onclick="pickTracking('manual')">
+              <div class="to-dot" style="background:#555"></div>
+              <div class="to-body">
+                <div class="to-name">Manual check-in</div>
+                <div class="to-desc">You confirm progress each week — AI prompts you</div>
+              </div>
+              <div class="to-radio"></div>
+            </div>
+            <div class="track-opt" id="to-ai" onclick="pickTracking('ai')">
+              <div class="to-dot" style="background:#ba7517"></div>
+              <div class="to-body">
+                <div class="to-name">AI-assisted</div>
+                <div class="to-desc">AI suggests actions each week and tracks completion</div>
+              </div>
+              <div class="to-radio"></div>
+            </div>
+          </div>
+
+          <div class="ai-assist" id="ai-assist-row">
+            <div class="aa-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z" fill="#9b8fff" opacity=".7"/></svg>
+            </div>
+            <div class="aa-body">
+              <div class="aa-title">AI suggestions</div>
+              <div class="aa-sub">Surface nudges and pattern insights for this goal</div>
+            </div>
+            <div class="aa-toggle" id="ai-toggle" onclick="this.classList.toggle('off')"><div class="aa-knob"></div></div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-back" onclick="goStep(2)">←</button>
+            <button class="btn-primary" onclick="goStep(4)">Continue</button>
+          </div>
+        </div>
+
+        <!-- STEP 4: Review and confirm -->
+        <div class="step-panel" id="sp4">
+          <div class="step-head">
+            <div class="sh-left">
+              <div class="step-eyebrow">New goal · step 4 of 4</div>
+              <div class="step-title">Review and create</div>
+            </div>
+            <div class="step-close" onclick="closeSheet()">✕</div>
+          </div>
+          <div class="step-dots">
+            <div class="sd done"></div>
+            <div class="sd done"></div>
+            <div class="sd done"></div>
+            <div class="sd active"></div>
+          </div>
+
+          <div class="review-card">
+            <div class="rc-label">Goal summary</div>
+            <div class="rc-row">
+              <span class="rc-key">Goal</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="rc-val" id="rv-name">Pray every morning</span>
+                <span class="rc-edit" onclick="goStep(1)">Edit</span>
+              </div>
+            </div>
+            <div class="rc-row">
+              <span class="rc-key">Domain</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="rc-val domain-color" id="rv-domain">Faith</span>
+                <span class="rc-edit" onclick="goStep(1)">Edit</span>
+              </div>
+            </div>
+            <div class="rc-row">
+              <span class="rc-key">Type</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="rc-val" id="rv-type">Habit goal</span>
+                <span class="rc-edit" onclick="goStep(2)">Edit</span>
+              </div>
+            </div>
+            <div class="rc-row">
+              <span class="rc-key">Target</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="rc-val" id="rv-target">7 days / week</span>
+                <span class="rc-edit" onclick="goStep(2)">Edit</span>
+              </div>
+            </div>
+            <div class="rc-row">
+              <span class="rc-key">Timeline</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="rc-val" id="rv-timeline">1 month · ends Apr 14</span>
+                <span class="rc-edit" onclick="goStep(3)">Edit</span>
+              </div>
+            </div>
+            <div class="rc-row">
+              <span class="rc-key">Tracking</span>
+              <span class="rc-val" id="rv-tracking">Automatic · daily cron</span>
+            </div>
+          </div>
+
+          <div class="ai-preview">
+            <div class="ap-dot"></div>
+            <div class="ap-text" id="rv-ai-preview">I'll read your Faith logs daily and update this goal's progress automatically. If you miss 2+ days I'll surface a nudge — not a guilt trip, just a reminder. I'll flag it in your weekly review.</div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-back" onclick="goStep(3)">←</button>
+            <button class="btn-primary" onclick="createGoal()">Create goal</button>
+          </div>
+        </div>
+
+        <!-- Done state -->
+        <div class="done-state" id="done-state">
+          <div class="ds-ring" id="done-ring" style="background:#2a2040;border:1.5px solid #9b8fff">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 11l4 4 8-8" stroke="#9b8fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ds-title" id="done-title">Goal created</div>
+          <div class="ds-sub" id="done-sub">Pray every morning is now tracked in your Faith domain. Progress updates daily at 6:00 AM.</div>
+          <div class="ds-btns">
+            <div class="ds-btn ghost" onclick="resetSheet()">Add another</div>
+            <div class="ds-btn primary" onclick="sendPrompt('Show me my Faith domain with the new prayer goal')">View in domain ↗</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var goalData={name:'Pray every morning',domain:'Faith',domainColor:'#9b8fff',type:'Habit goal',target:'7 days / week',timeline:'1 month',tracking:'Automatic · daily cron'};
+var units=['days/wk','sessions/wk','hours/day','%','GH₵/mo','kg','times/mo'];
+var unitIdx=0;
+var currentStep=1;
+var selectedDomain='faith';
+var selectedType='habit';
+var selectedTimeline='1 month';
+var selectedTracking='auto';
+
+var presets={
+  habit:{name:'Pray every morning',domain:'faith',type:'habit',target:'7 days / week',timeline:'1 month',tracking:'auto',aiPreview:"I'll read your Faith logs daily and update this goal's progress automatically. If you miss 2+ days I'll surface a nudge — not a guilt trip, just a reminder. I'll flag it in your weekly review."},
+  project:{name:'Life OS v0.1 launch',domain:'career',type:'project',target:'All screens complete',timeline:'3 months',tracking:'ai',aiPreview:"I'll track task completion toward this goal every week. I'll surface it in your weekly plan generation and flag if the sprint pace is off-track for the timeline."},
+  metric:{name:'Save GH₵ 8,000 emergency fund',domain:'finance',type:'metric',target:'GH₵ 8,000',timeline:'6 months',tracking:'auto',aiPreview:"I'll calculate progress from your transactions and savings logs each day. Monthly surplus patterns suggest you're on track — I'll flag if spending variance risks the target."}
+};
+
+var domainColors={faith:'#534AB7',career:'#185FA5',finance:'#0F6E56',health:'#993C1D',wellness:'#993556',tasks:'#5F5E5A'};
+
+function loadPreset(key){
+  ['habit','project','metric'].forEach(function(k){
+    document.getElementById('sb-'+k).classList.toggle('active',k===key);
+  });
+  var p=presets[key];
+  document.getElementById('goal-name-input').value=p.name;
+  updateGoalName(p.name);
+  pickDomain(p.domain,document.getElementById('ds-'+p.domain));
+  pickType(p.type);
+  selectedTimeline=p.timeline;
+  document.querySelectorAll('.tl-pill').forEach(function(el){
+    el.classList.toggle('active',el.textContent===p.timeline);
+  });
+  pickTracking(p.tracking);
+  goalData.name=p.name;
+  goalData.domain=capitalize(p.domain);
+  goalData.domainColor=domainColors[p.domain]||'#9b8fff';
+  goalData.type=capitalize(p.type)+' goal';
+  goalData.target=p.target;
+  goalData.timeline=p.timeline+' · ends Apr 14';
+  goalData.tracking=p.tracking==='auto'?'Automatic · daily cron':p.tracking==='manual'?'Manual weekly check-in':'AI-assisted weekly';
+  goalData.aiPreview=p.aiPreview;
+  goStep(1);
+}
+
+function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+function goStep(n){
+  document.getElementById('sp'+currentStep).classList.remove('active');
+  currentStep=n;
+  document.getElementById('sp'+n).classList.add('active');
+  document.getElementById('done-state').style.display='none';
+  if(n===4)populateReview();
+  document.getElementById('sheet').scrollTop=0;
+}
+
+function updateGoalName(v){
+  document.getElementById('step1-next').disabled=v.trim().length<2;
+  goalData.name=v.trim()||'Untitled goal';
+}
+
+function pickDomain(key,el){
+  selectedDomain=key;
+  document.querySelectorAll('.ds-card').forEach(function(c){
+    c.classList.remove('selected');
+    c.querySelector('.ds-check').style.background='transparent';
+    c.querySelector('.ds-check').style.borderColor='#333';
+    c.querySelector('.ds-check').style.color='transparent';
+  });
+  el.classList.add('selected');
+  var color=domainColors[key]||'#9b8fff';
+  el.querySelector('.ds-check').style.background=color;
+  el.querySelector('.ds-check').style.borderColor=color;
+  el.querySelector('.ds-check').style.color='#fff';
+  goalData.domain=capitalize(key);
+  goalData.domainColor=color;
+}
+
+function pickType(t){
+  selectedType=t;
+  ['habit','project','metric'].forEach(function(k){
+    document.getElementById('tc-'+k).classList.toggle('selected',k===t);
+  });
+  goalData.type=capitalize(t)+' goal';
+  var labels={habit:'How often?',project:'What\'s the outcome?',metric:'What number?'};
+  var placeholders={habit:'e.g. 7 days / week',project:'e.g. All screens complete',metric:'e.g. GH₵ 8,000'};
+  document.getElementById('target-label').textContent=labels[t]||'Target';
+  document.getElementById('target-input').placeholder=placeholders[t]||'Enter target';
+}
+
+function pickTimeline(el){
+  selectedTimeline=el.textContent;
+  document.querySelectorAll('.tl-pill').forEach(function(p){p.classList.remove('active')});
+  el.classList.add('active');
+  goalData.timeline=el.textContent+(el.textContent==='Ongoing'?'':' · ends Apr 14');
+}
+
+function pickTracking(t){
+  selectedTracking=t;
+  ['auto','manual','ai'].forEach(function(k){
+    document.getElementById('to-'+k).classList.toggle('selected',k===t);
+  });
+  var tracking={auto:'Automatic · daily cron',manual:'Manual weekly check-in',ai:'AI-assisted weekly'};
+  goalData.tracking=tracking[t];
+}
+
+function cycleUnit(){
+  unitIdx=(unitIdx+1)%units.length;
+  document.getElementById('unit-btn').innerHTML=units[unitIdx]+' <span>↕</span>';
+}
+
+function populateReview(){
+  document.getElementById('rv-name').textContent=goalData.name;
+  document.getElementById('rv-domain').textContent=goalData.domain;
+  document.getElementById('rv-domain').style.color=goalData.domainColor;
+  document.getElementById('rv-type').textContent=goalData.type;
+  var targetVal=document.getElementById('target-input').value.trim();
+  document.getElementById('rv-target').textContent=targetVal||goalData.target;
+  document.getElementById('rv-timeline').textContent=goalData.timeline;
+  document.getElementById('rv-tracking').textContent=goalData.tracking;
+  document.getElementById('rv-ai-preview').textContent=goalData.aiPreview;
+}
+
+function createGoal(){
+  ['sp1','sp2','sp3','sp4'].forEach(function(id){document.getElementById(id).classList.remove('active')});
+  var done=document.getElementById('done-state');
+  done.style.display='block';
+  var ring=document.getElementById('done-ring');
+  var color=goalData.domainColor||'#9b8fff';
+  ring.style.background=color+'22';
+  ring.style.borderColor=color;
+  ring.querySelector('path').setAttribute('stroke',color);
+  document.getElementById('done-title').textContent=goalData.name+' — created';
+  document.getElementById('done-sub').textContent=goalData.name+' is now tracked in your '+goalData.domain+' domain. Progress updates via '+goalData.tracking.toLowerCase()+'.';
+  document.getElementById('sheet').scrollTop=0;
+}
+
+function closeSheet(){resetSheet()}
+function resetSheet(){
+  goStep(1);
+  loadPreset('habit');
+}
+
+loadPreset('habit');
+</script>

@@ -1,0 +1,419 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{display:flex;flex-direction:column;gap:28px;padding:8px 0}
+.phone{width:375px;background:#0e0e10;border-radius:44px;overflow:hidden;border:1px solid #2a2a2e}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500}
+.pscreen{padding:0 0 32px;overflow-y:auto;max-height:700px}
+.pscreen::-webkit-scrollbar{display:none}
+
+/* Day chip */
+.day-chip{font-size:10px;color:#444;font-weight:500;padding:0 4px;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase}
+
+/* Top bar */
+.top-bar{padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.day-badge{font-size:11px;padding:4px 12px;background:#1e1a30;color:#9b8fff;border-radius:20px;border:0.5px solid #3d3570;font-weight:500}
+
+/* Greeting variants */
+.greeting{padding:16px 24px 0}
+.g-day{font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.g-title{font-size:24px;font-weight:500;color:#fff;line-height:1.3;margin-bottom:6px}
+.g-sub{font-size:13px;color:#555;line-height:1.5;margin-bottom:14px}
+
+/* First AI message — special treatment */
+.ai-first-card{margin:0 24px;background:#13131f;border:0.5px solid #2a2a36;border-radius:18px;padding:16px}
+.afc-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.afc-pulse{width:7px;height:7px;border-radius:50%;background:#9b8fff;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.afc-label{font-size:11px;color:#6b5fff;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.afc-text{font-size:14px;color:#b0b0c0;line-height:1.65;margin-bottom:12px}
+.afc-chips{display:flex;gap:6px;flex-wrap:wrap}
+.afc-chip{font-size:12px;padding:6px 12px;background:#1e1a30;border:0.5px solid #3d3570;border-radius:20px;color:#9b8fff;cursor:pointer;transition:all .15s}
+.afc-chip:hover{background:#252040}
+
+/* Progress bar — learning */
+.learning-bar{margin:12px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px}
+.lb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.lb-label{font-size:12px;font-weight:500;color:#888}
+.lb-day{font-size:11px;color:#555}
+.lb-track{height:4px;background:#1e1e22;border-radius:2px;overflow:hidden;margin-bottom:6px}
+.lb-fill{height:100%;border-radius:2px;background:#9b8fff;transition:width .5s}
+.lb-sub{font-size:11px;color:#444;line-height:1.4}
+
+/* Habit prompt — first habit */
+.habit-prompt{margin:10px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;padding:14px}
+.hp-label{font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.hp-habit{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid #1e1e22}
+.hp-habit:last-child{border-bottom:none}
+.hp-ring{width:22px;height:22px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.hp-ring.done{border-color:currentColor}
+.hp-ring.done::after{content:'';width:5px;height:8px;border:1.5px solid currentColor;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block}
+.hp-name{font-size:13px;color:#ccc;font-weight:500;flex:1}
+.hp-domain{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+
+/* Streak celebrate */
+.streak-celebrate{margin:10px 24px 0;background:linear-gradient(135deg,#1a1628 0%,#1e1a30 100%);border:0.5px solid #3d3570;border-radius:16px;padding:16px;text-align:center}
+.sc-emoji{font-size:32px;margin-bottom:8px;display:block}
+.sc-title{font-size:16px;font-weight:500;color:#c8c0ff;margin-bottom:4px}
+.sc-sub{font-size:12px;color:#6b5fff;line-height:1.5}
+
+/* Growing context card */
+.context-card{margin:10px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:13px 16px}
+.cc-label{font-size:10px;color:#444;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.cc-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.cc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cc-text{font-size:12px;color:#777;line-height:1.4;flex:1}
+.cc-new{font-size:10px;color:#9b8fff;padding:1px 6px;background:#1e1a30;border-radius:10px;border:0.5px solid #3d3570;flex-shrink:0}
+
+/* First suggestion */
+.suggestion-card{margin:10px 24px 0;background:#1a1a24;border:0.5px solid #2d2a40;border-radius:16px;padding:14px 16px}
+.sc-ai-row{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.sc-ai-dot{width:6px;height:6px;border-radius:50%;background:#9b8fff;flex-shrink:0}
+.sc-ai-label{font-size:11px;color:#6b5fff;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+.sc-ai-badge{margin-left:auto;font-size:10px;color:#444;padding:2px 7px;background:#1e1e28;border-radius:10px}
+.sc-text{font-size:13px;color:#c0b8e8;line-height:1.55;margin-bottom:10px}
+.sc-actions{display:flex;gap:7px}
+.sc-btn{flex:1;padding:9px 0;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:none;text-align:center;transition:opacity .15s}
+.sc-btn.ok{background:#9b8fff;color:#0e0e10}
+.sc-btn.not-now{background:#1e1e28;color:#666;border:0.5px solid #2a2a2e}
+.sc-btn:hover{opacity:.8}
+
+/* Check-in nudge */
+.checkin-nudge{margin:10px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.cn-icon{width:32px;height:32px;border-radius:9px;background:#2a1020;border:0.5px solid #3d1030;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cn-body{flex:1}
+.cn-title{font-size:13px;font-weight:500;color:#d4537e}
+.cn-sub{font-size:11px;color:#555;margin-top:2px}
+.cn-arrow{font-size:14px;color:#555}
+
+/* Domain unlock card */
+.domain-unlock{margin:10px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s}
+.domain-unlock:hover{border-color:#333}
+.du-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.du-body{flex:1}
+.du-title{font-size:13px;font-weight:500;color:#ccc;margin-bottom:2px}
+.du-sub{font-size:11px;color:#555}
+.du-badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:500;flex-shrink:0}
+
+/* Standard priority card */
+.priority-card{margin:8px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.pc-ring{width:20px;height:20px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;margin-top:2px}
+.pc-body{flex:1}
+.pc-title{font-size:13px;color:#ccc;font-weight:500}
+.pc-meta{display:flex;gap:6px;margin-top:4px;align-items:center}
+.pc-domain{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500}
+.pc-time{font-size:11px;color:#444}
+
+/* Week summary mini */
+.week-summary{margin:10px 24px 0;background:#1a1a24;border:0.5px solid #2d2a40;border-radius:16px;padding:14px 16px}
+.ws-title{font-size:14px;font-weight:500;color:#c8c0ff;margin-bottom:10px}
+.ws-stats{display:flex;gap:8px;margin-bottom:10px}
+.wss{flex:1;background:#141420;border-radius:9px;padding:8px;text-align:center}
+.wss-num{font-size:18px;font-weight:500}
+.wss-label{font-size:10px;color:#555;margin-top:2px}
+.ws-text{font-size:12px;color:#6b5fff;line-height:1.5}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="wrap">
+
+  <!-- ─── DAY 2 ─── -->
+  <div>
+    <div class="day-chip">Day 2 — the AI has 1 day of data</div>
+    <div class="phone">
+      <div class="status-bar"><span>8:03</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div style="font-size:13px;color:#555">Today</div>
+          <div class="day-badge">Day 2</div>
+        </div>
+
+        <div class="greeting">
+          <div class="g-day">Tuesday · Mar 3</div>
+          <div class="g-title">Morning, Bobie.</div>
+          <div class="g-sub">I'm still building your picture. Keep logging — I'll get sharper every day.</div>
+        </div>
+
+        <div class="ai-first-card">
+          <div class="afc-header"><div class="afc-pulse"></div><span class="afc-label">From AI · day 2</span></div>
+          <div class="afc-text">Yesterday you logged prayer and completed 2 priorities. That's enough for me to know you're a morning person with a faith practice. I've set your default deep work block to 9 AM. Let me know if that's wrong.</div>
+          <div class="afc-chips">
+            <div class="afc-chip" onclick="sendPrompt('Change my default deep work block time')">Adjust timing</div>
+            <div class="afc-chip" onclick="sendPrompt('That timing is right — continue')">Looks right ✓</div>
+          </div>
+        </div>
+
+        <div class="learning-bar">
+          <div class="lb-header"><span class="lb-label">AI context</span><span class="lb-day">Day 2 of 7</span></div>
+          <div class="lb-track"><div class="lb-fill" style="width:14%"></div></div>
+          <div class="lb-sub">After 7 days I'll have enough to generate your first full personalised week plan. For now I'm working from your preferences and yesterday's data.</div>
+        </div>
+
+        <div style="padding:10px 24px 0;font-size:11px;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:0">Today's priorities</div>
+        <div class="priority-card">
+          <div class="pc-ring" style="border-color:#534AB7"></div>
+          <div class="pc-body">
+            <div class="pc-title">Morning devotional + prayer</div>
+            <div class="pc-meta"><span class="pc-domain" style="background:#2a2040;color:#b4adf5">Faith</span><span class="pc-time">6:00 AM · suggested</span></div>
+          </div>
+        </div>
+        <div class="priority-card">
+          <div class="pc-ring"></div>
+          <div class="pc-body">
+            <div class="pc-title">Log your morning check-in</div>
+            <div class="pc-meta"><span class="pc-domain" style="background:#2a1020;color:#ed93b1">Wellness</span><span class="pc-time">Helps AI learn</span></div>
+          </div>
+        </div>
+
+        <div class="checkin-nudge" onclick="sendPrompt('Open my morning check-in')">
+          <div class="cn-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#d4537e" stroke-width="1.3"/><path d="M6 9s.5 1.5 2 1.5 2-1.5 2-1.5" stroke="#d4537e" stroke-width="1" stroke-linecap="round"/></svg></div>
+          <div class="cn-body"><div class="cn-title">Check-in — 30 seconds</div><div class="cn-sub">Mood, energy, focus · feeds AI learning</div></div>
+          <span class="cn-arrow">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── DAY 3 ─── -->
+  <div>
+    <div class="day-chip">Day 3 — first pattern detected</div>
+    <div class="phone">
+      <div class="status-bar"><span>7:58</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div style="font-size:13px;color:#555">Today</div>
+          <div class="day-badge">Day 3</div>
+        </div>
+
+        <div class="greeting">
+          <div class="g-day">Wednesday · Mar 4</div>
+          <div class="g-title">Two days down.</div>
+          <div class="g-sub">I noticed something already.</div>
+        </div>
+
+        <div class="ai-first-card">
+          <div class="afc-header"><div class="afc-pulse"></div><span class="afc-label">First pattern</span></div>
+          <div class="afc-text">Both mornings you logged prayer before 7 AM and your energy check-in was 7 or above. On the day you didn't check in until 9 AM, energy was 6. That might be nothing — or it might be something. I'll keep watching.</div>
+          <div class="afc-chips">
+            <div class="afc-chip" onclick="sendPrompt('Tell me more about the prayer and energy pattern you noticed')">Interesting — tell me more</div>
+          </div>
+        </div>
+
+        <div class="context-card">
+          <div class="cc-label">What I know so far</div>
+          <div class="cc-row"><div class="cc-dot" style="background:#534AB7"></div><span class="cc-text">Prayer logged both mornings · streak started</span></div>
+          <div class="cc-row"><div class="cc-dot" style="background:#185FA5"></div><span class="cc-text">Deep work active · 2 sessions logged</span></div>
+          <div class="cc-row" style="margin-top:2px"><div class="cc-dot" style="background:#9b8fff"></div><span class="cc-text">Energy avg 7.0 · mood avg 7.5</span><span class="cc-new">new</span></div>
+        </div>
+
+        <div class="habit-prompt">
+          <div class="hp-label">Today's habits</div>
+          <div class="hp-habit">
+            <div class="hp-ring" style="color:#534AB7;border-color:#534AB7" onclick="this.classList.toggle('done')"></div>
+            <span class="hp-name">Prayer</span>
+            <span class="hp-domain" style="background:#2a2040;color:#b4adf5">Faith</span>
+          </div>
+          <div class="hp-habit">
+            <div class="hp-ring" style="color:#0F6E56;border-color:#0F6E56" onclick="this.classList.toggle('done')"></div>
+            <span class="hp-name">Water · 2L</span>
+            <span class="hp-domain" style="background:#1a2a1e;color:#6fcf97">Health</span>
+          </div>
+          <div class="hp-habit">
+            <div class="hp-ring" style="color:#534AB7;border-color:#534AB7" onclick="this.classList.toggle('done')"></div>
+            <span class="hp-name">Gratitude log</span>
+            <span class="hp-domain" style="background:#2a2040;color:#b4adf5">Faith</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── DAY 4 ─── -->
+  <div>
+    <div class="day-chip">Day 4 — first domain suggestion</div>
+    <div class="phone">
+      <div class="status-bar"><span>8:01</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div style="font-size:13px;color:#555">Today</div>
+          <div class="day-badge">Day 4</div>
+        </div>
+
+        <div class="greeting">
+          <div class="g-day">Thursday · Mar 5</div>
+          <div class="g-title">Getting clearer.</div>
+          <div class="g-sub">I have enough to make a first real suggestion.</div>
+        </div>
+
+        <div class="suggestion-card">
+          <div class="sc-ai-row"><div class="sc-ai-dot"></div><span class="sc-ai-label">First suggestion</span><span class="sc-ai-badge">Faith × Wellness</span></div>
+          <div class="sc-text">Your energy on prayer mornings averages 7.2 — on non-prayer mornings it drops to 5.8. Three days in and the pattern is already clear. Want me to lock in morning prayer as a non-negotiable habit?</div>
+          <div class="sc-actions">
+            <div class="sc-btn ok" onclick="sendPrompt('Lock in morning prayer as a recurring daily habit in my Faith domain')">Yes — lock it in ↗</div>
+            <div class="sc-btn not-now" onclick="sendPrompt('Not yet — I want to keep observing before locking this in')">Not yet</div>
+          </div>
+        </div>
+
+        <div class="learning-bar">
+          <div class="lb-header"><span class="lb-label">AI context</span><span class="lb-day">Day 4 of 7</span></div>
+          <div class="lb-track"><div class="lb-fill" style="width:43%"></div></div>
+          <div class="lb-sub">3 more days until your first full personalised week plan. I now understand your energy patterns and faith rhythm.</div>
+        </div>
+
+        <div class="domain-unlock" onclick="sendPrompt('Open the Finance domain and help me set up my budget')">
+          <div class="du-icon" style="background:#1a2a1e;border:0.5px solid #2a4030"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#6fcf97" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+          <div class="du-body">
+            <div class="du-title">Set up Finance domain</div>
+            <div class="du-sub">Add a budget cap to unlock spending insights</div>
+          </div>
+          <span class="du-badge" style="background:#1a2a1e;color:#6fcf97;border:0.5px solid #2a4030">+ Setup</span>
+        </div>
+
+        <div class="domain-unlock" onclick="sendPrompt('Open the Health domain and log my first training session')">
+          <div class="du-icon" style="background:#2a1510;border:0.5px solid #3d2015"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 13s-5-3.5-5-7a5 5 0 0110 0c0 3.5-5 7-5 7z" stroke="#f0997b" stroke-width="1.3"/></svg></div>
+          <div class="du-body">
+            <div class="du-title">Log first training session</div>
+            <div class="du-sub">Activate the Health domain</div>
+          </div>
+          <span class="du-badge" style="background:#2a1510;color:#f0997b;border:0.5px solid #3d2015">+ Activate</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── DAY 5 ─── -->
+  <div>
+    <div class="day-chip">Day 5 — first approval</div>
+    <div class="phone">
+      <div class="status-bar"><span>8:12</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div style="font-size:13px;color:#555">Today</div>
+          <div class="day-badge">Day 5</div>
+        </div>
+
+        <div class="greeting">
+          <div class="g-day">Friday · Mar 6</div>
+          <div class="g-title">Something new today.</div>
+          <div class="g-sub">I want to make a change — but only with your permission.</div>
+        </div>
+
+        <div style="margin:14px 24px 0;background:#1a1a24;border:0.5px solid #2d2a40;border-radius:16px;padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:28px;height:28px;border-radius:8px;background:#2a2040;border:0.5px solid #3d3570;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#9b8fff" stroke-width="1.3"/><path d="M8 5v3" stroke="#9b8fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".8" fill="#9b8fff"/></svg></div>
+            <div><div style="font-size:13px;font-weight:500;color:#c8c0ff">Your first AI proposal</div><div style="font-size:11px;color:#555;margin-top:1px">Faith · schedule routine</div></div>
+          </div>
+          <div style="font-size:13px;color:#9090a8;line-height:1.55;margin-bottom:10px">Based on 4 days of data, your morning spiritual routine is your strongest anchor. I'd like to add it to your weekly plan as a recurring block — 6:00–6:45 AM, Mon–Fri.</div>
+          <div style="background:#141418;border-radius:8px;padding:8px 10px;margin-bottom:10px">
+            <div style="font-size:10px;color:#444;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px">What will be added</div>
+            <div style="font-size:11px;color:#888;margin-bottom:3px">Prayer + devotional + Bible reading</div>
+            <div style="font-size:11px;color:#888;margin-bottom:3px">6:00–6:45 AM · Mon–Fri · recurring</div>
+            <div style="font-size:11px;color:#6b5fff">Based on 4 days of check-in + faith log data</div>
+          </div>
+          <div style="display:flex;gap:7px">
+            <div style="flex:1;padding:10px;background:#9b8fff;border-radius:10px;font-size:13px;font-weight:500;color:#0e0e10;cursor:pointer;text-align:center" onclick="sendPrompt('Approve the morning spiritual routine recurring block — first AI approval')">Approve ↗</div>
+            <div style="flex:1;padding:10px;background:#1e1e28;border:0.5px solid #2a2a3a;border-radius:10px;font-size:13px;color:#666;cursor:pointer;text-align:center" onclick="sendPrompt('Reject the morning routine proposal — not ready yet')">Not yet</div>
+          </div>
+        </div>
+
+        <div class="learning-bar" style="margin-top:10px">
+          <div class="lb-header"><span class="lb-label">AI context</span><span class="lb-day">Day 5 of 7</span></div>
+          <div class="lb-track"><div class="lb-fill" style="width:57%"></div></div>
+          <div class="lb-sub">This is your first approval moment. The AI will never make changes without showing you this first — every time.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── DAY 6 ─── -->
+  <div>
+    <div class="day-chip">Day 6 — streak milestone + deeper domains</div>
+    <div class="phone">
+      <div class="status-bar"><span>7:55</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div style="font-size:13px;color:#555">Today</div>
+          <div class="day-badge">Day 6</div>
+        </div>
+
+        <div class="greeting">
+          <div class="g-day">Saturday · Mar 7</div>
+          <div class="g-title">Five days straight.</div>
+          <div class="g-sub">That's a real streak, not a lucky start.</div>
+        </div>
+
+        <div class="streak-celebrate">
+          <span class="sc-emoji">🔥</span>
+          <div class="sc-title">5-day check-in streak</div>
+          <div class="sc-sub">Every morning, every check-in. Your consistency is what makes the AI useful — keep it going.</div>
+        </div>
+
+        <div class="context-card" style="margin-top:10px">
+          <div class="cc-label">What I now know about you</div>
+          <div class="cc-row"><div class="cc-dot" style="background:#534AB7"></div><span class="cc-text">Morning faith practice is your anchor — holds every day</span></div>
+          <div class="cc-row"><div class="cc-dot" style="background:#185FA5"></div><span class="cc-text">Deep work best 9–11 AM · energy peaks morning</span></div>
+          <div class="cc-row"><div class="cc-dot" style="background:#9b8fff"></div><span class="cc-text">Energy pattern: high morning, dip after 2 PM</span><span class="cc-new">new</span></div>
+          <div class="cc-row"><div class="cc-dot" style="background:#0F6E56"></div><span class="cc-text">Finance domain active · budget set at GH₵ 4,000</span><span class="cc-new">new</span></div>
+          <div class="cc-row"><div class="cc-dot" style="background:#993C1D"></div><span class="cc-text">Health domain: 1 training session logged</span><span class="cc-new">new</span></div>
+        </div>
+
+        <div class="domain-unlock" style="margin-top:10px" onclick="sendPrompt('Add someone to my Relationships domain — my first person')">
+          <div class="du-icon" style="background:#0e1420;border:0.5px solid #1a3040"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="5.5" cy="6" r="2.5" stroke="#85b7eb" stroke-width="1.4"/><circle cx="10.5" cy="6" r="2.5" stroke="#85b7eb" stroke-width="1.4"/><path d="M2 13c0-2 1.6-3.5 3.5-3.5M8 13c0-2 1.6-3.5 3.5-3.5" stroke="#85b7eb" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+          <div class="du-body">
+            <div class="du-title">Add to Relationships</div>
+            <div class="du-sub">Who matters most to you right now?</div>
+          </div>
+          <span class="du-badge" style="background:#0e1420;color:#85b7eb;border:0.5px solid #1a3040">+ Add</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── DAY 7 ─── -->
+  <div>
+    <div class="day-chip">Day 7 — first full week plan unlocks</div>
+    <div class="phone">
+      <div class="status-bar"><span>8:00</span><div style="font-size:11px;color:#fff">▮▮▮</div></div>
+      <div class="pscreen">
+        <div class="top-bar">
+          <div style="font-size:13px;color:#555">Today</div>
+          <div class="day-badge">Day 7 ✓</div>
+        </div>
+
+        <div class="greeting">
+          <div class="g-day">Sunday · Mar 8</div>
+          <div class="g-title">One week in, Bobie.</div>
+          <div class="g-sub">I know you well enough now. Here's what I found.</div>
+        </div>
+
+        <div class="week-summary">
+          <div class="ws-title">Your first week</div>
+          <div class="ws-stats">
+            <div class="wss"><div class="wss-num" style="color:#1d9e75">7</div><div class="wss-label">Check-ins</div></div>
+            <div class="wss"><div class="wss-num" style="color:#9b8fff">6</div><div class="wss-label">Prayer days</div></div>
+            <div class="wss"><div class="wss-num" style="color:#85b7eb">14</div><div class="wss-label">Tasks done</div></div>
+            <div class="wss"><div class="wss-num" style="color:#b4adf5">1</div><div class="wss-label">Approval</div></div>
+          </div>
+          <div class="ws-text">Faith is your strongest domain. Career is your most active. Finance needs a first full setup. Your morning is your best time — everything I suggest next week will protect it.</div>
+        </div>
+
+        <div class="ai-first-card" style="margin-top:10px">
+          <div class="afc-header"><div class="afc-pulse"></div><span class="afc-label">Week 2 plan · ready</span></div>
+          <div class="afc-text">I've generated your first full personalised week plan. It's built around your real patterns — not templates. Review it, adjust it, and approve what fits. This is how every week will start from now on.</div>
+          <div class="afc-chips">
+            <div class="afc-chip" onclick="sendPrompt('Open my first personalised week plan in the Planner')">Open week plan ↗</div>
+            <div class="afc-chip" onclick="sendPrompt('Walk me through what the AI learned about me this week')">What you learned</div>
+          </div>
+        </div>
+
+        <div class="learning-bar" style="margin-top:10px">
+          <div class="lb-header"><span class="lb-label">AI context</span><span class="lb-day" style="color:#1d9e75">Complete ✓</span></div>
+          <div class="lb-track"><div class="lb-fill" style="width:100%"></div></div>
+          <div class="lb-sub">Full personalised context active. From here, suggestions, plans, and insights will be built from your actual patterns — not defaults.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>

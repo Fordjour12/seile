@@ -1,0 +1,490 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.phone{width:375px;min-height:812px;background:#0e0e10;border-radius:44px;margin:0 auto;overflow:hidden;border:1px solid #2a2a2e;position:relative;display:flex;flex-direction:column}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px 0;color:#fff;font-size:12px;font-weight:500;flex-shrink:0}
+.screen{flex:1;overflow-y:auto;padding-bottom:40px}
+.screen::-webkit-scrollbar{display:none}
+
+.top-bar{padding:16px 24px 0;display:flex;align-items:center;gap:10px}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+
+.header{padding:10px 24px 0}
+.h-title{font-size:26px;font-weight:500;color:#fff}
+.h-sub{font-size:13px;color:#444;margin-top:4px}
+
+/* Context freshness bar */
+.freshness-card{margin:14px 24px 0;background:#13131f;border:0.5px solid #2a2a36;border-radius:16px;padding:13px 16px}
+.fc-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.fc-pulse{width:6px;height:6px;border-radius:50%;background:#1d9e75;flex-shrink:0}
+.fc-label{font-size:12px;color:#1d9e75;font-weight:500;flex:1}
+.fc-time{font-size:11px;color:#333}
+.fc-stats{display:flex;gap:8px}
+.fcs{flex:1;background:#1a1a24;border-radius:8px;padding:8px;text-align:center}
+.fcs-num{font-size:16px;font-weight:500;color:#e0e0ec}
+.fcs-label{font-size:10px;color:#555;margin-top:2px}
+
+/* Domain cards */
+.section-head{padding:14px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.sh-label{font-size:11px;font-weight:500;color:#444;letter-spacing:.07em;text-transform:uppercase}
+.sh-action{font-size:12px;color:#9b8fff;cursor:pointer}
+
+.memory-card{margin:8px 24px 0;background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:16px;overflow:hidden;transition:border-color .15s}
+.mc-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.mc-header:hover{background:rgba(255,255,255,.02)}
+.mc-domain-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mc-domain-name{font-size:13px;font-weight:500;color:#ccc;flex:1}
+.mc-freshness{font-size:10px;color:#444}
+.mc-chevron{width:14px;height:14px;opacity:.3;transition:transform .2s;flex-shrink:0}
+.memory-card.open .mc-chevron{transform:rotate(90deg)}
+.mc-body{display:none;padding:0 14px 12px;border-top:0.5px solid #1e1e22}
+.memory-card.open .mc-body{display:block}
+
+/* Memory entries */
+.mem-entry{padding:10px 0;border-bottom:0.5px solid #1a1a22;display:flex;gap:10px;align-items:flex-start}
+.mem-entry:last-child{border-bottom:none}
+.me-key{font-size:11px;color:#555;width:96px;flex-shrink:0;padding-top:1px;line-height:1.4}
+.me-val{font-size:13px;color:#c8c8d4;line-height:1.5;flex:1}
+.me-val.highlight{color:#b4adf5}
+.me-val.warn{color:#ba7517}
+.me-val.positive{color:#1d9e75}
+.me-actions{display:flex;gap:5px;margin-top:5px}
+.me-btn{font-size:10px;padding:3px 8px;border-radius:12px;cursor:pointer;border:0.5px solid #222;background:#141418;color:#555;transition:all .15s}
+.me-btn:hover{color:#888;border-color:#333}
+.me-btn.suppress{color:#e24b4a;border-color:#3a1a1a;background:#120a0a}
+.me-btn.correct{color:#9b8fff;border-color:#2a2a36;background:#13131f}
+
+/* Suppressed entry */
+.mem-entry.suppressed{opacity:.35}
+.suppressed-badge{font-size:10px;color:#333;background:#1a1a1e;border-radius:10px;padding:2px 7px;border:0.5px solid #222;margin-left:6px}
+
+/* Source trace */
+.source-trace{margin-top:8px;padding:8px 10px;background:#13131f;border-radius:8px;border:0.5px solid #1e1e28}
+.st-label{font-size:10px;color:#333;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.st-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.st-row:last-child{margin-bottom:0}
+.st-src{font-size:11px;color:#3a3a4a;font-family:monospace}
+.st-arrow{font-size:9px;color:#2a2a2e}
+.st-val{font-size:11px;color:#555}
+
+/* Clear controls */
+.clear-section{margin:16px 24px 0}
+.clear-card{background:#1a1a1e;border:0.5px solid #2a2a2e;border-radius:14px;padding:13px 16px;margin-bottom:8px}
+.cc-title{font-size:13px;font-weight:500;color:#ccc;margin-bottom:3px}
+.cc-sub{font-size:12px;color:#555;margin-bottom:10px;line-height:1.4}
+.cc-btn{padding:9px 16px;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:opacity .15s;display:inline-block}
+.cc-btn:hover{opacity:.8}
+.cc-btn.soft{background:#1e1e28;color:#888;border:0.5px solid #2a2a2e}
+.cc-btn.danger{background:#1a0e0e;color:#e24b4a;border:0.5px solid #3a1a1a}
+
+/* Scope select */
+.scope-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.scope-pills::-webkit-scrollbar{display:none}
+.sp{padding:5px 12px;background:#1a1a1e;border:0.5px solid #222;border-radius:20px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.sp.active{background:#1e1a30;border-color:#3d3570;color:#c8c0ff}
+
+.info-note{margin:10px 24px 0;padding:10px 12px;background:#13131f;border:0.5px solid #1e1e28;border-radius:10px;display:flex;gap:8px}
+.in-dot{width:5px;height:5px;border-radius:50%;background:#555;flex-shrink:0;margin-top:3px}
+.in-text{font-size:11px;color:#444;line-height:1.5}
+</style>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:24px 16px">
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div style="display:flex;gap:5px;font-size:11px;color:#fff"><span>▮▮▮</span><span>WiFi</span></div>
+  </div>
+  <div class="screen">
+
+    <div class="top-bar">
+      <div class="back-btn" onclick="sendPrompt('Go back to Profile')">
+        <svg viewBox="0 0 14 14" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 3L5 7l4 4"/></svg>
+        Profile
+      </div>
+    </div>
+
+    <div class="header">
+      <div class="h-title">AI memory</div>
+      <div class="h-sub">What Claude reads before generating anything</div>
+    </div>
+
+    <!-- Freshness card -->
+    <div class="freshness-card">
+      <div class="fc-row">
+        <div class="fc-pulse"></div>
+        <span class="fc-label">Context is fresh</span>
+        <span class="fc-time">Updated today · 6:00 AM UTC</span>
+      </div>
+      <div class="fc-stats">
+        <div class="fcs"><div class="fcs-num">8</div><div class="fcs-label">Domains read</div></div>
+        <div class="fcs"><div class="fcs-num">53</div><div class="fcs-label">Tables</div></div>
+        <div class="fcs"><div class="fcs-num">24</div><div class="fcs-label">Cron jobs</div></div>
+        <div class="fcs"><div class="fcs-num">7d</div><div class="fcs-label">Window</div></div>
+      </div>
+    </div>
+
+    <!-- Scope filter -->
+    <div class="section-head" style="padding-bottom:8px">
+      <span class="sh-label">Context by domain</span>
+    </div>
+    <div style="padding:0 24px">
+      <div class="scope-pills">
+        <div class="sp active" onclick="filterScope(this,'all')">All</div>
+        <div class="sp" onclick="filterScope(this,'faith')">Faith</div>
+        <div class="sp" onclick="filterScope(this,'career')">Career</div>
+        <div class="sp" onclick="filterScope(this,'finance')">Finance</div>
+        <div class="sp" onclick="filterScope(this,'health')">Health</div>
+        <div class="sp" onclick="filterScope(this,'wellness')">Wellness</div>
+      </div>
+    </div>
+
+    <!-- FAITH -->
+    <div class="memory-card open" id="mc-faith" data-domain="faith">
+      <div class="mc-header" onclick="toggleCard('mc-faith')">
+        <div class="mc-domain-dot" style="background:#534AB7"></div>
+        <span class="mc-domain-name">Faith</span>
+        <span class="mc-freshness">6:00 AM</span>
+        <svg class="mc-chevron" viewBox="0 0 14 14" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l4 4-4 4"/></svg>
+      </div>
+      <div class="mc-body">
+        <div class="mem-entry">
+          <span class="me-key">Prayer streak</span>
+          <div style="flex:1">
+            <div class="me-val positive">5 consecutive days · logged today 6:12 AM</div>
+            <div class="me-actions">
+              <div class="me-btn correct" onclick="sendPrompt('Correct my prayer streak data')">Correct</div>
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div>
+            </div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Bible reading</span>
+          <div style="flex:1">
+            <div class="me-val positive">6 of last 7 days · Romans 8 today</div>
+            <div class="me-actions">
+              <div class="me-btn correct" onclick="sendPrompt('Correct my Bible reading data')">Correct</div>
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div>
+            </div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Fasting rhythm</span>
+          <div style="flex:1">
+            <div class="me-val">Wednesdays · 3 consecutive weeks · last: Mar 12</div>
+            <div class="me-actions">
+              <div class="me-btn correct" onclick="sendPrompt('Correct my fasting data')">Correct</div>
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div>
+            </div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Devotional</span>
+          <div style="flex:1">
+            <div class="me-val">4 of 7 days this week · not logged today</div>
+            <div class="me-actions">
+              <div class="me-btn correct" onclick="sendPrompt('Correct my devotional data')">Correct</div>
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div>
+            </div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Pattern</span>
+          <div style="flex:1">
+            <div class="me-val highlight">Early prayer (before 7 AM) → energy avg 7.4 vs 5.9. Consistent across 18/21 days.</div>
+            <div class="me-actions">
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Suppress this pattern</div>
+            </div>
+          </div>
+        </div>
+        <div class="source-trace">
+          <div class="st-label">Source</div>
+          <div class="st-row"><span class="st-src">faithLogs table</span><span class="st-arrow">→</span><span class="st-val">prayer, fasting, devotional, gratitude entries</span></div>
+          <div class="st-row"><span class="st-src">habitTracker</span><span class="st-arrow">→</span><span class="st-val">streak calculations</span></div>
+          <div class="st-row"><span class="st-src">wellnessCheckins</span><span class="st-arrow">→</span><span class="st-val">cross-domain energy correlation</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAREER -->
+    <div class="memory-card" id="mc-career" data-domain="career">
+      <div class="mc-header" onclick="toggleCard('mc-career')">
+        <div class="mc-domain-dot" style="background:#185FA5"></div>
+        <span class="mc-domain-name">Career</span>
+        <span class="mc-freshness">6:00 AM</span>
+        <svg class="mc-chevron" viewBox="0 0 14 14" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l4 4-4 4"/></svg>
+      </div>
+      <div class="mc-body">
+        <div class="mem-entry">
+          <span class="me-key">Active project</span>
+          <div style="flex:1">
+            <div class="me-val">Life OS · UI/UX sprint · 68% complete</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Deep work</span>
+          <div style="flex:1">
+            <div class="me-val positive">5-day streak · Mon–Fri this week</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Completion rate</span>
+          <div style="flex:1">
+            <div class="me-val positive">8 tasks done · 90% domain health</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Deferred</span>
+          <div style="flex:1">
+            <div class="me-val warn">2 tasks deferred to next week · Convex monitoring, Faith UX research</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="source-trace">
+          <div class="st-label">Source</div>
+          <div class="st-row"><span class="st-src">tasks table</span><span class="st-arrow">→</span><span class="st-val">completion counts, deferred items</span></div>
+          <div class="st-row"><span class="st-src">plannerBlocks</span><span class="st-arrow">→</span><span class="st-val">deep work streak</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCE -->
+    <div class="memory-card" id="mc-finance" data-domain="finance">
+      <div class="mc-header" onclick="toggleCard('mc-finance')">
+        <div class="mc-domain-dot" style="background:#ba7517"></div>
+        <span class="mc-domain-name">Finance</span>
+        <span class="mc-freshness" style="color:#ba7517">⚠ Needs review</span>
+        <svg class="mc-chevron" viewBox="0 0 14 14" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l4 4-4 4"/></svg>
+      </div>
+      <div class="mc-body">
+        <div class="mem-entry">
+          <span class="me-key">Budget status</span>
+          <div style="flex:1">
+            <div class="me-val">GH₵ 2,760 spent of GH₵ 4,000 · 69% used · 14 days remain</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Review status</span>
+          <div style="flex:1">
+            <div class="me-val warn">Q2 review overdue · 4 days · was due Mon Mar 10</div>
+            <div class="me-actions">
+              <div class="me-btn correct" onclick="sendPrompt('Mark the budget review as complete')">Mark done</div>
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div>
+            </div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Surplus pattern</span>
+          <div style="flex:1">
+            <div class="me-val highlight">GH₵ 380–520 unallocated at month-end · last 3 months</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress this pattern</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Pending proposal</span>
+          <div style="flex:1">
+            <div class="me-val highlight">Savings goal GH₵ 400/month · awaiting approval</div>
+            <div class="me-actions">
+              <div class="me-btn correct" onclick="sendPrompt('Approve the savings goal proposal')">Approve ↗</div>
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Dismiss</div>
+            </div>
+          </div>
+        </div>
+        <div class="source-trace">
+          <div class="st-label">Source</div>
+          <div class="st-row"><span class="st-src">transactions table</span><span class="st-arrow">→</span><span class="st-val">42 records, March 2026</span></div>
+          <div class="st-row"><span class="st-src">recurringTransactions</span><span class="st-arrow">→</span><span class="st-val">8 active subscriptions</span></div>
+          <div class="st-row"><span class="st-src">savingsGoals</span><span class="st-arrow">→</span><span class="st-val">2 active + 1 pending proposal</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEALTH -->
+    <div class="memory-card" id="mc-health" data-domain="health">
+      <div class="mc-header" onclick="toggleCard('mc-health')">
+        <div class="mc-domain-dot" style="background:#993C1D"></div>
+        <span class="mc-domain-name">Health</span>
+        <span class="mc-freshness">6:00 AM</span>
+        <svg class="mc-chevron" viewBox="0 0 14 14" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l4 4-4 4"/></svg>
+      </div>
+      <div class="mc-body">
+        <div class="mem-entry">
+          <span class="me-key">Training</span>
+          <div style="flex:1">
+            <div class="me-val">2 of 3 target sessions · Mon + Wed · 1 remaining</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Avg energy</span>
+          <div style="flex:1">
+            <div class="me-val warn">6.2 / 10 this week · below usual 7.4</div>
+            <div class="me-actions">
+              <div class="me-btn correct" onclick="sendPrompt('Correct my energy data — the Wednesday reading was an outlier')">Correct</div>
+              <div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div>
+            </div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Sleep</span>
+          <div style="flex:1">
+            <div class="me-val">Avg 7.1h this week · quality 7.8/10</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry suppressed" id="sup-entry">
+          <span class="me-key">Weight <span class="suppressed-badge">Suppressed</span></span>
+          <div style="flex:1">
+            <div class="me-val" style="color:#333">74.2 kg · stable</div>
+            <div class="me-actions">
+              <div class="me-btn" onclick="restoreEntry(this)" style="color:#9b8fff;border-color:#2a2a36">Restore</div>
+            </div>
+          </div>
+        </div>
+        <div class="source-trace">
+          <div class="st-label">Source</div>
+          <div class="st-row"><span class="st-src">trainingSessions</span><span class="st-arrow">→</span><span class="st-val">session count, types</span></div>
+          <div class="st-row"><span class="st-src">wellnessCheckins</span><span class="st-arrow">→</span><span class="st-val">energy, mood averages</span></div>
+          <div class="st-row"><span class="st-src">sleepLogs</span><span class="st-arrow">→</span><span class="st-val">duration, quality scores</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WELLNESS -->
+    <div class="memory-card" id="mc-wellness" data-domain="wellness">
+      <div class="mc-header" onclick="toggleCard('mc-wellness')">
+        <div class="mc-domain-dot" style="background:#993556"></div>
+        <span class="mc-domain-name">Wellness</span>
+        <span class="mc-freshness">6:00 AM</span>
+        <svg class="mc-chevron" viewBox="0 0 14 14" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l4 4-4 4"/></svg>
+      </div>
+      <div class="mc-body">
+        <div class="mem-entry">
+          <span class="me-key">Avg mood</span>
+          <div style="flex:1">
+            <div class="me-val positive">7.1 this week · above 3-month avg of 6.8</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Stress</span>
+          <div style="flex:1">
+            <div class="me-val positive">Below 4 all week · lowest sustained in 30 days</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="mem-entry">
+          <span class="me-key">Check-in streak</span>
+          <div style="flex:1">
+            <div class="me-val positive">47 consecutive days</div>
+            <div class="me-actions"><div class="me-btn suppress" onclick="suppressEntry(this)">Suppress</div></div>
+          </div>
+        </div>
+        <div class="source-trace">
+          <div class="st-label">Source</div>
+          <div class="st-row"><span class="st-src">wellnessCheckins</span><span class="st-arrow">→</span><span class="st-val">mood, energy, focus, stress · daily</span></div>
+          <div class="st-row"><span class="st-src">reflections table</span><span class="st-arrow">→</span><span class="st-val">qualitative entries</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info note -->
+    <div class="info-note">
+      <div class="in-dot"></div>
+      <div class="in-text">This is pre-aggregated data — not raw conversation history. Claude never stores what you say, only what your activity data shows. Suppressed entries are excluded from AI suggestions until restored. Context refreshes daily at 6:00 AM UTC.</div>
+    </div>
+
+    <!-- Clear controls -->
+    <div class="clear-section">
+      <div class="section-head" style="padding:0 0 10px">
+        <span class="sh-label">Context controls</span>
+      </div>
+
+      <div class="clear-card">
+        <div class="cc-title">Clear domain context</div>
+        <div class="cc-sub">Wipes the pre-aggregated summaries for selected domains. Your actual data (logs, transactions, habits) is untouched. Regenerates at the next 6 AM cron sync.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="domain-select">
+          <div class="sp" onclick="this.classList.toggle('active')" style="font-size:11px">Faith</div>
+          <div class="sp" onclick="this.classList.toggle('active')" style="font-size:11px">Career</div>
+          <div class="sp" onclick="this.classList.toggle('active')" style="font-size:11px">Finance</div>
+          <div class="sp" onclick="this.classList.toggle('active')" style="font-size:11px">Health</div>
+          <div class="sp" onclick="this.classList.toggle('active')" style="font-size:11px">Wellness</div>
+        </div>
+        <div class="cc-btn soft" onclick="sendPrompt('Clear the selected domain context — confirm before proceeding')">Clear selected domains</div>
+      </div>
+
+      <div class="clear-card">
+        <div class="cc-title">Clear all context</div>
+        <div class="cc-sub">Claude will have no memory of your patterns until tomorrow's 6 AM sync. Your actual data is untouched. Use this for a fresh start.</div>
+        <div class="cc-btn danger" onclick="sendPrompt('Clear all AI context — explain what happens and confirm before doing anything')">Clear all context</div>
+      </div>
+
+      <div class="clear-card">
+        <div class="cc-title">Change context window</div>
+        <div class="cc-sub">Currently reading 7 days back. Extend for deeper pattern recognition or reduce for a more current-focused AI.</div>
+        <div style="display:flex;gap:6px">
+          <div class="sp" onclick="setWindow(this,'3d')" style="font-size:11px">3 days</div>
+          <div class="sp active" onclick="setWindow(this,'7d')" style="font-size:11px">7 days</div>
+          <div class="sp" onclick="setWindow(this,'14d')" style="font-size:11px">14 days</div>
+          <div class="sp" onclick="setWindow(this,'30d')" style="font-size:11px">30 days</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
+</div>
+</div>
+
+<script>
+function toggleCard(id){
+  var card=document.getElementById(id);
+  card.classList.toggle('open');
+}
+
+function suppressEntry(btn){
+  var entry=btn.closest('.mem-entry');
+  entry.classList.add('suppressed');
+  var keyEl=entry.querySelector('.me-key');
+  if(!keyEl.querySelector('.suppressed-badge')){
+    var badge=document.createElement('span');
+    badge.className='suppressed-badge';
+    badge.textContent='Suppressed';
+    keyEl.appendChild(badge);
+  }
+  var valEl=entry.querySelector('.me-val');
+  valEl.style.color='#333';
+  btn.textContent='Restore';
+  btn.classList.remove('suppress');
+  btn.onclick=function(){restoreEntry(this)};
+}
+
+function restoreEntry(btn){
+  var entry=btn.closest('.mem-entry');
+  entry.classList.remove('suppressed');
+  var badge=entry.querySelector('.suppressed-badge');
+  if(badge)badge.remove();
+  var valEl=entry.querySelector('.me-val');
+  valEl.style.color='';
+  btn.textContent='Suppress';
+  btn.classList.add('suppress');
+  btn.onclick=function(){suppressEntry(this)};
+}
+
+function filterScope(el,scope){
+  document.querySelectorAll('.scope-pills .sp').forEach(function(p){p.classList.remove('active')});
+  el.classList.add('active');
+  document.querySelectorAll('.memory-card').forEach(function(card){
+    if(scope==='all'){card.style.display='';}
+    else{card.style.display=card.dataset.domain===scope?'':'none';}
+  });
+}
+
+function setWindow(el,w){
+  document.querySelectorAll('.clear-card:last-of-type .sp').forEach(function(p){p.classList.remove('active')});
+  el.classList.add('active');
+}
+</script>
