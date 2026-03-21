@@ -1,0 +1,721 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#FAFAF8;--surf:#FFFFFF;--surf2:#F5F4F1;--surf3:#EFEEED;
+--border:#E8E6E1;--border2:#D4D1CA;
+--text:#1C1B18;--muted:#8A8780;--hint:#C8C5BE;--hint2:#E8E6E1;
+--acc:#1C1B18;
+--purple:#6B5ECD;--purple-bg:#F0EEFF;--purple-border:#C9C1F5;
+--teal:#2A7A6F;--teal-bg:#E6F5F3;--teal-border:#A8D8D3;
+--amber:#9A6B1A;--amber-bg:#FDF3E0;--amber-border:#F0D090;
+--green:#2D6A4F;--green-bg:#E8F5EE;--green-border:#B7DEC9;
+--red:#C0392B;--red-bg:#FDECEA;--red-border:#F5B8B2;
+--tr:all .2s cubic-bezier(.4,0,.2,1);
+}
+body{background:#EDECEA;font-family:'Inter',sans-serif;color:var(--text);padding:28px 16px;display:flex;justify-content:center;min-height:100vh}
+.shell{display:flex;gap:20px;align-items:flex-start;max-width:900px;width:100%;flex-wrap:wrap;justify-content:center}
+
+/* phone */
+.phone{width:375px;background:var(--surf);border-radius:50px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.13),0 4px 16px rgba(0,0,0,.06),inset 0 0 0 1px rgba(0,0,0,.08);flex-shrink:0}
+.notch{height:44px;background:var(--surf);display:flex;align-items:center;justify-content:center}
+.notch-pill{width:120px;height:34px;background:var(--text);border-radius:20px}
+.screen{display:none;flex-direction:column;min-height:740px;padding-bottom:36px}
+.screen.active{display:flex;animation:rise .25s cubic-bezier(.4,0,.2,1)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* header */
+.hd{padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between}
+.hd-left{}
+.hd-day{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.09em;color:var(--hint);margin-bottom:2px}
+.hd-title{font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);line-height:1.2}
+.hd-title em{font-style:italic}
+.phase-pill{padding:4px 10px;border-radius:99px;font-size:11px;font-weight:500}
+.phase-seed{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.phase-learn{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.phase-act{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border)}
+
+/* scroll area */
+.scroll{flex:1;overflow-y:auto;padding:16px 22px 0;display:flex;flex-direction:column;gap:14px}
+.scroll::-webkit-scrollbar{display:none}
+
+/* section label */
+.sec-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.09em;color:var(--hint);margin-bottom:-6px}
+
+/* insight card */
+.insight{border-radius:16px;padding:16px;border:1px solid var(--border)}
+.insight-eyebrow{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:6px}
+.insight-text{font-size:14px;color:var(--text);line-height:1.6}
+.insight-sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+
+/* progress bar */
+.prog-card{background:var(--surf2);border-radius:14px;padding:14px 16px;border:1px solid var(--border)}
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.prog-label{font-size:12px;font-weight:500;color:var(--text)}
+.prog-pct{font-size:12px;color:var(--muted)}
+.prog-track{height:4px;background:var(--hint2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.pf-seed{background:var(--amber)}
+.pf-learn{background:var(--purple)}
+.pf-act{background:var(--teal)}
+.prog-days{display:flex;gap:4px;margin-top:8px}
+.prog-day{flex:1;height:3px;border-radius:2px;background:var(--hint2)}
+.prog-day.done{background:var(--text)}
+.prog-day.cur{background:var(--amber)}
+
+/* activity card */
+.act-card{border-radius:14px;border:1px solid var(--border);background:var(--surf);overflow:hidden}
+.act-head{display:flex;align-items:center;gap:10px;padding:13px 14px}
+.act-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ai-focus{background:var(--purple-bg)}
+.ai-sleep{background:#EEF2FF}
+.ai-exercise{background:var(--teal-bg)}
+.ai-tasks{background:var(--amber-bg)}
+.ai-habits{background:var(--green-bg)}
+.ai-reflection{background:var(--surf3)}
+.act-info{flex:1}
+.act-title{font-size:14px;font-weight:500;color:var(--text)}
+.act-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.act-status{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--tr);flex-shrink:0}
+.act-status:hover{border-color:var(--border2);background:var(--surf2)}
+.act-status.done{background:var(--green);border-color:var(--green)}
+.act-status.skipped{background:var(--surf3);border-color:var(--border2)}
+.act-status-dot{width:6px;height:6px;border-radius:50%;background:transparent}
+.act-status.done .act-status-dot{display:none}
+.act-status.done::after{content:'✓';font-size:11px;color:#fff}
+.act-status.skipped::after{content:'—';font-size:11px;color:var(--hint)}
+.act-body{padding:0 14px 13px}
+.act-desc{font-size:12px;color:var(--muted);line-height:1.55}
+.act-actions{display:flex;gap:6px;margin-top:10px}
+.act-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif}
+.act-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surf2)}
+.act-btn.primary{background:var(--text);border-color:var(--text);color:#FAFAF8}
+.act-btn.primary:hover{background:#2c2b27}
+.act-btn.done-btn{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.act-btn.skip-btn{color:var(--hint)}
+
+/* suggestion card */
+.sug-card{border-radius:14px;border:1px solid var(--purple-border);background:var(--purple-bg);padding:14px 16px}
+.sug-eyebrow{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--purple);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.sug-conf{padding:2px 8px;border-radius:99px;background:var(--purple);color:#fff;font-size:10px}
+.sug-text{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:12px}
+.sug-actions{display:flex;gap:6px}
+.sug-btn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;transition:var(--tr);border:1px solid var(--purple-border);font-family:'Inter',sans-serif}
+.sug-accept{background:var(--purple);color:#fff;border-color:var(--purple)}
+.sug-accept:hover{background:#5a4db8}
+.sug-dismiss{background:transparent;color:var(--purple)}
+.sug-dismiss:hover{background:rgba(107,94,205,.1)}
+.sug-snooze{background:transparent;color:var(--muted);border-color:var(--border)}
+.sug-snooze:hover{background:var(--surf2)}
+
+/* confidence card */
+.conf-card{border-radius:14px;border:1px solid var(--border);background:var(--surf);padding:14px 16px}
+.conf-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:10px}
+.conf-rows{display:flex;flex-direction:column;gap:8px}
+.conf-row{display:flex;align-items:center;gap:10px}
+.conf-cat{font-size:12px;color:var(--muted);width:72px;flex-shrink:0}
+.conf-bar-track{flex:1;height:4px;background:var(--hint2);border-radius:2px;overflow:hidden}
+.conf-bar-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.cf-observe{background:var(--hint)}
+.cf-suggest{background:var(--amber)}
+.cf-recommend{background:var(--purple)}
+.cf-act{background:var(--teal)}
+.conf-score{font-size:11px;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
+.conf-tier{font-size:10px;padding:2px 7px;border-radius:99px;flex-shrink:0}
+.ct-observe{background:var(--surf3);color:var(--hint)}
+.ct-suggest{background:var(--amber-bg);color:var(--amber)}
+.ct-recommend{background:var(--purple-bg);color:var(--purple)}
+.ct-act{background:var(--teal-bg);color:var(--teal)}
+
+/* check-in */
+.checkin-card{border-radius:14px;border:1px solid var(--teal-border);background:var(--teal-bg);padding:14px 16px}
+.checkin-title{font-size:13px;font-weight:500;color:var(--teal);margin-bottom:12px}
+.slider-rows{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-lbl{font-size:12px;color:var(--text);width:60px;flex-shrink:0}
+.slider-inp{flex:1;accent-color:var(--teal);height:4px}
+.slider-val{font-size:12px;color:var(--teal);font-weight:500;width:16px;text-align:right}
+.checkin-btn{width:100%;padding:10px;border-radius:10px;background:var(--teal);border:none;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr)}
+.checkin-btn:hover{background:#1f5c52}
+
+/* unlock card */
+.unlock-card{border-radius:14px;border:1px solid var(--border);background:var(--surf2);padding:14px 16px}
+.unlock-row{display:flex;align-items:center;gap:12px}
+.unlock-icon{width:36px;height:36px;border-radius:10px;background:var(--surf);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.unlock-info{flex:1}
+.unlock-title{font-size:13px;font-weight:500;color:var(--text)}
+.unlock-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.unlock-arrow{font-size:14px;color:var(--hint);cursor:pointer}
+
+/* finish cta */
+.finish-card{border-radius:14px;border:1px solid var(--green-border);background:var(--green-bg);padding:16px}
+.finish-title{font-size:14px;font-weight:500;color:var(--green);margin-bottom:4px}
+.finish-sub{font-size:12px;color:var(--teal);margin-bottom:12px;line-height:1.5}
+.finish-btn{width:100%;padding:12px;border-radius:10px;background:var(--green);border:none;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr)}
+.finish-btn:hover{background:#235c43}
+
+/* day tabs */
+.day-tabs{padding:0 22px;display:flex;gap:6px;overflow-x:auto;margin-top:14px}
+.day-tabs::-webkit-scrollbar{display:none}
+.day-tab{padding:6px 14px;border-radius:99px;font-size:12px;font-weight:500;cursor:pointer;transition:var(--tr);border:1px solid var(--border);background:transparent;color:var(--muted);white-space:nowrap;flex-shrink:0;font-family:'Inter',sans-serif}
+.day-tab:hover{border-color:var(--border2);color:var(--text)}
+.day-tab.active{background:var(--text);border-color:var(--text);color:#FAFAF8}
+.day-tab.locked{opacity:.4;cursor:not-allowed}
+
+/* side panel */
+.panel{width:210px;display:flex;flex-direction:column;gap:10px}
+.pcard{background:var(--surf);border-radius:14px;border:1px solid var(--border);padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.plabel{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:8px}
+.prow{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0}
+.prow-k{color:var(--muted)}
+.prow-v{font-weight:500;color:var(--text)}
+.badge{padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500}
+.legend-rows{display:flex;flex-direction:column;gap:6px}
+.leg{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+
+<div style="background:#EDECEA;min-height:100vh;padding:28px 16px;display:flex;justify-content:center;align-items:flex-start">
+<div class="shell">
+
+<div style="display:flex;flex-direction:column;gap:0;align-items:center">
+<!-- DAY TABS (above phone) -->
+<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;max-width:375px">
+  <button class="day-tab active" onclick="setDay(1)">Day 1</button>
+  <button class="day-tab" onclick="setDay(2)">Day 2</button>
+  <button class="day-tab" onclick="setDay(3)">Day 3</button>
+  <button class="day-tab" onclick="setDay(4)">Day 4</button>
+  <button class="day-tab" onclick="setDay(5)">Day 5</button>
+  <button class="day-tab" onclick="setDay(6)">Day 6</button>
+  <button class="day-tab" onclick="setDay(7)">Day 7</button>
+</div>
+
+<div class="phone">
+<div class="notch"><div class="notch-pill"></div></div>
+
+<!-- DAY 1 -->
+<div class="screen active" id="d1">
+  <div class="hd">
+    <div class="hd-left">
+      <div class="hd-day">Day 1 · Seed phase</div>
+      <div class="hd-title">Good morning, <em>Sam.</em></div>
+    </div>
+    <div class="phase-pill phase-seed">Observing</div>
+  </div>
+  <div class="scroll">
+    <div class="insight" style="background:var(--amber-bg);border-color:var(--amber-border)">
+      <div class="insight-eyebrow">First message</div>
+      <div class="insight-text">"You said you want to get more done each day. Let's start with something small — just two focused tasks. I'll watch what works."</div>
+      <div class="insight-sub">AI tone: direct · Commitment: moderate (3 tasks)</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-row"><span class="prog-label">Week 1 progress</span><span class="prog-pct">Day 1 of 7</span></div>
+      <div class="prog-track"><div class="prog-fill pf-seed" style="width:14%"></div></div>
+      <div class="prog-days">
+        <div class="prog-day cur"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div>
+      </div>
+    </div>
+    <div class="sec-label">Today's activities</div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-reflection">📋</div>
+        <div class="act-info"><div class="act-title">Morning check-in</div><div class="act-meta">5 min · reflection</div></div>
+        <div class="act-status" id="a1-1" onclick="toggleAct('a1-1')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">Rate your mood, energy, and readiness (1–5). Takes 60 seconds. Sets the AI baseline for today.</div>
+        <div class="act-actions">
+          <button class="act-btn primary" onclick="startCheckin()">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a1-1')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-tasks">✏️</div>
+        <div class="act-info"><div class="act-title">Write 3 priorities</div><div class="act-meta">10 min · tasks</div></div>
+        <div class="act-status" id="a1-2" onclick="toggleAct('a1-2')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">Name the three things that would make today feel like a win. Keeps your focus on what matters.</div>
+        <div class="act-actions">
+          <button class="act-btn primary">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a1-2')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-focus">⚡</div>
+        <div class="act-info"><div class="act-title">Focus block (25 min)</div><div class="act-meta">25 min · focus</div></div>
+        <div class="act-status" id="a1-3" onclick="toggleAct('a1-3')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">One task, no interruptions. Phone face-down. I'll track how often you complete these.</div>
+        <div class="act-actions">
+          <button class="act-btn primary">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a1-3')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="sec-label">Set up your domains</div>
+    <div class="unlock-card">
+      <div class="unlock-row">
+        <div class="unlock-icon">💼</div>
+        <div class="unlock-info"><div class="unlock-title">Career</div><div class="unlock-sub">Tap to activate this domain</div></div>
+        <div class="unlock-arrow">→</div>
+      </div>
+    </div>
+    <div class="unlock-card" style="margin-top:-6px">
+      <div class="unlock-row">
+        <div class="unlock-icon">💪</div>
+        <div class="unlock-info"><div class="unlock-title">Health</div><div class="unlock-sub">Tap to activate this domain</div></div>
+        <div class="unlock-arrow">→</div>
+      </div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-title">AI confidence — just getting started</div>
+      <div class="conf-rows">
+        <div class="conf-row"><span class="conf-cat">Focus</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:8%"></div></div><span class="conf-score">8</span><span class="conf-tier ct-observe">Observe</span></div>
+        <div class="conf-row"><span class="conf-cat">Tasks</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:5%"></div></div><span class="conf-score">5</span><span class="conf-tier ct-observe">Observe</span></div>
+        <div class="conf-row"><span class="conf-cat">Reflection</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:3%"></div></div><span class="conf-score">3</span><span class="conf-tier ct-observe">Observe</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 2 -->
+<div class="screen" id="d2">
+  <div class="hd">
+    <div class="hd-left">
+      <div class="hd-day">Day 2 · Seed phase</div>
+      <div class="hd-title">Morning <em>person confirmed.</em></div>
+    </div>
+    <div class="phase-pill phase-seed">Observing</div>
+  </div>
+  <div class="scroll">
+    <div class="insight" style="background:var(--amber-bg);border-color:var(--amber-border)">
+      <div class="insight-eyebrow">AI observation</div>
+      <div class="insight-text">"You completed the focus block at 8:43 AM. I'm noting morning as your sharp window. Deep work blocks will default to 9 AM going forward."</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-row"><span class="prog-label">Week 1 progress</span><span class="prog-pct">Day 2 of 7</span></div>
+      <div class="prog-track"><div class="prog-fill pf-seed" style="width:28%"></div></div>
+      <div class="prog-days">
+        <div class="prog-day done"></div><div class="prog-day cur" style="background:var(--amber)"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div>
+      </div>
+    </div>
+    <div class="sec-label">Today's activities</div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-reflection">📋</div>
+        <div class="act-info"><div class="act-title">Morning check-in</div><div class="act-meta">5 min · reflection</div></div>
+        <div class="act-status done" id="a2-1"></div>
+      </div>
+      <div class="act-body"><div class="act-desc">Completed at 7:12 AM · Mood 4, Energy 4, Readiness 3</div></div>
+    </div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-exercise">🚶</div>
+        <div class="act-info"><div class="act-title">Walk after lunch</div><div class="act-meta">15 min · exercise</div></div>
+        <div class="act-status" id="a2-2" onclick="toggleAct('a2-2')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">A short walk helps reset focus for the afternoon. Added because your goal is productivity and energy was flagged as a blocker.</div>
+        <div class="act-actions">
+          <button class="act-btn primary">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a2-2')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-reflection">🪞</div>
+        <div class="act-info"><div class="act-title">Reflect on blocker</div><div class="act-meta">10 min · reflection</div></div>
+        <div class="act-status" id="a2-3" onclick="toggleAct('a2-3')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">You said follow-through is your main obstacle. Write one sentence about where you got stuck today — that's it.</div>
+        <div class="act-actions">
+          <button class="act-btn primary">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a2-3')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-title">AI confidence — data building</div>
+      <div class="conf-rows">
+        <div class="conf-row"><span class="conf-cat">Focus</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:22%"></div></div><span class="conf-score">22</span><span class="conf-tier ct-observe">Observe</span></div>
+        <div class="conf-row"><span class="conf-cat">Tasks</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:18%"></div></div><span class="conf-score">18</span><span class="conf-tier ct-observe">Observe</span></div>
+        <div class="conf-row"><span class="conf-cat">Reflection</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:35%"></div></div><span class="conf-score">35</span><span class="conf-tier ct-suggest">Suggest</span></div>
+        <div class="conf-row"><span class="conf-cat">Exercise</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:10%"></div></div><span class="conf-score">10</span><span class="conf-tier ct-observe">Observe</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 3 -->
+<div class="screen" id="d3">
+  <div class="hd">
+    <div class="hd-left">
+      <div class="hd-day">Day 3 · Learn phase</div>
+      <div class="hd-title">Patterns <em>emerging.</em></div>
+    </div>
+    <div class="phase-pill phase-learn">Learning</div>
+  </div>
+  <div class="scroll">
+    <div class="insight" style="background:var(--purple-bg);border-color:var(--purple-border)">
+      <div class="insight-eyebrow">First AI insight</div>
+      <div class="insight-text">"You reflect consistently but often skip afternoon tasks. Your follow-through drops after 2 PM. I'll front-load your important work."</div>
+      <div class="insight-sub">Confidence threshold crossed: Reflection ≥ 31</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-row"><span class="prog-label">Week 1 progress</span><span class="prog-pct">Day 3 of 7</span></div>
+      <div class="prog-track"><div class="prog-fill pf-learn" style="width:43%"></div></div>
+      <div class="prog-days">
+        <div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day cur" style="background:var(--purple)"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div>
+      </div>
+    </div>
+    <div class="checkin-card">
+      <div class="checkin-title">Evening check-in</div>
+      <div class="slider-rows">
+        <div class="slider-row"><span class="slider-lbl">Mood</span><input type="range" class="slider-inp" min="1" max="5" value="3" oninput="this.nextElementSibling.textContent=this.value"><span class="slider-val">3</span></div>
+        <div class="slider-row"><span class="slider-lbl">Energy</span><input type="range" class="slider-inp" min="1" max="5" value="4" oninput="this.nextElementSibling.textContent=this.value"><span class="slider-val">4</span></div>
+        <div class="slider-row"><span class="slider-lbl">Readiness</span><input type="range" class="slider-inp" min="1" max="5" value="3" oninput="this.nextElementSibling.textContent=this.value"><span class="slider-val">3</span></div>
+      </div>
+      <button class="checkin-btn">Submit check-in</button>
+    </div>
+    <div class="sec-label">Today's activities</div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-focus">⚡</div>
+        <div class="act-info"><div class="act-title">Focus block (25 min)</div><div class="act-meta">25 min · focus · moved to 9 AM</div></div>
+        <div class="act-status done"></div>
+      </div>
+      <div class="act-body"><div class="act-desc">Completed 9:04 AM — 2 days in a row. Focus confidence rising.</div></div>
+    </div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-habits">🔁</div>
+        <div class="act-info"><div class="act-title">Evening wind-down</div><div class="act-meta">10 min · habits</div></div>
+        <div class="act-status" id="a3-2" onclick="toggleAct('a3-2')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">Close your tabs, write tomorrow's top task. Helps you actually stop working.</div>
+        <div class="act-actions">
+          <button class="act-btn primary">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a3-2')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-title">AI confidence — learning phase</div>
+      <div class="conf-rows">
+        <div class="conf-row"><span class="conf-cat">Focus</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:44%"></div></div><span class="conf-score">44</span><span class="conf-tier ct-suggest">Suggest</span></div>
+        <div class="conf-row"><span class="conf-cat">Tasks</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:28%"></div></div><span class="conf-score">28</span><span class="conf-tier ct-observe">Observe</span></div>
+        <div class="conf-row"><span class="conf-cat">Reflection</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:58%"></div></div><span class="conf-score">58</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Exercise</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:20%"></div></div><span class="conf-score">20</span><span class="conf-tier ct-observe">Observe</span></div>
+        <div class="conf-row"><span class="conf-cat">Habits</span><div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width:15%"></div></div><span class="conf-score">15</span><span class="conf-tier ct-observe">Observe</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 4 -->
+<div class="screen" id="d4">
+  <div class="hd">
+    <div class="hd-left">
+      <div class="hd-day">Day 4 · Learn phase</div>
+      <div class="hd-title">First real <em>suggestion.</em></div>
+    </div>
+    <div class="phase-pill phase-learn">Learning</div>
+  </div>
+  <div class="scroll">
+    <div class="sug-card">
+      <div class="sug-eyebrow">AI suggestion <span class="sug-conf">Focus 44</span></div>
+      <div class="sug-text">"Lock your 9–9:25 AM slot as a daily focus block. You've done it two days running and your output scores were highest then. Make it non-negotiable."</div>
+      <div class="sug-actions">
+        <button class="sug-btn sug-accept">Accept</button>
+        <button class="sug-btn sug-dismiss">Dismiss</button>
+        <button class="sug-btn sug-snooze">Snooze</button>
+      </div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-row"><span class="prog-label">Week 1 progress</span><span class="prog-pct">Day 4 of 7</span></div>
+      <div class="prog-track"><div class="prog-fill pf-learn" style="width:57%"></div></div>
+      <div class="prog-days">
+        <div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day cur" style="background:var(--purple)"></div><div class="prog-day"></div><div class="prog-day"></div><div class="prog-day"></div>
+      </div>
+    </div>
+    <div class="sec-label">Today's activities</div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-focus">⚡</div>
+        <div class="act-info"><div class="act-title">Focus block (25 min)</div><div class="act-meta">25 min · focus · 9:00 AM</div></div>
+        <div class="act-status done"></div>
+      </div>
+      <div class="act-body"><div class="act-desc">Completed 9:02 AM — 3 days in a row. Streak: 🔥</div></div>
+    </div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-tasks">✏️</div>
+        <div class="act-info"><div class="act-title">Write 3 priorities</div><div class="act-meta">10 min · tasks</div></div>
+        <div class="act-status" id="a4-2" onclick="toggleAct('a4-2')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-actions">
+          <button class="act-btn primary">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a4-2')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="unlock-card">
+      <div class="unlock-row">
+        <div class="unlock-icon">💰</div>
+        <div class="unlock-info"><div class="unlock-title">Finance domain</div><div class="unlock-sub">Ready to set up</div></div>
+        <div class="unlock-arrow">→</div>
+      </div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-title">AI confidence — 2 categories ready to suggest</div>
+      <div class="conf-rows">
+        <div class="conf-row"><span class="conf-cat">Focus</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:56%"></div></div><span class="conf-score">56</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Tasks</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:38%"></div></div><span class="conf-score">38</span><span class="conf-tier ct-suggest">Suggest</span></div>
+        <div class="conf-row"><span class="conf-cat">Reflection</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:65%"></div></div><span class="conf-score">65</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Habits</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:34%"></div></div><span class="conf-score">34</span><span class="conf-tier ct-suggest">Suggest</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 5 -->
+<div class="screen" id="d5">
+  <div class="hd">
+    <div class="hd-left">
+      <div class="hd-day">Day 5 · Learn phase</div>
+      <div class="hd-title">AI is <em>getting sharp.</em></div>
+    </div>
+    <div class="phase-pill phase-learn">Learning</div>
+  </div>
+  <div class="scroll">
+    <div class="sug-card">
+      <div class="sug-eyebrow">AI suggestion <span class="sug-conf">Reflection 65</span></div>
+      <div class="sug-text">"Your check-in scores drop on days you skip the wind-down. Block 9:30–9:45 PM for it. Direct ask: do this every weeknight."</div>
+      <div class="sug-actions">
+        <button class="sug-btn sug-accept">Accept</button>
+        <button class="sug-btn sug-dismiss">Dismiss</button>
+        <button class="sug-btn sug-snooze">Snooze</button>
+      </div>
+    </div>
+    <div class="sug-card" style="margin-top:-6px;border-color:var(--amber-border);background:var(--amber-bg)">
+      <div class="sug-eyebrow" style="color:var(--amber)">AI suggestion <span style="background:var(--amber);color:#fff;padding:2px 8px;border-radius:99px;font-size:10px">Tasks 38</span></div>
+      <div class="sug-text">"Your 3-priority list gets done more often when you write it before 8 AM. Try setting a 7:50 AM reminder."</div>
+      <div class="sug-actions">
+        <button class="sug-btn" style="background:var(--amber);color:#fff;border-color:var(--amber)">Accept</button>
+        <button class="sug-btn" style="background:transparent;color:var(--amber);border-color:var(--amber-border)">Dismiss</button>
+        <button class="sug-btn sug-snooze">Snooze</button>
+      </div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-row"><span class="prog-label">Week 1 progress</span><span class="prog-pct">Day 5 of 7</span></div>
+      <div class="prog-track"><div class="prog-fill pf-learn" style="width:71%"></div></div>
+      <div class="prog-days">
+        <div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day cur" style="background:var(--purple)"></div><div class="prog-day"></div><div class="prog-day"></div>
+      </div>
+    </div>
+    <div class="sec-label">Today's activities</div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-reflection">📋</div>
+        <div class="act-info"><div class="act-title">Morning check-in</div><div class="act-meta">5 min · reflection</div></div>
+        <div class="act-status done"></div>
+      </div>
+      <div class="act-body"><div class="act-desc">Completed 7:08 AM · Mood 5, Energy 4, Readiness 5</div></div>
+    </div>
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-focus">⚡</div>
+        <div class="act-info"><div class="act-title">Focus block (25 min)</div><div class="act-meta">25 min · focus · 9:00 AM</div></div>
+        <div class="act-status" id="a5-2" onclick="toggleAct('a5-2')"><div class="act-status-dot"></div></div>
+      </div>
+      <div class="act-body">
+        <div class="act-actions">
+          <button class="act-btn primary">Start</button>
+          <button class="act-btn skip-btn" onclick="skipAct('a5-2')">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-title">AI confidence — strong in 3 categories</div>
+      <div class="conf-rows">
+        <div class="conf-row"><span class="conf-cat">Focus</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:68%"></div></div><span class="conf-score">68</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Tasks</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:45%"></div></div><span class="conf-score">45</span><span class="conf-tier ct-suggest">Suggest</span></div>
+        <div class="conf-row"><span class="conf-cat">Reflection</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:72%"></div></div><span class="conf-score">72</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Habits</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:42%"></div></div><span class="conf-score">42</span><span class="conf-tier ct-suggest">Suggest</span></div>
+        <div class="conf-row"><span class="conf-cat">Exercise</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:36%"></div></div><span class="conf-score">36</span><span class="conf-tier ct-suggest">Suggest</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 6 -->
+<div class="screen" id="d6">
+  <div class="hd">
+    <div class="hd-left">
+      <div class="hd-day">Day 6 · Act phase</div>
+      <div class="hd-title">Streak <em>celebration.</em></div>
+    </div>
+    <div class="phase-pill phase-act">Acting</div>
+  </div>
+  <div class="scroll">
+    <div class="insight" style="background:var(--teal-bg);border-color:var(--teal-border)">
+      <div class="insight-eyebrow">AI observation</div>
+      <div class="insight-text">"6 days in. Your focus block has a 100% completion rate. Reflection scores consistently high. I now have enough to make strong weekly recommendations."</div>
+      <div class="insight-sub">Act phase unlocked — Focus ≥ 80 or Day ≥ 6</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-row"><span class="prog-label">Week 1 progress</span><span class="prog-pct">Day 6 of 7</span></div>
+      <div class="prog-track"><div class="prog-fill pf-act" style="width:86%"></div></div>
+      <div class="prog-days">
+        <div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day cur" style="background:var(--teal)"></div><div class="prog-day"></div>
+      </div>
+    </div>
+    <div class="sug-card" style="border-color:var(--teal-border);background:var(--teal-bg)">
+      <div class="sug-eyebrow" style="color:var(--teal)">Strong recommendation <span style="background:var(--teal);color:#fff;padding:2px 8px;border-radius:99px;font-size:10px">Focus 82</span></div>
+      <div class="sug-text">"Add a second 25-min focus block at 2 PM on Mon/Wed/Fri. Your energy dips then and a structured block prevents drift better than open time."</div>
+      <div class="sug-actions">
+        <button class="sug-btn" style="background:var(--teal);color:#fff;border-color:var(--teal)">Accept</button>
+        <button class="sug-btn" style="background:transparent;color:var(--teal);border-color:var(--teal-border)">Dismiss</button>
+        <button class="sug-btn sug-snooze">Snooze</button>
+      </div>
+    </div>
+    <div class="unlock-card">
+      <div class="unlock-row">
+        <div class="unlock-icon">🤝</div>
+        <div class="unlock-info"><div class="unlock-title">Relationships domain</div><div class="unlock-sub">New domain ready to unlock</div></div>
+        <div class="unlock-arrow">→</div>
+      </div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-title">AI confidence — act phase</div>
+      <div class="conf-rows">
+        <div class="conf-row"><span class="conf-cat">Focus</span><div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width:82%"></div></div><span class="conf-score">82</span><span class="conf-tier ct-act">Act</span></div>
+        <div class="conf-row"><span class="conf-cat">Tasks</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:52%"></div></div><span class="conf-score">52</span><span class="conf-tier ct-suggest">Suggest</span></div>
+        <div class="conf-row"><span class="conf-cat">Reflection</span><div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width:80%"></div></div><span class="conf-score">80</span><span class="conf-tier ct-act">Act</span></div>
+        <div class="conf-row"><span class="conf-cat">Habits</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:60%"></div></div><span class="conf-score">60</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Exercise</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:48%"></div></div><span class="conf-score">48</span><span class="conf-tier ct-suggest">Suggest</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 7 -->
+<div class="screen" id="d7">
+  <div class="hd">
+    <div class="hd-left">
+      <div class="hd-day">Day 7 · Act phase</div>
+      <div class="hd-title">Week 2 <em>plan ready.</em></div>
+    </div>
+    <div class="phase-pill phase-act">Acting</div>
+  </div>
+  <div class="scroll">
+    <div class="insight" style="background:var(--teal-bg);border-color:var(--teal-border)">
+      <div class="insight-eyebrow">Week 2 preview</div>
+      <div class="insight-text">"I've built your first personalised week. Focus blocks at 9 AM daily, wind-down at 9:30 PM, priorities by 7:50 AM. Three accepted suggestions are now recurring."</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-row"><span class="prog-label">Week 1 complete</span><span class="prog-pct">Day 7 of 7</span></div>
+      <div class="prog-track"><div class="prog-fill pf-act" style="width:100%"></div></div>
+      <div class="prog-days">
+        <div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done"></div><div class="prog-day done" style="background:var(--teal)"></div>
+      </div>
+    </div>
+    <div class="conf-card">
+      <div class="conf-title">Final AI confidence — ready for Week 2</div>
+      <div class="conf-rows">
+        <div class="conf-row"><span class="conf-cat">Focus</span><div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width:88%"></div></div><span class="conf-score">88</span><span class="conf-tier ct-act">Act</span></div>
+        <div class="conf-row"><span class="conf-cat">Tasks</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:64%"></div></div><span class="conf-score">64</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Reflection</span><div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width:91%"></div></div><span class="conf-score">91</span><span class="conf-tier ct-act">Act</span></div>
+        <div class="conf-row"><span class="conf-cat">Habits</span><div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width:70%"></div></div><span class="conf-score">70</span><span class="conf-tier ct-recommend">Recommend</span></div>
+        <div class="conf-row"><span class="conf-cat">Exercise</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:55%"></div></div><span class="conf-score">55</span><span class="conf-tier ct-suggest">Suggest</span></div>
+        <div class="conf-row"><span class="conf-cat">Sleep</span><div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width:38%"></div></div><span class="conf-score">38</span><span class="conf-tier ct-suggest">Suggest</span></div>
+      </div>
+    </div>
+    <div class="finish-card">
+      <div class="finish-title">Your Week 2 plan is ready</div>
+      <div class="finish-sub">Unlock your personalised weekly schedule, built from 7 days of real behaviour — not guesses.</div>
+      <button class="finish-btn">Unlock weekly review →</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /phone -->
+</div>
+
+<!-- SIDE PANEL -->
+<div class="panel">
+  <div class="pcard">
+    <div class="plabel">Day summary</div>
+    <div id="daySummary" style="font-size:12px;color:var(--muted);line-height:1.8"></div>
+  </div>
+  <div class="pcard">
+    <div class="plabel">Confidence tiers</div>
+    <div class="legend-rows">
+      <div class="leg"><div class="leg-dot" style="background:var(--hint)"></div>Observe &lt; 31 — watch only</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--amber)"></div>Suggest ≥ 31 — soft hints</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--purple)"></div>Recommend ≥ 56 — strong push</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--teal)"></div>Act ≥ 80 — recurring plans</div>
+    </div>
+  </div>
+  <div class="pcard">
+    <div class="plabel">Phase logic</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8">
+      <div><b style="color:var(--amber)">Seed</b> — days 1–2</div>
+      <div><b style="color:var(--purple)">Learn</b> — score ≥ 31 or day ≥ 3</div>
+      <div><b style="color:var(--teal)">Act</b> — score ≥ 80 or day ≥ 6</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+const daySummaries={
+  1:{phase:'Seed',activities:3,suggestions:0,note:'Morning check-in, 3 priorities, focus block. Domains shown. AI just watching.'},
+  2:{phase:'Seed',activities:3,suggestions:0,note:'Morning person confirmed. Walk + reflect on blocker added. Reflection crosses 31 → Suggest.'},
+  3:{phase:'Learn',activities:3,suggestions:0,note:'Phase flips to Learn. Evening check-in unlocked. First insight card shown. Focus streak begins.'},
+  4:{phase:'Learn',activities:3,suggestions:1,note:'First suggestion surfaces (Focus 44). Finance domain unlocked. Streak: 3 days.'},
+  5:{phase:'Learn',activities:3,suggestions:2,note:'Two suggestions — wind-down + morning priorities timing. 3 categories in Suggest/Recommend.'},
+  6:{phase:'Act',activities:3,suggestions:1,note:'Act phase. Focus hits 82 → strong recommendation. Relationships domain unlocked.'},
+  7:{phase:'Act',activities:3,suggestions:0,note:'All activities done. Week 2 plan generated. readyToComplete = true. Finish CTA shown.'}
+};
+
+function setDay(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('d'+n).classList.add('active');
+  document.querySelectorAll('.day-tab').forEach((t,i)=>t.classList.toggle('active',i===n-1));
+  const d=daySummaries[n];
+  document.getElementById('daySummary').innerHTML=
+    '<div><span style="color:var(--text);font-weight:500">Phase:</span> '+d.phase+'</div>'+
+    '<div><span style="color:var(--text);font-weight:500">Activities:</span> '+d.activities+'</div>'+
+    '<div><span style="color:var(--text);font-weight:500">Suggestions:</span> '+d.suggestions+'</div>'+
+    '<div style="margin-top:6px;line-height:1.6">'+d.note+'</div>';
+}
+
+function toggleAct(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('done');
+}
+function skipAct(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('done');
+  el.classList.add('skipped');
+}
+function startCheckin(){}
+
+setDay(1);
+</script>

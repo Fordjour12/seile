@@ -1,5 +1,5 @@
 import { Card, Text } from "@/components/ui";
-import { FirstRunJourneyScreen } from "@/components/first-run/first-run-journey-screen";
+import { FirstRunCompleteScreen } from "@/components/first-run-v2/first-run-complete-screen";
 import { Container } from "@/components/container";
 import { useAuth } from "@/lib/v1-auth-context";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
@@ -12,7 +12,7 @@ export default function Index() {
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
 
   if (stage === "first-run") {
-    return <FirstRunJourneyScreen />;
+    return <FirstRunCompleteScreen />;
   }
 
   return (
@@ -63,10 +63,22 @@ export default function Index() {
             gap: 10,
           }}
         >
-          <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700" }}>
+          <Text
+            selectable
+            variant="small"
+            style={{
+              color: theme.foreground,
+              fontFamily: "Geist",
+              fontWeight: "700",
+            }}
+          >
             What changed
           </Text>
-          <Text selectable variant="small" style={{ color: theme.mutedForeground, lineHeight: 20 }}>
+          <Text
+            selectable
+            variant="small"
+            style={{ color: theme.mutedForeground, lineHeight: 20 }}
+          >
             Your planner can now generate full weekly plans, approvals unlock
             from real activity, and domains are no longer operating from setup
             defaults.
@@ -82,10 +94,22 @@ export default function Index() {
             gap: 10,
           }}
         >
-          <Text selectable variant="small" style={{ color: theme.foreground, fontFamily: "Geist", fontWeight: "700" }}>
+          <Text
+            selectable
+            variant="small"
+            style={{
+              color: theme.foreground,
+              fontFamily: "Geist",
+              fontWeight: "700",
+            }}
+          >
             Next surfaces
           </Text>
-          <Text selectable variant="small" style={{ color: theme.mutedForeground, lineHeight: 20 }}>
+          <Text
+            selectable
+            variant="small"
+            style={{ color: theme.mutedForeground, lineHeight: 20 }}
+          >
             Use Planner to review the week, Domains to deepen setup, and Today
             to keep feeding the AI new signal.
           </Text>

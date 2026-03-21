@@ -1,0 +1,780 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#FAFAF8;--surf:#FFF;--surf2:#F5F4F1;--surf3:#EFEEED;
+--border:#E8E6E1;--border2:#D4D1CA;
+--text:#1C1B18;--muted:#8A8780;--hint:#C8C5BE;--hint2:#E8E6E1;
+--tr:all .22s cubic-bezier(.4,0,.2,1);
+/* domain colours */
+--finance:#1A6B3A;--finance-bg:#E8F5EE;--finance-border:#B7DEC9;
+--career:#1A4A8A;--career-bg:#E8F0FB;--career-border:#B8CFF5;
+--health:#8A1A1A;--health-bg:#FBE8E8;--health-border:#F5B8B8;
+--faith:#6B3A1A;--faith-bg:#FDF3E0;--faith-border:#F0D090;
+--habits:#2A7A6F;--habits-bg:#E6F5F3;--habits-border:#A8D8D3;
+--relationships:#6B1A6B;--relationships-bg:#F5E8FB;--relationships-border:#D8B8F0;
+--wellbeing:#1A6B6B;--wellbeing-bg:#E8F5F5;--wellbeing-border:#B8DFE0;
+}
+body{background:#EDECEA;font-family:'Inter',sans-serif;color:var(--text);padding:28px 16px;display:flex;justify-content:center;min-height:100vh}
+.shell{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:900px;width:100%}
+
+.phone{width:375px;background:var(--surf);border-radius:50px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.13),0 4px 16px rgba(0,0,0,.06),inset 0 0 0 1px rgba(0,0,0,.08);flex-shrink:0;position:relative;min-height:780px}
+.notch{height:44px;background:var(--surf);display:flex;align-items:center;justify-content:center}
+.notch-pill{width:120px;height:34px;background:var(--text);border-radius:20px}
+
+.screen{display:none;flex-direction:column;min-height:736px}
+.screen.active{display:flex;animation:rise .25s cubic-bezier(.4,0,.2,1)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:10px;padding:18px 22px 0}
+.back{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--tr);font-family:'Inter',sans-serif;flex-shrink:0}
+.back:hover{background:var(--surf2);color:var(--text)}
+.topbar-title{font-size:15px;font-weight:500;color:var(--text);flex:1;text-align:center}
+.topbar-action{font-size:13px;color:var(--muted);cursor:pointer;min-width:34px;text-align:right;transition:var(--tr)}
+.topbar-action:hover{color:var(--text)}
+
+.scroll{flex:1;overflow-y:auto;padding:16px 22px 32px;display:flex;flex-direction:column;gap:14px}
+.scroll::-webkit-scrollbar{display:none}
+
+/* first-run domain section */
+.sec-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.09em;color:var(--hint)}
+.hd-day{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.09em;color:var(--hint);margin-bottom:2px}
+.hd-title{font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);line-height:1.2;margin-bottom:14px}
+.hd-title em{font-style:italic}
+
+/* domain cards on first-run */
+.domain-card{border-radius:14px;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:var(--tr)}
+.domain-card:hover{border-color:var(--border2)}
+.dc-head{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.dc-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dc-info{flex:1}
+.dc-name{font-size:14px;font-weight:500;color:var(--text)}
+.dc-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.dc-status{display:flex;align-items:center;gap:6px}
+.status-pill{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:500}
+.sp-setup{background:var(--surf3);color:var(--muted);border:1px solid var(--border)}
+.sp-active{background:var(--finance-bg);color:var(--finance);border:1px solid var(--finance-border)}
+.sp-inactive{background:#FBE8E8;color:#8A1A1A;border:1px solid #F5B8B8}
+.dc-arrow{font-size:14px;color:var(--hint)}
+.dc-progress{padding:0 16px 14px}
+.dc-prog-track{height:3px;background:var(--hint2);border-radius:2px;overflow:hidden}
+.dc-prog-fill{height:100%;border-radius:2px;transition:width .4s}
+
+/* domain settings page */
+.ds-hero{padding:24px 22px 0}
+.ds-hero-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px}
+.ds-hero-name{font-family:'Instrument Serif',serif;font-size:28px;color:var(--text);margin-bottom:4px}
+.ds-hero-desc{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:4px}
+.ds-active-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.ds-active-label{font-size:14px;font-weight:500;color:var(--text)}
+.ds-active-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.tog-sw{position:relative;width:46px;height:27px;flex-shrink:0}
+.tog-sw input{opacity:0;width:0;height:0;position:absolute}
+.tog-sl{position:absolute;inset:0;border-radius:14px;cursor:pointer;transition:var(--tr);border:1px solid var(--border2)}
+.tog-sl{background:var(--hint2)}
+.tog-sl:before{content:'';position:absolute;width:21px;height:21px;left:2px;top:2px;background:#fff;border-radius:50%;transition:var(--tr);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tog-sw input:checked+.tog-sl{border-color:transparent}
+.tog-sw input:checked+.tog-sl:before{transform:translateX(19px)}
+
+/* setup sections */
+.setup-section{border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-top:2px}
+.setup-section-head{padding:12px 16px;background:var(--surf2);border-bottom:1px solid var(--border);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint)}
+.setup-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:var(--tr)}
+.setup-row:last-child{border-bottom:none}
+.setup-row:hover{background:var(--surf2)}
+.setup-row-left{}
+.setup-row-label{font-size:14px;font-weight:500;color:var(--text)}
+.setup-row-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.setup-row-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.setup-val{font-size:13px;color:var(--muted)}
+.setup-arrow{font-size:14px;color:var(--hint)}
+.setup-badge{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:500}
+.sb-done{background:var(--finance-bg);color:var(--finance);border:1px solid var(--finance-border)}
+.sb-todo{background:var(--surf3);color:var(--muted);border:1px solid var(--border)}
+.sb-warn{background:#FDF3E0;color:#9A6B1A;border:1px solid #F0D090}
+
+/* input sheet overlay */
+.overlay{position:absolute;inset:0;background:rgba(28,27,24,.4);border-radius:50px;z-index:10;display:none}
+.overlay.show{display:block;animation:fadeO .2s ease}
+@keyframes fadeO{from{opacity:0}to{opacity:1}}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:var(--surf);border-radius:28px 28px 50px 50px;z-index:20;display:none;flex-direction:column;max-height:70%}
+.sheet.show{display:flex;animation:slideUp .26s cubic-bezier(.4,0,.2,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-handle{width:36px;height:4px;background:var(--hint2);border-radius:2px;margin:12px auto 0}
+.sh-head{padding:16px 22px 14px;border-bottom:1px solid var(--border)}
+.sh-title{font-size:16px;font-weight:500;color:var(--text)}
+.sh-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.sh-body{padding:16px 22px;overflow-y:auto;flex:1}
+.sh-body::-webkit-scrollbar{display:none}
+.sh-foot{padding:12px 22px 28px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.sh-cta{width:100%;padding:15px;border-radius:13px;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr);color:#FAFAF8}
+.sh-cta:hover{transform:translateY(-1px)}
+.sh-cta:active{transform:scale(.98)}
+.sh-ghost{width:100%;padding:13px;border-radius:13px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr)}
+.sh-ghost:hover{border-color:var(--border2);color:var(--text)}
+
+/* finance specific */
+.account-types{display:flex;flex-direction:column;gap:8px}
+.acct-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);cursor:pointer;transition:var(--tr);user-select:none}
+.acct-row:hover{border-color:var(--border2);background:var(--surf2)}
+.acct-row.sel{border-color:var(--finance);background:var(--finance-bg)}
+.acct-icon{font-size:20px;width:32px;text-align:center}
+.acct-info{flex:1}
+.acct-label{font-size:14px;font-weight:500;color:var(--text)}
+.acct-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.acct-check{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0}
+.acct-row.sel .acct-check{background:var(--finance);border-color:var(--finance)}
+.acct-tick{font-size:10px;color:#fff;display:none}
+.acct-row.sel .acct-tick{display:block}
+
+/* goal input */
+.goal-inp{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:13px 14px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:var(--tr);margin-bottom:10px}
+.goal-inp:focus{border-color:var(--border2)}
+.goal-inp::placeholder{color:var(--hint)}
+.goal-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.goal-chip{padding:6px 14px;border-radius:99px;border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif}
+.goal-chip:hover{border-color:var(--border2);color:var(--text)}
+.goal-chip.sel{background:var(--finance);border-color:var(--finance);color:#fff}
+
+/* panel */
+.panel{width:210px;display:flex;flex-direction:column;gap:10px}
+.pcard{background:var(--surf);border-radius:14px;border:1px solid var(--border);padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.plabel{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:10px}
+.domain-nav{display:flex;flex-direction:column;gap:6px}
+.dnav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:var(--tr);border:1px solid transparent}
+.dnav:hover{background:var(--surf2);border-color:var(--border)}
+.dnav.active{background:var(--surf);border-color:var(--border2);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.dnav-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dnav-label{font-size:13px;font-weight:500;color:var(--text)}
+.dnav-status{font-size:11px;margin-left:auto;padding:2px 8px;border-radius:99px}
+</style>
+
+<div style="background:#EDECEA;min-height:100vh;padding:28px 16px;display:flex;justify-content:center;align-items:flex-start">
+<div class="shell">
+
+<div class="phone">
+  <div class="notch"><div class="notch-pill"></div></div>
+
+  <!-- SCREEN 0: FIRST-RUN DOMAIN CARDS -->
+  <div class="screen active" id="s-firstrun">
+    <div class="scroll" style="padding-top:20px">
+      <div>
+        <div class="hd-day">Day 1 · Seed phase</div>
+        <div class="hd-title">Set up your <em>domains.</em></div>
+      </div>
+      <div class="sec-label">Your life areas</div>
+
+      <div class="domain-card" id="dc-finance" onclick="goTo('s-finance')">
+        <div class="dc-head">
+          <div class="dc-icon" style="background:var(--finance-bg)">💰</div>
+          <div class="dc-info">
+            <div class="dc-name">Finance</div>
+            <div class="dc-desc">Budgeting, savings goals, accounts</div>
+          </div>
+          <div class="dc-status">
+            <div class="status-pill sp-setup" id="pill-finance">Set up</div>
+            <div class="dc-arrow">→</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="domain-card" id="dc-career" onclick="goTo('s-career')">
+        <div class="dc-head">
+          <div class="dc-icon" style="background:var(--career-bg)">💼</div>
+          <div class="dc-info">
+            <div class="dc-name">Career</div>
+            <div class="dc-desc">Goals, projects, skill building</div>
+          </div>
+          <div class="dc-status">
+            <div class="status-pill sp-setup" id="pill-career">Set up</div>
+            <div class="dc-arrow">→</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="domain-card" id="dc-health" onclick="goTo('s-health')">
+        <div class="dc-head">
+          <div class="dc-icon" style="background:var(--health-bg)">💪</div>
+          <div class="dc-info">
+            <div class="dc-name">Health</div>
+            <div class="dc-desc">Sleep, movement, nutrition</div>
+          </div>
+          <div class="dc-status">
+            <div class="status-pill sp-setup" id="pill-health">Set up</div>
+            <div class="dc-arrow">→</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="domain-card" id="dc-faith" onclick="goTo('s-faith')">
+        <div class="dc-head">
+          <div class="dc-icon" style="background:var(--faith-bg)">✦</div>
+          <div class="dc-info">
+            <div class="dc-name">Faith</div>
+            <div class="dc-desc">Prayer, devotionals, spiritual rhythm</div>
+          </div>
+          <div class="dc-status">
+            <div class="status-pill sp-active" id="pill-faith">Active</div>
+            <div class="dc-arrow">→</div>
+          </div>
+        </div>
+        <div class="dc-progress">
+          <div class="dc-prog-track"><div class="dc-prog-fill" style="width:60%;background:var(--faith)"></div></div>
+        </div>
+      </div>
+
+      <div class="domain-card" id="dc-relationships" onclick="goTo('s-relationships')">
+        <div class="dc-head">
+          <div class="dc-icon" style="background:var(--relationships-bg)">🤝</div>
+          <div class="dc-info">
+            <div class="dc-name">Relationships</div>
+            <div class="dc-desc">Family, friends, community</div>
+          </div>
+          <div class="dc-status">
+            <div class="status-pill sp-setup" id="pill-relationships">Set up</div>
+            <div class="dc-arrow">→</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCREEN 1: FINANCE SETTINGS -->
+  <div class="screen" id="s-finance">
+    <div class="topbar">
+      <button class="back" onclick="goTo('s-firstrun')">←</button>
+      <div class="topbar-title">Finance</div>
+      <div class="topbar-action" onclick="goTo('s-firstrun')">Done</div>
+    </div>
+    <div class="scroll">
+      <div class="ds-hero">
+        <div class="ds-hero-icon" style="background:var(--finance-bg)">💰</div>
+        <div class="ds-hero-name">Finance</div>
+        <div class="ds-hero-desc">Track your money, set savings targets, and build better financial habits over time.</div>
+        <div class="ds-active-row">
+          <div>
+            <div class="ds-active-label">Activate Finance</div>
+            <div class="ds-active-sub">Show Finance activities and suggestions</div>
+          </div>
+          <label class="tog-sw">
+            <input type="checkbox" id="tog-finance" onchange="toggleDomain('finance',this.checked)">
+            <span class="tog-sl" style=""></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="setup-section">
+        <div class="setup-section-head">Accounts</div>
+        <div class="setup-row" onclick="openSheet('finance-accounts')">
+          <div class="setup-row-left">
+            <div class="setup-row-label">Link your accounts</div>
+            <div class="setup-row-sub">Checking, savings, credit cards</div>
+          </div>
+          <div class="setup-row-right">
+            <div class="setup-badge sb-todo">Not set up</div>
+            <div class="setup-arrow">→</div>
+          </div>
+        </div>
+        <div class="setup-row" onclick="openSheet('finance-budget')">
+          <div class="setup-row-left">
+            <div class="setup-row-label">Monthly budget</div>
+            <div class="setup-row-sub">Set your overall spending limit</div>
+          </div>
+          <div class="setup-row-right">
+            <div class="setup-badge sb-todo">Not set</div>
+            <div class="setup-arrow">→</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-section">
+        <div class="setup-section-head">Goals</div>
+        <div class="setup-row" onclick="openSheet('finance-goal')">
+          <div class="setup-row-left">
+            <div class="setup-row-label">Primary goal</div>
+            <div class="setup-row-sub">What are you saving toward?</div>
+          </div>
+          <div class="setup-row-right">
+            <div class="setup-badge sb-todo">Not set</div>
+            <div class="setup-arrow">→</div>
+          </div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left">
+            <div class="setup-row-label">Savings target</div>
+            <div class="setup-row-sub">Monthly amount to set aside</div>
+          </div>
+          <div class="setup-row-right">
+            <div class="setup-val">—</div>
+            <div class="setup-arrow">→</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-section">
+        <div class="setup-section-head">Notifications</div>
+        <div class="setup-row">
+          <div class="setup-row-left">
+            <div class="setup-row-label">Weekly summary</div>
+            <div class="setup-row-sub">Spending recap every Sunday</div>
+          </div>
+          <div class="setup-row-right">
+            <label class="tog-sw"><input type="checkbox" checked><span class="tog-sl" style="background:var(--finance)" ></span></label>
+          </div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left">
+            <div class="setup-row-label">Overspend alerts</div>
+            <div class="setup-row-sub">Notify when nearing category limits</div>
+          </div>
+          <div class="setup-row-right">
+            <label class="tog-sw"><input type="checkbox"><span class="tog-sl"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-section">
+        <div class="setup-section-head">Danger zone</div>
+        <div class="setup-row" onclick="deactivateDomain('finance')">
+          <div class="setup-row-left">
+            <div class="setup-row-label" style="color:#8A1A1A">Deactivate Finance</div>
+            <div class="setup-row-sub">Hide from first-run and suggestions</div>
+          </div>
+          <div class="setup-row-right"><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-finance" onclick="closeAllSheets('finance')"></div>
+
+    <!-- sheet: accounts -->
+    <div class="sheet" id="sh-finance-accounts">
+      <div class="sh-handle"></div>
+      <div class="sh-head">
+        <div class="sh-title">Link your accounts</div>
+        <div class="sh-sub">Choose which account types you want to track</div>
+      </div>
+      <div class="sh-body">
+        <div class="account-types">
+          <div class="acct-row sel" onclick="toggleAcct(this)">
+            <div class="acct-icon">🏦</div>
+            <div class="acct-info"><div class="acct-label">Checking account</div><div class="acct-sub">Day-to-day spending</div></div>
+            <div class="acct-check"><span class="acct-tick">✓</span></div>
+          </div>
+          <div class="acct-row" onclick="toggleAcct(this)">
+            <div class="acct-icon">💎</div>
+            <div class="acct-info"><div class="acct-label">Savings account</div><div class="acct-sub">Emergency fund, goals</div></div>
+            <div class="acct-check"><span class="acct-tick">✓</span></div>
+          </div>
+          <div class="acct-row" onclick="toggleAcct(this)">
+            <div class="acct-icon">💳</div>
+            <div class="acct-info"><div class="acct-label">Credit card</div><div class="acct-sub">Track balance and limit</div></div>
+            <div class="acct-check"><span class="acct-tick">✓</span></div>
+          </div>
+          <div class="acct-row" onclick="toggleAcct(this)">
+            <div class="acct-icon">📈</div>
+            <div class="acct-info"><div class="acct-label">Investment account</div><div class="acct-sub">Stocks, ETFs, retirement</div></div>
+            <div class="acct-check"><span class="acct-tick">✓</span></div>
+          </div>
+          <div class="acct-row" onclick="toggleAcct(this)">
+            <div class="acct-icon">🏠</div>
+            <div class="acct-info"><div class="acct-label">Mortgage / loan</div><div class="acct-sub">Track remaining balance</div></div>
+            <div class="acct-check"><span class="acct-tick">✓</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sh-foot">
+        <button class="sh-cta" style="background:var(--finance)" onclick="saveAccounts()">Save accounts</button>
+        <button class="sh-ghost" onclick="closeAllSheets('finance')">Cancel</button>
+      </div>
+    </div>
+
+    <!-- sheet: goal -->
+    <div class="sheet" id="sh-finance-goal">
+      <div class="sh-handle"></div>
+      <div class="sh-head">
+        <div class="sh-title">Primary financial goal</div>
+        <div class="sh-sub">What are you working toward right now?</div>
+      </div>
+      <div class="sh-body">
+        <input class="goal-inp" type="text" placeholder="e.g. Save for a house deposit…">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Or pick a common goal:</div>
+        <div class="goal-chips">
+          <div class="goal-chip" onclick="pickGoalChip(this)">Emergency fund</div>
+          <div class="goal-chip" onclick="pickGoalChip(this)">House deposit</div>
+          <div class="goal-chip" onclick="pickGoalChip(this)">Pay off debt</div>
+          <div class="goal-chip" onclick="pickGoalChip(this)">Save for travel</div>
+          <div class="goal-chip" onclick="pickGoalChip(this)">Retirement</div>
+          <div class="goal-chip" onclick="pickGoalChip(this)">Build wealth</div>
+        </div>
+      </div>
+      <div class="sh-foot">
+        <button class="sh-cta" style="background:var(--finance)" onclick="saveGoal()">Save goal</button>
+        <button class="sh-ghost" onclick="closeAllSheets('finance')">Cancel</button>
+      </div>
+    </div>
+
+    <!-- sheet: budget -->
+    <div class="sheet" id="sh-finance-budget">
+      <div class="sh-handle"></div>
+      <div class="sh-head">
+        <div class="sh-title">Monthly budget</div>
+        <div class="sh-sub">How much do you want to spend each month?</div>
+      </div>
+      <div class="sh-body">
+        <div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surf2);margin-bottom:14px">
+          <span style="font-size:22px;color:var(--muted)">$</span>
+          <input type="number" placeholder="2,500" style="flex:1;background:transparent;border:none;outline:none;font-size:24px;font-weight:500;color:var(--text);font-family:'Inter',sans-serif" oninput="updateBudgetBar(this.value)">
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Quick picks:</div>
+        <div class="goal-chips">
+          <div class="goal-chip" onclick="setBudget(this,1000)">$1,000</div>
+          <div class="goal-chip" onclick="setBudget(this,2000)">$2,000</div>
+          <div class="goal-chip" onclick="setBudget(this,3000)">$3,000</div>
+          <div class="goal-chip" onclick="setBudget(this,5000)">$5,000</div>
+        </div>
+      </div>
+      <div class="sh-foot">
+        <button class="sh-cta" style="background:var(--finance)" onclick="saveBudget()">Set budget</button>
+        <button class="sh-ghost" onclick="closeAllSheets('finance')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: CAREER SETTINGS -->
+  <div class="screen" id="s-career">
+    <div class="topbar">
+      <button class="back" onclick="goTo('s-firstrun')">←</button>
+      <div class="topbar-title">Career</div>
+      <div class="topbar-action" onclick="goTo('s-firstrun')">Done</div>
+    </div>
+    <div class="scroll">
+      <div class="ds-hero">
+        <div class="ds-hero-icon" style="background:var(--career-bg)">💼</div>
+        <div class="ds-hero-name">Career</div>
+        <div class="ds-hero-desc">Set professional goals, track projects, and build skills that move you forward.</div>
+        <div class="ds-active-row">
+          <div><div class="ds-active-label">Activate Career</div><div class="ds-active-sub">Show Career activities in first-run</div></div>
+          <label class="tog-sw"><input type="checkbox" id="tog-career" onchange="toggleDomain('career',this.checked)"><span class="tog-sl"></span></label>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Your role</div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Current role</div><div class="setup-row-sub">Job title or type of work</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Industry</div><div class="setup-row-sub">Helps tailor suggestions</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Goals</div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Career goal</div><div class="setup-row-sub">What are you working toward?</div></div>
+          <div class="setup-row-right"><div class="setup-badge sb-todo">Not set</div><div class="setup-arrow">→</div></div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Skill to develop</div><div class="setup-row-sub">One skill this month</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Danger zone</div>
+        <div class="setup-row" onclick="deactivateDomain('career')">
+          <div class="setup-row-left"><div class="setup-row-label" style="color:#8A1A1A">Deactivate Career</div><div class="setup-row-sub">Hide from activities and suggestions</div></div>
+          <div class="setup-row-right"><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: HEALTH SETTINGS -->
+  <div class="screen" id="s-health">
+    <div class="topbar">
+      <button class="back" onclick="goTo('s-firstrun')">←</button>
+      <div class="topbar-title">Health</div>
+      <div class="topbar-action" onclick="goTo('s-firstrun')">Done</div>
+    </div>
+    <div class="scroll">
+      <div class="ds-hero">
+        <div class="ds-hero-icon" style="background:var(--health-bg)">💪</div>
+        <div class="ds-hero-name">Health</div>
+        <div class="ds-hero-desc">Build sustainable movement, sleep, and nutrition habits that compound over time.</div>
+        <div class="ds-active-row">
+          <div><div class="ds-active-label">Activate Health</div><div class="ds-active-sub">Show Health activities in first-run</div></div>
+          <label class="tog-sw"><input type="checkbox" id="tog-health" onchange="toggleDomain('health',this.checked)"><span class="tog-sl"></span></label>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Body</div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Sleep target</div><div class="setup-row-sub">Hours per night</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Movement goal</div><div class="setup-row-sub">Minutes per day</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Water intake</div><div class="setup-row-sub">Daily target in litres</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Connect</div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Apple Health</div><div class="setup-row-sub">Sync steps and sleep data</div></div>
+          <div class="setup-row-right"><div class="setup-badge sb-todo">Not connected</div><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Danger zone</div>
+        <div class="setup-row" onclick="deactivateDomain('health')">
+          <div class="setup-row-left"><div class="setup-row-label" style="color:#8A1A1A">Deactivate Health</div><div class="setup-row-sub">Hide from activities and suggestions</div></div>
+          <div class="setup-row-right"><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: FAITH SETTINGS (already active) -->
+  <div class="screen" id="s-faith">
+    <div class="topbar">
+      <button class="back" onclick="goTo('s-firstrun')">←</button>
+      <div class="topbar-title">Faith</div>
+      <div class="topbar-action" onclick="goTo('s-firstrun')">Done</div>
+    </div>
+    <div class="scroll">
+      <div class="ds-hero">
+        <div class="ds-hero-icon" style="background:var(--faith-bg)">✦</div>
+        <div class="ds-hero-name">Faith</div>
+        <div class="ds-hero-desc">Build a consistent prayer and devotional rhythm that fits your daily life.</div>
+        <div class="ds-active-row">
+          <div><div class="ds-active-label">Faith is active</div><div class="ds-active-sub">Activities and suggestions are on</div></div>
+          <label class="tog-sw"><input type="checkbox" id="tog-faith" checked onchange="toggleDomain('faith',this.checked)"><span class="tog-sl" style="background:var(--faith);border-color:transparent"></span></label>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Rhythm</div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Prayer time</div><div class="setup-row-sub">When do you prefer to pray?</div></div>
+          <div class="setup-row-right"><div class="setup-val">6:00 AM</div><div class="setup-arrow">→</div></div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Devotional plan</div><div class="setup-row-sub">Reading plan or custom</div></div>
+          <div class="setup-row-right"><div class="setup-badge sb-done" style="background:var(--faith-bg);color:var(--faith);border-color:var(--faith-border)">Set</div><div class="setup-arrow">→</div></div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Bible translation</div><div class="setup-row-sub">Preferred version</div></div>
+          <div class="setup-row-right"><div class="setup-val">NIV</div><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Accountability</div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Prayer partner</div><div class="setup-row-sub">Optional — share streaks</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Danger zone</div>
+        <div class="setup-row" onclick="deactivateDomain('faith')">
+          <div class="setup-row-left"><div class="setup-row-label" style="color:#8A1A1A">Deactivate Faith</div><div class="setup-row-sub">Remove from activities</div></div>
+          <div class="setup-row-right"><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: RELATIONSHIPS -->
+  <div class="screen" id="s-relationships">
+    <div class="topbar">
+      <button class="back" onclick="goTo('s-firstrun')">←</button>
+      <div class="topbar-title">Relationships</div>
+      <div class="topbar-action" onclick="goTo('s-firstrun')">Done</div>
+    </div>
+    <div class="scroll">
+      <div class="ds-hero">
+        <div class="ds-hero-icon" style="background:var(--relationships-bg)">🤝</div>
+        <div class="ds-hero-name">Relationships</div>
+        <div class="ds-hero-desc">Stay intentional with the people who matter — family, friends, community.</div>
+        <div class="ds-active-row">
+          <div><div class="ds-active-label">Activate Relationships</div><div class="ds-active-sub">Show activities and nudges</div></div>
+          <label class="tog-sw"><input type="checkbox" id="tog-relationships" onchange="toggleDomain('relationships',this.checked)"><span class="tog-sl"></span></label>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Focus</div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Priority relationship</div><div class="setup-row-sub">Who needs the most attention?</div></div>
+          <div class="setup-row-right"><div class="setup-val">—</div><div class="setup-arrow">→</div></div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-row-left"><div class="setup-row-label">Check-in frequency</div><div class="setup-row-sub">How often to prompt connection</div></div>
+          <div class="setup-row-right"><div class="setup-val">Weekly</div><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+      <div class="setup-section">
+        <div class="setup-section-head">Danger zone</div>
+        <div class="setup-row" onclick="deactivateDomain('relationships')">
+          <div class="setup-row-left"><div class="setup-row-label" style="color:#8A1A1A">Deactivate Relationships</div><div class="setup-row-sub">Hide from activities</div></div>
+          <div class="setup-row-right"><div class="setup-arrow">→</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+
+<!-- SIDE PANEL -->
+<div class="panel">
+  <div class="pcard">
+    <div class="plabel">Domains</div>
+    <div class="domain-nav">
+      <div class="dnav active" onclick="goTo('s-firstrun')">
+        <div class="dnav-dot" style="background:var(--text)"></div>
+        <div class="dnav-label">Overview</div>
+      </div>
+      <div class="dnav" id="nav-finance" onclick="goTo('s-finance')">
+        <div class="dnav-dot" style="background:var(--finance)"></div>
+        <div class="dnav-label">Finance</div>
+        <div class="dnav-status status-pill sp-setup" id="ns-finance">Set up</div>
+      </div>
+      <div class="dnav" id="nav-career" onclick="goTo('s-career')">
+        <div class="dnav-dot" style="background:var(--career)"></div>
+        <div class="dnav-label">Career</div>
+        <div class="dnav-status status-pill sp-setup" id="ns-career">Set up</div>
+      </div>
+      <div class="dnav" id="nav-health" onclick="goTo('s-health')">
+        <div class="dnav-dot" style="background:var(--health)"></div>
+        <div class="dnav-label">Health</div>
+        <div class="dnav-status status-pill sp-setup" id="ns-health">Set up</div>
+      </div>
+      <div class="dnav" id="nav-faith" onclick="goTo('s-faith')">
+        <div class="dnav-dot" style="background:var(--faith)"></div>
+        <div class="dnav-label">Faith</div>
+        <div class="dnav-status status-pill sp-active" id="ns-faith">Active</div>
+      </div>
+      <div class="dnav" id="nav-relationships" onclick="goTo('s-relationships')">
+        <div class="dnav-dot" style="background:var(--relationships)"></div>
+        <div class="dnav-label">Relationships</div>
+        <div class="dnav-status status-pill sp-setup" id="ns-relationships">Set up</div>
+      </div>
+    </div>
+  </div>
+  <div class="pcard">
+    <div class="plabel">Status legend</div>
+    <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--muted)">
+      <div style="display:flex;align-items:center;gap:8px"><span class="status-pill sp-setup" style="font-size:10px">Set up</span>Not yet configured</div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="status-pill sp-active" style="font-size:10px">Active</span>Configured + on</div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="status-pill sp-inactive" style="font-size:10px">Off</span>Deactivated</div>
+    </div>
+  </div>
+  <div class="pcard">
+    <div class="plabel">Each domain has</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.9">
+      Activate toggle<br>
+      Domain-specific setup rows<br>
+      Notification prefs<br>
+      Deactivate option<br>
+      Bottom sheets for inputs
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+const domainStates={finance:'setup',career:'setup',health:'setup',faith:'active',relationships:'setup'};
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.dnav').forEach(n=>n.classList.remove('active'));
+  const map={'s-firstrun':0,'s-finance':1,'s-career':2,'s-health':3,'s-faith':4,'s-relationships':5};
+  const navs=document.querySelectorAll('.dnav');
+  if(map[id]!==undefined) navs[map[id]]?.classList.add('active');
+}
+
+function toggleDomain(domain,on){
+  domainStates[domain]=on?'active':'inactive';
+  updatePill(domain);
+  const tog=document.getElementById('tog-'+domain);
+  if(tog){
+    const sl=tog.nextElementSibling;
+    if(on){sl.style.background='var(--'+domain+')';sl.style.borderColor='transparent';}
+    else{sl.style.background='';sl.style.borderColor='';}
+  }
+}
+
+function deactivateDomain(domain){
+  const tog=document.getElementById('tog-'+domain);
+  if(tog){tog.checked=false;toggleDomain(domain,false);}
+}
+
+function updatePill(domain){
+  const state=domainStates[domain];
+  const pill=document.getElementById('pill-'+domain);
+  const npill=document.getElementById('ns-'+domain);
+  const cls=state==='active'?'sp-active':state==='inactive'?'sp-inactive':'sp-setup';
+  const txt=state==='active'?'Active':state==='inactive'?'Off':'Set up';
+  if(pill){pill.className='status-pill '+cls;pill.textContent=txt;}
+  if(npill){npill.className='status-pill '+cls;npill.textContent=txt;}
+}
+
+function openSheet(id){
+  const domain=id.split('-')[0];
+  const ov=document.getElementById('ov-'+domain);
+  const sh=document.getElementById('sh-'+id);
+  if(ov) ov.classList.add('show');
+  if(sh) sh.classList.add('show');
+}
+
+function closeAllSheets(domain){
+  const ov=document.getElementById('ov-'+domain);
+  if(ov) ov.classList.remove('show');
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
+}
+
+function toggleAcct(el){el.classList.toggle('sel')}
+
+function pickGoalChip(el){
+  el.closest('.goal-chips').querySelectorAll('.goal-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const inp=el.closest('.sh-body').querySelector('.goal-inp');
+  if(inp) inp.value=el.textContent;
+}
+
+function setBudget(el,val){
+  el.closest('.sh-body').querySelectorAll('.goal-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const inp=el.closest('.sh-body').querySelector('input[type=number]');
+  if(inp) inp.value=val;
+}
+
+function saveAccounts(){
+  closeAllSheets('finance');
+  const row=document.querySelector('#s-finance .setup-row');
+  if(row){const b=row.querySelector('.setup-badge');if(b){b.className='setup-badge sb-done';b.textContent='Connected';}}
+  toggleDomain('finance',true);
+  document.getElementById('tog-finance').checked=true;
+}
+
+function saveGoal(){
+  closeAllSheets('finance');
+  const rows=document.querySelectorAll('#s-finance .setup-row');
+  if(rows[2]){const b=rows[2].querySelector('.setup-badge');if(b){b.className='setup-badge sb-done';b.textContent='Set';}}
+}
+
+function saveBudget(){
+  closeAllSheets('finance');
+  const rows=document.querySelectorAll('#s-finance .setup-row');
+  if(rows[1]){const b=rows[1].querySelector('.setup-badge');if(b){b.className='setup-badge sb-done';b.textContent='Set';}}
+}
+</script>

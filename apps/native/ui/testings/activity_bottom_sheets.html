@@ -1,0 +1,587 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#FAFAF8;--surf:#FFFFFF;--surf2:#F5F4F1;--surf3:#EFEEED;
+--border:#E8E6E1;--border2:#D4D1CA;
+--text:#1C1B18;--muted:#8A8780;--hint:#C8C5BE;--hint2:#E8E6E1;
+--purple:#6B5ECD;--purple-bg:#F0EEFF;--purple-border:#C9C1F5;
+--teal:#2A7A6F;--teal-bg:#E6F5F3;--teal-border:#A8D8D3;
+--amber:#9A6B1A;--amber-bg:#FDF3E0;--amber-border:#F0D090;
+--green:#2D6A4F;--green-bg:#E8F5EE;--green-border:#B7DEC9;
+--tr:all .22s cubic-bezier(.4,0,.2,1);
+}
+body{background:#EDECEA;font-family:'Inter',sans-serif;color:var(--text);padding:28px 16px;display:flex;justify-content:center;min-height:100vh}
+.shell{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:860px;width:100%}
+
+/* phone */
+.phone{width:375px;background:var(--surf);border-radius:50px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.13),0 4px 16px rgba(0,0,0,.06),inset 0 0 0 1px rgba(0,0,0,.08);flex-shrink:0;position:relative}
+.notch{height:44px;background:var(--surf);display:flex;align-items:center;justify-content:center}
+.notch-pill{width:120px;height:34px;background:var(--text);border-radius:20px}
+
+/* day screen bg */
+.day-bg{min-height:740px;padding:20px 22px;display:flex;flex-direction:column;gap:12px;position:relative;padding-bottom:36px}
+.hd-day{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.09em;color:var(--hint);margin-bottom:2px}
+.hd-title{font-family:'Instrument Serif',serif;font-size:22px;color:var(--text)}
+.hd-title em{font-style:italic}
+
+/* activity card (background) */
+.act-card{border-radius:14px;border:1px solid var(--border);background:var(--surf);overflow:hidden}
+.act-head{display:flex;align-items:center;gap:10px;padding:13px 14px}
+.act-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ai-focus{background:var(--purple-bg)}
+.ai-reflection{background:var(--surf3)}
+.ai-tasks{background:var(--amber-bg)}
+.ai-exercise{background:var(--teal-bg)}
+.ai-habits{background:var(--green-bg)}
+.act-info{flex:1}
+.act-title{font-size:14px;font-weight:500;color:var(--text)}
+.act-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.act-status{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.act-body{padding:0 14px 13px}
+.act-desc{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+.act-actions{display:flex;gap:6px}
+.act-btn{padding:7px 16px;border-radius:9px;border:1px solid var(--border);background:var(--text);font-size:12px;font-weight:500;color:#FAFAF8;cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif}
+.act-btn:hover{background:#2c2b27}
+.act-btn-ghost{padding:7px 14px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:400;color:var(--muted);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif}
+.act-btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+
+/* overlay */
+.overlay{position:absolute;inset:0;background:rgba(28,27,24,.45);border-radius:50px;z-index:10;display:none;animation:fadeOverlay .2s ease}
+.overlay.show{display:block}
+@keyframes fadeOverlay{from{opacity:0}to{opacity:1}}
+
+/* bottom sheet */
+.sheet{position:absolute;bottom:0;left:0;right:0;background:var(--surf);border-radius:28px 28px 50px 50px;z-index:20;display:none;flex-direction:column;max-height:82%;overflow:hidden;box-shadow:0 -8px 32px rgba(0,0,0,.12)}
+.sheet.show{display:flex;animation:slideUp .28s cubic-bezier(.4,0,.2,1)}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet-handle{width:36px;height:4px;background:var(--hint2);border-radius:2px;margin:12px auto 0}
+.sheet-head{padding:16px 22px 12px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border)}
+.sheet-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sheet-title-wrap{flex:1;margin:0 12px}
+.sheet-title{font-family:'Instrument Serif',serif;font-size:18px;color:var(--text);line-height:1.2}
+.sheet-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.sheet-close{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;transition:var(--tr)}
+.sheet-close:hover{background:var(--surf2);color:var(--text)}
+.sheet-body{padding:18px 22px;overflow-y:auto;flex:1}
+.sheet-body::-webkit-scrollbar{display:none}
+.sheet-foot{padding:14px 22px 28px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.sheet-cta{width:100%;padding:15px;border-radius:13px;background:var(--text);border:none;color:#FAFAF8;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr)}
+.sheet-cta:hover{background:#2c2b27;transform:translateY(-1px)}
+.sheet-cta:active{transform:scale(.98)}
+.sheet-cta-ghost{width:100%;padding:13px;border-radius:13px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr)}
+.sheet-cta-ghost:hover{border-color:var(--border2);color:var(--text)}
+
+/* timer ring */
+.timer-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 16px}
+.timer-ring-wrap{position:relative;width:140px;height:140px;margin-bottom:12px}
+.timer-svg{transform:rotate(-90deg)}
+.timer-track{fill:none;stroke:var(--hint2);stroke-width:6}
+.timer-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .5s linear}
+.timer-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.timer-time{font-family:'Instrument Serif',serif;font-size:32px;color:var(--text);line-height:1}
+.timer-label{font-size:11px;color:var(--muted);margin-top:4px}
+.timer-controls{display:flex;gap:10px;margin-top:4px}
+.timer-btn{padding:9px 24px;border-radius:99px;border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr)}
+.timer-play{background:var(--text);color:#FAFAF8;border-color:var(--text)}
+.timer-play:hover{background:#2c2b27}
+.timer-pause{background:var(--surf2);color:var(--text);border-color:var(--border2)}
+.timer-pause:hover{background:var(--surf3)}
+
+/* checkin sliders */
+.checkin-rows{display:flex;flex-direction:column;gap:16px;margin-bottom:4px}
+.ci-row{display:flex;flex-direction:column;gap:6px}
+.ci-top{display:flex;justify-content:space-between;align-items:center}
+.ci-label{font-size:13px;font-weight:500;color:var(--text)}
+.ci-val{font-size:13px;font-weight:500;color:var(--teal);min-width:20px;text-align:right}
+.ci-track{position:relative;height:36px;display:flex;align-items:center}
+.ci-inp{width:100%;accent-color:var(--teal)}
+.ci-ticks{display:flex;justify-content:space-between;padding:0 2px;margin-top:-4px}
+.ci-tick{font-size:10px;color:var(--hint)}
+
+/* priorities */
+.priority-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.p-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surf2)}
+.p-num{width:20px;height:20px;border-radius:50%;background:var(--text);color:#FAFAF8;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.p-inp{flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--text);font-family:'Inter',sans-serif}
+.p-inp::placeholder{color:var(--hint)}
+
+/* reflection input */
+.reflect-inp{width:100%;min-height:100px;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;resize:none;line-height:1.6;transition:var(--tr)}
+.reflect-inp:focus{border-color:var(--border2)}
+.reflect-inp::placeholder{color:var(--hint)}
+.reflect-prompt{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;padding:12px 14px;border-radius:10px;background:var(--surf3);border-left:3px solid var(--amber)}
+
+/* post-activity reflection */
+.rating-rows{display:flex;flex-direction:column;gap:12px;margin-bottom:8px}
+.rating-row{display:flex;align-items:center;justify-content:space-between}
+.rating-label{font-size:13px;color:var(--text);font-weight:500}
+.rating-pills{display:flex;gap:6px}
+.rpill{padding:6px 14px;border-radius:99px;border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif}
+.rpill:hover{border-color:var(--border2);color:var(--text)}
+.rpill.sel{background:var(--text);border-color:var(--text);color:#FAFAF8}
+
+/* walk instruction */
+.walk-steps{display:flex;flex-direction:column;gap:10px}
+.walk-step{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surf2)}
+.walk-num{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--muted);flex-shrink:0;margin-top:1px}
+.walk-text{font-size:13px;color:var(--text);line-height:1.5}
+
+/* panel */
+.panel{width:200px;display:flex;flex-direction:column;gap:10px}
+.pcard{background:var(--surf);border-radius:14px;border:1px solid var(--border);padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.plabel{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--hint);margin-bottom:10px}
+.sheet-btn-row{display:flex;flex-direction:column;gap:8px}
+.sbtn{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr);text-align:left;display:flex;align-items:center;gap:8px}
+.sbtn:hover{background:var(--surf2);border-color:var(--border2);color:var(--text)}
+.sbtn.active{background:var(--text);border-color:var(--text);color:#FAFAF8}
+.sbtn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+
+<div style="background:#EDECEA;min-height:100vh;padding:28px 16px;display:flex;justify-content:center;align-items:flex-start">
+<div class="shell">
+
+<div class="phone">
+  <div class="notch"><div class="notch-pill"></div></div>
+
+  <!-- DAY BG -->
+  <div class="day-bg">
+    <div>
+      <div class="hd-day">Day 1 · Seed phase</div>
+      <div class="hd-title">Good morning, <em>Sam.</em></div>
+    </div>
+
+    <!-- Morning check-in card -->
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-reflection">📋</div>
+        <div class="act-info"><div class="act-title">Morning check-in</div><div class="act-meta">5 min · reflection</div></div>
+        <div class="act-status"></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">Rate your mood, energy, and readiness. Sets the AI baseline for today.</div>
+        <div class="act-actions">
+          <button class="act-btn" onclick="openSheet('checkin')">Start</button>
+          <button class="act-btn-ghost">Skip</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Write 3 priorities -->
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-tasks">✏️</div>
+        <div class="act-info"><div class="act-title">Write 3 priorities</div><div class="act-meta">10 min · tasks</div></div>
+        <div class="act-status"></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">Name the three things that would make today feel like a win.</div>
+        <div class="act-actions">
+          <button class="act-btn" onclick="openSheet('priorities')">Start</button>
+          <button class="act-btn-ghost">Skip</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Focus block -->
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-focus">⚡</div>
+        <div class="act-info"><div class="act-title">Focus block (25 min)</div><div class="act-meta">25 min · focus</div></div>
+        <div class="act-status"></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">One task, no interruptions. Phone face-down.</div>
+        <div class="act-actions">
+          <button class="act-btn" onclick="openSheet('focus')">Start</button>
+          <button class="act-btn-ghost">Skip</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reflect on blocker -->
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-reflection">🪞</div>
+        <div class="act-info"><div class="act-title">Reflect on blocker</div><div class="act-meta">10 min · reflection</div></div>
+        <div class="act-status"></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">Where did you get stuck today? One sentence is enough.</div>
+        <div class="act-actions">
+          <button class="act-btn" onclick="openSheet('reflect')">Start</button>
+          <button class="act-btn-ghost">Skip</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Walk after lunch -->
+    <div class="act-card">
+      <div class="act-head">
+        <div class="act-icon ai-exercise">🚶</div>
+        <div class="act-info"><div class="act-title">Walk after lunch</div><div class="act-meta">15 min · exercise</div></div>
+        <div class="act-status"></div>
+      </div>
+      <div class="act-body">
+        <div class="act-desc">A short walk resets focus for the afternoon.</div>
+        <div class="act-actions">
+          <button class="act-btn" onclick="openSheet('walk')">Start</button>
+          <button class="act-btn-ghost">Skip</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /day-bg -->
+
+  <!-- OVERLAY -->
+  <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+  <!-- SHEET: CHECK-IN -->
+  <div class="sheet" id="sheet-checkin">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-icon ai-reflection">📋</div>
+      <div class="sheet-title-wrap">
+        <div class="sheet-title">Morning check-in</div>
+        <div class="sheet-meta">5 min · reflection · seeds AI baseline</div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="checkin-rows">
+        <div class="ci-row">
+          <div class="ci-top"><span class="ci-label">Mood</span><span class="ci-val" id="ci-mood">3</span></div>
+          <div class="ci-track"><input type="range" class="ci-inp" min="1" max="5" value="3" oninput="document.getElementById('ci-mood').textContent=this.value"></div>
+          <div class="ci-ticks"><span class="ci-tick">Low</span><span class="ci-tick">Okay</span><span class="ci-tick">Neutral</span><span class="ci-tick">Good</span><span class="ci-tick">Great</span></div>
+        </div>
+        <div class="ci-row">
+          <div class="ci-top"><span class="ci-label">Energy</span><span class="ci-val" id="ci-energy">3</span></div>
+          <div class="ci-track"><input type="range" class="ci-inp" min="1" max="5" value="3" oninput="document.getElementById('ci-energy').textContent=this.value"></div>
+          <div class="ci-ticks"><span class="ci-tick">Drained</span><span class="ci-tick">Tired</span><span class="ci-tick">Okay</span><span class="ci-tick">Alert</span><span class="ci-tick">Sharp</span></div>
+        </div>
+        <div class="ci-row">
+          <div class="ci-top"><span class="ci-label">Readiness</span><span class="ci-val" id="ci-ready">3</span></div>
+          <div class="ci-track"><input type="range" class="ci-inp" min="1" max="5" value="3" oninput="document.getElementById('ci-ready').textContent=this.value"></div>
+          <div class="ci-ticks"><span class="ci-tick">Avoidant</span><span class="ci-tick">Hesitant</span><span class="ci-tick">Ready</span><span class="ci-tick">Focused</span><span class="ci-tick">Locked in</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="sheet-cta" style="background:var(--teal)" onclick="completeActivity('checkin')">Submit check-in</button>
+      <button class="sheet-cta-ghost" onclick="closeSheet()">Skip for now</button>
+    </div>
+  </div>
+
+  <!-- SHEET: PRIORITIES -->
+  <div class="sheet" id="sheet-priorities">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-icon ai-tasks">✏️</div>
+      <div class="sheet-title-wrap">
+        <div class="sheet-title">Write 3 priorities</div>
+        <div class="sheet-meta">10 min · tasks · what matters today</div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">What three things would make today feel like a win? Keep them small enough to actually finish.</div>
+      <div class="priority-rows">
+        <div class="p-row"><div class="p-num">1</div><input class="p-inp" type="text" placeholder="Most important thing today…"></div>
+        <div class="p-row"><div class="p-num">2</div><input class="p-inp" type="text" placeholder="Second priority…"></div>
+        <div class="p-row"><div class="p-num">3</div><input class="p-inp" type="text" placeholder="Third priority…"></div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="sheet-cta" onclick="completeActivity('priorities')">Save priorities</button>
+      <button class="sheet-cta-ghost" onclick="closeSheet()">Skip for now</button>
+    </div>
+  </div>
+
+  <!-- SHEET: FOCUS BLOCK -->
+  <div class="sheet" id="sheet-focus">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-icon ai-focus">⚡</div>
+      <div class="sheet-title-wrap">
+        <div class="sheet-title">Focus block</div>
+        <div class="sheet-meta">25 min · no interruptions</div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Pick one thing to work on. Put your phone face-down. I'll track your completion rate over the week.</div>
+      <div class="p-row" style="margin-bottom:20px"><input class="p-inp" type="text" placeholder="What are you working on?"></div>
+      <div class="timer-wrap">
+        <div class="timer-ring-wrap">
+          <svg class="timer-svg" width="140" height="140" viewBox="0 0 140 140">
+            <circle class="timer-track" cx="70" cy="70" r="58"/>
+            <circle class="timer-fill" id="timerRing" cx="70" cy="70" r="58" stroke="var(--purple)" stroke-dasharray="364.4" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-text">
+            <div class="timer-time" id="timerDisplay">25:00</div>
+            <div class="timer-label" id="timerLabel">ready</div>
+          </div>
+        </div>
+        <div class="timer-controls">
+          <button class="timer-btn timer-play" id="timerPlayBtn" onclick="toggleTimer()">Start</button>
+          <button class="timer-btn timer-pause" onclick="resetTimer()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="sheet-cta" style="background:var(--purple)" onclick="completeActivity('focus')">Mark complete</button>
+      <button class="sheet-cta-ghost" onclick="closeSheet()">Skip</button>
+    </div>
+  </div>
+
+  <!-- SHEET: REFLECT -->
+  <div class="sheet" id="sheet-reflect">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-icon ai-reflection">🪞</div>
+      <div class="sheet-title-wrap">
+        <div class="sheet-title">Reflect on blocker</div>
+        <div class="sheet-meta">10 min · reflection · follow-through</div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="reflect-prompt">You said follow-through is your biggest obstacle. Where did you get stuck today — even a little bit?</div>
+      <textarea class="reflect-inp" placeholder="One sentence is enough. Be honest with yourself…" rows="4"></textarea>
+      <div style="font-size:12px;color:var(--hint);margin-top:8px">This feeds the AI's understanding of your pattern. Not shared anywhere.</div>
+    </div>
+    <div class="sheet-foot">
+      <button class="sheet-cta" onclick="openRating('reflect')">Save reflection</button>
+      <button class="sheet-cta-ghost" onclick="closeSheet()">Skip</button>
+    </div>
+  </div>
+
+  <!-- SHEET: WALK -->
+  <div class="sheet" id="sheet-walk">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-icon ai-exercise">🚶</div>
+      <div class="sheet-title-wrap">
+        <div class="sheet-title">Walk after lunch</div>
+        <div class="sheet-meta">15 min · exercise · resets afternoon focus</div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Added because low energy is one of your flagged blockers. Even a short walk significantly improves afternoon focus scores.</div>
+      <div class="walk-steps">
+        <div class="walk-step"><div class="walk-num">1</div><div class="walk-text">Step outside — doesn't need to be far, just away from your screen.</div></div>
+        <div class="walk-step"><div class="walk-num">2</div><div class="walk-text">Leave your phone in your pocket. Let your mind wander.</div></div>
+        <div class="walk-step"><div class="walk-num">3</div><div class="walk-text">Come back and tap done. That's it.</div></div>
+      </div>
+      <div style="margin-top:16px">
+        <div class="timer-wrap" style="padding:8px 0 0">
+          <div class="timer-ring-wrap" style="width:110px;height:110px">
+            <svg class="timer-svg" width="110" height="110" viewBox="0 0 110 110">
+              <circle class="timer-track" cx="55" cy="55" r="44"/>
+              <circle class="timer-fill" id="walkRing" cx="55" cy="55" r="44" stroke="var(--teal)" stroke-dasharray="276.5" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-text">
+              <div class="timer-time" id="walkDisplay" style="font-size:24px">15:00</div>
+              <div class="timer-label" id="walkLabel">ready</div>
+            </div>
+          </div>
+          <div class="timer-controls">
+            <button class="timer-btn timer-play" id="walkPlayBtn" onclick="toggleWalk()" style="background:var(--teal);border-color:var(--teal)">Start</button>
+            <button class="timer-btn timer-pause" onclick="resetWalk()">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="sheet-cta" style="background:var(--teal)" onclick="completeActivity('walk')">Done — I walked</button>
+      <button class="sheet-cta-ghost" onclick="closeSheet()">Skip</button>
+    </div>
+  </div>
+
+  <!-- SHEET: POST-ACTIVITY RATING -->
+  <div class="sheet" id="sheet-rating">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-icon" id="ratingIcon" style="background:var(--green-bg)">✓</div>
+      <div class="sheet-title-wrap">
+        <div class="sheet-title">Nice work</div>
+        <div class="sheet-meta">Quick rating — helps the AI learn faster</div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Two quick questions. This directly improves the quality of your AI suggestions.</div>
+      <div class="rating-rows">
+        <div class="rating-row">
+          <span class="rating-label">How useful was this?</span>
+          <div class="rating-pills">
+            <button class="rpill" onclick="pickRating(this,'useful')">Useful</button>
+            <button class="rpill" onclick="pickRating(this,'useful')">Meh</button>
+            <button class="rpill" onclick="pickRating(this,'useful')">Not really</button>
+          </div>
+        </div>
+        <div class="rating-row">
+          <span class="rating-label">How hard was it?</span>
+          <div class="rating-pills">
+            <button class="rpill" onclick="pickRating(this,'diff')">Easy</button>
+            <button class="rpill" onclick="pickRating(this,'diff')">Medium</button>
+            <button class="rpill" onclick="pickRating(this,'diff')">Hard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="sheet-cta" style="background:var(--green)" onclick="closeSheet();showDone()">Submit feedback</button>
+      <button class="sheet-cta-ghost" onclick="closeSheet()">Skip rating</button>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+
+<!-- SIDE PANEL -->
+<div class="panel">
+  <div class="pcard">
+    <div class="plabel">Activity sheets</div>
+    <div class="sheet-btn-row">
+      <button class="sbtn active" onclick="openSheet('checkin')"><div class="sbtn-dot" style="background:var(--teal)"></div>Morning check-in</button>
+      <button class="sbtn" onclick="openSheet('priorities')"><div class="sbtn-dot" style="background:var(--amber)"></div>Write 3 priorities</button>
+      <button class="sbtn" onclick="openSheet('focus')"><div class="sbtn-dot" style="background:var(--purple)"></div>Focus block</button>
+      <button class="sbtn" onclick="openSheet('reflect')"><div class="sbtn-dot" style="background:var(--muted)"></div>Reflect on blocker</button>
+      <button class="sbtn" onclick="openSheet('walk')"><div class="sbtn-dot" style="background:var(--teal)"></div>Walk after lunch</button>
+    </div>
+  </div>
+  <div class="pcard">
+    <div class="plabel">After completion</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8">
+      Every activity ends with a <b style="color:var(--text)">rating sheet</b> — useful/hard — which fires <code style="font-size:11px;background:var(--surf3);padding:1px 4px;border-radius:4px">recordActivityReflection</code> and adds <b style="color:var(--text)">+10 confidence</b> to the reflection category.
+    </div>
+  </div>
+  <div class="pcard">
+    <div class="plabel">Mutations fired</div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.9;font-family:monospace">
+      Start → recordActivityEvent<br>
+      (action: "started")<br><br>
+      Done → recordActivityEvent<br>
+      (action: "completed")<br><br>
+      Rating → recordActivity<br>
+      Reflection<br><br>
+      Skip → recordActivityEvent<br>
+      (action: "skipped")
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+let timerInterval=null,timerSec=1500,timerRunning=false;
+let walkInterval=null,walkSec=900,walkRunning=false;
+let currentSheet=null;
+
+function openSheet(id){
+  closeSheet(true);
+  const s=document.getElementById('sheet-'+id);
+  const o=document.getElementById('overlay');
+  if(!s) return;
+  s.classList.add('show');
+  o.classList.add('show');
+  currentSheet=id;
+  document.querySelectorAll('.sbtn').forEach(b=>b.classList.remove('active'));
+  const idx={checkin:0,priorities:1,focus:2,reflect:3,walk:4}[id];
+  if(idx!==undefined) document.querySelectorAll('.sbtn')[idx]?.classList.add('active');
+}
+
+function closeSheet(silent){
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
+  document.getElementById('overlay').classList.remove('show');
+  if(!silent) currentSheet=null;
+}
+
+function completeActivity(type){
+  closeSheet(true);
+  setTimeout(()=>openSheet('rating'),200);
+}
+
+function openRating(){
+  closeSheet(true);
+  setTimeout(()=>openSheet('rating'),200);
+}
+
+function pickRating(el,group){
+  el.closest('.rating-pills').querySelectorAll('.rpill').forEach(r=>r.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function showDone(){}
+
+// focus timer
+function toggleTimer(){
+  if(!timerRunning){
+    timerRunning=true;
+    document.getElementById('timerPlayBtn').textContent='Pause';
+    document.getElementById('timerLabel').textContent='running';
+    timerInterval=setInterval(()=>{
+      timerSec--;
+      if(timerSec<=0){clearInterval(timerInterval);timerSec=0;timerRunning=false;document.getElementById('timerPlayBtn').textContent='Done';document.getElementById('timerLabel').textContent='complete';}
+      updateTimer();
+    },1000);
+  } else {
+    timerRunning=false;
+    clearInterval(timerInterval);
+    document.getElementById('timerPlayBtn').textContent='Resume';
+    document.getElementById('timerLabel').textContent='paused';
+  }
+}
+
+function resetTimer(){
+  clearInterval(timerInterval);timerRunning=false;timerSec=1500;
+  document.getElementById('timerPlayBtn').textContent='Start';
+  document.getElementById('timerLabel').textContent='ready';
+  updateTimer();
+}
+
+function updateTimer(){
+  const m=Math.floor(timerSec/60),s=timerSec%60;
+  document.getElementById('timerDisplay').textContent=m+':'+(s<10?'0':'')+s;
+  const pct=timerSec/1500;
+  document.getElementById('timerRing').style.strokeDashoffset=364.4*(1-pct);
+}
+
+// walk timer
+function toggleWalk(){
+  if(!walkRunning){
+    walkRunning=true;
+    document.getElementById('walkPlayBtn').textContent='Pause';
+    document.getElementById('walkLabel').textContent='walking';
+    walkInterval=setInterval(()=>{
+      walkSec--;
+      if(walkSec<=0){clearInterval(walkInterval);walkSec=0;walkRunning=false;document.getElementById('walkPlayBtn').textContent='Done';document.getElementById('walkLabel').textContent='complete';}
+      updateWalk();
+    },1000);
+  } else {
+    walkRunning=false;
+    clearInterval(walkInterval);
+    document.getElementById('walkPlayBtn').textContent='Resume';
+    document.getElementById('walkLabel').textContent='paused';
+  }
+}
+
+function resetWalk(){
+  clearInterval(walkInterval);walkRunning=false;walkSec=900;
+  document.getElementById('walkPlayBtn').textContent='Start';
+  document.getElementById('walkLabel').textContent='ready';
+  updateWalk();
+}
+
+function updateWalk(){
+  const m=Math.floor(walkSec/60),s=walkSec%60;
+  document.getElementById('walkDisplay').textContent=m+':'+(s<10?'0':'')+s;
+  const pct=walkSec/900;
+  document.getElementById('walkRing').style.strokeDashoffset=276.5*(1-pct);
+}
+
+openSheet('checkin');
+</script>

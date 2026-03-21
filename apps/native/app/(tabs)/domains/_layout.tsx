@@ -1,9 +1,12 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import { Stack } from 'expo-router'
+import { Stack } from "expo-router";
 
 export default function DomainLayout() {
   return (
-    <Stack />
-  )
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+      }}
+    />
+  );
 }

@@ -32,6 +32,6 @@
   "devDependencies": {
     "@seile/config": "workspace:*",
     "@types/node": "^24.3.0",
-    "@typescript/native-preview": "catalog:"
+    "typescript": "catalog:"
   }
 }

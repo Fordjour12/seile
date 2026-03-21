@@ -109,22 +109,26 @@ export const BIGGEST_BLOCKER_OPTIONS: ReadonlyArray<{
 export const PREFERRED_STYLE_OPTIONS: ReadonlyArray<{
   id: PreferredStyle;
   label: string;
+  description: string;
   example: string;
 }> = [
   {
     id: "gentle",
     label: "Gentle",
+    description: "Encouraging tone with low pressure and supportive framing.",
     example:
       '"You have a lot on your plate. Let’s pick the one thing that will make the rest of the day feel lighter."',
   },
   {
     id: "direct",
     label: "Direct",
+    description: "Straight to the point with clear calls to action.",
     example: '"Your most important task is still untouched. Start there before anything else."',
   },
   {
     id: "structured",
     label: "Structured",
+    description: "Organized and methodical with explicit priorities and steps.",
     example: '"Priority 1: review plan. Priority 2: complete focus block. Priority 3: check in tonight."',
   },
 ];

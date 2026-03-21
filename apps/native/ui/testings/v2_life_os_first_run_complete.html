@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life OS — First Run Complete</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #FAFAF8;
+      --surf: #FFFFFF;
+      --surf2: #F5F4F1;
+      --surf3: #EFEEED;
+      --border: #E8E6E1;
+      --border2: #D4D1CA;
+      --text: #1C1B18;
+      --muted: #8A8780;
+      --hint: #C8C5BE;
+      --hint2: #E8E6E1;
+      --purple: #6B5ECD;
+      --purple-bg: #F0EEFF;
+      --purple-border: #C9C1F5;
+      --teal: #2A7A6F;
+      --teal-bg: #E6F5F3;
+      --teal-border: #A8D8D3;
+      --amber: #9A6B1A;
+      --amber-bg: #FDF3E0;
+      --amber-border: #F0D090;
+      --green: #2D6A4F;
+      --green-bg: #E8F5EE;
+      --green-border: #B7DEC9;
+      --red: #C0392B;
+      --red-bg: #FDECEA;
+      --red-border: #F5B8B2;
+      --tr: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      background: #EDECEA;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      padding: 28px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .shell {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      max-width: 900px;
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Phone frame */
+    .phone {
+      width: 375px;
+      background: var(--surf);
+      border-radius: 50px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.13),
+                  0 4px 16px rgba(0, 0, 0, 0.06),
+                  inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notch {
+      height: 44px;
+      background: var(--surf);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notch-pill {
+      width: 120px;
+      height: 34px;
+      background: var(--text);
+      border-radius: 20px;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      min-height: 740px;
+      padding-bottom: 36px;
+      animation: rise 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Header */
+    .hd {
+      padding: 20px 22px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hd-left {
+      flex: 1;
+    }
+
+    .hd-day {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--hint);
+      margin-bottom: 2px;
+    }
+
+    .hd-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 22px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .hd-title em {
+      font-style: italic;
+    }
+
+    .phase-pill {
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .phase-seed {
+      background: var(--amber-bg);
+      color: var(--amber);
+      border: 1px solid var(--amber-border);
+    }
+
+    .phase-learn {
+      background: var(--purple-bg);
+      color: var(--purple);
+      border: 1px solid var(--purple-border);
+    }
+
+    .phase-act {
+      background: var(--teal-bg);
+      color: var(--teal);
+      border: 1px solid var(--teal-border);
+    }
+
+    /* Scroll area */
+    .scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 22px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Section label */
+    .sec-label {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--hint);
+      margin-bottom: -6px;
+    }
+
+    /* Insight card */
+    .insight {
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      background: var(--surf);
+    }
+
+    .insight-eyebrow {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--hint);
+      margin-bottom: 6px;
+    }
+
+    .insight-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .insight-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    /* Progress bar */
+    .prog-card {
+      background: var(--surf2);
+      border-radius: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+    }
+
+    .prog-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .prog-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .prog-pct {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .prog-track {
+      height: 4px;
+      background: var(--hint2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .prog-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .pf-seed {
+      background: var(--amber);
+    }
+
+    .pf-learn {
+      background: var(--purple);
+    }
+
+    .pf-act {
+      background: var(--teal);
+    }
+
+    .prog-days {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .prog-day {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--hint2);
+    }
+
+    .prog-day.done {
+      background: var(--text);
+    }
+
+    .prog-day.cur {
+      background: var(--amber);
+    }
+
+    /* Activity card */
+    .act-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surf);
+      overflow: hidden;
+      cursor: pointer;
+      transition: var(--tr);
+    }
+
+    .act-card:hover {
+      border-color: var(--border2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .act-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+    }
+
+    .act-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .ai-focus {
+      background: var(--purple-bg);
+    }
+
+    .ai-sleep {
+      background: #EEF2FF;
+    }
+
+    .ai-exercise {
+      background: var(--teal-bg);
+    }
+
+    .ai-tasks {
+      background: var(--amber-bg);
+    }
+
+    .ai-habits {
+      background: var(--green-bg);
+    }
+
+    .ai-reflection {
+      background: var(--surf3);
+    }
+
+    .act-info {
+      flex: 1;
+    }
+
+    .act-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .act-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .act-status {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--tr);
+      flex-shrink: 0;
+    }
+
+    .act-status:hover {
+      border-color: var(--border2);
+      background: var(--surf2);
+    }
+
+    .act-status.done {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .act-status.skipped {
+      background: var(--surf3);
+      border-color: var(--border2);
+    }
+
+    .act-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: transparent;
+    }
+
+    .act-status.done .act-status-dot {
+      display: none;
+    }
+
+    .act-status.done::after {
+      content: '✓';
+      font-size: 11px;
+      color: #fff;
+    }
+
+    .act-status.skipped::after {
+      content: '—';
+      font-size: 11px;
+      color: var(--hint);
+    }
+
+    .act-body {
+      padding: 0 14px 13px;
+    }
+
+    .act-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .act-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .act-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: var(--tr);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .act-btn:hover {
+      border-color: var(--border2);
+      color: var(--text);
+      background: var(--surf2);
+    }
+
+    .act-btn.primary {
+      background: var(--text);
+      border-color: var(--text);
+      color: #FAFAF8;
+    }
+
+    .act-btn.primary:hover {
+      background: #2c2b27;
+    }
+
+    /* Suggestion card */
+    .sug-card {
+      border-radius: 14px;
+      border: 1px solid var(--purple-border);
+      background: var(--purple-bg);
+      padding: 14px 16px;
+      animation: slideIn 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .sug-eyebrow {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--purple);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sug-conf {
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: var(--purple);
+      color: #fff;
+      font-size: 10px;
+    }
+
+    .sug-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .sug-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .sug-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--tr);
+      border: 1px solid var(--purple-border);
+      font-family: 'Inter', sans-serif;
+      flex: 1;
+    }
+
+    .sug-accept {
+      background: var(--purple);
+      color: #fff;
+      border-color: var(--purple);
+    }
+
+    .sug-accept:hover {
+      background: #5a4db8;
+    }
+
+    .sug-dismiss {
+      background: transparent;
+      color: var(--purple);
+    }
+
+    .sug-dismiss:hover {
+      background: rgba(107, 94, 205, 0.1);
+    }
+
+    .sug-snooze {
+      background: transparent;
+      color: var(--muted);
+      border-color: var(--border);
+    }
+
+    .sug-snooze:hover {
+      background: var(--surf2);
+    }
+
+    .sug-card.teal {
+      border-color: var(--teal-border);
+      background: var(--teal-bg);
+    }
+
+    .sug-card.teal .sug-eyebrow,
+    .sug-card.teal .sug-conf {
+      color: var(--teal);
+    }
+
+    .sug-card.teal .sug-conf {
+      background: var(--teal);
+    }
+
+    .sug-card.amber {
+      border-color: var(--amber-border);
+      background: var(--amber-bg);
+    }
+
+    .sug-card.amber .sug-eyebrow,
+    .sug-card.amber .sug-conf {
+      color: var(--amber);
+    }
+
+    .sug-card.amber .sug-conf {
+      background: var(--amber);
+    }
+
+    /* Confidence card */
+    .conf-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surf);
+      padding: 14px 16px;
+    }
+
+    .conf-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .conf-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .conf-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .conf-cat {
+      font-size: 12px;
+      color: var(--muted);
+      width: 72px;
+      flex-shrink: 0;
+    }
+
+    .conf-bar-track {
+      flex: 1;
+      height: 4px;
+      background: var(--hint2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .conf-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .cf-observe {
+      background: var(--hint);
+    }
+
+    .cf-suggest {
+      background: var(--amber);
+    }
+
+    .cf-recommend {
+      background: var(--purple);
+    }
+
+    .cf-act {
+      background: var(--teal);
+    }
+
+    .conf-score {
+      font-size: 11px;
+      color: var(--muted);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .conf-tier {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+
+    .ct-observe {
+      background: var(--surf3);
+      color: var(--hint);
+    }
+
+    .ct-suggest {
+      background: var(--amber-bg);
+      color: var(--amber);
+    }
+
+    .ct-recommend {
+      background: var(--purple-bg);
+      color: var(--purple);
+    }
+
+    .ct-act {
+      background: var(--teal-bg);
+      color: var(--teal);
+    }
+
+    /* Check-in card */
+    .checkin-card {
+      border-radius: 14px;
+      border: 1px solid var(--teal-border);
+      background: var(--teal-bg);
+      padding: 14px 16px;
+    }
+
+    .checkin-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--teal);
+      margin-bottom: 12px;
+    }
+
+    .slider-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-lbl {
+      font-size: 12px;
+      color: var(--text);
+      width: 60px;
+      flex-shrink: 0;
+    }
+
+    .slider-inp {
+      flex: 1;
+      accent-color: var(--teal);
+      height: 4px;
+      cursor: pointer;
+    }
+
+    .slider-val {
+      font-size: 12px;
+      color: var(--teal);
+      font-weight: 500;
+      width: 16px;
+      text-align: right;
+    }
+
+    .checkin-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--teal);
+      border: none;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: var(--tr);
+    }
+
+    .checkin-btn:hover {
+      background: #1f5c52;
+    }
+
+    /* Unlock card */
+    .unlock-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surf2);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: var(--tr);
+    }
+
+    .unlock-card:hover {
+      border-color: var(--border2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .unlock-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .unlock-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--surf);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .unlock-info {
+      flex: 1;
+    }
+
+    .unlock-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .unlock-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .unlock-arrow {
+      font-size: 14px;
+      color: var(--hint);
+      cursor: pointer;
+    }
+
+    /* Rating sheet */
+    .rating-sheet {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .rating-sheet.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .sheet-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surf);
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px;
+      max-height: 80vh;
+      overflow-y: auto;
+      animation: slideUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    .sheet-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--surf2);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      transition: var(--tr);
+    }
+
+    .sheet-close:hover {
+      background: var(--surf3);
+    }
+
+    .sheet-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 20px;
+      color: var(--text);
+      margin-bottom: 4px;
+      padding-right: 32px;
+    }
+
+    .sheet-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .rating-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .rating-btn {
+      padding: 16px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: var(--tr);
+    }
+
+    .rating-btn:hover {
+      border-color: var(--border2);
+      background: var(--surf2);
+    }
+
+    .rating-btn.active {
+      background: var(--teal-bg);
+      border-color: var(--teal-border);
+    }
+
+    .rating-emoji {
+      font-size: 32px;
+    }
+
+    .rating-label {
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Ring timer */
+    .ring-timer {
+      width: 120px;
+      height: 120px;
+      margin: 16px auto;
+    }
+
+    .ring-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .ring-circle {
+      fill: none;
+      stroke: var(--teal);
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .ring-bg {
+      stroke: var(--hint2);
+    }
+
+    .timer-text {
+      font-family: 'Instrument Serif', serif;
+      font-size: 28px;
+      font-weight: 500;
+      text-anchor: middle;
+      dy: 0.3em;
+      dominant-baseline: central;
+    }
+
+    .timer-label {
+      font-size: 11px;
+      text-anchor: middle;
+      dy: 1.5em;
+      fill: var(--hint);
+    }
+
+    /* Summary card */
+    .summary-card {
+      border-radius: 14px;
+      border: 1px solid var(--green-border);
+      background: var(--green-bg);
+      padding: 16px;
+    }
+
+    .summary-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 18px;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+
+    .summary-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .summary-item {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .summary-item strong {
+      font-weight: 600;
+    }
+
+    .summary-cta {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--green);
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: var(--tr);
+    }
+
+    .summary-cta:hover {
+      background: #235c43;
+    }
+
+    /* Day tabs */
+    .day-tabs {
+      padding: 0 22px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+
+    .day-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .day-tab {
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--tr);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .day-tab:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .day-tab.active {
+      background: var(--text);
+      border-color: var(--text);
+      color: #FAFAF8;
+    }
+
+    .day-tab.locked {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Side panel */
+    .panel {
+      width: 210px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pcard {
+      background: var(--surf);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .plabel {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--hint);
+      margin-bottom: 8px;
+    }
+
+    .prow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      padding: 3px 0;
+    }
+
+    .prow-k {
+      color: var(--muted);
+    }
+
+    .prow-v {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- DAY TABS -->
+    <div style="display: flex; flex-direction: column; gap: 0; align-items: center; width: 100%; max-width: 375px;">
+      <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; justify-content: center; max-width: 375px;">
+        <button class="day-tab active" onclick="setDay(1)">Day 1</button>
+        <button class="day-tab" onclick="setDay(2)">Day 2</button>
+        <button class="day-tab" onclick="setDay(3)">Day 3</button>
+        <button class="day-tab" onclick="setDay(4)">Day 4</button>
+        <button class="day-tab" onclick="setDay(5)">Day 5</button>
+        <button class="day-tab" onclick="setDay(6)">Day 6</button>
+        <button class="day-tab" onclick="setDay(7)">Day 7</button>
+      </div>
+
+      <div class="phone">
+        <div class="notch"><div class="notch-pill"></div></div>
+
+        <!-- DAY 1 -->
+        <div class="screen active" id="d1">
+          <div class="hd">
+            <div class="hd-left">
+              <div class="hd-day">Day 1 of 7</div>
+              <div class="hd-title">Let's <em>begin</em></div>
+            </div>
+            <div class="phase-pill phase-seed">Seed</div>
+          </div>
+          <div class="scroll">
+            <div class="insight">
+              <div class="insight-eyebrow">Welcome message</div>
+              <div class="insight-text">You've shared your context with us. Today, we observe.</div>
+              <div class="insight-sub">Focus on what feels natural. We're learning your rhythms.</div>
+            </div>
+            <div class="prog-card">
+              <div class="prog-row">
+                <div class="prog-label">Week 1 progress</div>
+                <div class="prog-pct">14%</div>
+              </div>
+              <div class="prog-track"><div class="prog-fill pf-seed" style="width: 14%;"></div></div>
+              <div class="prog-days">
+                <div class="prog-day cur"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+              </div>
+            </div>
+            <div class="sec-label">Suggested activities</div>
+            <div class="act-card" onclick="openActivitySheet('Morning Check-in')">
+              <div class="act-head">
+                <div class="act-icon ai-habits">🌅</div>
+                <div class="act-info">
+                  <div class="act-title">Morning check-in</div>
+                  <div class="act-meta">2 min • Start your day</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+              <div class="act-body">
+                <div class="act-desc">Notice what you're thinking about first thing. Sit with it for a moment.</div>
+              </div>
+            </div>
+            <div class="act-card" onclick="openActivitySheet('Focus Block')">
+              <div class="act-head">
+                <div class="act-icon ai-focus">⚡</div>
+                <div class="act-info">
+                  <div class="act-title">Focus block</div>
+                  <div class="act-meta">25 min • Deep work</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+              <div class="act-body">
+                <div class="act-desc">Pick one task that matters. Work on it without distractions.</div>
+              </div>
+            </div>
+            <div class="act-card" onclick="openActivitySheet('Evening Wind-down')">
+              <div class="act-head">
+                <div class="act-icon ai-sleep">🌙</div>
+                <div class="act-info">
+                  <div class="act-title">Evening wind-down</div>
+                  <div class="act-meta">5 min • Rest</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+              <div class="act-body">
+                <div class="act-desc">Let the day settle. Notice one thing that went well.</div>
+              </div>
+            </div>
+            <div class="sec-label">Domain setup</div>
+            <div class="unlock-card" onclick="openUnlockFlow('Productivity')">
+              <div class="unlock-row">
+                <div class="unlock-icon">📊</div>
+                <div class="unlock-info">
+                  <div class="unlock-title">Add Productivity domain</div>
+                  <div class="unlock-sub">Track goals and focus blocks</div>
+                </div>
+                <div class="unlock-arrow">→</div>
+              </div>
+            </div>
+            <div class="conf-card">
+              <div class="conf-title">Confidence by category</div>
+              <div class="conf-rows">
+                <div class="conf-row">
+                  <div class="conf-cat">Focus</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width: 35%;"></div></div>
+                  <div class="conf-score">35</div>
+                  <div class="conf-tier ct-suggest">Suggest</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Sleep</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width: 20%;"></div></div>
+                  <div class="conf-score">20</div>
+                  <div class="conf-tier ct-observe">Observe</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Exercise</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width: 25%;"></div></div>
+                  <div class="conf-score">25</div>
+                  <div class="conf-tier ct-suggest">Suggest</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAY 2 -->
+        <div class="screen" id="d2">
+          <div class="hd">
+            <div class="hd-left">
+              <div class="hd-day">Day 2 of 7</div>
+              <div class="hd-title">Building the <em>baseline</em></div>
+            </div>
+            <div class="phase-pill phase-seed">Seed</div>
+          </div>
+          <div class="scroll">
+            <div class="insight">
+              <div class="insight-eyebrow">Today's focus</div>
+              <div class="insight-text">We're still watching to understand your patterns.</div>
+              <div class="insight-sub">How did yesterday feel? Let's build on that.</div>
+            </div>
+            <div class="prog-card">
+              <div class="prog-row">
+                <div class="prog-label">Week 1 progress</div>
+                <div class="prog-pct">28%</div>
+              </div>
+              <div class="prog-track"><div class="prog-fill pf-seed" style="width: 28%;"></div></div>
+              <div class="prog-days">
+                <div class="prog-day done"></div>
+                <div class="prog-day cur"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+              </div>
+            </div>
+            <div class="sec-label">Suggested activities</div>
+            <div class="act-card" onclick="openActivitySheet('Morning Check-in')">
+              <div class="act-head">
+                <div class="act-icon ai-habits">🌅</div>
+                <div class="act-info">
+                  <div class="act-title">Morning check-in</div>
+                  <div class="act-meta">2 min • Start your day</div>
+                </div>
+                <div class="act-status done" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="act-card" onclick="openActivitySheet('Focus Block')">
+              <div class="act-head">
+                <div class="act-icon ai-focus">⚡</div>
+                <div class="act-info">
+                  <div class="act-title">Focus block</div>
+                  <div class="act-meta">25 min • Deep work</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="act-card" onclick="openActivitySheet('Reflection')">
+              <div class="act-head">
+                <div class="act-icon ai-reflection">🪞</div>
+                <div class="act-info">
+                  <div class="act-title">Reflect on blocker</div>
+                  <div class="act-meta">5 min • Learning</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+              <div class="act-body">
+                <div class="act-desc">What's the one thing blocking you most right now?</div>
+              </div>
+            </div>
+            <div class="conf-card">
+              <div class="conf-title">Confidence by category</div>
+              <div class="conf-rows">
+                <div class="conf-row">
+                  <div class="conf-cat">Focus</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width: 42%;"></div></div>
+                  <div class="conf-score">42</div>
+                  <div class="conf-tier ct-suggest">Suggest</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Sleep</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-observe" style="width: 28%;"></div></div>
+                  <div class="conf-score">28</div>
+                  <div class="conf-tier ct-observe">Observe</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Habits</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width: 38%;"></div></div>
+                  <div class="conf-score">38</div>
+                  <div class="conf-tier ct-suggest">Suggest</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAY 3 -->
+        <div class="screen" id="d3">
+          <div class="hd">
+            <div class="hd-left">
+              <div class="hd-day">Day 3 of 7</div>
+              <div class="hd-title">We start <em>suggesting</em></div>
+            </div>
+            <div class="phase-pill phase-learn">Learn</div>
+          </div>
+          <div class="scroll">
+            <div class="insight">
+              <div class="insight-eyebrow">Phase transition</div>
+              <div class="insight-text">We've seen enough. Starting gentle suggestions today.</div>
+              <div class="insight-sub">See something that doesn't fit? Just dismiss it.</div>
+            </div>
+            <div class="prog-card">
+              <div class="prog-row">
+                <div class="prog-label">Week 1 progress</div>
+                <div class="prog-pct">42%</div>
+              </div>
+              <div class="prog-track"><div class="prog-fill pf-learn" style="width: 42%;"></div></div>
+              <div class="prog-days">
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day cur"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+              </div>
+            </div>
+            <div class="sec-label">Suggested activities</div>
+            <div class="act-card" onclick="openActivitySheet('Morning Check-in')">
+              <div class="act-head">
+                <div class="act-icon ai-habits">🌅</div>
+                <div class="act-info">
+                  <div class="act-title">Morning check-in</div>
+                  <div class="act-meta">2 min • Start your day</div>
+                </div>
+                <div class="act-status done" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="act-card" onclick="openActivitySheet('Focus Block')">
+              <div class="act-head">
+                <div class="act-icon ai-focus">⚡</div>
+                <div class="act-info">
+                  <div class="act-title">Focus block</div>
+                  <div class="act-meta">25 min • Deep work</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="sec-label">Suggestion</div>
+            <div class="sug-card">
+              <div class="sug-eyebrow">AI Suggestion <span class="sug-conf">68%</span></div>
+              <div class="sug-text">You've been focused the last two days. Try 35-minute blocks instead of 25?</div>
+              <div class="sug-actions">
+                <button class="sug-btn sug-accept" onclick="acceptSuggestion(this)">Accept</button>
+                <button class="sug-btn sug-dismiss" onclick="dismissSuggestion(this)">Dismiss</button>
+                <button class="sug-btn sug-snooze" onclick="snoozeSuggestion(this)">Snooze</button>
+              </div>
+            </div>
+            <div class="conf-card">
+              <div class="conf-title">Confidence by category</div>
+              <div class="conf-rows">
+                <div class="conf-row">
+                  <div class="conf-cat">Focus</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width: 68%;"></div></div>
+                  <div class="conf-score">68</div>
+                  <div class="conf-tier ct-recommend">Recommend</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Sleep</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width: 45%;"></div></div>
+                  <div class="conf-score">45</div>
+                  <div class="conf-tier ct-suggest">Suggest</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Habits</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width: 62%;"></div></div>
+                  <div class="conf-score">62</div>
+                  <div class="conf-tier ct-recommend">Recommend</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAY 4 -->
+        <div class="screen" id="d4">
+          <div class="hd">
+            <div class="hd-left">
+              <div class="hd-day">Day 4 of 7</div>
+              <div class="hd-title">Growth <em>signals</em></div>
+            </div>
+            <div class="phase-pill phase-learn">Learn</div>
+          </div>
+          <div class="scroll">
+            <div class="insight">
+              <div class="insight-eyebrow">Pattern detected</div>
+              <div class="insight-text">You're showing strong consistency. We're getting bolder.</div>
+              <div class="insight-sub">More suggestions coming — and a new domain to explore.</div>
+            </div>
+            <div class="prog-card">
+              <div class="prog-row">
+                <div class="prog-label">Week 1 progress</div>
+                <div class="prog-pct">57%</div>
+              </div>
+              <div class="prog-track"><div class="prog-fill pf-learn" style="width: 57%;"></div></div>
+              <div class="prog-days">
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day cur"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+              </div>
+            </div>
+            <div class="sec-label">Suggested activities</div>
+            <div class="act-card" onclick="openActivitySheet('Morning Check-in')">
+              <div class="act-head">
+                <div class="act-icon ai-habits">🌅</div>
+                <div class="act-info">
+                  <div class="act-title">Morning check-in</div>
+                  <div class="act-meta">2 min • Start your day</div>
+                </div>
+                <div class="act-status done" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="act-card" onclick="openActivitySheet('Focus Block')">
+              <div class="act-head">
+                <div class="act-icon ai-focus">⚡</div>
+                <div class="act-info">
+                  <div class="act-title">Focus block (35 min)</div>
+                  <div class="act-meta">35 min • Deep work</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="sec-label">Suggestion</div>
+            <div class="sug-card teal">
+              <div class="sug-eyebrow">AI Suggestion <span class="sug-conf">71%</span></div>
+              <div class="sug-text">Try a 10-min walk after lunch. Movement helps your afternoon focus.</div>
+              <div class="sug-actions">
+                <button class="sug-btn" style="flex:1; background:var(--teal); color:#fff; border-color:var(--teal-border)" onclick="acceptSuggestion(this)">Accept</button>
+                <button class="sug-btn" style="flex:1; background:transparent; color:var(--teal); border-color:var(--teal-border)" onclick="dismissSuggestion(this)">Dismiss</button>
+              </div>
+            </div>
+            <div class="sec-label">Domain unlock</div>
+            <div class="unlock-card" onclick="openUnlockFlow('Health')">
+              <div class="unlock-row">
+                <div class="unlock-icon">💪</div>
+                <div class="unlock-info">
+                  <div class="unlock-title">Add Health domain</div>
+                  <div class="unlock-sub">Track exercise and movement</div>
+                </div>
+                <div class="unlock-arrow">→</div>
+              </div>
+            </div>
+            <div class="conf-card">
+              <div class="conf-title">Confidence by category</div>
+              <div class="conf-rows">
+                <div class="conf-row">
+                  <div class="conf-cat">Focus</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width: 78%;"></div></div>
+                  <div class="conf-score">78</div>
+                  <div class="conf-tier ct-act">Act</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Exercise</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width: 71%;"></div></div>
+                  <div class="conf-score">71</div>
+                  <div class="conf-tier ct-recommend">Recommend</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Habits</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width: 75%;"></div></div>
+                  <div class="conf-score">75</div>
+                  <div class="conf-tier ct-act">Act</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAY 5 -->
+        <div class="screen" id="d5">
+          <div class="hd">
+            <div class="hd-left">
+              <div class="hd-day">Day 5 of 7</div>
+              <div class="hd-title">Momentum <em>building</em></div>
+            </div>
+            <div class="phase-pill phase-learn">Learn</div>
+          </div>
+          <div class="scroll">
+            <div class="insight">
+              <div class="insight-eyebrow">Midweek check</div>
+              <div class="insight-text">You're showing strong patterns. Let's check in on energy.</div>
+              <div class="insight-sub">Quick reflection helps us refine the rest of the week.</div>
+            </div>
+            <div class="prog-card">
+              <div class="prog-row">
+                <div class="prog-label">Week 1 progress</div>
+                <div class="prog-pct">71%</div>
+              </div>
+              <div class="prog-track"><div class="prog-fill pf-learn" style="width: 71%;"></div></div>
+              <div class="prog-days">
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day cur"></div>
+                <div class="prog-day"></div>
+                <div class="prog-day"></div>
+              </div>
+            </div>
+            <div class="sec-label">Quick check-in</div>
+            <div class="checkin-card">
+              <div class="checkin-title">How are you tracking?</div>
+              <div class="slider-rows">
+                <div class="slider-row">
+                  <div class="slider-lbl">Energy</div>
+                  <input type="range" class="slider-inp" min="1" max="5" value="3" onchange="updateSlider(this)">
+                  <div class="slider-val" id="energy-val">3</div>
+                </div>
+                <div class="slider-row">
+                  <div class="slider-lbl">Focus</div>
+                  <input type="range" class="slider-inp" min="1" max="5" value="4" onchange="updateSlider(this)">
+                  <div class="slider-val" id="focus-val">4</div>
+                </div>
+                <div class="slider-row">
+                  <div class="slider-lbl">Mood</div>
+                  <input type="range" class="slider-inp" min="1" max="5" value="3" onchange="updateSlider(this)">
+                  <div class="slider-val" id="mood-val">3</div>
+                </div>
+              </div>
+              <button class="checkin-btn" onclick="submitCheckin()">Save check-in</button>
+            </div>
+            <div class="sec-label">Activity</div>
+            <div class="act-card" onclick="openActivitySheet('Focus Block')">
+              <div class="act-head">
+                <div class="act-icon ai-focus">⚡</div>
+                <div class="act-info">
+                  <div class="act-title">Focus block (35 min)</div>
+                  <div class="act-meta">35 min • Deep work</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="sec-label">Suggestion</div>
+            <div class="sug-card amber">
+              <div class="sug-eyebrow">AI Suggestion <span class="sug-conf">64%</span></div>
+              <div class="sug-text">Based on your mood tracking, try a 5-min breathing break before your next focus block.</div>
+              <div class="sug-actions">
+                <button class="sug-btn" style="flex:1; background:var(--amber); color:#fff; border-color:var(--amber-border)" onclick="acceptSuggestion(this)">Accept</button>
+                <button class="sug-btn" style="flex:1; background:transparent; color:var(--amber); border-color:var(--amber-border)" onclick="dismissSuggestion(this)">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAY 6 -->
+        <div class="screen" id="d6">
+          <div class="hd">
+            <div class="hd-left">
+              <div class="hd-day">Day 6 of 7</div>
+              <div class="hd-title">Final <em>push</em></div>
+            </div>
+            <div class="phase-pill phase-act">Act</div>
+          </div>
+          <div class="scroll">
+            <div class="insight">
+              <div class="insight-eyebrow">Bold territory</div>
+              <div class="insight-text">We know you well enough now. Time for bolder suggestions.</div>
+              <div class="insight-sub">These are based on real patterns from your last 5 days.</div>
+            </div>
+            <div class="prog-card">
+              <div class="prog-row">
+                <div class="prog-label">Week 1 progress</div>
+                <div class="prog-pct">85%</div>
+              </div>
+              <div class="prog-track"><div class="prog-fill pf-act" style="width: 85%;"></div></div>
+              <div class="prog-days">
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day done"></div>
+                <div class="prog-day cur"></div>
+                <div class="prog-day"></div>
+              </div>
+            </div>
+            <div class="sec-label">Today's challenge</div>
+            <div class="sug-card teal">
+              <div class="sug-eyebrow">AI Challenge <span class="sug-conf">82%</span></div>
+              <div class="sug-text">You've completed 5 focus blocks in 5 days. Try 45 minutes today. You can do it.</div>
+              <div class="sug-actions">
+                <button class="sug-btn" style="flex:1; background:var(--teal); color:#fff; border-color:var(--teal-border)" onclick="acceptSuggestion(this)">I'm in</button>
+                <button class="sug-btn" style="flex:1; background:transparent; color:var(--teal); border-color:var(--teal-border)" onclick="dismissSuggestion(this)">Not today</button>
+              </div>
+            </div>
+            <div class="sec-label">Suggested activity</div>
+            <div class="act-card" onclick="openActivitySheet('Focus Block')">
+              <div class="act-head">
+                <div class="act-icon ai-focus">⚡</div>
+                <div class="act-info">
+                  <div class="act-title">Focus block (45 min)</div>
+                  <div class="act-meta">45 min • Deep work</div>
+                </div>
+                <div class="act-status" onclick="toggleStatus(event)">
+                  <div class="act-status-dot"></div>
+                </div>
+              </div>
+            </div>
+            <div class="sec-label">Domain unlock</div>
+            <div class="unlock-card" onclick="openUnlockFlow('Relationships')">
+              <div class="unlock-row">
+                <div class="unlock-icon">👥</div>
+                <div class="unlock-info">
+                  <div class="unlock-title">Add Relationships domain</div>
+                  <div class="unlock-sub">Track connection and community</div>
+                </div>
+                <div class="unlock-arrow">→</div>
+              </div>
+            </div>
+            <div class="conf-card">
+              <div class="conf-title">Confidence by category</div>
+              <div class="conf-rows">
+                <div class="conf-row">
+                  <div class="conf-cat">Focus</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width: 86%;"></div></div>
+                  <div class="conf-score">86</div>
+                  <div class="conf-tier ct-act">Act</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Habits</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width: 82%;"></div></div>
+                  <div class="conf-score">82</div>
+                  <div class="conf-tier ct-act">Act</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Exercise</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width: 73%;"></div></div>
+                  <div class="conf-score">73</div>
+                  <div class="conf-tier ct-recommend">Recommend</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAY 7 -->
+        <div class="screen" id="d7">
+          <div class="hd">
+            <div class="hd-left">
+              <div class="hd-day">Day 7 of 7</div>
+              <div class="hd-title">You made <em>it</em></div>
+            </div>
+            <div class="phase-pill phase-act">Act</div>
+          </div>
+          <div class="scroll">
+            <div class="summary-card">
+              <div class="summary-title">Week 1 recap</div>
+              <div class="summary-items">
+                <div class="summary-item">✓ <strong>6 focus blocks completed</strong> — you're building momentum</div>
+                <div class="summary-item">✓ <strong>Consistent check-ins</strong> — great self-awareness</div>
+                <div class="summary-item">✓ <strong>3 domains unlocked</strong> — Health, Relationships ready</div>
+                <div class="summary-item">→ <strong>Week 2 plan ready</strong> — personalized based on your patterns</div>
+              </div>
+              <button class="summary-cta" onclick="alert('Proceed to Week 2 onboarding')">View Week 2 plan</button>
+            </div>
+            <div class="conf-card">
+              <div class="conf-title">Final confidence scores</div>
+              <div class="conf-rows">
+                <div class="conf-row">
+                  <div class="conf-cat">Focus</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width: 88%;"></div></div>
+                  <div class="conf-score">88</div>
+                  <div class="conf-tier ct-act">Act</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Habits</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-act" style="width: 84%;"></div></div>
+                  <div class="conf-score">84</div>
+                  <div class="conf-tier ct-act">Act</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Exercise</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-recommend" style="width: 76%;"></div></div>
+                  <div class="conf-score">76</div>
+                  <div class="conf-tier ct-recommend">Recommend</div>
+                </div>
+                <div class="conf-row">
+                  <div class="conf-cat">Sleep</div>
+                  <div class="conf-bar-track"><div class="conf-bar-fill cf-suggest" style="width: 58%;"></div></div>
+                  <div class="conf-score">58</div>
+                  <div class="conf-tier ct-suggest">Suggest</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEETS -->
+  <div class="rating-sheet" id="ratingSheet">
+    <div class="sheet-content">
+      <button class="sheet-close" onclick="closeSheet('ratingSheet')">×</button>
+      <div class="sheet-title" id="sheetTitle">Rate this activity</div>
+      <div class="sheet-sub" id="sheetSub">How did this feel?</div>
+      <div class="rating-grid">
+        <button class="rating-btn" onclick="selectRating(this, 1)">
+          <div class="rating-emoji">😤</div>
+          <div class="rating-label">Too hard</div>
+        </button>
+        <button class="rating-btn" onclick="selectRating(this, 2)">
+          <div class="rating-emoji">😐</div>
+          <div class="rating-label">Just right</div>
+        </button>
+        <button class="rating-btn" onclick="selectRating(this, 3)">
+          <div class="rating-emoji">😊</div>
+          <div class="rating-label">Easy</div>
+        </button>
+        <button class="rating-btn" onclick="selectRating(this, 4)">
+          <div class="rating-emoji">🚀</div>
+          <div class="rating-label">Flow</div>
+        </button>
+      </div>
+      <button class="checkin-btn" onclick="submitRating()">Save rating</button>
+    </div>
+  </div>
+
+  <script>
+    let currentDay = 1;
+    let currentSheet = null;
+    let selectedRating = null;
+
+    function setDay(day) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+
+      document.getElementById(`d${day}`).classList.add('active');
+      document.querySelectorAll('.day-tab')[day - 1].classList.add('active');
+      currentDay = day;
+    }
+
+    function toggleStatus(event) {
+      event.stopPropagation();
+      const status = event.currentTarget;
+      status.classList.toggle('done');
+      if (status.classList.contains('done')) {
+        openActivitySheet('Activity completed');
+      }
+    }
+
+    function openActivitySheet(title) {
+      currentSheet = 'activity';
+      document.getElementById('sheetTitle').textContent = title;
+      document.getElementById('sheetSub').textContent = 'Start this activity or log it as done?';
+      document.getElementById('ratingSheet').classList.add('active');
+    }
+
+    function openUnlockFlow(domain) {
+      alert(`Setting up ${domain} domain...\n\nIn a real app, this would show:\n• Connect your accounts\n• Set initial preferences\n• Create first item\n\nFor now, the domain is unlocked!`);
+    }
+
+    function closeSheet(sheetId) {
+      document.getElementById(sheetId).classList.remove('active');
+      selectedRating = null;
+      currentSheet = null;
+    }
+
+    function selectRating(btn, rating) {
+      document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedRating = rating;
+    }
+
+    function submitRating() {
+      if (selectedRating) {
+        const emojis = ['', '😤', '😐', '😊', '🚀'];
+        alert(`Rating saved: ${emojis[selectedRating]}`);
+        closeSheet('ratingSheet');
+      }
+    }
+
+    function submitCheckin() {
+      const energy = document.querySelector('input[type="range"]:nth-of-type(1)').value;
+      const focus = document.querySelector('input[type="range"]:nth-of-type(2)').value;
+      const mood = document.querySelector('input[type="range"]:nth-of-type(3)').value;
+      alert(`Check-in saved:\nEnergy: ${energy}, Focus: ${focus}, Mood: ${mood}`);
+    }
+
+    function acceptSuggestion(btn) {
+      btn.parentElement.parentElement.style.animation = 'slideOut 0.2s ease';
+      setTimeout(() => {
+        btn.parentElement.parentElement.remove();
+        alert('Suggestion accepted!');
+      }, 200);
+    }
+
+    function dismissSuggestion(btn) {
+      btn.parentElement.parentElement.style.animation = 'slideOut 0.2s ease';
+      setTimeout(() => {
+        btn.parentElement.parentElement.remove();
+        alert('Suggestion dismissed');
+      }, 200);
+    }
+
+    function snoozeSuggestion(btn) {
+      btn.parentElement.parentElement.style.animation = 'slideOut 0.2s ease';
+      setTimeout(() => {
+        btn.parentElement.parentElement.remove();
+        alert('Suggestion snoozed for 3 days');
+      }, 200);
+    }
+
+    function updateSlider(input) {
+      const values = ['energy-val', 'focus-val', 'mood-val'];
+      const parent = input.closest('.slider-row');
+      const valElement = parent.querySelector('.slider-val');
+      valElement.textContent = input.value;
+    }
+  </script>
+</body>
+</html>

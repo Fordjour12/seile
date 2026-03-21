@@ -41,6 +41,55 @@ const STORE_KEYS = {
   ONBOARDING_DRAFT: "lifeos.onboarding.draft",
 } as const;
 
+/**
+ * Log all secure store data to console (useful for debugging)
+ * Only logs keys that match known patterns - won't expose sensitive tokens
+ */
+async function logSecureStoreData(): Promise<void> {
+  if (__DEV__) {
+    try {
+      console.log("[SecureStore] Reading all stored data...");
+      const storeData: Record<string, string | null> = {};
+
+      // Log all known keys
+      for (const [keyName, keyValue] of Object.entries(STORE_KEYS)) {
+        try {
+          const value = await SecureStore.getItemAsync(keyValue);
+          storeData[keyValue] = value;
+        } catch {
+          storeData[keyValue] = "[error reading]";
+        }
+      }
+
+      // Try to read better-auth tokens (don't log the actual token values for security)
+      try {
+        const betterAuthKeys = [
+          "seile_sessionToken",
+          "seile_session",
+          "better-auth.session_token",
+        ];
+        for (const key of betterAuthKeys) {
+          try {
+            const exists = await SecureStore.getItemAsync(key);
+            if (exists) {
+              storeData[key] = "[token stored - length: " + exists.length + "]";
+            }
+          } catch {
+            // Key doesn't exist, skip
+          }
+        }
+      } catch {
+        // Token reading skipped
+      }
+
+      console.log("[SecureStore] Current state:", storeData);
+      console.table(storeData);
+    } catch (err) {
+      console.error("[SecureStore] Failed to log data:", err);
+    }
+  }
+}
+
 export type AppStage = "loading" | "onboarding" | "create-account" | "first-run" | "tabs";
 
 export interface OnboardingDraft extends Partial<UserProfileInput> {
@@ -326,7 +375,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (shouldSyncDraft) {
       await syncDraftToBackend(storedDraft);
-      await deleteFlag(STORE_KEYS.ONBOARDING_DRAFT);
+      // Clean up onboarding temporary data after sync
+      await Promise.all([
+        deleteFlag(STORE_KEYS.ONBOARDING_DRAFT),
+        deleteFlag(STORE_KEYS.ONBOARDING_STARTED),
+      ]);
       dispatch({ type: "CLEAR_DRAFT" });
     }
 
@@ -343,8 +396,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (remoteState.currentStage === "complete") {
-      await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
-      await writeFlag(STORE_KEYS.FIRST_RUN_COMPLETE, "true");
+      // Clean up all onboarding data once fully complete
+      await Promise.all([
+        deleteFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+        deleteFlag(STORE_KEYS.FIRST_RUN_COMPLETE),
+        deleteFlag(STORE_KEYS.ONBOARDING_DRAFT),
+        deleteFlag(STORE_KEYS.ONBOARDING_STARTED),
+      ]);
       dispatch({ type: "SET_DAYS", days: null });
       return "tabs" as const;
     }
@@ -394,28 +452,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
-        const [onboardingComplete, draftRaw] = await Promise.all([
-          readFlag(STORE_KEYS.ONBOARDING_COMPLETE),
-          readFlag(STORE_KEYS.ONBOARDING_DRAFT),
-        ]);
-
-        const draft = parseDraft(draftRaw);
-        if (draft) {
-          dispatch({ type: "REPLACE_DRAFT", draft });
-        } else if (draftRaw) {
-          await deleteFlag(STORE_KEYS.ONBOARDING_DRAFT);
-        }
+        // Log secure store data at startup (dev only)
+        await logSecureStoreData();
 
         let stage: AppStage;
-        if (!isAuthenticated) {
-          stage = onboardingComplete === "true" ? "create-account" : "onboarding";
-          const firstLoginAt = parseTimestamp(await readFlag(STORE_KEYS.FIRST_LOGIN_AT));
-          dispatch({
-            type: "SET_DAYS",
-            days: firstLoginAt === null ? null : daysBetween(firstLoginAt),
-          });
-        } else {
+
+        if (isAuthenticated) {
+          // User is authenticated - resolve stage from backend, skip local draft checks
           stage = await resolveAuthenticatedStage();
+        } else {
+          // User is NOT authenticated - default to onboarding (no blocking reads)
+          // The second useEffect will handle navigation once we know auth status
+          stage = "onboarding";
         }
 
         prevAuthenticated.current = isAuthenticated;
@@ -443,11 +491,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // User is NOT authenticated - load onboarding state from secure store
     void (async () => {
-      const onboardingComplete = await readFlag(STORE_KEYS.ONBOARDING_COMPLETE);
-      const nextStage = onboardingComplete === "true" ? "create-account" : "onboarding";
-      dispatch({ type: "SET_STAGE", stage: nextStage });
-      navigateToStage(nextStage);
+      try {
+        const [onboardingComplete, draftRaw, firstLoginAt] = await Promise.all([
+          readFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+          readFlag(STORE_KEYS.ONBOARDING_DRAFT),
+          readFlag(STORE_KEYS.FIRST_LOGIN_AT),
+        ]);
+
+        // Parse and restore draft if it exists
+        const draft = parseDraft(draftRaw);
+        if (draft) {
+          dispatch({ type: "REPLACE_DRAFT", draft });
+        } else if (draftRaw) {
+          await deleteFlag(STORE_KEYS.ONBOARDING_DRAFT);
+        }
+
+        // Determine next stage
+        const nextStage = onboardingComplete === "true" ? "create-account" : "onboarding";
+
+        // Calculate days since first login
+        const firstLoginTimestamp = parseTimestamp(firstLoginAt);
+        const daysSince = firstLoginTimestamp === null ? null : daysBetween(firstLoginTimestamp);
+
+        dispatch({ type: "SET_DAYS", days: daysSince });
+        dispatch({ type: "SET_STAGE", stage: nextStage });
+        navigateToStage(nextStage);
+      } catch (err) {
+        console.error("[AuthContext] unauthenticated state load error", err);
+        dispatch({ type: "SET_STAGE", stage: "onboarding" });
+      }
     })();
   }, [convexLoading, handleSuccessfulAuth, isAuthenticated, navigateToStage]);
 
@@ -489,6 +563,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       await authClient.getSession();
+      // Clean up onboarding data immediately after successful sign up
+      await Promise.all([
+        deleteFlag(STORE_KEYS.ONBOARDING_DRAFT),
+        deleteFlag(STORE_KEYS.ONBOARDING_STARTED),
+        deleteFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+      ]);
+      dispatch({ type: "CLEAR_DRAFT" });
     } catch (err: any) {
       dispatch({
         type: "SET_ERROR",
@@ -513,6 +594,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       await authClient.getSession();
+      // Clean up onboarding data immediately after successful sign up
+      await Promise.all([
+        deleteFlag(STORE_KEYS.ONBOARDING_DRAFT),
+        deleteFlag(STORE_KEYS.ONBOARDING_STARTED),
+        deleteFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+      ]);
+      dispatch({ type: "CLEAR_DRAFT" });
     } catch (err: any) {
       dispatch({
         type: "SET_ERROR",
@@ -537,6 +625,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       await authClient.getSession();
+      // Clean up onboarding data immediately after successful sign up
+      await Promise.all([
+        deleteFlag(STORE_KEYS.ONBOARDING_DRAFT),
+        deleteFlag(STORE_KEYS.ONBOARDING_STARTED),
+        deleteFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+      ]);
+      dispatch({ type: "CLEAR_DRAFT" });
     } catch (err: any) {
       dispatch({
         type: "SET_ERROR",
@@ -587,8 +682,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const completeFirstRun = useCallback(async () => {
     await convex.mutation(api.onboarding.completeOnboarding, {});
-    await writeFlag(STORE_KEYS.FIRST_RUN_COMPLETE, "true");
-    await writeFlag(STORE_KEYS.ONBOARDING_COMPLETE, "true");
+    // Clean up all onboarding temporary flags after completion
+    await Promise.all([
+      deleteFlag(STORE_KEYS.FIRST_RUN_COMPLETE),
+      deleteFlag(STORE_KEYS.ONBOARDING_COMPLETE),
+      deleteFlag(STORE_KEYS.ONBOARDING_DRAFT),
+      deleteFlag(STORE_KEYS.ONBOARDING_STARTED),
+    ]);
     dispatch({ type: "SET_DAYS", days: null });
     dispatch({ type: "SET_STAGE", stage: "tabs" });
     router.replace("/(tabs)");

@@ -9,7 +9,7 @@
     "catalog": {
       "dotenv": "^17.2.2",
       "zod": "^4.1.13",
-      "@typescript/native-preview": "^7.0.0-dev.20260317.1",
+      "typescript": "^5",
       "convex": "^1.32.0"
     }
   },
@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@seile/env": "workspace:*",
-    "@typescript/native-preview": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
