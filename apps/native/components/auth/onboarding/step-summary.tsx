@@ -2,38 +2,70 @@ import { View } from "react-native";
 
 import Animated, { LinearTransition } from "react-native-reanimated";
 
-import { Button, Card, Text } from "@/components/ui";
+import {
+  BIGGEST_BLOCKER_OPTIONS,
+  COMMITMENT_LEVEL_OPTIONS,
+  ENERGY_PATTERN_OPTIONS,
+  PRIMARY_GOAL_OPTIONS,
+  STYLE_MESSAGES,
+} from "@/components/auth/onboarding/data";
 import { AnimatedStage } from "@/components/auth/onboarding-flow-motion";
-import { TONE_MESSAGES, type DomainOption } from "@/components/auth/onboarding/data";
 import type {
-  AiTone,
+  BiggestBlocker,
+  CommitmentLevel,
+  EnergyPattern,
+  OnboardingNotifications,
   OnboardingTheme,
+  PreferredStyle,
+  PrimaryGoal,
 } from "@/components/auth/onboarding/types";
+import { Button, Card, Text } from "@/components/ui";
+
+function findLabel<T extends string>(
+  options: ReadonlyArray<{ id: T; label: string }>,
+  value: T,
+) {
+  return options.find((item) => item.id === value)?.label ?? value;
+}
 
 export function StepSummary({
   theme,
   minHeight,
   displayName,
-  summaryDomains,
-  aiTone,
-  pinnedDomainIds,
+  primaryGoal,
+  energyPattern,
+  biggestBlocker,
+  preferredStyle,
+  commitmentLevel,
+  notifications,
   onWelcomeScreen,
-  onUseExistingAccount,
   onBack,
 }: {
   theme: OnboardingTheme;
   minHeight: number;
   displayName: string;
-  summaryDomains: DomainOption[];
-  aiTone: AiTone;
-  pinnedDomainIds: string[];
+  primaryGoal: PrimaryGoal;
+  energyPattern: EnergyPattern;
+  biggestBlocker: BiggestBlocker;
+  preferredStyle: PreferredStyle;
+  commitmentLevel: CommitmentLevel;
+  notifications: OnboardingNotifications;
   onWelcomeScreen: () => void;
-  onUseExistingAccount: () => void;
   onBack: () => void;
 }) {
+  const enabledNotifications = Object.entries(notifications).filter(([, enabled]) => enabled).length;
+
+  const summaryItems = [
+    ["Primary goal", findLabel(PRIMARY_GOAL_OPTIONS, primaryGoal)],
+    ["Energy pattern", findLabel(ENERGY_PATTERN_OPTIONS, energyPattern)],
+    ["Biggest blocker", findLabel(BIGGEST_BLOCKER_OPTIONS, biggestBlocker)],
+    ["AI style", preferredStyle],
+    ["Commitment", findLabel(COMMITMENT_LEVEL_OPTIONS, commitmentLevel)],
+  ] as const;
+
   return (
     <AnimatedStage
-      stageKey="onboarding-step-7"
+      stageKey="onboarding-step-8"
       style={{
         flex: 1,
         justifyContent: "space-between",
@@ -54,7 +86,7 @@ export function StepSummary({
               fontWeight: "700",
             }}
           >
-            Step 6 of 6
+            Step 8 of 8
           </Text>
           <Text
             selectable
@@ -66,42 +98,41 @@ export function StepSummary({
               lineHeight: 34,
             }}
           >
-            You're set up, {displayName}.
+            You&apos;re set up, {displayName}.
           </Text>
           <Text
             selectable
             variant="small"
             style={{ color: theme.mutedForeground, lineHeight: 22 }}
           >
-            Here's what I know heading into your first week. I'll learn more as
-            you use the app.
+            This gives the AI enough signal to start your first seven days in seed mode.
           </Text>
         </View>
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {summaryDomains.map((item) => (
+          {summaryItems.map(([label, value]) => (
             <Animated.View
-              key={item.id}
+              key={label}
               layout={LinearTransition.springify().damping(18).stiffness(180)}
               style={{
                 borderRadius: 999,
                 paddingHorizontal: 10,
                 paddingVertical: 5,
-                backgroundColor: item.background,
+                backgroundColor: theme.card,
                 borderWidth: 1,
-                borderColor: `${item.color}66`,
+                borderColor: theme.border,
               }}
             >
               <Text
                 selectable
                 variant="muted"
                 style={{
-                  color: item.color,
+                  color: theme.foreground,
                   fontFamily: "Geist",
                   fontWeight: "700",
                 }}
               >
-                {item.label}
+                {label}: {value}
               </Text>
             </Animated.View>
           ))}
@@ -118,35 +149,21 @@ export function StepSummary({
             backgroundColor: "rgba(19, 19, 31, 0.96)",
           }}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <View
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: 999,
-                backgroundColor: "#9b8fff",
-              }}
-            />
-            <Text
-              selectable
-              variant="muted"
-              style={{
-                color: theme.primary,
-                textTransform: "uppercase",
-                letterSpacing: 1,
-                fontFamily: "Geist",
-                fontWeight: "700",
-              }}
-            >
-              First message
-            </Text>
-          </View>
           <Text
             selectable
-            variant="small"
-            style={{ color: "#b0b0c0", lineHeight: 22 }}
+            variant="muted"
+            style={{
+              color: theme.primary,
+              textTransform: "uppercase",
+              letterSpacing: 1,
+              fontFamily: "Geist",
+              fontWeight: "700",
+            }}
           >
-            {TONE_MESSAGES[aiTone]}
+            First message
+          </Text>
+          <Text selectable variant="small" style={{ color: "#b0b0c0", lineHeight: 22 }}>
+            {STYLE_MESSAGES[preferredStyle]}
           </Text>
         </Card>
 
@@ -176,19 +193,11 @@ export function StepSummary({
           </Text>
           <View style={{ gap: 8 }}>
             {[
-              ["#9b8fff", "You'll land on Today - your daily command center"],
-              ["#1d9e75", "The AI will suggest your first priorities and habits"],
-              [
-                "#ba7517",
-                "Your first weekly plan generates after your first check-in",
-              ],
-              [
-                "#534AB7",
-                pinnedDomainIds.length > 0
-                  ? `${pinnedDomainIds.length} pinned domain${pinnedDomainIds.length === 1 ? "" : "s"} will be featured first across the app`
-                  : "Your selected domains shape the first week of suggestions",
-              ],
-            ].map(([color, label]) => (
+              "You’ll land on Today and start a 7-day learning loop.",
+              "The AI will use your goal, blocker, energy pattern, and style to seed early suggestions.",
+              `${enabledNotifications} notification preference${enabledNotifications === 1 ? "" : "s"} will be active by default.`,
+              "Nothing changes automatically. Suggestions still require your approval when they affect your plan.",
+            ].map((label) => (
               <View
                 key={label}
                 style={{
@@ -202,7 +211,7 @@ export function StepSummary({
                     width: 5,
                     height: 5,
                     borderRadius: 999,
-                    backgroundColor: color,
+                    backgroundColor: "#9b8fff",
                     marginTop: 6,
                   }}
                 />
@@ -229,7 +238,7 @@ export function StepSummary({
           onPress={onWelcomeScreen}
           style={{ borderRadius: 14, borderCurve: "continuous" }}
         />
-                <Button
+        <Button
           title="Back"
           variant="ghost"
           onPress={onBack}

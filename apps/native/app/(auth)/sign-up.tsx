@@ -62,7 +62,7 @@ export default function CreateAccount() {
           Create your account
         </Text>
         <Text selectable variant="small" style={styles.subtitle}>
-          You&apos;ll set up your Life OS preferences in the next step.
+          Your onboarding answers are ready. Creating an account saves them to your profile.
         </Text>
       </View>
 

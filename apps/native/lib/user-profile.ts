@@ -6,16 +6,34 @@ export type UserNotificationPreferences = {
   habitReminders: boolean;
 };
 
-export type UserProfilePlanningStyle = "light" | "balanced" | "intensive";
-export type UserProfileAiTone = "direct" | "coaching" | "minimal";
+export type UserProfilePreferredStyle = "gentle" | "direct" | "structured";
+export type UserProfileCommitmentLevel = "light" | "moderate" | "committed";
+export type UserProfilePrimaryGoal =
+  | "productivity"
+  | "wellbeing"
+  | "habits"
+  | "health";
+export type UserProfileEnergyPattern =
+  | "morning"
+  | "afternoon"
+  | "evening"
+  | "variable";
+export type UserProfileBiggestBlocker =
+  | "follow_through"
+  | "distraction"
+  | "overwhelm"
+  | "energy";
 
 export type UserProfileInput = {
   name: string;
-  selectedDomains: string[];
-  pinnedDomainIds: string[];
-  planningStyle: UserProfilePlanningStyle;
-  aiTone: UserProfileAiTone;
+  primaryGoal: UserProfilePrimaryGoal;
+  energyPattern: UserProfileEnergyPattern;
+  biggestBlocker: UserProfileBiggestBlocker;
+  preferredStyle: UserProfilePreferredStyle;
+  commitmentLevel: UserProfileCommitmentLevel;
   notifications: UserNotificationPreferences;
+  timezone: string;
+  seedAnswers?: unknown;
   draftCompletedAt?: number;
 };
 
@@ -25,11 +43,11 @@ export function isCompleteUserProfileInput(
   return (
     typeof value.name === "string" &&
     value.name.trim().length > 0 &&
-    Array.isArray(value.selectedDomains) &&
-    value.selectedDomains.length > 0 &&
-    Array.isArray(value.pinnedDomainIds) &&
-    typeof value.planningStyle === "string" &&
-    typeof value.aiTone === "string" &&
+    typeof value.primaryGoal === "string" &&
+    typeof value.energyPattern === "string" &&
+    typeof value.biggestBlocker === "string" &&
+    typeof value.preferredStyle === "string" &&
+    typeof value.commitmentLevel === "string" &&
     value.notifications !== undefined
   );
 }

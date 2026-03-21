@@ -1,53 +1,61 @@
 import { Pressable, View } from "react-native";
 
 import { Text } from "@/components/ui";
-import { STYLE_OPTIONS } from "@/components/auth/onboarding/data";
 import { StepShell } from "@/components/auth/onboarding/shared";
-import type {
-  OnboardingTheme,
-  PlanningStyle,
-} from "@/components/auth/onboarding/types";
+import type { OnboardingTheme } from "@/components/auth/onboarding/types";
 
-export function StepPlanningStyle({
+type ChoiceOption<T extends string> = {
+  id: T;
+  label: string;
+  description: string;
+  color?: string;
+  example?: string;
+};
+
+export function StepChoice<T extends string>({
   theme,
-  planningStyle,
-  onSelectPlanningStyle,
+  stepLabel,
+  title,
+  subtitle,
+  value,
+  options,
+  onSelect,
   onBack,
   onNext,
 }: {
   theme: OnboardingTheme;
-  planningStyle: PlanningStyle;
-  onSelectPlanningStyle: (value: PlanningStyle) => void;
+  stepLabel: string;
+  title: string;
+  subtitle: string;
+  value: T;
+  options: ReadonlyArray<ChoiceOption<T>>;
+  onSelect: (value: T) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
   return (
     <StepShell
-      stepLabel="Step 3 of 6"
-      title="How do you like to plan?"
-      subtitle="This shapes how the AI builds your weekly plan. You can change it any time."
+      stepLabel={stepLabel}
+      title={title}
+      subtitle={subtitle}
       onBack={onBack}
       onNext={onNext}
     >
       <View style={{ gap: 8 }}>
-        {STYLE_OPTIONS.map((item) => {
-          const selected = planningStyle === item.id;
+        {options.map((item) => {
+          const selected = value === item.id;
 
           return (
             <Pressable
               key={item.id}
-              onPress={() => onSelectPlanningStyle(item.id)}
+              onPress={() => onSelect(item.id)}
               style={({ pressed }) => ({
                 borderRadius: 16,
                 borderCurve: "continuous",
                 padding: 16,
-                backgroundColor: selected
-                  ? "rgba(30, 22, 40, 0.96)"
-                  : theme.card,
+                backgroundColor: selected ? "rgba(30, 22, 40, 0.96)" : theme.card,
                 borderWidth: 1,
-                borderColor: selected
-                  ? "rgba(61, 53, 112, 0.9)"
-                  : theme.border,
+                borderColor: selected ? "rgba(61, 53, 112, 0.9)" : theme.border,
                 opacity: pressed ? 0.88 : 1,
                 flexDirection: "row",
                 alignItems: "flex-start",
@@ -59,18 +67,17 @@ export function StepPlanningStyle({
                   width: 10,
                   height: 10,
                   borderRadius: 999,
-                  backgroundColor: item.color,
-                  marginTop: 3,
+                  backgroundColor: item.color ?? "#9b8fff",
+                  marginTop: 4,
                 }}
               />
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, gap: 4 }}>
                 <Text
                   selectable
                   style={{
                     color: theme.foreground,
                     fontFamily: "Geist",
                     fontWeight: "700",
-                    marginBottom: 3,
                   }}
                 >
                   {item.label}
@@ -78,13 +85,23 @@ export function StepPlanningStyle({
                 <Text
                   selectable
                   variant="small"
-                  style={{
-                    color: theme.mutedForeground,
-                    lineHeight: 18,
-                  }}
+                  style={{ color: theme.mutedForeground, lineHeight: 18 }}
                 >
                   {item.description}
                 </Text>
+                {item.example ? (
+                  <Text
+                    selectable
+                    variant="muted"
+                    style={{
+                      color: theme.mutedForeground,
+                      fontStyle: "italic",
+                      lineHeight: 18,
+                    }}
+                  >
+                    {item.example}
+                  </Text>
+                ) : null}
               </View>
               <View
                 style={{
@@ -100,7 +117,7 @@ export function StepPlanningStyle({
                   <View
                     style={{
                       position: "absolute",
-                      inset: 5,
+                      inset: 4,
                       borderRadius: 999,
                       backgroundColor: "#0e0e10",
                     }}

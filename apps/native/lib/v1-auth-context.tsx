@@ -27,9 +27,9 @@ import { api } from "@seile/backend/convexApi";
 import { authClient } from "@/lib/auth-client";
 import {
   type UserNotificationPreferences,
-  type UserProfileAiTone,
+  type UserProfileCommitmentLevel,
   type UserProfileInput,
-  type UserProfilePlanningStyle,
+  type UserProfilePreferredStyle,
   isCompleteUserProfileInput,
 } from "@/lib/user-profile";
 
@@ -199,17 +199,31 @@ function toUserProfileInput(draft: OnboardingDraft): UserProfileInput | null {
 
   return {
     name: draft.name.trim(),
-    selectedDomains: uniqueStrings(draft.selectedDomains),
-    pinnedDomainIds: uniqueStrings(draft.pinnedDomainIds),
-    planningStyle: draft.planningStyle,
-    aiTone: draft.aiTone,
+    primaryGoal: draft.primaryGoal,
+    energyPattern: draft.energyPattern,
+    biggestBlocker: draft.biggestBlocker,
+    preferredStyle: draft.preferredStyle,
+    commitmentLevel: draft.commitmentLevel,
     notifications: draft.notifications,
+    timezone:
+      draft.timezone ||
+      Intl.DateTimeFormat().resolvedOptions().timeZone ||
+      "UTC",
+    seedAnswers: {
+      name: draft.name.trim(),
+      primaryGoal: draft.primaryGoal,
+      energyPattern: draft.energyPattern,
+      biggestBlocker: draft.biggestBlocker,
+      preferredStyle: draft.preferredStyle,
+      commitmentLevel: draft.commitmentLevel,
+      notifications: draft.notifications,
+      timezone:
+        draft.timezone ||
+        Intl.DateTimeFormat().resolvedOptions().timeZone ||
+        "UTC",
+    },
     draftCompletedAt: draft.draftCompletedAt ?? Date.now(),
   };
-}
-
-function uniqueStrings(values: string[]) {
-  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -674,4 +688,8 @@ export function useOnboardingDraft(): OnboardingDraft {
   return onboardingDraft;
 }
 
-export type { UserNotificationPreferences, UserProfileAiTone, UserProfilePlanningStyle };
+export type {
+  UserNotificationPreferences,
+  UserProfileCommitmentLevel,
+  UserProfilePreferredStyle,
+};

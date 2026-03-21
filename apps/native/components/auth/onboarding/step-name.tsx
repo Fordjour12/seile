@@ -19,7 +19,7 @@ export function StepName({
 }) {
   return (
     <StepShell
-      stepLabel="Step 1 of 6"
+      stepLabel="Step 1 of 8"
       title="What should I call you?"
       subtitle="This is your personal space. Just your first name is fine."
       onBack={onBack}

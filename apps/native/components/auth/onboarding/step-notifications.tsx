@@ -26,7 +26,7 @@ export function StepNotifications({
 }) {
   return (
     <StepShell
-      stepLabel="Step 5 of 6"
+      stepLabel="Step 7 of 8"
       title="When should I check in with you?"
       subtitle="You can adjust timing later in Profile. These are just defaults."
       onBack={onBack}

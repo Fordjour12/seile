@@ -1,38 +1,30 @@
 import { Redirect, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, useWindowDimensions } from "react-native";
 
-import {
-  BIGGEST_BLOCKER_OPTIONS,
-  COMMITMENT_LEVEL_OPTIONS,
-  ENERGY_PATTERN_OPTIONS,
-  PREFERRED_STYLE_OPTIONS,
-  PRIMARY_GOAL_OPTIONS,
-  STEP_PROGRESS,
-} from "@/components/auth/onboarding/data";
-import { StepChoice } from "@/components/auth/onboarding/step-choice";
+import { StepAiTone } from "@/components/auth/onboarding/step-ai-tone";
+import { StepDomains } from "@/components/auth/onboarding/step-domains";
 import { StepName } from "@/components/auth/onboarding/step-name";
 import { StepNotifications } from "@/components/auth/onboarding/step-notifications";
+import { StepPlanningStyle } from "@/components/auth/onboarding/step-planning-style";
 import { StepSummary } from "@/components/auth/onboarding/step-summary";
 import { StepWelcome } from "@/components/auth/onboarding/step-welcome";
+import {
+  DOMAIN_OPTIONS,
+  MAX_PINNED_DOMAINS,
+  STEP_PROGRESS,
+} from "@/components/auth/onboarding/data";
 import type {
-  BiggestBlocker,
-  CommitmentLevel,
-  EnergyPattern,
+  AiTone,
   OnboardingNotifications,
   OnboardingNotificationKey,
-  PreferredStyle,
-  PrimaryGoal,
+  PlanningStyle,
   Step,
 } from "@/components/auth/onboarding/types";
 import { AnimatedProgressBar } from "@/components/auth/onboarding-flow-motion";
 import { useAuth } from "@/lib/v1-auth-context";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
-
-function detectTimezone() {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-}
 
 export function OnboardingScreen() {
   const {
@@ -50,11 +42,15 @@ export function OnboardingScreen() {
 
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
-  const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>("productivity");
-  const [energyPattern, setEnergyPattern] = useState<EnergyPattern>("morning");
-  const [biggestBlocker, setBiggestBlocker] = useState<BiggestBlocker>("follow_through");
-  const [preferredStyle, setPreferredStyle] = useState<PreferredStyle>("direct");
-  const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>("moderate");
+  const [domains, setDomains] = useState<string[]>([
+    "faith",
+    "career",
+    "finance",
+    "health",
+  ]);
+  const [pinnedDomainIds, setPinnedDomainIds] = useState<string[]>(["faith"]);
+  const [planningStyle, setPlanningStyle] = useState<PlanningStyle>("balanced");
+  const [aiTone, setAiTone] = useState<AiTone>("direct");
   const [notifications, setNotifications] = useState<OnboardingNotifications>({
     morningBriefing: true,
     approvalAlerts: true,
@@ -66,7 +62,29 @@ export function OnboardingScreen() {
   const [isDraftReady, setIsDraftReady] = useState(false);
 
   const minHeight = Math.max(height - UI_PRESETS.spacing.screen * 2, 760);
-  const displayName = name.trim() || "there";
+  const displayName = name.trim() || "Bobie";
+
+  const summaryDomains = useMemo(
+    () =>
+      DOMAIN_OPTIONS.filter((item) => domains.includes(item.id)).sort(
+        (a, b) => {
+          const aPinnedIndex = pinnedDomainIds.indexOf(a.id);
+          const bPinnedIndex = pinnedDomainIds.indexOf(b.id);
+
+          if (aPinnedIndex !== -1 && bPinnedIndex !== -1) {
+            return aPinnedIndex - bPinnedIndex;
+          }
+          if (aPinnedIndex !== -1) {
+            return -1;
+          }
+          if (bPinnedIndex !== -1) {
+            return 1;
+          }
+          return domains.indexOf(a.id) - domains.indexOf(b.id);
+        },
+      ),
+    [domains, pinnedDomainIds],
+  );
 
   useEffect(() => {
     if (hasHydratedDraft.current) {
@@ -78,29 +96,33 @@ export function OnboardingScreen() {
     if (typeof onboardingDraft.name === "string") {
       setName(onboardingDraft.name);
     }
-    if (onboardingDraft.primaryGoal) {
-      setPrimaryGoal(onboardingDraft.primaryGoal);
+    if (
+      Array.isArray(onboardingDraft.selectedDomains) &&
+      onboardingDraft.selectedDomains.length > 0
+    ) {
+      setDomains(onboardingDraft.selectedDomains);
     }
-    if (onboardingDraft.energyPattern) {
-      setEnergyPattern(onboardingDraft.energyPattern);
+    if (Array.isArray(onboardingDraft.pinnedDomainIds)) {
+      setPinnedDomainIds(onboardingDraft.pinnedDomainIds);
     }
-    if (onboardingDraft.biggestBlocker) {
-      setBiggestBlocker(onboardingDraft.biggestBlocker);
+    if (onboardingDraft.planningStyle) {
+      setPlanningStyle(onboardingDraft.planningStyle);
     }
-    if (onboardingDraft.preferredStyle) {
-      setPreferredStyle(onboardingDraft.preferredStyle);
-    }
-    if (onboardingDraft.commitmentLevel) {
-      setCommitmentLevel(onboardingDraft.commitmentLevel);
+    if (onboardingDraft.aiTone) {
+      setAiTone(onboardingDraft.aiTone);
     }
     if (onboardingDraft.notifications) {
-      setNotifications(onboardingDraft.notifications as OnboardingNotifications);
+      setNotifications(
+        onboardingDraft.notifications as OnboardingNotifications,
+      );
     }
     if (typeof onboardingDraft.lastStep === "number") {
-      const nextStep = Math.max(1, Math.min(9, onboardingDraft.lastStep)) as Step;
+      const nextStep = Math.max(
+        1,
+        Math.min(7, onboardingDraft.lastStep),
+      ) as Step;
       setStep(nextStep);
     }
-
     setIsDraftReady(true);
   }, [onboardingDraft]);
 
@@ -111,24 +133,21 @@ export function OnboardingScreen() {
 
     void saveOnboardingDraft({
       name,
-      primaryGoal,
-      energyPattern,
-      biggestBlocker,
-      preferredStyle,
-      commitmentLevel,
+      selectedDomains: domains,
+      pinnedDomainIds,
+      planningStyle,
+      aiTone,
       notifications,
-      timezone: detectTimezone(),
       lastStep: step,
     });
   }, [
-    biggestBlocker,
-    commitmentLevel,
-    energyPattern,
-    isDraftReady,
+    aiTone,
+    domains,
     name,
     notifications,
-    preferredStyle,
-    primaryGoal,
+    pinnedDomainIds,
+    planningStyle,
+    isDraftReady,
     saveOnboardingDraft,
     step,
   ]);
@@ -138,7 +157,7 @@ export function OnboardingScreen() {
   }
 
   function nextStep() {
-    setStep((current) => Math.min(9, current + 1) as Step);
+    setStep((current) => Math.min(7, current + 1) as Step);
   }
 
   function previousStep() {
@@ -148,6 +167,48 @@ export function OnboardingScreen() {
   async function handleWelcomeScreen() {
     await completeOnboardingSetup();
     router.push("/(auth)/welcome");
+  }
+
+  async function handleExistingAccount() {
+    await completeOnboardingSetup();
+    router.push("/(auth)/sign-in");
+  }
+
+  function toggleDomain(id: string) {
+    setDomains((current) => {
+      const isSelected = current.includes(id);
+      if (isSelected && current.length === 1) {
+        return current;
+      }
+
+      const nextDomains = isSelected
+        ? current.filter((item) => item !== id)
+        : [...current, id];
+
+      if (isSelected) {
+        setPinnedDomainIds((currentPinned) =>
+          currentPinned.filter((item) => item !== id),
+        );
+      }
+
+      return nextDomains;
+    });
+  }
+
+  function togglePinnedDomain(id: string) {
+    if (!domains.includes(id)) {
+      return;
+    }
+
+    setPinnedDomainIds((current) => {
+      if (current.includes(id)) {
+        return current.filter((item) => item !== id);
+      }
+      if (current.length >= MAX_PINNED_DOMAINS) {
+        return current;
+      }
+      return [...current, id];
+    });
   }
 
   function toggleNotification(key: OnboardingNotificationKey) {
@@ -179,75 +240,37 @@ export function OnboardingScreen() {
         );
       case 3:
         return (
-          <StepChoice
+          <StepDomains
             theme={theme}
-            stepLabel="Step 2 of 8"
-            title="What do you want the AI to improve first?"
-            subtitle="This becomes the main lens for your first seven days."
-            value={primaryGoal}
-            options={PRIMARY_GOAL_OPTIONS}
-            onSelect={setPrimaryGoal}
+            domains={domains}
+            pinnedDomainIds={pinnedDomainIds}
+            onToggleDomain={toggleDomain}
+            onTogglePinnedDomain={togglePinnedDomain}
             onBack={previousStep}
             onNext={nextStep}
           />
         );
       case 4:
         return (
-          <StepChoice
+          <StepPlanningStyle
             theme={theme}
-            stepLabel="Step 3 of 8"
-            title="When do you usually have your best energy?"
-            subtitle="Early suggestions will be timed around this until the AI learns better from your behavior."
-            value={energyPattern}
-            options={ENERGY_PATTERN_OPTIONS}
-            onSelect={setEnergyPattern}
+            planningStyle={planningStyle}
+            onSelectPlanningStyle={setPlanningStyle}
             onBack={previousStep}
             onNext={nextStep}
           />
         );
       case 5:
         return (
-          <StepChoice
+          <StepAiTone
             theme={theme}
-            stepLabel="Step 4 of 8"
-            title="What gets in your way most often?"
-            subtitle="This tells the AI where to be useful instead of just motivational."
-            value={biggestBlocker}
-            options={BIGGEST_BLOCKER_OPTIONS}
-            onSelect={setBiggestBlocker}
+            aiTone={aiTone}
+            onSelectAiTone={setAiTone}
             onBack={previousStep}
             onNext={nextStep}
           />
         );
       case 6:
-        return (
-          <StepChoice
-            theme={theme}
-            stepLabel="Step 5 of 8"
-            title="How should the AI talk to you?"
-            subtitle="This controls how it frames nudges, suggestions, and reflections."
-            value={preferredStyle}
-            options={PREFERRED_STYLE_OPTIONS}
-            onSelect={setPreferredStyle}
-            onBack={previousStep}
-            onNext={nextStep}
-          />
-        );
-      case 7:
-        return (
-          <StepChoice
-            theme={theme}
-            stepLabel="Step 6 of 8"
-            title="How much structure do you want right now?"
-            subtitle="This sets the initial intensity. The AI can adjust later once it sees your real capacity."
-            value={commitmentLevel}
-            options={COMMITMENT_LEVEL_OPTIONS}
-            onSelect={setCommitmentLevel}
-            onBack={previousStep}
-            onNext={nextStep}
-          />
-        );
-      case 8:
         return (
           <StepNotifications
             theme={theme}
@@ -257,20 +280,20 @@ export function OnboardingScreen() {
             onNext={nextStep}
           />
         );
-      case 9:
+      case 7:
         return (
           <StepSummary
             theme={theme}
             minHeight={minHeight}
             displayName={displayName}
-            primaryGoal={primaryGoal}
-            energyPattern={energyPattern}
-            biggestBlocker={biggestBlocker}
-            preferredStyle={preferredStyle}
-            commitmentLevel={commitmentLevel}
-            notifications={notifications}
+            summaryDomains={summaryDomains}
+            aiTone={aiTone}
+            pinnedDomainIds={pinnedDomainIds}
             onWelcomeScreen={() => {
               void handleWelcomeScreen();
+            }}
+            onUseExistingAccount={() => {
+              void handleExistingAccount();
             }}
             onBack={previousStep}
           />
