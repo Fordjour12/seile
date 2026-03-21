@@ -1,14 +1,21 @@
 import React, { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@seile/backend/convexApi";
 
-import { Card, Switch, Text } from "@/components/ui";
-import { useSettingsTheme } from "@/components/settings/shared";
-import { UI_PRESETS } from "@/lib/constants";
+import { Badge, Button, Separator, Switch, Text } from "@/components/ui";
+import { Container } from "@/components/container";
+import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
+import { useColorScheme } from "@/lib/use-color-scheme";
 
 // ─── Domain config ──────────────────────────────────────────────────────────
 
@@ -36,12 +43,8 @@ type DomainConfig = {
   name: string;
   emoji: string;
   description: string;
-  lightAccent: string;
-  lightBg: string;
-  lightBorder: string;
-  darkAccent: string;
-  darkBg: string;
-  darkBorder: string;
+  accent: string;
+  accentMuted: string;
   sections: SetupSectionConfig[];
 };
 
@@ -52,12 +55,8 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "💰",
     description:
       "Track your money, set savings targets, and build better financial habits over time.",
-    lightAccent: "#1A6B3A",
-    lightBg: "#E8F5EE",
-    lightBorder: "#B7DEC9",
-    darkAccent: "#6fcf97",
-    darkBg: "#0d1f14",
-    darkBorder: "#1a5930",
+    accent: "#6fcf97",
+    accentMuted: "#6fcf9718",
     sections: [
       {
         title: "Accounts",
@@ -95,7 +94,11 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
           {
             label: "Weekly summary",
             sub: "Spending recap every Sunday",
-            right: { type: "toggle", toggleKey: "weekly-summary", initial: true },
+            right: {
+              type: "toggle",
+              toggleKey: "weekly-summary",
+              initial: true,
+            },
           },
           {
             label: "Overspend alerts",
@@ -109,7 +112,7 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
         rows: [
           {
             label: "Deactivate Finance",
-            sub: "Hide from activities and suggestions",
+            sub: "Hide from first-run and suggestions",
             right: { type: "danger" },
           },
         ],
@@ -123,12 +126,8 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "💼",
     description:
       "Set professional goals, track projects, and build skills that move you forward.",
-    lightAccent: "#1A4A8A",
-    lightBg: "#E8F0FB",
-    lightBorder: "#B8CFF5",
-    darkAccent: "#85b7eb",
-    darkBg: "#0a1220",
-    darkBorder: "#1a3860",
+    accent: "#85b7eb",
+    accentMuted: "#85b7eb18",
     sections: [
       {
         title: "Your role",
@@ -165,7 +164,7 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
         rows: [
           {
             label: "Deactivate Career",
-            sub: "Hide from activities and suggestions",
+            sub: "Hide from first-run and suggestions",
             right: { type: "danger" },
           },
         ],
@@ -179,12 +178,8 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "💪",
     description:
       "Build sustainable movement, sleep, and nutrition habits that compound over time.",
-    lightAccent: "#8A1A1A",
-    lightBg: "#FBE8E8",
-    lightBorder: "#F5B8B8",
-    darkAccent: "#f0997b",
-    darkBg: "#200a0a",
-    darkBorder: "#5c1a1a",
+    accent: "#f0997b",
+    accentMuted: "#f0997b18",
     sections: [
       {
         title: "Body",
@@ -221,7 +216,7 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
         rows: [
           {
             label: "Deactivate Health",
-            sub: "Hide from activities and suggestions",
+            sub: "Hide from first-run and suggestions",
             right: { type: "danger" },
           },
         ],
@@ -235,12 +230,8 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "✦",
     description:
       "Build a consistent prayer and devotional rhythm that fits your daily life.",
-    lightAccent: "#6B3A1A",
-    lightBg: "#FDF3E0",
-    lightBorder: "#F0D090",
-    darkAccent: "#b4adf5",
-    darkBg: "#160e2a",
-    darkBorder: "#3d3570",
+    accent: "#b4adf5",
+    accentMuted: "#b4adf518",
     sections: [
       {
         title: "Rhythm",
@@ -291,12 +282,8 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "🤝",
     description:
       "Stay intentional with the people who matter — family, friends, community.",
-    lightAccent: "#6B1A6B",
-    lightBg: "#F5E8FB",
-    lightBorder: "#D8B8F0",
-    darkAccent: "#ed93b1",
-    darkBg: "#1a0a1a",
-    darkBorder: "#5c1a5c",
+    accent: "#ed93b1",
+    accentMuted: "#ed93b118",
     sections: [
       {
         title: "Focus",
@@ -332,12 +319,8 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "🌿",
     description:
       "Track energy, mood, and mental well-being to build resilience over time.",
-    lightAccent: "#1A6B6B",
-    lightBg: "#E8F5F5",
-    lightBorder: "#B8DFE0",
-    darkAccent: "#40d4c0",
-    darkBg: "#051414",
-    darkBorder: "#0a4040",
+    accent: "#40d4c0",
+    accentMuted: "#40d4c018",
     sections: [
       {
         title: "Check-ins",
@@ -345,7 +328,11 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
           {
             label: "Daily check-in reminder",
             sub: "Mood, energy, focus prompt",
-            right: { type: "toggle", toggleKey: "daily-checkin", initial: true },
+            right: {
+              type: "toggle",
+              toggleKey: "daily-checkin",
+              initial: true,
+            },
           },
           {
             label: "Check-in time",
@@ -373,12 +360,45 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "✅",
     description:
       "Capture, prioritise, and complete tasks that move the needle on what matters.",
-    lightAccent: "#5F5E5A",
-    lightBg: "#F5F4F1",
-    lightBorder: "#D4D1CA",
-    darkAccent: "#A8A5A0",
-    darkBg: "#121210",
-    darkBorder: "#3a3830",
+    accent: "#A8A5A0",
+    accentMuted: "#A8A5A018",
+    sections: [
+      {
+        title: "Workflow",
+        rows: [
+          {
+            label: "Daily priorities count",
+            sub: "How many priorities per day",
+            right: { type: "value", value: "3" },
+          },
+          {
+            label: "Review time",
+            sub: "When to review tomorrow's list",
+            right: { type: "value", value: "9:00 PM" },
+          },
+        ],
+      },
+      {
+        title: "Danger zone",
+        rows: [
+          {
+            label: "Deactivate Tasks",
+            sub: "Hide from activities",
+            right: { type: "danger" },
+          },
+        ],
+      },
+    ],
+  },
+
+  tasks: {
+    key: "tasks",
+    name: "Tasks",
+    emoji: "✅",
+    description:
+      "Capture, prioritise, and complete tasks that move the needle on what matters.",
+    accent: "#A8A5A0",
+    accentMuted: "#A8A5A018",
     sections: [
       {
         title: "Workflow",
@@ -414,12 +434,8 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
     emoji: "🏠",
     description:
       "Organise your physical environment — rooms, zones, and recurring resets.",
-    lightAccent: "#444444",
-    lightBg: "#F2F2F2",
-    lightBorder: "#D0D0D0",
-    darkAccent: "#999999",
-    darkBg: "#111111",
-    darkBorder: "#333333",
+    accent: "#999999",
+    accentMuted: "#99999918",
     sections: [
       {
         title: "Zones",
@@ -450,7 +466,17 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
   },
 };
 
+// ─── Theme hook ──────────────────────────────────────────────────────────────
+
+function useDomainTheme() {
+  const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
+  return { theme, isDark: isDarkColorScheme };
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
+
+/* ── Top navigation bar ─────────────────────────────────────────────────── */
 
 function TopBar({
   title,
@@ -459,31 +485,49 @@ function TopBar({
   title: string;
   accentColor: string;
 }) {
-  const { theme } = useSettingsTheme();
+  const { theme } = useDomainTheme();
+
   return (
     <View style={[styles.topBar, { borderBottomColor: theme.border }]}>
       <Pressable
         onPress={() => router.back()}
-        hitSlop={8}
+        hitSlop={12}
         style={({ pressed }) => [
           styles.backBtn,
-          { borderColor: theme.border, backgroundColor: theme.card },
-          pressed && { opacity: 0.7 },
+          { backgroundColor: theme.muted },
+          pressed && { opacity: 0.6 },
         ]}
       >
-        <FontAwesome name="angle-left" size={16} color={theme.mutedForeground} />
+        <FontAwesome
+          name="chevron-left"
+          size={11}
+          color={theme.mutedForeground}
+        />
       </Pressable>
 
       <Text
         selectable
         variant="small"
         style={[styles.topBarTitle, { color: theme.foreground }]}
+        numberOfLines={1}
       >
         {title}
       </Text>
 
-      <Pressable onPress={() => router.back()} hitSlop={8}>
-        <Text selectable variant="small" style={{ color: accentColor, fontWeight: "600" }}>
+      <Pressable
+        onPress={() => router.back()}
+        hitSlop={12}
+        style={({ pressed }) => [
+          styles.doneBtn,
+          { backgroundColor: `${accentColor}18` },
+          pressed && { opacity: 0.6 },
+        ]}
+      >
+        <Text
+          selectable
+          variant="small"
+          style={[styles.doneBtnText, { color: accentColor }]}
+        >
           Done
         </Text>
       </Pressable>
@@ -491,134 +535,317 @@ function TopBar({
   );
 }
 
-function DomainHero({
+/* ── Activation hero — shown when domain is INACTIVE ────────────────────── */
+
+function InactiveHero({
   config,
-  accentColor,
-  accentBg,
-  isActive,
-  onToggle,
+  onActivate,
 }: {
   config: DomainConfig;
-  accentColor: string;
-  accentBg: string;
-  isActive: boolean;
-  onToggle: (v: boolean) => void;
+  onActivate: () => void;
 }) {
-  const { theme } = useSettingsTheme();
+  const { theme } = useDomainTheme();
+
   return (
-    <View style={styles.hero}>
-      <View style={[styles.heroIcon, { backgroundColor: accentBg }]}>
-        <Text selectable style={styles.heroEmoji}>
+    <View style={styles.inactiveHero}>
+      {/* Large emoji */}
+      <View
+        style={[styles.heroIconLg, { backgroundColor: config.accentMuted }]}
+      >
+        <Text selectable style={styles.heroEmojiLg}>
           {config.emoji}
         </Text>
       </View>
+
       <Text selectable style={[styles.heroName, { color: theme.foreground }]}>
         {config.name}
       </Text>
-      <Text selectable variant="small" style={[styles.heroDesc, { color: theme.mutedForeground }]}>
+
+      <Text
+        selectable
+        variant="body"
+        style={[styles.heroDesc, { color: theme.mutedForeground }]}
+      >
         {config.description}
       </Text>
 
-      <View style={[styles.activeRow, { borderBottomColor: theme.border }]}>
-        <View style={{ flex: 1 }}>
-          <Text selectable variant="small" style={[styles.activeLabel, { color: theme.foreground }]}>
-            {isActive ? `${config.name} is active` : `Activate ${config.name}`}
+      {/* Inactive status pill */}
+      <View style={[styles.statusPill, { backgroundColor: theme.muted }]}>
+        <View style={[styles.statusDot, { backgroundColor: theme.mutedForeground }]} />
+        <Text
+          selectable
+          variant="small"
+          style={{ color: theme.mutedForeground, fontWeight: "500" }}
+        >
+          Not activated
+        </Text>
+      </View>
+
+      {/* Activation CTA */}
+      <View
+        style={[
+          styles.activateCta,
+          {
+            backgroundColor: `${config.accent}10`,
+            borderColor: `${config.accent}30`,
+          },
+        ]}
+      >
+        <View style={styles.activateCtaBody}>
+          <Text
+            selectable
+            variant="small"
+            style={[styles.activateCtaTitle, { color: theme.foreground }]}
+          >
+            Ready to activate?
           </Text>
-          <Text selectable variant="muted" style={{ color: theme.mutedForeground, marginTop: 2 }}>
-            {isActive
-              ? "Activities and suggestions are on"
-              : `Show ${config.name} activities and suggestions`}
+          <Text
+            selectable
+            variant="muted"
+            style={{ color: theme.mutedForeground, lineHeight: 16 }}
+          >
+            Turn on {config.name} to unlock activities, suggestions, and
+            tracking for this domain.
           </Text>
         </View>
-        <Switch value={isActive} onValueChange={onToggle} />
+
+        <Button
+          title={`Activate ${config.name}`}
+          variant="primary"
+          size="md"
+          onPress={onActivate}
+          style={{ backgroundColor: config.accent }}
+        />
+      </View>
+
+      {/* Locked sections preview */}
+      <View style={styles.lockedPreview}>
+        <View style={styles.lockedHeader}>
+          <FontAwesome name="lock" size={11} color={theme.mutedForeground} />
+          <Text
+            selectable
+            variant="muted"
+            style={[styles.lockedTitle, { color: theme.mutedForeground }]}
+          >
+            Settings available after activation
+          </Text>
+        </View>
+
+        {config.sections
+          .filter((s) => !s.title.toLowerCase().includes("danger"))
+          .map((section) => (
+            <View
+              key={section.title}
+              style={[
+                styles.lockedRow,
+                { borderColor: theme.border },
+              ]}
+            >
+              <Text
+                selectable
+                variant="small"
+                style={{ color: theme.mutedForeground, opacity: 0.6 }}
+              >
+                {section.title}
+              </Text>
+              <Badge variant="subtle" color="default">
+                {`${section.rows.length} ${section.rows.length === 1 ? "setting" : "settings"}`}
+              </Badge>
+            </View>
+          ))}
       </View>
     </View>
   );
 }
 
-function SetupSection({
+/* ── Active hero — shown when domain IS active ──────────────────────────── */
+
+function ActiveHero({
   config,
+  isPinned,
+  onTogglePin,
+  pinnedCount,
+}: {
+  config: DomainConfig;
+  isPinned: boolean;
+  onTogglePin: () => void;
+  pinnedCount: number;
+}) {
+  const { theme } = useDomainTheme();
+
+  return (
+    <View style={styles.activeHero}>
+      <View style={styles.activeHeroTop}>
+        {/* Icon + info */}
+        <View
+          style={[styles.heroIconSm, { backgroundColor: config.accentMuted }]}
+        >
+          <Text selectable style={styles.heroEmojiSm}>
+            {config.emoji}
+          </Text>
+        </View>
+
+        <View style={styles.activeHeroInfo}>
+          <Text
+            selectable
+            style={[styles.heroNameSm, { color: theme.foreground }]}
+          >
+            {config.name}
+          </Text>
+          <Text
+            selectable
+            variant="muted"
+            style={{ color: theme.mutedForeground }}
+          >
+            {config.description}
+          </Text>
+        </View>
+      </View>
+
+      {/* Status row */}
+      <View style={[styles.activeStatusRow, { borderColor: theme.border }]}>
+        <View style={styles.statusPillActive}>
+          <View
+            style={[styles.statusDot, { backgroundColor: config.accent }]}
+          />
+          <Text
+            selectable
+            variant="small"
+            style={{ color: config.accent, fontWeight: "600" }}
+          >
+            Active
+          </Text>
+        </View>
+
+        {/* Pin toggle */}
+        <Pressable
+          onPress={onTogglePin}
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.pinBtn,
+            isPinned
+              ? {
+                  backgroundColor: `${config.accent}20`,
+                  borderColor: `${config.accent}40`,
+                }
+              : {
+                  backgroundColor: theme.muted,
+                  borderColor: theme.border,
+                },
+            pressed && { opacity: 0.6 },
+          ]}
+        >
+          <Text selectable style={{ fontSize: 12 }}>
+            {isPinned ? "📌" : "📍"}
+          </Text>
+          <Text
+            selectable
+            variant="muted"
+            style={{
+              color: isPinned ? config.accent : theme.mutedForeground,
+              fontWeight: "500",
+              fontSize: 11,
+            }}
+          >
+            {isPinned ? "Pinned" : `Pin (${pinnedCount}/4)`}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+/* ── Setup section card ─────────────────────────────────────────────────── */
+
+function SetupSection({
+  section,
   accentColor,
-  accentBg,
-  accentBorder,
   toggles,
   onToggle,
   onDeactivate,
 }: {
-  config: SetupSectionConfig;
+  section: SetupSectionConfig;
   accentColor: string;
-  accentBg: string;
-  accentBorder: string;
   toggles: Record<string, boolean>;
   onToggle: (key: string, value: boolean) => void;
   onDeactivate?: () => void;
 }) {
-  const { theme, isDarkColorScheme } = useSettingsTheme();
-  const isDanger = config.title === "Danger zone";
+  const { theme } = useDomainTheme();
+  const isDanger = section.title.toLowerCase().includes("danger");
 
   return (
     <View style={styles.sectionWrap}>
       <Text
         selectable
         variant="muted"
-        style={[styles.sectionLabel, { color: theme.mutedForeground }]}
+        style={[
+          styles.sectionTitle,
+          {
+            color: isDanger
+              ? theme.destructive ?? "#e24b4a"
+              : theme.mutedForeground,
+          },
+        ]}
       >
-        {config.title}
+        {section.title}
       </Text>
-      <Card style={[styles.sectionCard, { borderColor: theme.border }]}>
-        {config.rows.map((row, i) => (
+
+      <View
+        style={[
+          styles.sectionCard,
+          {
+            borderColor: isDanger
+              ? `${theme.destructive}30`
+              : theme.border,
+          },
+        ]}
+      >
+        {section.rows.map((row, i) => (
           <React.Fragment key={row.label}>
+            {i > 0 && (
+              <Separator
+                style={{ marginLeft: 16 }}
+              />
+            )}
             <SetupRow
               row={row}
               accentColor={accentColor}
-              accentBg={accentBg}
-              accentBorder={accentBorder}
               toggles={toggles}
               onToggle={onToggle}
-              isDanger={isDanger}
-              theme={theme}
               onDeactivate={onDeactivate}
             />
-            {i < config.rows.length - 1 ? (
-              <View style={[styles.rowDivider, { backgroundColor: theme.border }]} />
-            ) : null}
           </React.Fragment>
         ))}
-      </Card>
+      </View>
     </View>
   );
 }
 
+/* ── Individual row ─────────────────────────────────────────────────────── */
+
 function SetupRow({
   row,
   accentColor,
-  accentBg,
-  accentBorder,
   toggles,
   onToggle,
-  isDanger,
-  theme,
   onDeactivate,
 }: {
   row: SetupRowConfig;
   accentColor: string;
-  accentBg: string;
-  accentBorder: string;
   toggles: Record<string, boolean>;
   onToggle: (key: string, value: boolean) => void;
-  isDanger: boolean;
-  theme: ReturnType<typeof useSettingsTheme>["theme"];
   onDeactivate?: () => void;
 }) {
+  const { theme } = useDomainTheme();
   const right = row.right;
+  const isDanger = right.type === "danger";
   const isToggle = right.type === "toggle";
-  const isDeactivate = right.type === "danger";
 
   function handlePress() {
-    if (isDeactivate) {
+    if (isDanger) {
       Alert.alert(
         row.label,
-        "This will hide this domain from your first-run and suggestions.",
+        "This will hide this domain from your activities and suggestions.",
         [
           { text: "Cancel", style: "cancel" },
           {
@@ -629,70 +856,94 @@ function SetupRow({
         ],
       );
     } else if (!isToggle) {
-      Alert.alert(row.label, row.sub + "\n\nThis field will be editable in the full release.");
+      Alert.alert(row.label, `${row.sub}\n\nEditable in a future update.`);
     }
   }
 
   return (
     <Pressable
       onPress={handlePress}
-      style={({ pressed }) => [styles.row, pressed && !isToggle && { opacity: 0.7 }]}
+      style={({ pressed }) => [
+        styles.row,
+        pressed && !isToggle && { backgroundColor: `${theme.muted}80` },
+      ]}
     >
-      <View style={styles.rowLeft}>
+      <View style={styles.rowInfo}>
         <Text
           selectable
           variant="small"
           style={[
             styles.rowLabel,
-            { color: isDeactivate ? "#e24b4a" : theme.foreground },
+            { color: isDanger ? theme.destructive : theme.foreground },
           ]}
         >
           {row.label}
         </Text>
-        <Text selectable variant="muted" style={{ color: theme.mutedForeground, marginTop: 2 }}>
+        <Text
+          selectable
+          variant="muted"
+          style={{ color: theme.mutedForeground }}
+        >
           {row.sub}
         </Text>
       </View>
 
       <View style={styles.rowRight}>
-        {right.type === "badge-todo" ? (
-          <View style={[styles.badge, { backgroundColor: theme.muted, borderColor: theme.border }]}>
-            <Text selectable variant="muted" style={{ color: theme.mutedForeground, fontSize: 11 }}>
-              Not set
-            </Text>
-          </View>
-        ) : right.type === "badge-done" ? (
-          <View
-            style={[styles.badge, { backgroundColor: accentBg, borderColor: accentBorder }]}
-          >
-            <Text selectable variant="muted" style={{ color: accentColor, fontSize: 11 }}>
-              Set
-            </Text>
-          </View>
-        ) : right.type === "toggle" ? (
+        {right.type === "badge-todo" && (
+          <Badge variant="subtle" color="default">
+            Not set
+          </Badge>
+        )}
+        {right.type === "badge-done" && (
+          <Badge variant="outline" color="success">
+            Set
+          </Badge>
+        )}
+        {right.type === "toggle" && (
           <Switch
             value={toggles[right.toggleKey] ?? right.initial ?? false}
             onValueChange={(v) => onToggle(right.toggleKey, v)}
           />
-        ) : right.type === "value" ? (
-          <>
-            <Text selectable variant="small" style={{ color: theme.mutedForeground }}>
+        )}
+        {right.type === "value" && (
+          <View style={styles.valueRow}>
+            <Text
+              selectable
+              variant="muted"
+              style={{ color: theme.mutedForeground }}
+            >
               {right.value}
             </Text>
-            <FontAwesome name="angle-right" size={15} color={theme.mutedForeground} />
-          </>
-        ) : (
-          <FontAwesome name="angle-right" size={15} color={theme.mutedForeground} />
+            <FontAwesome
+              name="angle-right"
+              size={16}
+              color={theme.mutedForeground}
+            />
+          </View>
+        )}
+        {right.type === "arrow" && (
+          <FontAwesome
+            name="angle-right"
+            size={16}
+            color={theme.mutedForeground}
+          />
+        )}
+        {right.type === "danger" && (
+          <FontAwesome
+            name="angle-right"
+            size={16}
+            color={theme.destructive}
+          />
         )}
       </View>
     </Pressable>
   );
 }
 
-// ─── Main exported screen ────────────────────────────────────────────────────
+// ─── Main screen ─────────────────────────────────────────────────────────────
 
 export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
-  const { theme, isDarkColorScheme } = useSettingsTheme();
+  const { theme } = useDomainTheme();
   const config = DOMAIN_CONFIGS[domainKey];
 
   // Convex: read current domain status
@@ -700,12 +951,19 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
     api.domains.getDomainStatus,
     domainKey ? { domain: domainKey as any } : "skip",
   );
+
+  // All user domains — to count pinned
+  const allDomains = useQuery(api.domains.getUserDomains) ?? [];
+  const pinnedCount = allDomains.filter((d) => d.status === "pinned").length;
+
   const activate = useMutation(api.domains.activateDomain);
   const deactivate = useMutation(api.domains.deactivateDomain);
+  const togglePin = useMutation(api.domains.togglePinDomain);
 
-  // Derive active state from Convex (fallback to inactive while loading)
+  // Derive active state
   const isActive =
     domainStatus?.status === "active" || domainStatus?.status === "pinned";
+  const isPinned = domainStatus?.status === "pinned";
 
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
@@ -719,204 +977,364 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
     return init;
   });
 
+  /* ── Not found fallback ──────────────────────────────────────────────── */
+
   if (!config) {
     return (
-      <View style={[styles.notFound, { backgroundColor: theme.background }]}>
-        <Text selectable style={{ color: theme.foreground }}>
-          Domain "{domainKey}" not found.
-        </Text>
-        <Pressable onPress={() => router.back()} style={{ marginTop: 12 }}>
-          <Text selectable style={{ color: theme.primary }}>
-            Go back
+      <Container>
+        <View style={styles.notFound}>
+          <View style={styles.notFoundIcon}>
+            <FontAwesome name="question" size={24} color={theme.mutedForeground} />
+          </View>
+          <Text
+            selectable
+            variant="body"
+            style={{ color: theme.foreground, textAlign: "center" }}
+          >
+            Domain "{domainKey}" not found.
           </Text>
-        </Pressable>
-      </View>
+          <Button
+            title="Go back"
+            variant="outline"
+            size="sm"
+            onPress={() => router.back()}
+          />
+        </View>
+      </Container>
     );
   }
 
-  const accentColor = isDarkColorScheme ? config.darkAccent : config.lightAccent;
-  const accentBg = isDarkColorScheme ? config.darkBg : config.lightBg;
-  const accentBorder = isDarkColorScheme ? config.darkBorder : config.lightBorder;
+  const accentColor = config.accent;
+
+  /* ── Handlers ────────────────────────────────────────────────────────── */
 
   function handleToggle(key: string, value: boolean) {
     setToggles((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleActivateToggle(value: boolean) {
-    const d = domainKey as any;
-    if (value) {
-      await activate({ domain: d });
-    } else {
-      await deactivate({ domain: d });
-    }
+  async function handleActivate() {
+    await activate({ domain: domainKey as any });
   }
 
   async function handleDeactivate() {
-    const d = domainKey as any;
-    await deactivate({ domain: d });
+    await deactivate({ domain: domainKey as any });
     router.back();
   }
 
+  async function handleTogglePin() {
+    const result = await togglePin({ domain: domainKey as any });
+    if (!result.ok && result.error) {
+      Alert.alert("Pin limit", result.error);
+    }
+  }
+
+  /* ── Render ──────────────────────────────────────────────────────────── */
+
   return (
-    <View style={[styles.screen, { backgroundColor: theme.background }]}>
+    <Container>
       <TopBar title={config.name} accentColor={accentColor} />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
       >
-        <DomainHero
-          config={config}
-          accentColor={accentColor}
-          accentBg={accentBg}
-          isActive={isActive}
-          onToggle={handleActivateToggle}
-        />
+        {/* ── Branch: inactive vs active ────────────────────────────────── */}
+        {!isActive ? (
+          <InactiveHero config={config} onActivate={handleActivate} />
+        ) : (
+          <>
+            <ActiveHero
+              config={config}
+              isPinned={isPinned}
+              onTogglePin={handleTogglePin}
+              pinnedCount={pinnedCount}
+            />
 
-        {config.sections.map((section) => (
-          <SetupSection
-            key={section.title}
-            config={section}
-            accentColor={accentColor}
-            accentBg={accentBg}
-            accentBorder={accentBorder}
-            toggles={toggles}
-            onToggle={handleToggle}
-            onDeactivate={handleDeactivate}
-          />
-        ))}
+            {/* Setup sections — only shown when active */}
+            {config.sections.map((section) => (
+              <SetupSection
+                key={section.title}
+                section={section}
+                accentColor={accentColor}
+                toggles={toggles}
+                onToggle={handleToggle}
+                onDeactivate={handleDeactivate}
+              />
+            ))}
+          </>
+        )}
       </ScrollView>
-    </View>
+    </Container>
   );
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
+  /* Not found */
   notFound: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: 16,
+    paddingHorizontal: UI_PRESETS.spacing.section,
   },
-  scroll: {
-    paddingBottom: 60,
+  notFoundIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(128,128,128,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
-  // Top bar
+  /* Scroll */
+  scroll: {
+    paddingBottom: 96,
+  },
+
+  /* ── Top bar ──────────────────────────────────────────────────────── */
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: UI_PRESETS.spacing.section,
-    paddingTop: 18,
-    paddingBottom: 14,
+    paddingTop: 8,
+    paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 12,
   },
   backBtn: {
     width: 34,
     height: 34,
-    borderRadius: UI_PRESETS.radius.full,
-    borderWidth: 1,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
   topBarTitle: {
+    fontFamily: "Geist",
     fontWeight: "600",
+    fontSize: 15,
     flex: 1,
     textAlign: "center",
   },
-
-  // Hero
-  hero: {
-    paddingHorizontal: UI_PRESETS.spacing.section,
-    paddingTop: UI_PRESETS.spacing.section,
-    paddingBottom: 0,
+  doneBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 99,
   },
-  heroIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+  doneBtnText: {
+    fontFamily: "Geist",
+    fontWeight: "600",
+    fontSize: 13,
+  },
+
+  /* ── Inactive hero ────────────────────────────────────────────────── */
+  inactiveHero: {
+    paddingHorizontal: UI_PRESETS.spacing.section,
+    paddingTop: 32,
+    gap: 12,
+    alignItems: "center",
+  },
+  heroIconLg: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
+    marginBottom: 4,
   },
-  heroEmoji: {
-    fontSize: 24,
+  heroEmojiLg: {
+    fontSize: 32,
+    lineHeight: 38,
   },
   heroName: {
     fontFamily: "Geist",
     fontSize: 26,
     fontWeight: "700",
-    marginBottom: 4,
+    lineHeight: 32,
+    letterSpacing: -0.3,
+    textAlign: "center",
   },
   heroDesc: {
     lineHeight: 22,
-    marginBottom: 4,
-  },
-  activeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 12,
-  },
-  activeLabel: {
-    fontWeight: "600",
+    textAlign: "center",
+    maxWidth: 300,
   },
 
-  // Sections
+  /* Status pill */
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 99,
+    marginTop: 4,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+
+  /* Activation CTA card */
+  activateCta: {
+    width: "100%",
+    borderRadius: UI_PRESETS.radius.xxl,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    padding: 20,
+    gap: 16,
+    marginTop: 8,
+  },
+  activateCtaBody: {
+    gap: 4,
+  },
+  activateCtaTitle: {
+    fontFamily: "Geist",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+
+  /* Locked preview */
+  lockedPreview: {
+    width: "100%",
+    gap: 6,
+    marginTop: 8,
+    opacity: 0.5,
+  },
+  lockedHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
+  lockedTitle: {
+    fontFamily: "Geist",
+    fontWeight: "600",
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  lockedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: UI_PRESETS.radius.md,
+    borderWidth: 1,
+  },
+
+  /* ── Active hero ──────────────────────────────────────────────────── */
+  activeHero: {
+    paddingHorizontal: UI_PRESETS.spacing.section,
+    paddingTop: 20,
+    gap: 16,
+  },
+  activeHeroTop: {
+    flexDirection: "row",
+    gap: 14,
+    alignItems: "flex-start",
+  },
+  heroIconSm: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroEmojiSm: {
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  activeHeroInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  heroNameSm: {
+    fontFamily: "Geist",
+    fontSize: 20,
+    fontWeight: "700",
+    lineHeight: 26,
+    letterSpacing: -0.2,
+  },
+
+  /* Active status row */
+  activeStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  statusPillActive: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pinBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 99,
+    borderWidth: 1,
+  },
+
+  /* ── Setup sections ───────────────────────────────────────────────── */
   sectionWrap: {
     paddingHorizontal: UI_PRESETS.spacing.section,
-    paddingTop: UI_PRESETS.spacing.section,
-    gap: UI_PRESETS.spacing.sm,
+    paddingTop: 24,
+    gap: 8,
   },
-  sectionLabel: {
+  sectionTitle: {
+    fontFamily: "Geist",
+    fontWeight: "700",
     fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.7,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   sectionCard: {
     borderRadius: UI_PRESETS.radius.lg,
+    borderCurve: "continuous",
     borderWidth: 1,
     overflow: "hidden",
-    padding: 0,
   },
 
-  // Row
+  /* ── Row ───────────────────────────────────────────────────────────── */
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: UI_PRESETS.spacing.xxxl,
-    paddingVertical: UI_PRESETS.spacing.xxl,
-    gap: UI_PRESETS.spacing.xl,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
   },
-  rowLeft: {
+  rowInfo: {
     flex: 1,
+    gap: 2,
   },
   rowLabel: {
+    fontFamily: "Geist",
     fontWeight: "500",
     fontSize: 14,
+    lineHeight: 18,
   },
   rowRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: UI_PRESETS.spacing.md,
+    gap: 6,
     flexShrink: 0,
   },
-  rowDivider: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: UI_PRESETS.spacing.xxxl,
-  },
-
-  // Badge
-  badge: {
-    paddingHorizontal: UI_PRESETS.spacing.lg,
-    paddingVertical: 3,
-    borderRadius: UI_PRESETS.radius.full,
-    borderWidth: 1,
+  valueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 });
