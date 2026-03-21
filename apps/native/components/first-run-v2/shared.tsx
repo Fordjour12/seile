@@ -4,7 +4,10 @@ import { router } from "expo-router";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-import { AnimatedProgressBar, AnimatedStage } from "@/components/auth/onboarding-flow-motion";
+import {
+  AnimatedProgressBar,
+  AnimatedStage,
+} from "@/components/auth/onboarding-flow-motion";
 import { Badge, Card, Chip, Text } from "@/components/ui";
 import { UI_PRESETS, Typography } from "@/lib/constants";
 import type {
@@ -25,11 +28,7 @@ export function showPreview(label: string, message: string) {
   Alert.alert(label, message);
 }
 
-export function FirstRunScroll({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function FirstRunScroll({ children }: { children: React.ReactNode }) {
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
@@ -180,7 +179,8 @@ export function ProgressCard({
           selectable
           variant="muted"
           style={{
-            color: progress === 100 ? tokens.completionGreen : tokens.textSecondary,
+            color:
+              progress === 100 ? tokens.completionGreen : tokens.textSecondary,
           }}
         >
           {label}
@@ -233,7 +233,11 @@ export function ScreenHeader({
       {badge ? (
         <View style={styles.topline}>
           <View style={styles.toplineLeft}>
-            <Text selectable variant="small" style={{ color: tokens.textSecondary }}>
+            <Text
+              selectable
+              variant="small"
+              style={{ color: tokens.textSecondary }}
+            >
               Today
             </Text>
             <Badge color="secondary">{badge}</Badge>
@@ -287,7 +291,11 @@ export function SectionTitle({
         {label}
       </Text>
       {subtitle ? (
-        <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+        <Text
+          selectable
+          variant="muted"
+          style={{ color: tokens.textSecondary }}
+        >
           {subtitle}
         </Text>
       ) : null}
@@ -333,7 +341,11 @@ export function ActionCard({
               {item.tone.label}
             </Text>
           </View>
-          <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+          <Text
+            selectable
+            variant="muted"
+            style={{ color: tokens.textSecondary }}
+          >
             {item.note}
           </Text>
         </View>
@@ -365,7 +377,11 @@ export function EmptyHabitCard({
         >
           {title}
         </Text>
-        <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+        <Text
+          selectable
+          variant="muted"
+          style={{ color: tokens.textSecondary }}
+        >
           {subtitle}
         </Text>
       </View>
@@ -417,35 +433,54 @@ export function PromptCard({
           style={({ pressed }) => [
             styles.promptPill,
             styles.promptPillAccept,
-            { borderColor: `${accentColor}55`, backgroundColor: `${accentColor}22` },
+            {
+              borderColor: `${accentColor}55`,
+              backgroundColor: `${accentColor}22`,
+            },
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
-          <Text selectable variant="small" style={[styles.promptPillText, { color: accentColor }]}>
+          <Text
+            selectable
+            variant="small"
+            style={[styles.promptPillText, { color: accentColor }]}
+          >
             Open
           </Text>
         </Pressable>
         <Pressable
-          onPress={() => showPreview("Dismiss", "This preview would dismiss the prompt.")}
+          onPress={() =>
+            showPreview("Dismiss", "This preview would dismiss the prompt.")
+          }
           style={({ pressed }) => [
             styles.promptPill,
             { borderColor: `${accentColor}33`, backgroundColor: "transparent" },
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
-          <Text selectable variant="small" style={[styles.promptPillText, { color: tokens.textSecondary }]}>
+          <Text
+            selectable
+            variant="small"
+            style={[styles.promptPillText, { color: tokens.textSecondary }]}
+          >
             Dismiss
           </Text>
         </Pressable>
         <Pressable
-          onPress={() => showPreview("Snooze", "This preview would snooze the prompt.")}
+          onPress={() =>
+            showPreview("Snooze", "This preview would snooze the prompt.")
+          }
           style={({ pressed }) => [
             styles.promptPill,
             { borderColor: `${accentColor}33`, backgroundColor: "transparent" },
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
-          <Text selectable variant="small" style={[styles.promptPillText, { color: tokens.textSecondary }]}>
+          <Text
+            selectable
+            variant="small"
+            style={[styles.promptPillText, { color: tokens.textSecondary }]}
+          >
             Snooze
           </Text>
         </Pressable>
@@ -490,7 +525,11 @@ export function SetupCard({ item }: { item: SetupItem }) {
         >
           {item.title}
         </Text>
-        <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+        <Text
+          selectable
+          variant="muted"
+          style={{ color: tokens.textSecondary }}
+        >
           {item.subtitle}
         </Text>
       </View>
@@ -524,7 +563,11 @@ export function MetricsRow({ items }: { items: MetricItem[] }) {
           <Text selectable style={[styles.metricValue, { color: item.color }]}>
             {item.value}
           </Text>
-          <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+          <Text
+            selectable
+            variant="muted"
+            style={{ color: tokens.textSecondary }}
+          >
             {item.label}
           </Text>
         </View>
@@ -549,7 +592,11 @@ export function HabitRail({ items }: { items: string[] }) {
             style={[styles.habitChip, { backgroundColor: tokens.background }]}
           >
             <View style={[styles.habitDot, { borderColor: tokens.primary }]} />
-            <Text selectable variant="small" style={{ color: tokens.textSecondary }}>
+            <Text
+              selectable
+              variant="small"
+              style={{ color: tokens.textSecondary }}
+            >
               {item}
             </Text>
           </View>
@@ -583,7 +630,9 @@ export function ContextCard({ items }: { items: ContextItem[] }) {
       <View style={styles.contextList}>
         {items.map((item) => (
           <View key={item.label} style={styles.contextRow}>
-            <View style={[styles.contextDot, { backgroundColor: item.color }]} />
+            <View
+              style={[styles.contextDot, { backgroundColor: item.color }]}
+            />
             <Text
               selectable
               variant="small"
@@ -601,7 +650,11 @@ export function ContextCard({ items }: { items: ContextItem[] }) {
                   },
                 ]}
               >
-                <Text selectable variant="muted" style={{ color: tokens.newBadgeText }}>
+                <Text
+                  selectable
+                  variant="muted"
+                  style={{ color: tokens.newBadgeText }}
+                >
                   new
                 </Text>
               </View>
@@ -691,7 +744,10 @@ export function ApprovalCard({
             key={detail}
             selectable
             variant="muted"
-            style={[styles.approvalDetailTextStyle, { color: tokens.approvalDetailText }]}
+            style={[
+              styles.approvalDetailTextStyle,
+              { color: tokens.approvalDetailText },
+            ]}
           >
             {detail}
           </Text>
@@ -756,7 +812,10 @@ export function ConfidenceCard({
                   </Text>
                   <Text
                     selectable
-                    style={[styles.confidenceTierLabel, { color: tokens.textSecondary }]}
+                    style={[
+                      styles.confidenceTierLabel,
+                      { color: tokens.textSecondary },
+                    ]}
                   >
                     {config.label}
                   </Text>
@@ -806,7 +865,10 @@ export function DomainSuggestedCard({
     <Card
       style={[
         styles.domainSuggestedCard,
-        { borderColor: tokens.insightBorder, backgroundColor: tokens.insightBg },
+        {
+          borderColor: tokens.insightBorder,
+          backgroundColor: tokens.insightBg,
+        },
       ]}
     >
       <View>
@@ -839,7 +901,10 @@ export function DomainSuggestedCard({
             >
               <Text
                 selectable
-                style={[styles.domainActionPrimaryText, { color: tokens.textInverse }]}
+                style={[
+                  styles.domainActionPrimaryText,
+                  { color: tokens.textInverse },
+                ]}
               >
                 {action.label}
               </Text>
@@ -856,7 +921,10 @@ export function DomainSuggestedCard({
             >
               <Text
                 selectable
-                style={[styles.domainActionGhostText, { color: tokens.textSecondary }]}
+                style={[
+                  styles.domainActionGhostText,
+                  { color: tokens.textSecondary },
+                ]}
               >
                 {action.label}
               </Text>
@@ -910,7 +978,10 @@ export function DayActivityCard({
         <View
           style={[
             styles.dayActivityIcon,
-            { backgroundColor: tokens.primaryMuted, borderColor: tokens.cardBorder },
+            {
+              backgroundColor: tokens.primaryMuted,
+              borderColor: tokens.cardBorder,
+            },
           ]}
         >
           <Text selectable style={styles.dayActivityEmoji}>
@@ -926,7 +997,11 @@ export function DayActivityCard({
             {item.title}
           </Text>
           {item.meta ? (
-            <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+            <Text
+              selectable
+              variant="muted"
+              style={{ color: tokens.textSecondary }}
+            >
               {item.meta}
             </Text>
           ) : null}
@@ -937,8 +1012,14 @@ export function DayActivityCard({
           style={({ pressed }) => [
             styles.dayActivityStatus,
             done
-              ? { backgroundColor: tokens.completionGreen, borderColor: tokens.completionGreen }
-              : { borderColor: tokens.cardBorder, backgroundColor: "transparent" },
+              ? {
+                  backgroundColor: tokens.completionGreen,
+                  borderColor: tokens.completionGreen,
+                }
+              : {
+                  borderColor: tokens.cardBorder,
+                  backgroundColor: "transparent",
+                },
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
@@ -956,7 +1037,10 @@ export function DayActivityCard({
           <Text
             selectable
             variant="muted"
-            style={[styles.dayActivityBodyText, { color: tokens.textSecondary }]}
+            style={[
+              styles.dayActivityBodyText,
+              { color: tokens.textSecondary },
+            ]}
           >
             {item.body}
           </Text>
@@ -970,7 +1054,13 @@ export function DayActivityCard({
                   pressed && { opacity: tokens.pressedOpacity },
                 ]}
               >
-                <Text selectable style={[styles.dayActivityBtnText, { color: tokens.textInverse }]}>
+                <Text
+                  selectable
+                  style={[
+                    styles.dayActivityBtnText,
+                    { color: tokens.textInverse },
+                  ]}
+                >
                   Start
                 </Text>
               </Pressable>
@@ -982,7 +1072,13 @@ export function DayActivityCard({
                   pressed && { opacity: tokens.pressedOpacity },
                 ]}
               >
-                <Text selectable style={[styles.dayActivityBtnText, { color: tokens.textSecondary }]}>
+                <Text
+                  selectable
+                  style={[
+                    styles.dayActivityBtnText,
+                    { color: tokens.textSecondary },
+                  ]}
+                >
                   Skip
                 </Text>
               </Pressable>
@@ -1055,7 +1151,10 @@ export function AISuggestionCard({
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
-          <Text selectable style={[styles.aiActionButtonText, { color: tokens.textInverse }]}>
+          <Text
+            selectable
+            style={[styles.aiActionButtonText, { color: tokens.textInverse }]}
+          >
             {item.acceptLabel}
           </Text>
         </Pressable>
@@ -1068,7 +1167,10 @@ export function AISuggestionCard({
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
-          <Text selectable style={[styles.aiActionButtonText, { color: variantColors.text }]}>
+          <Text
+            selectable
+            style={[styles.aiActionButtonText, { color: variantColors.text }]}
+          >
             {item.dismissLabel}
           </Text>
         </Pressable>
@@ -1082,7 +1184,13 @@ export function AISuggestionCard({
               pressed && { opacity: tokens.pressedOpacity },
             ]}
           >
-            <Text selectable style={[styles.aiActionButtonText, { color: tokens.textSecondary }]}>
+            <Text
+              selectable
+              style={[
+                styles.aiActionButtonText,
+                { color: tokens.textSecondary },
+              ]}
+            >
               {item.snoozeLabel}
             </Text>
           </Pressable>
@@ -1103,7 +1211,7 @@ export function DomainUnlockCard({
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/domains/${item.domainKey}` as never)}
+      onPress={() => router.push(`/(tabs)/settings/activate-domains`)}
       style={({ pressed }) => [
         styles.domainUnlockCard,
         {
@@ -1116,7 +1224,10 @@ export function DomainUnlockCard({
       <View
         style={[
           styles.domainUnlockIcon,
-          { backgroundColor: tokens.primaryMuted, borderColor: tokens.cardBorder },
+          {
+            backgroundColor: tokens.primaryMuted,
+            borderColor: tokens.cardBorder,
+          },
         ]}
       >
         <Text selectable style={styles.domainUnlockEmoji}>
@@ -1131,7 +1242,11 @@ export function DomainUnlockCard({
         >
           {item.title}
         </Text>
-        <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+        <Text
+          selectable
+          variant="muted"
+          style={{ color: tokens.textSecondary }}
+        >
           {item.subtitle}
         </Text>
       </View>
@@ -1172,7 +1287,13 @@ export function RecapCard({
       <View style={styles.recapList}>
         {recapData.items.map((item) => (
           <View key={item.text} style={styles.recapRow}>
-            <Text selectable style={[styles.recapItemPrefix, { color: tokens.completionGreen }]}>
+            <Text
+              selectable
+              style={[
+                styles.recapItemPrefix,
+                { color: tokens.completionGreen },
+              ]}
+            >
               {item.kind === "check" ? "✓" : "→"}
             </Text>
             <View style={styles.recapItemBody}>
@@ -1182,7 +1303,11 @@ export function RecapCard({
               >
                 {item.text}
               </Text>
-              <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+              <Text
+                selectable
+                variant="muted"
+                style={{ color: tokens.textSecondary }}
+              >
                 {item.sub}
               </Text>
             </View>
@@ -1251,13 +1376,19 @@ export function CheckInCard() {
                     styles.checkInDot,
                     {
                       backgroundColor:
-                        i < metric.value ? tokens.phaseAct.text : tokens.cardBorder,
+                        i < metric.value
+                          ? tokens.phaseAct.text
+                          : tokens.cardBorder,
                     },
                   ]}
                 />
               ))}
             </View>
-            <Text selectable variant="muted" style={{ color: tokens.textSecondary }}>
+            <Text
+              selectable
+              variant="muted"
+              style={{ color: tokens.textSecondary }}
+            >
               {metric.value}/{metric.max}
             </Text>
           </View>
@@ -1265,7 +1396,10 @@ export function CheckInCard() {
       </View>
       <Pressable
         onPress={() =>
-          showPreview("Daily check-in", "This preview would open the check-in flow.")
+          showPreview(
+            "Daily check-in",
+            "This preview would open the check-in flow.",
+          )
         }
         style={({ pressed }) => [
           styles.checkInButton,
@@ -1276,7 +1410,10 @@ export function CheckInCard() {
           pressed && { opacity: tokens.pressedOpacity },
         ]}
       >
-        <Text selectable style={[styles.checkInButtonText, { color: "#ffffff" }]}>
+        <Text
+          selectable
+          style={[styles.checkInButtonText, { color: "#ffffff" }]}
+        >
           Start check-in
         </Text>
       </Pressable>

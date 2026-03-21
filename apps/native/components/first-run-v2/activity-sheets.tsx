@@ -22,6 +22,7 @@ import React, {
   useState,
 } from "react";
 import {
+  Dimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -32,6 +33,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import Animated, { useAnimatedProps, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
@@ -39,6 +41,10 @@ import { Text } from "@/components/ui";
 import { NAV_THEME, UI_PRESETS, Typography } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import type { UserProfileBiggestBlocker } from "@/lib/user-profile";
+import {
+  AnimatedCircle,
+  useStaggeredEntrance,
+} from "@/components/animation/life-os-reanimated-patterns";
 
 // ─── Activity type ──────────────────────────────────────────────────────────
 
@@ -70,7 +76,8 @@ function recordActivityReflection(
 // ─── Context ────────────────────────────────────────────────────────────────
 
 type ActivitySheetsContextValue = {
-  openSheet: (type: ActivitySheetType) => void;
+  /** Open a sheet. Pass the activityId so completion marks the card done. */
+  openSheet: (type: ActivitySheetType, activityId?: string) => void;
 };
 
 const ActivitySheetsContext = createContext<ActivitySheetsContextValue>({
@@ -96,15 +103,33 @@ function CountdownRing({
 }) {
   const r = size === 140 ? 58 : 44;
   const circumference = 2 * Math.PI * r;
-  const offset = circumference * (elapsedSeconds / totalSeconds);
   const cx = size / 2;
   const cy = size / 2;
   const track = "rgba(130,130,140,0.18)";
+
+  // Animate the ring fill smoothly between ticks
+  const animatedOffset = useSharedValue(0);
+
+  useEffect(() => {
+    const target = circumference * (elapsedSeconds / totalSeconds);
+    animatedOffset.value = withTiming(target, { duration: 400 });
+  }, [elapsedSeconds, totalSeconds, circumference, animatedOffset]);
+
+  const ringProps = useAnimatedProps(() => ({
+    strokeDashoffset: animatedOffset.value,
+  }));
 
   const remaining = totalSeconds - elapsedSeconds;
   const m = Math.floor(remaining / 60);
   const s = remaining % 60;
   const display = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+  const statusLabel =
+    elapsedSeconds === 0
+      ? "ready"
+      : elapsedSeconds >= totalSeconds
+        ? "done"
+        : "running";
 
   return (
     <View style={{ alignItems: "center", width: size, height: size }}>
@@ -115,7 +140,7 @@ function CountdownRing({
         style={{ transform: [{ rotate: "-90deg" }], position: "absolute" }}
       >
         <Circle cx={cx} cy={cy} r={r} fill="none" stroke={track} strokeWidth={6} />
-        <Circle
+        <AnimatedCircle
           cx={cx}
           cy={cy}
           r={r}
@@ -124,7 +149,7 @@ function CountdownRing({
           strokeWidth={6}
           strokeLinecap="round"
           strokeDasharray={circumference}
-          strokeDashoffset={offset}
+          animatedProps={ringProps}
         />
       </Svg>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -132,11 +157,7 @@ function CountdownRing({
           {display}
         </Text>
         <Text selectable style={styles.timerLabel}>
-          {elapsedSeconds === 0
-            ? "ready"
-            : elapsedSeconds >= totalSeconds
-              ? "done"
-              : "running"}
+          {statusLabel}
         </Text>
       </View>
     </View>
@@ -253,6 +274,20 @@ function DiscreteSlider({
   );
 }
 
+// ─── Staggered entrance wrapper ──────────────────────────────────────────────
+
+function StaggeredItem({
+  index,
+  children,
+}: {
+  index: number;
+  children: React.ReactNode;
+}) {
+  const { animatedStyle } = useStaggeredEntrance(index, 60);
+
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
+}
+
 // ─── Blocker prompts ─────────────────────────────────────────────────────────
 
 const BLOCKER_PROMPTS: Record<UserProfileBiggestBlocker, string> = {
@@ -267,6 +302,10 @@ const BLOCKER_PROMPTS: Record<UserProfileBiggestBlocker, string> = {
 };
 
 // ─── Sheet chrome (shared wrapper) ──────────────────────────────────────────
+
+const SCREEN_HEIGHT = Dimensions.get("window").height;
+/** Max height the scrollable body can occupy (keeps header + footer visible). */
+const BODY_MAX_HEIGHT = SCREEN_HEIGHT * 0.52;
 
 function SheetFrame({
   icon,
@@ -288,50 +327,52 @@ function SheetFrame({
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.frame}
+      style={styles.kavWrap}
     >
-      {/* Drag handle */}
-      <View style={styles.handle} />
+      <View style={styles.frame}>
+        {/* Drag handle */}
+        <View style={styles.handle} />
 
-      {/* Header */}
-      <View style={styles.sheetHead}>
-        <View style={[styles.sheetIcon, { backgroundColor: iconBg }]}>
-          <Text selectable style={styles.sheetIconEmoji}>
-            {icon}
-          </Text>
+        {/* Header */}
+        <View style={styles.sheetHead}>
+          <View style={[styles.sheetIcon, { backgroundColor: iconBg }]}>
+            <Text selectable style={styles.sheetIconEmoji}>
+              {icon}
+            </Text>
+          </View>
+          <View style={styles.sheetTitleWrap}>
+            <Text selectable style={styles.sheetTitle}>
+              {title}
+            </Text>
+            <Text selectable style={styles.sheetMeta}>
+              {meta}
+            </Text>
+          </View>
+          <Pressable
+            onPress={onClose}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.closeBtn,
+              pressed && { opacity: 0.6 },
+            ]}
+          >
+            <FontAwesome name="times" size={13} color="#8A8780" />
+          </Pressable>
         </View>
-        <View style={styles.sheetTitleWrap}>
-          <Text selectable style={styles.sheetTitle}>
-            {title}
-          </Text>
-          <Text selectable style={styles.sheetMeta}>
-            {meta}
-          </Text>
-        </View>
-        <Pressable
-          onPress={onClose}
-          hitSlop={8}
-          style={({ pressed }) => [
-            styles.closeBtn,
-            pressed && { opacity: 0.6 },
-          ]}
+
+        {/* Scrollable body — explicit maxHeight so it never collapses */}
+        <ScrollView
+          style={{ maxHeight: BODY_MAX_HEIGHT }}
+          contentContainerStyle={styles.sheetBodyContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <FontAwesome name="times" size={13} color="#8A8780" />
-        </Pressable>
+          {children}
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.sheetFoot}>{footer}</View>
       </View>
-
-      {/* Scrollable body */}
-      <ScrollView
-        style={styles.sheetBody}
-        contentContainerStyle={styles.sheetBodyContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={styles.sheetFoot}>{footer}</View>
     </KeyboardAvoidingView>
   );
 }
@@ -480,9 +521,15 @@ function CheckInSheet({
       }
     >
       <View style={styles.sliders}>
-        <DiscreteSlider metric="mood" value={mood} onChange={setMood} accentColor={TEAL} />
-        <DiscreteSlider metric="energy" value={energy} onChange={setEnergy} accentColor={TEAL} />
-        <DiscreteSlider metric="readiness" value={readiness} onChange={setReadiness} accentColor={TEAL} />
+        <StaggeredItem index={0}>
+          <DiscreteSlider metric="mood" value={mood} onChange={setMood} accentColor={TEAL} />
+        </StaggeredItem>
+        <StaggeredItem index={1}>
+          <DiscreteSlider metric="energy" value={energy} onChange={setEnergy} accentColor={TEAL} />
+        </StaggeredItem>
+        <StaggeredItem index={2}>
+          <DiscreteSlider metric="readiness" value={readiness} onChange={setReadiness} accentColor={TEAL} />
+        </StaggeredItem>
       </View>
     </SheetFrame>
   );
@@ -535,21 +582,23 @@ function PrioritiesSheet({
       </Text>
       <View style={styles.priorityRows}>
         {values.map((val, i) => (
-          <View key={i} style={styles.priorityRow}>
-            <View style={styles.priorityNum}>
-              <Text selectable style={styles.priorityNumText}>
-                {i + 1}
-              </Text>
+          <StaggeredItem key={i} index={i}>
+            <View style={styles.priorityRow}>
+              <View style={styles.priorityNum}>
+                <Text selectable style={styles.priorityNumText}>
+                  {i + 1}
+                </Text>
+              </View>
+              <TextInput
+                style={styles.priorityInput}
+                value={val}
+                onChangeText={setters[i]}
+                placeholder={placeholders[i]}
+                placeholderTextColor="#C8C5BE"
+                returnKeyType={i < 2 ? "next" : "done"}
+              />
             </View>
-            <TextInput
-              style={styles.priorityInput}
-              value={val}
-              onChangeText={setters[i]}
-              placeholder={placeholders[i]}
-              placeholderTextColor="#C8C5BE"
-              returnKeyType={i < 2 ? "next" : "done"}
-            />
-          </View>
+          </StaggeredItem>
         ))}
       </View>
     </SheetFrame>
@@ -740,19 +789,21 @@ function WalkSheet({
         walk significantly improves afternoon focus scores.
       </Text>
 
-      {/* Step cards */}
+      {/* Step cards — staggered entrance */}
       <View style={styles.walkSteps}>
         {WALK_STEPS.map((step, i) => (
-          <View key={i} style={styles.walkStep}>
-            <View style={styles.walkNum}>
-              <Text selectable style={styles.walkNumText}>
-                {i + 1}
+          <StaggeredItem key={i} index={i}>
+            <View style={styles.walkStep}>
+              <View style={styles.walkNum}>
+                <Text selectable style={styles.walkNumText}>
+                  {i + 1}
+                </Text>
+              </View>
+              <Text selectable style={styles.walkStepText}>
+                {step}
               </Text>
             </View>
-            <Text selectable style={styles.walkStepText}>
-              {step}
-            </Text>
-          </View>
+          </StaggeredItem>
         ))}
       </View>
 
@@ -846,22 +897,25 @@ function SheetGhost({
 // ─── Provider ────────────────────────────────────────────────────────────────
 
 type SheetState =
-  | { kind: "activity"; type: ActivitySheetType }
-  | { kind: "rating"; completedType: ActivitySheetType }
+  | { kind: "activity"; type: ActivitySheetType; activityId?: string }
+  | { kind: "rating"; completedType: ActivitySheetType; activityId?: string }
   | null;
 
 export function ActivitySheetsProvider({
   children,
   biggestBlocker = "follow_through",
+  onActivityComplete,
 }: {
   children: React.ReactNode;
   biggestBlocker?: UserProfileBiggestBlocker;
+  /** Called with the activity id when a user completes an activity + rating. */
+  onActivityComplete?: (activityId: string) => void;
 }) {
   const [sheetState, setSheetState] = useState<SheetState>(null);
 
-  const openSheet = useCallback((type: ActivitySheetType) => {
+  const openSheet = useCallback((type: ActivitySheetType, activityId?: string) => {
     recordActivityEvent(type, "started");
-    setSheetState({ kind: "activity", type });
+    setSheetState({ kind: "activity", type, activityId });
   }, []);
 
   function closeAll() {
@@ -875,8 +929,11 @@ export function ActivitySheetsProvider({
 
   function handleComplete(type: ActivitySheetType, metadata?: Record<string, unknown>) {
     recordActivityEvent(type, "completed", metadata);
+    const activityId = sheetState?.activityId;
+    // Mark the card done immediately
+    if (activityId) onActivityComplete?.(activityId);
     // Slide directly into rating sheet
-    setSheetState({ kind: "rating", completedType: type });
+    setSheetState({ kind: "rating", completedType: type, activityId });
   }
 
   function handleRatingSubmit(useful: string, diff: string) {
@@ -980,11 +1037,13 @@ const styles = StyleSheet.create({
   },
 
   // Sheet frame
+  kavWrap: {
+    justifyContent: "flex-end",
+  },
   frame: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    maxHeight: "82%",
     overflow: "hidden",
   },
   handle: {
@@ -1042,9 +1101,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-  },
-  sheetBody: {
-    flex: 1,
   },
   sheetBodyContent: {
     paddingHorizontal: 22,

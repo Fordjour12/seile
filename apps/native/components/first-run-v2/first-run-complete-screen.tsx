@@ -273,7 +273,7 @@ function DayContent({
               onToggle={() => onToggleActivity(activity.id)}
               onStart={
                 activity.sheetType
-                  ? () => openSheet(activity.sheetType as ActivitySheetType)
+                  ? () => openSheet(activity.sheetType as ActivitySheetType, activity.id)
                   : undefined
               }
             />
@@ -387,7 +387,16 @@ export function FirstRunCompleteScreen() {
       | undefined;
 
   return (
-    <ActivitySheetsProvider biggestBlocker={biggestBlocker ?? "follow_through"}>
+    <ActivitySheetsProvider
+      biggestBlocker={biggestBlocker ?? "follow_through"}
+      onActivityComplete={(id) => {
+        setDoneIds((prev) => {
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
+      }}
+    >
     <Container>
       <FirstRunScroll>
         {/* ── Top row: label + day counter + avatar ── */}

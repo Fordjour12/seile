@@ -3,6 +3,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@seile/backend/convexApi";
 
 import { Card, Switch, Text } from "@/components/ui";
 import { useSettingsTheme } from "@/components/settings/shared";
@@ -364,6 +366,88 @@ export const DOMAIN_CONFIGS: Record<string, DomainConfig> = {
       },
     ],
   },
+
+  productivity: {
+    key: "productivity",
+    name: "Tasks",
+    emoji: "✅",
+    description:
+      "Capture, prioritise, and complete tasks that move the needle on what matters.",
+    lightAccent: "#5F5E5A",
+    lightBg: "#F5F4F1",
+    lightBorder: "#D4D1CA",
+    darkAccent: "#A8A5A0",
+    darkBg: "#121210",
+    darkBorder: "#3a3830",
+    sections: [
+      {
+        title: "Workflow",
+        rows: [
+          {
+            label: "Daily priorities count",
+            sub: "How many priorities per day",
+            right: { type: "value", value: "3" },
+          },
+          {
+            label: "Review time",
+            sub: "When to review tomorrow's list",
+            right: { type: "value", value: "9:00 PM" },
+          },
+        ],
+      },
+      {
+        title: "Danger zone",
+        rows: [
+          {
+            label: "Deactivate Tasks",
+            sub: "Hide from activities",
+            right: { type: "danger" },
+          },
+        ],
+      },
+    ],
+  },
+
+  space: {
+    key: "space",
+    name: "Space",
+    emoji: "🏠",
+    description:
+      "Organise your physical environment — rooms, zones, and recurring resets.",
+    lightAccent: "#444444",
+    lightBg: "#F2F2F2",
+    lightBorder: "#D0D0D0",
+    darkAccent: "#999999",
+    darkBg: "#111111",
+    darkBorder: "#333333",
+    sections: [
+      {
+        title: "Zones",
+        rows: [
+          {
+            label: "Add a zone",
+            sub: "Kitchen, desk, garage, etc.",
+            right: { type: "badge-todo" },
+          },
+          {
+            label: "Reset schedule",
+            sub: "Weekly or monthly clean-up cycles",
+            right: { type: "value", value: "—" },
+          },
+        ],
+      },
+      {
+        title: "Danger zone",
+        rows: [
+          {
+            label: "Deactivate Space",
+            sub: "Hide from activities",
+            right: { type: "danger" },
+          },
+        ],
+      },
+    ],
+  },
 };
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -459,6 +543,7 @@ function SetupSection({
   accentBorder,
   toggles,
   onToggle,
+  onDeactivate,
 }: {
   config: SetupSectionConfig;
   accentColor: string;
@@ -466,6 +551,7 @@ function SetupSection({
   accentBorder: string;
   toggles: Record<string, boolean>;
   onToggle: (key: string, value: boolean) => void;
+  onDeactivate?: () => void;
 }) {
   const { theme, isDarkColorScheme } = useSettingsTheme();
   const isDanger = config.title === "Danger zone";
@@ -491,6 +577,7 @@ function SetupSection({
               onToggle={onToggle}
               isDanger={isDanger}
               theme={theme}
+              onDeactivate={onDeactivate}
             />
             {i < config.rows.length - 1 ? (
               <View style={[styles.rowDivider, { backgroundColor: theme.border }]} />
@@ -511,6 +598,7 @@ function SetupRow({
   onToggle,
   isDanger,
   theme,
+  onDeactivate,
 }: {
   row: SetupRowConfig;
   accentColor: string;
@@ -520,6 +608,7 @@ function SetupRow({
   onToggle: (key: string, value: boolean) => void;
   isDanger: boolean;
   theme: ReturnType<typeof useSettingsTheme>["theme"];
+  onDeactivate?: () => void;
 }) {
   const right = row.right;
   const isToggle = right.type === "toggle";
@@ -535,7 +624,7 @@ function SetupRow({
           {
             text: "Deactivate",
             style: "destructive",
-            onPress: () => router.back(),
+            onPress: () => onDeactivate?.(),
           },
         ],
       );
@@ -606,7 +695,18 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
   const { theme, isDarkColorScheme } = useSettingsTheme();
   const config = DOMAIN_CONFIGS[domainKey];
 
-  const [isActive, setIsActive] = useState(domainKey === "faith");
+  // Convex: read current domain status
+  const domainStatus = useQuery(
+    api.domains.getDomainStatus,
+    domainKey ? { domain: domainKey as any } : "skip",
+  );
+  const activate = useMutation(api.domains.activateDomain);
+  const deactivate = useMutation(api.domains.deactivateDomain);
+
+  // Derive active state from Convex (fallback to inactive while loading)
+  const isActive =
+    domainStatus?.status === "active" || domainStatus?.status === "pinned";
+
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     config?.sections.forEach((s) =>
@@ -642,6 +742,21 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
     setToggles((prev) => ({ ...prev, [key]: value }));
   }
 
+  async function handleActivateToggle(value: boolean) {
+    const d = domainKey as any;
+    if (value) {
+      await activate({ domain: d });
+    } else {
+      await deactivate({ domain: d });
+    }
+  }
+
+  async function handleDeactivate() {
+    const d = domainKey as any;
+    await deactivate({ domain: d });
+    router.back();
+  }
+
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <TopBar title={config.name} accentColor={accentColor} />
@@ -654,7 +769,7 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
           accentColor={accentColor}
           accentBg={accentBg}
           isActive={isActive}
-          onToggle={setIsActive}
+          onToggle={handleActivateToggle}
         />
 
         {config.sections.map((section) => (
@@ -666,6 +781,7 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
             accentBorder={accentBorder}
             toggles={toggles}
             onToggle={handleToggle}
+            onDeactivate={handleDeactivate}
           />
         ))}
       </ScrollView>

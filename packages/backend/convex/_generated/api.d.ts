@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as domains from "../domains.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
 import type * as lib_fractionalIndex from "../lib/fractionalIndex.js";
@@ -17,6 +18,7 @@ import type * as lib_money from "../lib/money.js";
 import type * as lib_recurring from "../lib/recurring.js";
 import type * as onboarding from "../onboarding.js";
 import type * as schema_ai from "../schema/ai.js";
+import type * as schema_domains from "../schema/domains.js";
 import type * as schema_onboarding from "../schema/onboarding.js";
 
 import type {
@@ -27,6 +29,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  domains: typeof domains;
   healthCheck: typeof healthCheck;
   http: typeof http;
   "lib/fractionalIndex": typeof lib_fractionalIndex;
@@ -35,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   "lib/recurring": typeof lib_recurring;
   onboarding: typeof onboarding;
   "schema/ai": typeof schema_ai;
+  "schema/domains": typeof schema_domains;
   "schema/onboarding": typeof schema_onboarding;
 }>;
 

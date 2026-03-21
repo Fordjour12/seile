@@ -122,12 +122,12 @@ export const NOTIFICATION_ROWS: SettingsRowItem[] = [
 ];
 
 export const DOMAIN_ITEMS: DomainItem[] = [
-  { id: "faith", label: "Faith", accentColor: "#534AB7", status: "pinned" },
-  { id: "career", label: "Career", accentColor: "#185FA5", status: "active" },
-  { id: "finance", label: "Finance", accentColor: "#0F6E56", status: "active" },
-  { id: "health", label: "Health", accentColor: "#993C1D", status: "active" },
-  { id: "wellness", label: "Wellness", accentColor: "#993556", status: "active" },
-  { id: "tasks", label: "Tasks", accentColor: "#5F5E5A", status: "active" },
+  { id: "faith", label: "Faith", accentColor: "#534AB7", status: "inactive" },
+  { id: "career", label: "Career", accentColor: "#185FA5", status: "inactive" },
+  { id: "finance", label: "Finance", accentColor: "#0F6E56", status: "inactive" },
+  { id: "health", label: "Health", accentColor: "#993C1D", status: "inactive" },
+  { id: "wellness", label: "Wellness", accentColor: "#993556", status: "inactive" },
+  { id: "productivity", label: "Tasks", accentColor: "#5F5E5A", status: "inactive" },
   {
     id: "relationships",
     label: "Relationships",

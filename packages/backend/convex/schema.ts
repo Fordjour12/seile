@@ -9,6 +9,10 @@ import {
   approvalRequestStatusValidator,
 } from "./schema/ai";
 import {
+  domainStatusValidator,
+  userDomainsTable,
+} from "./schema/domains";
+import {
   activityAssignmentsTable,
   activityAssignedByValidator,
   activityAssignmentStatusValidator,
@@ -48,6 +52,7 @@ export {
   aiMemoryConfidenceValidator,
   approvalModeValidator,
   approvalRequestStatusValidator,
+  domainStatusValidator,
   onboardingBiggestBlockerValidator,
   onboardingCommitmentLevelValidator,
   onboardingEnergyPatternValidator,
@@ -63,6 +68,7 @@ export {
 export default defineSchema({
   aiMemory: aiMemoryTable,
   approvalRequests: approvalRequestsTable,
+  userDomains: userDomainsTable,
   userProfile: userProfileTable,
   onboardingState: onboardingStateTable,
   activityTemplates: activityTemplatesTable,
