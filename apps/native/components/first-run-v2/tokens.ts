@@ -20,8 +20,8 @@ export function getFirstRunTokens(isDark: boolean) {
     // brand/accent
     primary: theme.primary,
     primaryMuted: isDark
-      ? `${theme.primary}1a`
-      : `${theme.primary}14`,
+      ? "hsla(267, 84%, 81%, 0.1)"
+      : "hsla(266, 85%, 58%, 0.08)",
 
     // insight card
     insightBg: isDark
@@ -41,8 +41,8 @@ export function getFirstRunTokens(isDark: boolean) {
       ? { bg: "#2a1e00", text: "#e0a040", border: "#6b4e00" }
       : { bg: "#FDF3E0", text: "#9A6B1A", border: "#F0D090" },
     phaseLearn: isDark
-      ? { bg: `${theme.primary}1a`, text: theme.primary, border: `${theme.primary}33` }
-      : { bg: `${theme.primary}14`, text: theme.primary, border: `${theme.primary}28` },
+      ? { bg: "hsla(267, 84%, 81%, 0.1)", text: theme.primary, border: "hsla(267, 84%, 81%, 0.2)" }
+      : { bg: "hsla(266, 85%, 58%, 0.08)", text: theme.primary, border: "hsla(266, 85%, 58%, 0.16)" },
     phaseAct: isDark
       ? { bg: "#001e1a", text: "#40d4c0", border: "#006b5e" }
       : { bg: "#E6F5F3", text: "#2A7A6F", border: "#A8D8D3" },

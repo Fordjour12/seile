@@ -1220,7 +1220,7 @@ export function AISuggestionCard({
         >
           <Text
             selectable
-            style={[styles.aiConfidenceBadgeText, { color: variantColors.bg }]}
+            style={[styles.aiConfidenceBadgeText, { color: tokens.textInverse }]}
           >
             {item.confidence}%
           </Text>
@@ -1245,7 +1245,7 @@ export function AISuggestionCard({
         >
           <Text
             selectable
-            style={[styles.aiActionButtonText, { color: variantColors.bg }]}
+            style={[styles.aiActionButtonText, { color: tokens.textInverse }]}
           >
             {item.acceptLabel}
           </Text>
