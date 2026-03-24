@@ -22,7 +22,7 @@ import type {
   Step,
 } from "@/components/auth/onboarding/types";
 import { AnimatedProgressBar } from "@/components/auth/onboarding-flow-motion";
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 

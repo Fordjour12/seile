@@ -1,18 +1,20 @@
-import React, { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
+import { useMutation } from "convex/react";
+import { api } from "@seile/backend/convexApi";
 
 import { Text } from "@/components/ui";
 import { Container } from "@/components/container";
 import { UI_PRESETS, Typography } from "@/lib/constants";
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { useFirstRunV2Theme } from "@/components/first-run-v2/tokens";
 import {
-  COMPLETE_DAYS,
   FIRST_RUN_TODAY_STATES,
   type CompleteDay,
   type DayActivityItem,
+  useCompleteDays,
 } from "@/components/first-run-v2/data";
 import {
   ActionCard,
@@ -118,10 +120,12 @@ function AvatarButton({ name }: { name?: string | null }) {
 // ─── Day chip row ──────────────────────────────────────────────────────────
 
 function DayChipRow({
+  completeDays,
   selectedDay,
   maxUnlocked,
   onSelect,
 }: {
+  completeDays: CompleteDay[];
   selectedDay: number;
   maxUnlocked: number;
   onSelect: (day: number) => void;
@@ -134,7 +138,7 @@ function DayChipRow({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.chipRowContent}
     >
-      {COMPLETE_DAYS.map((d) => {
+      {completeDays.map((d) => {
         const isSelected = d.day === selectedDay;
         const isLocked = d.day > maxUnlocked;
 
@@ -180,18 +184,91 @@ function DayChipRow({
   );
 }
 
+// ─── Incomplete activities banner ─────────────────────────────────────────
+
+function IncompleteBanner({
+  count,
+  onGoBack,
+}: {
+  count: number;
+  onGoBack: () => void;
+}) {
+  const { tokens } = useFirstRunV2Theme();
+
+  return (
+    <Pressable
+      onPress={onGoBack}
+      style={({ pressed }) => [
+        styles.incompleteBanner,
+        {
+          backgroundColor: tokens.phaseLearn?.bg ?? "#2a1040",
+          borderColor: tokens.phaseLearn?.border ?? "#6b4e9e",
+        },
+        pressed && { opacity: 0.84 },
+      ]}
+    >
+      <View style={styles.incompleteBannerContent}>
+        <Text selectable style={[styles.incompleteBannerIcon]}>
+          ⏳
+        </Text>
+        <View style={styles.incompleteBannerText}>
+          <Text
+            selectable
+            style={[
+              styles.incompleteBannerTitle,
+              { color: tokens.textPrimary },
+            ]}
+          >
+            {count} unfinished {count === 1 ? "activity" : "activities"} from
+            earlier
+          </Text>
+          <Text
+            selectable
+            style={[
+              styles.incompleteBannerSub,
+              { color: tokens.textSecondary },
+            ]}
+          >
+            Tap to go back and finish them
+          </Text>
+        </View>
+        <Text
+          selectable
+          style={[
+            styles.incompleteBannerChevron,
+            { color: tokens.textSecondary },
+          ]}
+        >
+          ‹
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
 // ─── Per-day content ──────────────────────────────────────────────────────
 
 function DayContent({
   day,
   doneIds,
+  startedIds,
+  startedAtById,
   onToggleActivity,
   onCompleteCta,
+  onSuggestionFeedback,
+  onGoToPreviousDay,
 }: {
   day: CompleteDay;
   doneIds: Set<string>;
+  startedIds: Set<string>;
+  startedAtById: Record<string, number>;
   onToggleActivity: (id: string) => void;
   onCompleteCta: () => void;
+  onSuggestionFeedback: (
+    suggestionId: string | undefined,
+    verdict: "accepted" | "dismissed" | "snoozed",
+  ) => void;
+  onGoToPreviousDay: () => void;
 }) {
   const { tokens } = useFirstRunV2Theme();
   const { openSheet } = useActivitySheets();
@@ -239,6 +316,15 @@ function DayContent({
         </View>
       </View>
 
+      {/* ── Incomplete activities banner ── */}
+      {day.incompletePreviousDayCount != null &&
+      day.incompletePreviousDayCount > 0 ? (
+        <IncompleteBanner
+          count={day.incompletePreviousDayCount}
+          onGoBack={onGoToPreviousDay}
+        />
+      ) : null}
+
       {/* ── Insight card ── */}
       <InsightCard
         label={day.insightEyebrow}
@@ -265,19 +351,38 @@ function DayContent({
       {day.activities && day.activities.length > 0 ? (
         <>
           <SectionTitle label="Suggested activities" />
-          {day.activities.map((activity: DayActivityItem) => (
-            <DayActivityCard
-              key={activity.id}
-              item={activity}
-              done={activity.done === true || doneIds.has(activity.id)}
-              onToggle={() => onToggleActivity(activity.id)}
-              onStart={
-                activity.sheetType
-                  ? () => openSheet(activity.sheetType as ActivitySheetType, activity.id)
-                  : undefined
-              }
-            />
-          ))}
+          {day.activities.map((activity: DayActivityItem) => {
+            const isDone = activity.done === true || doneIds.has(activity.id);
+            const isStarted =
+              !isDone &&
+              (activity.started === true || startedIds.has(activity.id));
+
+            return (
+              <DayActivityCard
+                key={activity.id}
+                item={activity}
+                status={isDone ? "done" : isStarted ? "started" : "pending"}
+                startedAt={startedAtById[activity.id] ?? activity.startedAt}
+                durationMinutes={activity.durationMinutes}
+                onToggle={() => onToggleActivity(activity.id)}
+                onStart={
+                  activity.sheetType
+                    ? () =>
+                        openSheet(
+                          activity.sheetType as ActivitySheetType,
+                          activity.id,
+                          activity.assignmentId,
+                          {
+                            startedAt:
+                              startedAtById[activity.id] ?? activity.startedAt,
+                            durationMinutes: activity.durationMinutes,
+                          },
+                        )
+                    : undefined
+                }
+              />
+            );
+          })}
         </>
       ) : null}
 
@@ -285,7 +390,24 @@ function DayContent({
       {day.suggestion ? (
         <>
           <SectionTitle label={day.suggestion.eyebrow} />
-          <AISuggestionCard item={day.suggestion} />
+          <AISuggestionCard
+            item={day.suggestion}
+            onAccept={() =>
+              onSuggestionFeedback(day.suggestion?.suggestionId, "accepted")
+            }
+            onDismiss={() =>
+              onSuggestionFeedback(day.suggestion?.suggestionId, "dismissed")
+            }
+            onSnooze={
+              day.suggestion.snoozeLabel
+                ? () =>
+                    onSuggestionFeedback(
+                      day.suggestion?.suggestionId,
+                      "snoozed",
+                    )
+                : undefined
+            }
+          />
         </>
       ) : null}
 
@@ -326,7 +448,11 @@ function Day1Extras() {
         <>
           <SectionTitle label="Suggested to start" />
           {day1.actions.map((item) => (
-            <ActionCard key={item.title} item={item} previewTitle={item.title} />
+            <ActionCard
+              key={item.title}
+              item={item}
+              previewTitle={item.title}
+            />
           ))}
         </>
       ) : null}
@@ -349,6 +475,11 @@ function Day1Extras() {
 export function FirstRunCompleteScreen() {
   const { user, daysSinceFirstLogin, completeFirstRun } = useAuth();
   const { tokens } = useFirstRunV2Theme();
+  const completeDays = useCompleteDays();
+  const recordSuggestionFeedback = useMutation(
+    api.firstRunDays.recordSuggestionFeedback,
+  );
+  const seedDayActivities = useMutation(api.firstRunDays.seedDayActivities);
 
   // Determine max unlocked day: daysSinceFirstLogin is 0-based days after first login
   // Day 1 is always unlocked. daysSinceFirstLogin=0 → day 1, 1 → day 2, etc.
@@ -357,8 +488,39 @@ export function FirstRunCompleteScreen() {
 
   const [selectedDay, setSelectedDay] = useState<number>(maxUnlocked);
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+  const [startedIds, setStartedIds] = useState<Set<string>>(new Set());
+  const [startedAtById, setStartedAtById] = useState<Record<string, number>>(
+    {},
+  );
 
-  const currentDay = COMPLETE_DAYS[selectedDay - 1];
+  // Auto-seed activities for the current day if they haven't been seeded yet.
+  // This handles the case where onboarding was initialized before the seeding
+  // code was deployed — the scheduled seedDayActivitiesForUser never ran.
+  const seededDaysRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    // Check if the current day's activities came from the backend (have assignmentId)
+    // or are static fallback (no assignmentId). If static, trigger seeding.
+    const currentDayData = completeDays[maxUnlocked - 1];
+    const hasBackendActivities = currentDayData?.activities?.some(
+      (a) => a.assignmentId,
+    );
+
+    if (!hasBackendActivities && !seededDaysRef.current.has(maxUnlocked)) {
+      seededDaysRef.current.add(maxUnlocked);
+      // Seed all days up to and including the current unlocked day
+      for (let d = 1; d <= maxUnlocked; d++) {
+        const dayData = completeDays[d - 1];
+        const dayHasBackend = dayData?.activities?.some((a) => a.assignmentId);
+        if (!dayHasBackend) {
+          void seedDayActivities({ dayNumber: d }).catch(() => {
+            // Seeding failed silently — static fallback will still work
+          });
+        }
+      }
+    }
+  }, [completeDays, maxUnlocked, seedDayActivities]);
+
+  const currentDay = completeDays[selectedDay - 1] ?? completeDays[0];
 
   function handleToggleActivity(id: string) {
     setDoneIds((prev) => {
@@ -377,77 +539,147 @@ export function FirstRunCompleteScreen() {
     router.replace("/(tabs)" as never);
   }
 
+  function handleSuggestionFeedback(
+    suggestionId: string | undefined,
+    verdict: "accepted" | "dismissed" | "snoozed",
+  ) {
+    if (!suggestionId) {
+      Alert.alert(
+        "Suggestion unavailable",
+        "No backend suggestion is attached to this card yet.",
+      );
+      return;
+    }
+
+    void recordSuggestionFeedback({
+      suggestionId: suggestionId as any,
+      verdict,
+    }).catch((error) => {
+      Alert.alert(
+        "Update failed",
+        error instanceof Error
+          ? error.message
+          : "Could not save suggestion feedback.",
+      );
+    });
+  }
+
   // Pull biggestBlocker from user profile if available
-  const biggestBlocker =
-    (user as { biggestBlocker?: string } | null)?.biggestBlocker as
-      | "follow_through"
-      | "distraction"
-      | "overwhelm"
-      | "energy"
-      | undefined;
+  const biggestBlocker = (user as { biggestBlocker?: string } | null)
+    ?.biggestBlocker as
+    | "follow_through"
+    | "distraction"
+    | "overwhelm"
+    | "energy"
+    | undefined;
 
   return (
     <ActivitySheetsProvider
       biggestBlocker={biggestBlocker ?? "follow_through"}
+      onActivityStart={(id, startedAt) => {
+        setStartedIds((prev) => {
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
+        if (typeof startedAt === "number") {
+          setStartedAtById((prev) => ({ ...prev, [id]: startedAt }));
+        }
+      }}
       onActivityComplete={(id) => {
         setDoneIds((prev) => {
           const next = new Set(prev);
           next.add(id);
           return next;
         });
+        setStartedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        setStartedAtById((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      }}
+      onActivitySkip={(id) => {
+        setStartedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        setStartedAtById((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
       }}
     >
-    <Container>
-      <FirstRunScroll>
-        {/* ── Top row: label + day counter + avatar ── */}
-        <View style={styles.topRow}>
-          <View style={styles.topRowLeft}>
-            <Text
-              selectable
-              variant="muted"
-              style={[styles.screenLabel, { color: tokens.textSecondary }]}
-            >
-              First run
-            </Text>
-            <View
-              style={[
-                styles.dayCounter,
-                {
-                  backgroundColor: tokens.primaryMuted,
-                  borderColor: tokens.cardBorder,
-                },
-              ]}
-            >
+      <Container>
+        <FirstRunScroll>
+          {/* ── Top row: label + day counter + avatar ── */}
+          <View style={styles.topRow}>
+            <View style={styles.topRowLeft}>
               <Text
                 selectable
                 variant="muted"
-                style={[styles.dayCounterText, { color: tokens.primary }]}
+                style={[styles.screenLabel, { color: tokens.textSecondary }]}
               >
-                Day {maxUnlocked} of 7
+                First run
               </Text>
+              <View
+                style={[
+                  styles.dayCounter,
+                  {
+                    backgroundColor: tokens.primaryMuted,
+                    borderColor: tokens.cardBorder,
+                  },
+                ]}
+              >
+                <Text
+                  selectable
+                  variant="muted"
+                  style={[styles.dayCounterText, { color: tokens.background }]}
+                >
+                  Day {maxUnlocked} of 7
+                </Text>
+              </View>
             </View>
+            <AvatarButton name={user?.name} />
           </View>
-          <AvatarButton name={user?.name} />
-        </View>
 
-        {/* ── Day chip selector ── */}
-        <DayChipRow
-          selectedDay={selectedDay}
-          maxUnlocked={maxUnlocked}
-          onSelect={setSelectedDay}
-        />
-
-        {/* ── Animated per-day content ── */}
-        <ExperienceStage stageKey={`day-${selectedDay}`}>
-          <DayContent
-            day={currentDay}
-            doneIds={doneIds}
-            onToggleActivity={handleToggleActivity}
-            onCompleteCta={handleCompleteCta}
+          {/* ── Day chip selector ── */}
+          <DayChipRow
+            completeDays={completeDays}
+            selectedDay={selectedDay}
+            maxUnlocked={maxUnlocked}
+            onSelect={setSelectedDay}
           />
-        </ExperienceStage>
-      </FirstRunScroll>
-    </Container>
+
+          {/* ── Animated per-day content ── */}
+          <ExperienceStage stageKey={`day-${selectedDay}`}>
+            <DayContent
+              day={currentDay}
+              doneIds={doneIds}
+              startedIds={startedIds}
+              startedAtById={startedAtById}
+              onToggleActivity={handleToggleActivity}
+              onCompleteCta={handleCompleteCta}
+              onSuggestionFeedback={handleSuggestionFeedback}
+              onGoToPreviousDay={() => {
+                // Navigate to the most recent day with incomplete activities
+                for (let d = selectedDay - 1; d >= 1; d--) {
+                  if (d <= maxUnlocked) {
+                    setSelectedDay(d);
+                    return;
+                  }
+                }
+              }}
+            />
+          </ExperienceStage>
+        </FirstRunScroll>
+      </Container>
     </ActivitySheetsProvider>
   );
 }
@@ -556,5 +788,39 @@ const styles = StyleSheet.create({
   dotsRowWrapper: {
     marginTop: UI_PRESETS.spacing.md,
     paddingHorizontal: UI_PRESETS.spacing.section,
+  },
+  // Incomplete activities banner
+  incompleteBanner: {
+    borderRadius: UI_PRESETS.radius.lg,
+    borderWidth: 1,
+    padding: UI_PRESETS.spacing.lg,
+  },
+  incompleteBannerContent: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: UI_PRESETS.spacing.md,
+  },
+  incompleteBannerIcon: {
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  incompleteBannerText: {
+    flex: 1,
+    gap: 2,
+  },
+  incompleteBannerTitle: {
+    fontFamily: "Geist",
+    fontWeight: "600",
+    fontSize: Typography.bodySM.fontSize,
+    lineHeight: Typography.bodySM.lineHeight,
+  },
+  incompleteBannerSub: {
+    fontSize: Typography.labelXS.fontSize,
+    lineHeight: Typography.labelXS.lineHeight,
+  },
+  incompleteBannerChevron: {
+    fontSize: 20,
+    fontWeight: "600",
+    lineHeight: 24,
   },
 });

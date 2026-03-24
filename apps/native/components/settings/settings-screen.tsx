@@ -25,7 +25,7 @@ import {
   SettingsSeparator,
   showSettingsPreview,
 } from "@/components/settings/shared";
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 
 const INITIAL_TOGGLES: Record<SettingsToggleKey, boolean> = {
   proactiveSuggestions: true,

@@ -1,7 +1,7 @@
 import { Card, Text } from "@/components/ui";
 import { FirstRunCompleteScreen } from "@/components/first-run-v2/first-run-complete-screen";
 import { Container } from "@/components/container";
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { NAV_THEME, UI_PRESETS } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import { ScrollView, View } from "react-native";

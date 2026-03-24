@@ -31,7 +31,7 @@ import { useFirstRunV2Theme } from "@/components/first-run-v2/tokens";
 import { Container } from "@/components/container";
 import { Chip, Text } from "@/components/ui";
 import { UI_PRESETS, Typography } from "@/lib/constants";
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 
 type JourneyDay = {
   day: number;

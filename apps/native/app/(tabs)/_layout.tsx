@@ -2,7 +2,7 @@ import React from "react";
 
 import { Tabs } from "expo-router";
 
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 
 export default function TabLayout() {
   const { stage } = useAuth();

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { getOptionalUser, requireUserId } from "./lib/identity";
 import {
@@ -180,6 +181,10 @@ export const initializeOnboardingState = mutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, patch);
+      await ctx.scheduler.runAfter(0, internal.firstRunDays.seedDayActivitiesForUser, {
+        userId,
+        dayNumber: 1,
+      });
       return { ok: true };
     }
 
@@ -187,6 +192,10 @@ export const initializeOnboardingState = mutation({
       userId,
       ...patch,
       createdAt: now,
+    });
+    await ctx.scheduler.runAfter(0, internal.firstRunDays.seedDayActivitiesForUser, {
+      userId,
+      dayNumber: 1,
     });
 
     return { ok: true };
@@ -271,6 +280,16 @@ export const advanceOnboardingStage = mutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, patch);
+      if (!hasCompletedOnboarding) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.firstRunDays.seedDayActivitiesForUser,
+          {
+            userId,
+            dayNumber: nextDayNumber,
+          },
+        );
+      }
       return { ok: true };
     }
 
@@ -279,6 +298,12 @@ export const advanceOnboardingStage = mutation({
       ...patch,
       createdAt: now,
     });
+    if (!hasCompletedOnboarding) {
+      await ctx.scheduler.runAfter(0, internal.firstRunDays.seedDayActivitiesForUser, {
+        userId,
+        dayNumber: nextDayNumber,
+      });
+    }
     return { ok: true };
   },
 });

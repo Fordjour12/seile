@@ -1,1 +1,1 @@
-export * from "@/lib/v1-auth-context";
+export * from "@/lib/auth-context";

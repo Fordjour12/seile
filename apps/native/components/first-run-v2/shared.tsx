@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
@@ -954,17 +955,52 @@ export function ExperienceStage({
 
 export function DayActivityCard({
   item,
-  done,
+  status,
+  startedAt,
+  durationMinutes,
   onToggle,
   onStart,
 }: {
   item: import("./data").DayActivityItem;
-  done: boolean;
+  status: "pending" | "started" | "done";
+  startedAt?: number;
+  durationMinutes?: number;
   onToggle: () => void;
   onStart?: () => void;
 }) {
   const { tokens } = useFirstRunV2Theme();
   const hasSheet = !!onStart;
+  const isDone = status === "done";
+  const isStarted = status === "started";
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!isStarted || !startedAt || !durationMinutes) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [durationMinutes, isStarted, startedAt]);
+
+  const remainingSeconds =
+    isStarted && startedAt && durationMinutes
+      ? Math.max(
+          durationMinutes * 60 - Math.floor((now - startedAt) / 1000),
+          0,
+        )
+      : null;
+  const remainingLabel =
+    remainingSeconds == null
+      ? "In progress"
+      : remainingSeconds > 0
+        ? `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(
+            remainingSeconds % 60,
+          ).padStart(2, "0")} remaining`
+        : "Timer elapsed";
 
   return (
     <View
@@ -1005,17 +1041,31 @@ export function DayActivityCard({
               {item.meta}
             </Text>
           ) : null}
+          {isStarted ? (
+            <Text
+              selectable
+              variant="muted"
+              style={{ color: tokens.primary }}
+            >
+              {remainingLabel}
+            </Text>
+          ) : null}
         </View>
         <Pressable
           onPress={onToggle}
           hitSlop={8}
           style={({ pressed }) => [
             styles.dayActivityStatus,
-            done
+            isDone
               ? {
                   backgroundColor: tokens.completionGreen,
                   borderColor: tokens.completionGreen,
                 }
+              : isStarted
+                ? {
+                    backgroundColor: tokens.primaryMuted,
+                    borderColor: tokens.primary,
+                  }
               : {
                   borderColor: tokens.cardBorder,
                   backgroundColor: "transparent",
@@ -1023,9 +1073,19 @@ export function DayActivityCard({
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
-          {done ? (
+          {isDone ? (
             <Text selectable style={styles.dayActivityCheck}>
               ✓
+            </Text>
+          ) : isStarted ? (
+            <Text
+              selectable
+              style={[
+                styles.dayActivityCheck,
+                { color: tokens.primary, fontSize: 11, lineHeight: 13 },
+              ]}
+            >
+              •••
             </Text>
           ) : null}
         </Pressable>
@@ -1044,13 +1104,17 @@ export function DayActivityCard({
           >
             {item.body}
           </Text>
-          {hasSheet && !done ? (
+          {hasSheet && !isDone ? (
             <View style={styles.dayActivityActions}>
               <Pressable
                 onPress={onStart}
                 style={({ pressed }) => [
                   styles.dayActivityStartBtn,
-                  { backgroundColor: tokens.textPrimary },
+                  {
+                    backgroundColor: isStarted
+                      ? tokens.primary
+                      : tokens.textPrimary,
+                  },
                   pressed && { opacity: tokens.pressedOpacity },
                 ]}
               >
@@ -1061,7 +1125,7 @@ export function DayActivityCard({
                     { color: tokens.textInverse },
                   ]}
                 >
-                  Start
+                  {isStarted ? "Resume" : "Start"}
                 </Text>
               </Pressable>
               <Pressable
@@ -1094,8 +1158,14 @@ export function DayActivityCard({
 
 export function AISuggestionCard({
   item,
+  onAccept,
+  onDismiss,
+  onSnooze,
 }: {
   item: import("./data").AISuggestionItem;
+  onAccept?: () => void;
+  onDismiss?: () => void;
+  onSnooze?: () => void;
 }) {
   const { tokens } = useFirstRunV2Theme();
 
@@ -1143,7 +1213,7 @@ export function AISuggestionCard({
       </Text>
       <View style={styles.aiSuggestionActions}>
         <Pressable
-          onPress={() => showPreview(item.eyebrow, item.text)}
+          onPress={onAccept ?? (() => showPreview(item.eyebrow, item.text))}
           style={({ pressed }) => [
             styles.aiActionButton,
             styles.aiActionAccept,
@@ -1159,7 +1229,7 @@ export function AISuggestionCard({
           </Text>
         </Pressable>
         <Pressable
-          onPress={() => showPreview("Dismiss", "Suggestion dismissed.")}
+          onPress={onDismiss ?? (() => showPreview("Dismiss", "Suggestion dismissed."))}
           style={({ pressed }) => [
             styles.aiActionButton,
             styles.aiActionDismiss,
@@ -1176,7 +1246,7 @@ export function AISuggestionCard({
         </Pressable>
         {item.snoozeLabel ? (
           <Pressable
-            onPress={() => showPreview("Snooze", "Suggestion snoozed.")}
+            onPress={onSnooze ?? (() => showPreview("Snooze", "Suggestion snoozed."))}
             style={({ pressed }) => [
               styles.aiActionButton,
               styles.aiActionSnooze,

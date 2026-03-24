@@ -14,7 +14,7 @@ import { useFonts } from "expo-font";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 import { authClient } from "@/lib/auth-client";
-import { AuthProvider } from "@/lib/v1-auth-context";
+import { AuthProvider } from "@/lib/auth-context";
 import { convex } from "@/lib/convex-client";
 
 import { NAV_THEME } from "@/lib/constants";

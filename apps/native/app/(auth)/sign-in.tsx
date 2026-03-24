@@ -11,7 +11,7 @@ import { AuthPasswordField } from "@/components/auth/auth-password-field";
 import { AuthScrollScreen } from "@/components/auth/auth-scroll-screen";
 import { AuthSocialButton } from "@/components/auth/auth-social-button";
 import { Button, Text } from "@/components/ui";
-import { useAuth } from "@/lib/v1-auth-context";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SignIn() {
   const router = useRouter();

@@ -223,6 +223,7 @@ export const suggestionsTable = defineTable({
   feedbackAt: v.optional(v.number()),
 })
   .index("by_userId", ["userId"])
+  .index("by_userId_phase", ["userId", "phase"])
   .index("by_userId_shownAt", ["userId", "shownAt"]);
 
 export const feedbackTable = defineTable({

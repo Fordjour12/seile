@@ -22,6 +22,7 @@ import React, {
   useState,
 } from "react";
 import {
+  Alert,
   Dimensions,
   KeyboardAvoidingView,
   Modal,
@@ -36,9 +37,15 @@ import Svg, { Circle } from "react-native-svg";
 import Animated, { useAnimatedProps, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useMutation } from "convex/react";
+import { api } from "@seile/backend/convexApi";
 
 import { Text } from "@/components/ui";
 import { NAV_THEME, UI_PRESETS, Typography } from "@/lib/constants";
+import {
+  cancelFocusBlockNotification,
+  scheduleFocusBlockCompletionNotification,
+} from "@/lib/focus-block-notifications";
 import { useColorScheme } from "@/lib/use-color-scheme";
 import type { UserProfileBiggestBlocker } from "@/lib/user-profile";
 import {
@@ -55,29 +62,30 @@ export type ActivitySheetType =
   | "reflect"
   | "walk";
 
-// ─── Stub mutations (replace with real Convex calls later) ──────────────────
-
-function recordActivityEvent(
-  type: ActivitySheetType,
-  action: "started" | "completed" | "skipped",
-  metadata?: Record<string, unknown>,
-) {
-  console.log("[activity_event]", { type, action, ...metadata });
-}
-
-function recordActivityReflection(
+// Stub for when no assignmentId is available (static fallback activities).
+// The real persistence happens in ActivitySheetsProvider via Convex mutation.
+function recordActivityReflectionLocal(
   type: ActivitySheetType,
   useful: string,
   difficulty: string,
 ) {
-  console.log("[activity_reflection]", { type, useful, difficulty, confidenceDelta: 10 });
+  console.log("[activity_reflection:local]", { type, useful, difficulty });
 }
 
 // ─── Context ────────────────────────────────────────────────────────────────
 
 type ActivitySheetsContextValue = {
   /** Open a sheet. Pass the activityId so completion marks the card done. */
-  openSheet: (type: ActivitySheetType, activityId?: string) => void;
+  openSheet: (
+    type: ActivitySheetType,
+    activityId?: string,
+    assignmentId?: string,
+    options?: {
+      startedAt?: number;
+      durationMinutes?: number;
+      task?: string;
+    },
+  ) => void;
 };
 
 const ActivitySheetsContext = createContext<ActivitySheetsContextValue>({
@@ -166,9 +174,21 @@ function CountdownRing({
 
 // ─── Timer hook ─────────────────────────────────────────────────────────────
 
-function useTimer(totalSeconds: number) {
-  const [elapsed, setElapsed] = useState(0);
-  const [running, setRunning] = useState(false);
+function useTimer(
+  totalSeconds: number,
+  {
+    initialElapsedSeconds = 0,
+    autoStart = false,
+  }: {
+    initialElapsedSeconds?: number;
+    autoStart?: boolean;
+  } = {},
+) {
+  const boundedInitialElapsed = Math.min(initialElapsedSeconds, totalSeconds);
+  const [elapsed, setElapsed] = useState(boundedInitialElapsed);
+  const [running, setRunning] = useState(
+    autoStart && boundedInitialElapsed < totalSeconds,
+  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const start = useCallback(() => {
@@ -608,22 +628,81 @@ function PrioritiesSheet({
 // ─── Focus sheet ─────────────────────────────────────────────────────────────
 
 function FocusSheet({
+  activityId,
+  durationMinutes = 25,
+  startedAt,
   onComplete,
   onSkip,
+  onNotificationTaskChange,
+  onTimerStart,
 }: {
+  activityId?: string;
+  durationMinutes?: number;
+  startedAt?: number;
   onComplete: (task: string) => void;
   onSkip: () => void;
+  onNotificationTaskChange: (task: string) => void;
+  onTimerStart: (startedAt: number, metadata?: Record<string, unknown>) => void;
 }) {
   const PURPLE = "#6B5ECD";
   const [task, setTask] = useState("");
-  const timer = useTimer(25 * 60);
+  const hasTask = task.trim().length > 0;
+  const totalSeconds = durationMinutes * 60;
+  const initialElapsedSeconds = startedAt
+    ? Math.min(Math.floor((Date.now() - startedAt) / 1000), totalSeconds)
+    : 0;
+  const [sessionStartedAt, setSessionStartedAt] = useState<number | undefined>(
+    startedAt,
+  );
+  useEffect(() => {
+    setSessionStartedAt(startedAt);
+  }, [startedAt]);
+  const timer = useTimer(totalSeconds, {
+    initialElapsedSeconds,
+    autoStart:
+      startedAt != null &&
+      initialElapsedSeconds > 0 &&
+      initialElapsedSeconds < totalSeconds,
+  });
+
+  function handleStartOrResume() {
+    if (!hasTask) {
+      Alert.alert(
+        "Add a task first",
+        "Enter what you're working on before starting the focus block.",
+      );
+      return;
+    }
+
+    if (timer.running) {
+      timer.pause();
+      return;
+    }
+
+    if (!sessionStartedAt) {
+      const nextStartedAt = Date.now();
+      setSessionStartedAt(nextStartedAt);
+      onTimerStart(nextStartedAt, task ? { task } : undefined);
+      if (activityId) {
+        void scheduleFocusBlockCompletionNotification({
+          activityId,
+          task,
+          secondsUntilCompletion: totalSeconds,
+        }).catch((error) => {
+          console.warn("[focus_notification] failed to schedule", error);
+        });
+      }
+    }
+
+    timer.start();
+  }
 
   return (
     <SheetFrame
       icon="⚡"
       iconBg="#F0EEFF"
       title="Focus block"
-      meta="25 min · no interruptions"
+      meta={`${durationMinutes} min · no interruptions`}
       onClose={onSkip}
       footer={
         <>
@@ -646,7 +725,10 @@ function FocusSheet({
         <TextInput
           style={[styles.priorityInput, { flex: 1 }]}
           value={task}
-          onChangeText={setTask}
+          onChangeText={(value) => {
+            setTask(value);
+            onNotificationTaskChange(value);
+          }}
           placeholder="What are you working on?"
           placeholderTextColor="#C8C5BE"
           returnKeyType="done"
@@ -656,18 +738,21 @@ function FocusSheet({
       {/* Timer */}
       <View style={styles.timerWrap}>
         <CountdownRing
-          totalSeconds={25 * 60}
+          totalSeconds={totalSeconds}
           elapsedSeconds={timer.elapsed}
           color={PURPLE}
           size={140}
         />
         <View style={styles.timerControls}>
           <Pressable
-            onPress={timer.running ? timer.pause : timer.start}
+            onPress={handleStartOrResume}
             style={({ pressed }) => [
               styles.timerPlayBtn,
-              { backgroundColor: PURPLE, borderColor: PURPLE },
-              pressed && { opacity: 0.8 },
+              {
+                backgroundColor: hasTask ? PURPLE : "rgba(107,94,205,0.4)",
+                borderColor: hasTask ? PURPLE : "rgba(107,94,205,0.4)",
+              },
+              pressed && hasTask && { opacity: 0.8 },
             ]}
           >
             <Text selectable style={styles.timerPlayText}>
@@ -757,21 +842,58 @@ const WALK_STEPS = [
 ] as const;
 
 function WalkSheet({
+  durationMinutes = 15,
+  startedAt,
   onComplete,
   onSkip,
+  onTimerStart,
 }: {
+  durationMinutes?: number;
+  startedAt?: number;
   onComplete: () => void;
   onSkip: () => void;
+  onTimerStart: (startedAt: number) => void;
 }) {
   const TEAL = "#2A7A6F";
-  const timer = useTimer(15 * 60);
+  const totalSeconds = durationMinutes * 60;
+  const initialElapsedSeconds = startedAt
+    ? Math.min(Math.floor((Date.now() - startedAt) / 1000), totalSeconds)
+    : 0;
+  const [sessionStartedAt, setSessionStartedAt] = useState<number | undefined>(
+    startedAt,
+  );
+  useEffect(() => {
+    setSessionStartedAt(startedAt);
+  }, [startedAt]);
+  const timer = useTimer(totalSeconds, {
+    initialElapsedSeconds,
+    autoStart:
+      startedAt != null &&
+      initialElapsedSeconds > 0 &&
+      initialElapsedSeconds < totalSeconds,
+  });
+
+  function handleStartOrResume() {
+    if (timer.running) {
+      timer.pause();
+      return;
+    }
+
+    if (!sessionStartedAt) {
+      const nextStartedAt = Date.now();
+      setSessionStartedAt(nextStartedAt);
+      onTimerStart(nextStartedAt);
+    }
+
+    timer.start();
+  }
 
   return (
     <SheetFrame
       icon="🚶"
       iconBg="#E6F5F3"
       title="Walk after lunch"
-      meta="15 min · exercise · resets afternoon focus"
+      meta={`${durationMinutes} min · exercise · resets afternoon focus`}
       onClose={onSkip}
       footer={
         <>
@@ -810,14 +932,14 @@ function WalkSheet({
       {/* Timer */}
       <View style={[styles.timerWrap, { marginTop: 16 }]}>
         <CountdownRing
-          totalSeconds={15 * 60}
+          totalSeconds={totalSeconds}
           elapsedSeconds={timer.elapsed}
           color={TEAL}
           size={110}
         />
         <View style={styles.timerControls}>
           <Pressable
-            onPress={timer.running ? timer.pause : timer.start}
+            onPress={handleStartOrResume}
             style={({ pressed }) => [
               styles.timerPlayBtn,
               { backgroundColor: TEAL, borderColor: TEAL },
@@ -897,49 +1019,152 @@ function SheetGhost({
 // ─── Provider ────────────────────────────────────────────────────────────────
 
 type SheetState =
-  | { kind: "activity"; type: ActivitySheetType; activityId?: string }
-  | { kind: "rating"; completedType: ActivitySheetType; activityId?: string }
+  | {
+      kind: "activity";
+      type: ActivitySheetType;
+      activityId?: string;
+      assignmentId?: string;
+      startedAt?: number;
+      durationMinutes?: number;
+      task?: string;
+    }
+  | {
+      kind: "rating";
+      completedType: ActivitySheetType;
+      activityId?: string;
+      assignmentId?: string;
+    }
   | null;
 
 export function ActivitySheetsProvider({
   children,
   biggestBlocker = "follow_through",
+  onActivityStart,
   onActivityComplete,
+  onActivitySkip,
 }: {
   children: React.ReactNode;
   biggestBlocker?: UserProfileBiggestBlocker;
+  onActivityStart?: (activityId: string, startedAt?: number) => void;
   /** Called with the activity id when a user completes an activity + rating. */
   onActivityComplete?: (activityId: string) => void;
+  onActivitySkip?: (activityId: string) => void;
 }) {
   const [sheetState, setSheetState] = useState<SheetState>(null);
+  const recordActivityReflection = useMutation(
+    api.firstRunDays.recordActivityReflection,
+  );
+  const recordActivityCompletion = useMutation(
+    api.firstRunDays.recordActivityCompletion,
+  );
 
-  const openSheet = useCallback((type: ActivitySheetType, activityId?: string) => {
-    recordActivityEvent(type, "started");
-    setSheetState({ kind: "activity", type, activityId });
-  }, []);
+  const persistActivityEvent = useCallback(
+    (
+      assignmentId: string | undefined,
+      action: "started" | "completed" | "skipped",
+      metadata?: Record<string, unknown>,
+    ) => {
+      if (!assignmentId) {
+        return;
+      }
+
+      void recordActivityCompletion({
+        assignmentId: assignmentId as any,
+        action,
+        metadata,
+        elapsedMs:
+          typeof metadata?.elapsedMs === "number"
+            ? (metadata.elapsedMs as number)
+            : undefined,
+      }).catch((error) => {
+        Alert.alert(
+          "Activity update failed",
+          error instanceof Error ? error.message : "Could not record activity progress.",
+        );
+      });
+    },
+    [recordActivityCompletion],
+  );
+
+  const openSheet = useCallback(
+    (
+      type: ActivitySheetType,
+      activityId?: string,
+      assignmentId?: string,
+      options?: {
+        startedAt?: number;
+        durationMinutes?: number;
+        task?: string;
+      },
+    ) => {
+      if (type !== "focus" && type !== "walk") {
+        persistActivityEvent(assignmentId, "started");
+        if (activityId) onActivityStart?.(activityId);
+      }
+      setSheetState({
+        kind: "activity",
+        type,
+        activityId,
+        assignmentId,
+        startedAt: options?.startedAt,
+        durationMinutes: options?.durationMinutes,
+        task: options?.task,
+      });
+    },
+    [onActivityStart, persistActivityEvent],
+  );
 
   function closeAll() {
     setSheetState(null);
   }
 
   function handleSkip(type: ActivitySheetType) {
-    recordActivityEvent(type, "skipped");
+    const activityId = sheetState?.activityId;
+    const assignmentId = sheetState?.assignmentId;
+    persistActivityEvent(assignmentId, "skipped");
+    if (type === "focus" && activityId) {
+      void cancelFocusBlockNotification(activityId).catch((error) => {
+        console.warn("[focus_notification] failed to cancel", error);
+      });
+    }
+    if (activityId) onActivitySkip?.(activityId);
     closeAll();
   }
 
   function handleComplete(type: ActivitySheetType, metadata?: Record<string, unknown>) {
-    recordActivityEvent(type, "completed", metadata);
     const activityId = sheetState?.activityId;
+    const assignmentId = sheetState?.assignmentId;
+    persistActivityEvent(assignmentId, "completed", metadata);
+    if (type === "focus" && activityId) {
+      void cancelFocusBlockNotification(activityId).catch((error) => {
+        console.warn("[focus_notification] failed to cancel", error);
+      });
+    }
     // Mark the card done immediately
     if (activityId) onActivityComplete?.(activityId);
     // Slide directly into rating sheet
-    setSheetState({ kind: "rating", completedType: type, activityId });
+    setSheetState({ kind: "rating", completedType: type, activityId, assignmentId });
   }
 
   function handleRatingSubmit(useful: string, diff: string) {
     const completedType =
       sheetState?.kind === "rating" ? sheetState.completedType : "checkin";
-    recordActivityReflection(completedType, useful, diff);
+    const assignmentId = sheetState?.assignmentId;
+
+    if (assignmentId) {
+      // Persist reflection to Convex
+      void recordActivityReflection({
+        assignmentId: assignmentId as any,
+        useful: useful || "skipped",
+        difficulty: diff || "skipped",
+      }).catch((error) => {
+        console.warn("[activity_reflection] failed to persist", error);
+      });
+    } else {
+      // Fallback for static activities without an assignmentId
+      recordActivityReflectionLocal(completedType, useful, diff);
+    }
+
     closeAll();
   }
 
@@ -978,8 +1203,65 @@ export function ActivitySheetsProvider({
           )}
           {activeType === "focus" && (
             <FocusSheet
-              onComplete={(task) => handleComplete("focus", { task })}
+              activityId={
+                sheetState?.kind === "activity"
+                  ? sheetState.activityId
+                  : undefined
+              }
+              durationMinutes={
+                sheetState?.kind === "activity"
+                  ? sheetState.durationMinutes
+                  : undefined
+              }
+              startedAt={
+                sheetState?.kind === "activity"
+                  ? sheetState.startedAt
+                  : undefined
+              }
+              onComplete={(task) =>
+                handleComplete("focus", {
+                  task,
+                  startedAt:
+                    sheetState?.kind === "activity"
+                      ? sheetState.startedAt
+                      : undefined,
+                  elapsedMs:
+                    sheetState?.kind === "activity" &&
+                    sheetState.startedAt != null
+                      ? Math.max(Date.now() - sheetState.startedAt, 0)
+                      : undefined,
+                })
+              }
               onSkip={() => handleSkip("focus")}
+              onNotificationTaskChange={(task) => {
+                setSheetState((prev) =>
+                  prev?.kind === "activity"
+                    ? { ...prev, task }
+                    : prev,
+                );
+              }}
+              onTimerStart={(nextStartedAt, metadata) => {
+                const assignmentId =
+                  sheetState?.kind === "activity"
+                    ? sheetState.assignmentId
+                    : undefined;
+                const activityId =
+                  sheetState?.kind === "activity"
+                    ? sheetState.activityId
+                    : undefined;
+                persistActivityEvent(assignmentId, "started", {
+                  startedAt: nextStartedAt,
+                  ...metadata,
+                });
+                if (activityId) {
+                  onActivityStart?.(activityId, nextStartedAt);
+                }
+                setSheetState((prev) =>
+                  prev?.kind === "activity"
+                    ? { ...prev, startedAt: nextStartedAt, task: metadata?.task as string | undefined }
+                    : prev,
+                );
+              }}
             />
           )}
           {activeType === "reflect" && (
@@ -991,8 +1273,51 @@ export function ActivitySheetsProvider({
           )}
           {activeType === "walk" && (
             <WalkSheet
-              onComplete={() => handleComplete("walk")}
+              durationMinutes={
+                sheetState?.kind === "activity"
+                  ? sheetState.durationMinutes
+                  : undefined
+              }
+              startedAt={
+                sheetState?.kind === "activity"
+                  ? sheetState.startedAt
+                  : undefined
+              }
+              onComplete={() =>
+                handleComplete("walk", {
+                  startedAt:
+                    sheetState?.kind === "activity"
+                      ? sheetState.startedAt
+                      : undefined,
+                  elapsedMs:
+                    sheetState?.kind === "activity" &&
+                    sheetState.startedAt != null
+                      ? Math.max(Date.now() - sheetState.startedAt, 0)
+                      : undefined,
+                })
+              }
               onSkip={() => handleSkip("walk")}
+              onTimerStart={(nextStartedAt) => {
+                const assignmentId =
+                  sheetState?.kind === "activity"
+                    ? sheetState.assignmentId
+                    : undefined;
+                const activityId =
+                  sheetState?.kind === "activity"
+                    ? sheetState.activityId
+                    : undefined;
+                persistActivityEvent(assignmentId, "started", {
+                  startedAt: nextStartedAt,
+                });
+                if (activityId) {
+                  onActivityStart?.(activityId, nextStartedAt);
+                }
+                setSheetState((prev) =>
+                  prev?.kind === "activity"
+                    ? { ...prev, startedAt: nextStartedAt }
+                    : prev,
+                );
+              }}
             />
           )}
         </View>

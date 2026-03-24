@@ -1,3 +1,6 @@
+import { useQuery } from "convex/react";
+import { api } from "@seile/backend/convexApi";
+
 export type FirstRunTodayKey =
   | "day1-morning"
   | "day1-evening"
@@ -587,17 +590,22 @@ export type ActivitySheetType =
 
 export type DayActivityItem = {
   id: string;
+  assignmentId?: string;
   icon: string;
   iconType: ActivityIconType;
   title: string;
   meta?: string;
   body?: string;
   done?: boolean;
+  started?: boolean;
+  startedAt?: number;
+  durationMinutes?: number;
   /** Which bottom sheet opens when the user taps Start */
   sheetType?: ActivitySheetType;
 };
 
 export type AISuggestionItem = {
+  suggestionId?: string;
   variant: "purple" | "teal" | "amber";
   confidence: number;
   eyebrow: string;
@@ -649,6 +657,8 @@ export type CompleteDay = {
     items: RecapSummaryItem[];
     ctaLabel: string;
   };
+  /** Number of uncompleted activities from previous days. */
+  incompletePreviousDayCount?: number;
 };
 
 export const COMPLETE_DAYS: CompleteDay[] = [
@@ -735,24 +745,31 @@ export const COMPLETE_DAYS: CompleteDay[] = [
     dotsDone: 1,
     activities: [
       {
-        id: "d2-morning",
-        icon: "🌅",
-        iconType: "habits",
+        id: "d2-checkin",
+        icon: "📋",
+        iconType: "reflection",
         title: "Morning check-in",
-        done: true,
+        meta: "5 min · reflection",
+        body: "How are you feeling compared to yesterday? Track the shift.",
+        sheetType: "checkin",
       },
       {
         id: "d2-focus",
         icon: "⚡",
         iconType: "focus",
-        title: "Focus block",
+        title: "Focus block (25 min)",
+        meta: "25 min · focus",
+        body: "Same as yesterday — one task, no distractions. Building the habit.",
+        sheetType: "focus",
       },
       {
         id: "d2-reflect",
         icon: "🪞",
         iconType: "reflection",
         title: "Reflect on blocker",
+        meta: "10 min · reflection",
         body: "What's the one thing blocking you most right now?",
+        sheetType: "reflect",
       },
     ],
     confidence: [
@@ -774,17 +791,31 @@ export const COMPLETE_DAYS: CompleteDay[] = [
     dotsDone: 2,
     activities: [
       {
-        id: "d3-morning",
-        icon: "🌅",
-        iconType: "habits",
+        id: "d3-checkin",
+        icon: "📋",
+        iconType: "reflection",
         title: "Morning check-in",
-        done: true,
+        meta: "5 min · reflection",
+        body: "Day 3 — patterns are emerging. How does today compare?",
+        sheetType: "checkin",
       },
       {
         id: "d3-focus",
         icon: "⚡",
         iconType: "focus",
-        title: "Focus block",
+        title: "Focus block (25 min)",
+        meta: "25 min · focus",
+        body: "Third session builds real momentum. Pick your highest-value task.",
+        sheetType: "focus",
+      },
+      {
+        id: "d3-walk",
+        icon: "🚶",
+        iconType: "habits",
+        title: "Walk after lunch",
+        meta: "15 min · exercise",
+        body: "Movement resets your afternoon. Notice how you feel after.",
+        sheetType: "walk",
       },
     ],
     suggestion: {
@@ -815,18 +846,40 @@ export const COMPLETE_DAYS: CompleteDay[] = [
     dotsDone: 3,
     activities: [
       {
-        id: "d4-morning",
-        icon: "🌅",
-        iconType: "habits",
+        id: "d4-checkin",
+        icon: "📋",
+        iconType: "reflection",
         title: "Morning check-in",
-        done: true,
+        meta: "5 min · reflection",
+        body: "Consistency is building. Log today's baseline — the AI is watching.",
+        sheetType: "checkin",
       },
       {
         id: "d4-focus",
         icon: "⚡",
         iconType: "focus",
-        title: "Focus block 35 min",
-        meta: "35 min · Deep work",
+        title: "Focus block (35 min)",
+        meta: "35 min · focus",
+        body: "You've earned a longer block. 35 minutes of deep, uninterrupted work.",
+        sheetType: "focus",
+      },
+      {
+        id: "d4-walk",
+        icon: "🚶",
+        iconType: "habits",
+        title: "Walk after lunch",
+        meta: "15 min · exercise",
+        body: "Movement supports your afternoon focus. Make it a ritual.",
+        sheetType: "walk",
+      },
+      {
+        id: "d4-reflect",
+        icon: "🪞",
+        iconType: "reflection",
+        title: "Reflect on progress",
+        meta: "10 min · reflection",
+        body: "What's different about today compared to day 1? Write it down.",
+        sheetType: "reflect",
       },
     ],
     suggestion: {
@@ -863,11 +916,40 @@ export const COMPLETE_DAYS: CompleteDay[] = [
     hasCheckin: true,
     activities: [
       {
+        id: "d5-checkin",
+        icon: "📋",
+        iconType: "reflection",
+        title: "Morning check-in",
+        meta: "5 min · reflection",
+        body: "Midweek energy check. How sustainable does this feel?",
+        sheetType: "checkin",
+      },
+      {
         id: "d5-focus",
         icon: "⚡",
         iconType: "focus",
-        title: "Focus block 35 min",
-        meta: "35 min · Deep work",
+        title: "Focus block (35 min)",
+        meta: "35 min · focus",
+        body: "Stay with 35 minutes. Consistency beats intensity.",
+        sheetType: "focus",
+      },
+      {
+        id: "d5-priorities",
+        icon: "✏️",
+        iconType: "habits",
+        title: "Reprioritize for the week",
+        meta: "10 min · tasks",
+        body: "Halfway through — what are your top 3 priorities for the rest of the week?",
+        sheetType: "priorities",
+      },
+      {
+        id: "d5-reflect",
+        icon: "🪞",
+        iconType: "reflection",
+        title: "Reflect on energy",
+        meta: "10 min · reflection",
+        body: "When did your energy peak this week? When did it dip?",
+        sheetType: "reflect",
       },
     ],
     suggestion: {
@@ -890,6 +972,44 @@ export const COMPLETE_DAYS: CompleteDay[] = [
     insightSub: "These are based on real patterns from your last 5 days.",
     progressPercent: 85,
     dotsDone: 5,
+    activities: [
+      {
+        id: "d6-checkin",
+        icon: "📋",
+        iconType: "reflection",
+        title: "Morning check-in",
+        meta: "5 min · reflection",
+        body: "Almost there. How ready do you feel for a bigger challenge today?",
+        sheetType: "checkin",
+      },
+      {
+        id: "d6-focus",
+        icon: "⚡",
+        iconType: "focus",
+        title: "Focus block (45 min)",
+        meta: "45 min · focus",
+        body: "Your biggest block yet. 45 minutes, one important task. You've earned this.",
+        sheetType: "focus",
+      },
+      {
+        id: "d6-walk",
+        icon: "🚶",
+        iconType: "habits",
+        title: "Walk after lunch",
+        meta: "15 min · exercise",
+        body: "Keep the movement habit alive. It powers your afternoon.",
+        sheetType: "walk",
+      },
+      {
+        id: "d6-reflect",
+        icon: "🪞",
+        iconType: "reflection",
+        title: "Reflect on growth",
+        meta: "10 min · reflection",
+        body: "Compare today's energy and focus to day 1. What's changed?",
+        sheetType: "reflect",
+      },
+    ],
     suggestion: {
       variant: "teal",
       confidence: 82,
@@ -898,15 +1018,6 @@ export const COMPLETE_DAYS: CompleteDay[] = [
       acceptLabel: "I'm in",
       dismissLabel: "Not today",
     },
-    activities: [
-      {
-        id: "d6-focus",
-        icon: "⚡",
-        iconType: "focus",
-        title: "Focus block 45 min",
-        meta: "45 min · Deep work",
-      },
-    ],
     unlock: {
       icon: "👥",
       title: "Add Relationships domain",
@@ -930,6 +1041,35 @@ export const COMPLETE_DAYS: CompleteDay[] = [
     insightSub: "Your personalized plan is ready.",
     progressPercent: 100,
     dotsDone: 6,
+    activities: [
+      {
+        id: "d7-checkin",
+        icon: "📋",
+        iconType: "reflection",
+        title: "Final check-in",
+        meta: "5 min · reflection",
+        body: "Last check-in of week 1. How do you feel right now?",
+        sheetType: "checkin",
+      },
+      {
+        id: "d7-priorities",
+        icon: "✏️",
+        iconType: "habits",
+        title: "Set Week 2 priorities",
+        meta: "10 min · tasks",
+        body: "What are the three most important things for next week?",
+        sheetType: "priorities",
+      },
+      {
+        id: "d7-reflect",
+        icon: "🪞",
+        iconType: "reflection",
+        title: "Week 1 reflection",
+        meta: "10 min · reflection",
+        body: "What did you learn about yourself this week? What will you carry forward?",
+        sheetType: "reflect",
+      },
+    ],
     confidence: [
       { label: "Focus", score: 88, tier: "act" },
       { label: "Habits", score: 84, tier: "act" },
@@ -949,3 +1089,8 @@ export const COMPLETE_DAYS: CompleteDay[] = [
     },
   },
 ];
+
+export function useCompleteDays(): CompleteDay[] {
+  const dynamicDays = useQuery(api.firstRunDays.getCompleteDays);
+  return dynamicDays ?? COMPLETE_DAYS;
+}
