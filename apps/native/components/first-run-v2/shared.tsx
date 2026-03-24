@@ -960,18 +960,22 @@ export function DayActivityCard({
   durationMinutes,
   onToggle,
   onStart,
+  onSkip,
 }: {
   item: import("./data").DayActivityItem;
-  status: "pending" | "started" | "done";
+  status: "pending" | "started" | "done" | "skipped";
   startedAt?: number;
   durationMinutes?: number;
   onToggle: () => void;
   onStart?: () => void;
+  onSkip?: () => void;
 }) {
   const { tokens } = useFirstRunV2Theme();
   const hasSheet = !!onStart;
   const isDone = status === "done";
   const isStarted = status === "started";
+  const isSkipped = status === "skipped";
+  const handleSkip = onSkip ?? onToggle;
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -1061,21 +1065,36 @@ export function DayActivityCard({
                   backgroundColor: tokens.completionGreen,
                   borderColor: tokens.completionGreen,
                 }
-              : isStarted
+              : isSkipped
                 ? {
-                    backgroundColor: tokens.primaryMuted,
-                    borderColor: tokens.primary,
+                    backgroundColor: tokens.completionGreen + "26",
+                    borderColor: tokens.completionGreen,
                   }
-              : {
-                  borderColor: tokens.cardBorder,
-                  backgroundColor: "transparent",
-                },
+                : isStarted
+                  ? {
+                      backgroundColor: tokens.primaryMuted,
+                      borderColor: tokens.primary,
+                    }
+                  : {
+                      borderColor: tokens.cardBorder,
+                      backgroundColor: "transparent",
+                    },
             pressed && { opacity: tokens.pressedOpacity },
           ]}
         >
           {isDone ? (
             <Text selectable style={styles.dayActivityCheck}>
               ✓
+            </Text>
+          ) : isSkipped ? (
+            <Text
+              selectable
+              style={[
+                styles.dayActivityCheck,
+                { color: tokens.completionGreen, fontSize: 13, lineHeight: 15 },
+              ]}
+            >
+              —
             </Text>
           ) : isStarted ? (
             <Text
@@ -1104,7 +1123,7 @@ export function DayActivityCard({
           >
             {item.body}
           </Text>
-          {hasSheet && !isDone ? (
+          {hasSheet && !isDone && !isSkipped ? (
             <View style={styles.dayActivityActions}>
               <Pressable
                 onPress={onStart}
@@ -1129,7 +1148,7 @@ export function DayActivityCard({
                 </Text>
               </Pressable>
               <Pressable
-                onPress={onToggle}
+                onPress={handleSkip}
                 style={({ pressed }) => [
                   styles.dayActivitySkipBtn,
                   { borderColor: tokens.cardBorder },
@@ -1189,7 +1208,7 @@ export function AISuggestionCard({
         <Text
           selectable
           variant="muted"
-          style={[styles.eyebrow, { color: variantColors.text }]}
+          style={[styles.eyebrow, styles.aiSuggestionEyebrow, { color: variantColors.text }]}
         >
           {item.eyebrow}
         </Text>
@@ -1199,7 +1218,10 @@ export function AISuggestionCard({
             { backgroundColor: variantColors.text },
           ]}
         >
-          <Text selectable style={styles.aiConfidenceBadgeText}>
+          <Text
+            selectable
+            style={[styles.aiConfidenceBadgeText, { color: variantColors.bg }]}
+          >
             {item.confidence}%
           </Text>
         </View>
@@ -1223,48 +1245,50 @@ export function AISuggestionCard({
         >
           <Text
             selectable
-            style={[styles.aiActionButtonText, { color: tokens.textInverse }]}
+            style={[styles.aiActionButtonText, { color: variantColors.bg }]}
           >
             {item.acceptLabel}
           </Text>
         </Pressable>
-        <Pressable
-          onPress={onDismiss ?? (() => showPreview("Dismiss", "Suggestion dismissed."))}
-          style={({ pressed }) => [
-            styles.aiActionButton,
-            styles.aiActionDismiss,
-            { borderColor: variantColors.border },
-            pressed && { opacity: tokens.pressedOpacity },
-          ]}
-        >
-          <Text
-            selectable
-            style={[styles.aiActionButtonText, { color: variantColors.text }]}
-          >
-            {item.dismissLabel}
-          </Text>
-        </Pressable>
-        {item.snoozeLabel ? (
+        <View style={styles.aiActionSecondaryRow}>
           <Pressable
-            onPress={onSnooze ?? (() => showPreview("Snooze", "Suggestion snoozed."))}
+            onPress={onDismiss ?? (() => showPreview("Dismiss", "Suggestion dismissed."))}
             style={({ pressed }) => [
               styles.aiActionButton,
-              styles.aiActionSnooze,
-              { borderColor: tokens.cardBorder },
+              styles.aiActionDismiss,
+              { borderColor: variantColors.border, flex: 1 },
               pressed && { opacity: tokens.pressedOpacity },
             ]}
           >
             <Text
               selectable
-              style={[
-                styles.aiActionButtonText,
-                { color: tokens.textSecondary },
-              ]}
+              style={[styles.aiActionButtonText, { color: variantColors.text }]}
             >
-              {item.snoozeLabel}
+              {item.dismissLabel}
             </Text>
           </Pressable>
-        ) : null}
+          {item.snoozeLabel ? (
+            <Pressable
+              onPress={onSnooze ?? (() => showPreview("Snooze", "Suggestion snoozed."))}
+              style={({ pressed }) => [
+                styles.aiActionButton,
+                styles.aiActionSnooze,
+                { borderColor: variantColors.border, flex: 1 },
+                pressed && { opacity: tokens.pressedOpacity },
+              ]}
+            >
+              <Text
+                selectable
+                style={[
+                  styles.aiActionButtonText,
+                  { color: variantColors.text },
+                ]}
+              >
+                {item.snoozeLabel}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </Card>
   );
@@ -2011,13 +2035,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: UI_PRESETS.spacing.md,
   },
+  aiSuggestionEyebrow: {
+    flex: 1,
+  },
   aiConfidenceBadge: {
     borderRadius: UI_PRESETS.radius.full,
     paddingHorizontal: UI_PRESETS.spacing.md,
     paddingVertical: 3,
   },
   aiConfidenceBadgeText: {
-    color: "#ffffff",
     fontFamily: "Geist",
     fontWeight: "700",
     fontSize: Typography.labelXS.fontSize,
@@ -2028,15 +2054,20 @@ const styles = StyleSheet.create({
     fontSize: Typography.bodyMD.fontSize,
   },
   aiSuggestionActions: {
+    flexDirection: "column",
+    gap: UI_PRESETS.spacing.sm,
+  },
+  aiActionSecondaryRow: {
     flexDirection: "row",
-    gap: UI_PRESETS.spacing.md,
+    gap: UI_PRESETS.spacing.sm,
   },
   aiActionButton: {
     alignItems: "center",
-    borderRadius: 8,
-    flex: 1,
-    height: 36,
+    borderCurve: "continuous",
+    borderRadius: UI_PRESETS.radius.md,
+    height: 40,
     justifyContent: "center",
+    paddingHorizontal: UI_PRESETS.spacing.lg,
   },
   aiActionAccept: {},
   aiActionDismiss: {

@@ -598,6 +598,7 @@ export type DayActivityItem = {
   body?: string;
   done?: boolean;
   started?: boolean;
+  skipped?: boolean;
   startedAt?: number;
   durationMinutes?: number;
   /** Which bottom sheet opens when the user taps Start */

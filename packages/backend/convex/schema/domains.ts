@@ -114,6 +114,7 @@ export const userDomainsTable = defineTable({
   userId: v.string(),
   domain: aiDomainValidator,
   status: domainStatusValidator,
+  settings: v.optional(v.any()),
   activatedAt: v.optional(v.number()),
   pinnedAt: v.optional(v.number()),
   deactivatedAt: v.optional(v.number()),

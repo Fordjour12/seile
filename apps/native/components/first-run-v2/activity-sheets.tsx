@@ -654,6 +654,7 @@ function FocusSheet({
   const [sessionStartedAt, setSessionStartedAt] = useState<number | undefined>(
     startedAt,
   );
+  const canMarkComplete = hasTask && sessionStartedAt != null;
   useEffect(() => {
     setSessionStartedAt(startedAt);
   }, [startedAt]);
@@ -709,7 +710,17 @@ function FocusSheet({
           <SheetCta
             label="Mark complete"
             color={PURPLE}
-            onPress={() => onComplete(task)}
+            onPress={() => {
+              if (!canMarkComplete) {
+                Alert.alert(
+                  "Start the focus block first",
+                  "Add what you're working on and start the timer before marking it complete.",
+                );
+                return;
+              }
+
+              onComplete(task);
+            }}
           />
           <SheetGhost label="Skip" onPress={onSkip} />
         </>

@@ -40,6 +40,7 @@ type DayActivityItem = {
   body?: string;
   done?: boolean;
   started?: boolean;
+  skipped?: boolean;
   startedAt?: number;
   durationMinutes?: number;
   assignmentId?: string;
@@ -1026,6 +1027,11 @@ export const getCompleteDays = query({
         .filter((event) => event.action === "started")
         .map((event) => event.assignmentId),
     );
+    const skippedAssignmentIds = new Set(
+      activityEvents
+        .filter((event) => event.action === "skipped")
+        .map((event) => event.assignmentId),
+    );
     const latestStartedAtByAssignment = new Map<string, number>();
     for (const event of activityEvents) {
       if (event.action !== "started") {
@@ -1091,6 +1097,10 @@ export const getCompleteDays = query({
                     (startedAssignmentIds.has(assignment._id) &&
                       assignment.status !== "completed" &&
                       assignment.status !== "skipped"),
+                  skipped:
+                    assignment.status === "skipped" ||
+                    (skippedAssignmentIds.has(assignment._id) &&
+                      assignment.status !== "completed"),
                   startedAt: latestStartedAtByAssignment.get(assignment._id),
                   sheetType: activitySheetTypeForSlug(activityTemplate.slug),
                 } satisfies DayActivityItem,

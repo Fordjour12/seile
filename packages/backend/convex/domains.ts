@@ -62,6 +62,7 @@ export const activateDomain = mutation({
       userId,
       domain,
       status: "active",
+      settings: {},
       activatedAt: now,
       createdAt: now,
       updatedAt: now,
@@ -140,5 +141,47 @@ export const togglePinDomain = mutation({
       updatedAt: now,
     });
     return { ok: true, pinned: true };
+  },
+});
+
+export const saveDomainSetting = mutation({
+  args: {
+    domain: aiDomainValidator,
+    key: v.string(),
+    value: v.union(v.string(), v.boolean()),
+  },
+  handler: async (ctx, { domain, key, value }) => {
+    const userId = await requireUserId(ctx);
+    const now = Date.now();
+
+    const existing = await ctx.db
+      .query("userDomains")
+      .withIndex("by_userId_domain", (q) =>
+        q.eq("userId", userId).eq("domain", domain),
+      )
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        settings: {
+          ...(existing.settings ?? {}),
+          [key]: value,
+        },
+        updatedAt: now,
+      });
+      return { ok: true };
+    }
+
+    await ctx.db.insert("userDomains", {
+      userId,
+      domain,
+      status: "active",
+      settings: { [key]: value },
+      activatedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return { ok: true };
   },
 });

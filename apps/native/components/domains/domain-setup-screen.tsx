@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from "react-native";
 
@@ -32,6 +34,8 @@ type SetupRowConfig = {
   sub: string;
   right: RowRight;
 };
+
+type DomainSettings = Record<string, string | boolean>;
 
 type SetupSectionConfig = {
   title: string;
@@ -474,6 +478,40 @@ function useDomainTheme() {
   return { theme, isDark: isDarkColorScheme };
 }
 
+function getRowSettingKey(row: SetupRowConfig) {
+  if (row.right.type === "toggle") {
+    return row.right.toggleKey;
+  }
+
+  return row.label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getStoredRowValue(
+  row: SetupRowConfig,
+  settings: DomainSettings,
+): string | boolean | undefined {
+  return settings[getRowSettingKey(row)];
+}
+
+function getRowDisplayValue(
+  row: SetupRowConfig,
+  settings: DomainSettings,
+): string | undefined {
+  const stored = getStoredRowValue(row, settings);
+  if (typeof stored === "string" && stored.trim().length > 0) {
+    return stored;
+  }
+
+  if (row.right.type === "value") {
+    return row.right.value;
+  }
+
+  return undefined;
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 /* ── Top navigation bar ─────────────────────────────────────────────────── */
@@ -760,14 +798,18 @@ function ActiveHero({
 function SetupSection({
   section,
   accentColor,
+  settings,
   toggles,
   onToggle,
+  onEdit,
   onDeactivate,
 }: {
   section: SetupSectionConfig;
   accentColor: string;
+  settings: DomainSettings;
   toggles: Record<string, boolean>;
   onToggle: (key: string, value: boolean) => void;
+  onEdit: (row: SetupRowConfig) => void;
   onDeactivate?: () => void;
 }) {
   const { theme } = useDomainTheme();
@@ -810,8 +852,10 @@ function SetupSection({
             <SetupRow
               row={row}
               accentColor={accentColor}
+              settings={settings}
               toggles={toggles}
               onToggle={onToggle}
+              onEdit={onEdit}
               onDeactivate={onDeactivate}
             />
           </React.Fragment>
@@ -826,20 +870,28 @@ function SetupSection({
 function SetupRow({
   row,
   accentColor,
+  settings,
   toggles,
   onToggle,
+  onEdit,
   onDeactivate,
 }: {
   row: SetupRowConfig;
   accentColor: string;
+  settings: DomainSettings;
   toggles: Record<string, boolean>;
   onToggle: (key: string, value: boolean) => void;
+  onEdit: (row: SetupRowConfig) => void;
   onDeactivate?: () => void;
 }) {
   const { theme } = useDomainTheme();
   const right = row.right;
   const isDanger = right.type === "danger";
   const isToggle = right.type === "toggle";
+  const displayValue = getRowDisplayValue(row, settings);
+  const hasStoredValue =
+    typeof getStoredRowValue(row, settings) === "string" &&
+    (getStoredRowValue(row, settings) as string).trim().length > 0;
 
   function handlePress() {
     if (isDanger) {
@@ -856,7 +908,7 @@ function SetupRow({
         ],
       );
     } else if (!isToggle) {
-      Alert.alert(row.label, `${row.sub}\n\nEditable in a future update.`);
+      onEdit(row);
     }
   }
 
@@ -890,13 +942,16 @@ function SetupRow({
 
       <View style={styles.rowRight}>
         {right.type === "badge-todo" && (
-          <Badge variant="subtle" color="default">
-            Not set
+          <Badge variant={hasStoredValue ? "outline" : "subtle"} color={hasStoredValue ? "success" : "default"}>
+            {hasStoredValue ? "Set" : "Not set"}
           </Badge>
         )}
         {right.type === "badge-done" && (
-          <Badge variant="outline" color="success">
-            Set
+          <Badge
+            variant={hasStoredValue ? "outline" : "subtle"}
+            color={hasStoredValue ? "success" : "default"}
+          >
+            {hasStoredValue ? "Set" : "Not set"}
           </Badge>
         )}
         {right.type === "toggle" && (
@@ -912,7 +967,7 @@ function SetupRow({
               variant="muted"
               style={{ color: theme.mutedForeground }}
             >
-              {right.value}
+              {displayValue ?? "—"}
             </Text>
             <FontAwesome
               name="angle-right"
@@ -940,6 +995,92 @@ function SetupRow({
   );
 }
 
+function EditValueModal({
+  visible,
+  row,
+  value,
+  accentColor,
+  onChangeValue,
+  onClose,
+  onSave,
+}: {
+  visible: boolean;
+  row: SetupRowConfig | null;
+  value: string;
+  accentColor: string;
+  onChangeValue: (value: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const { theme } = useDomainTheme();
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalRoot}>
+        <Pressable style={styles.modalBackdrop} onPress={onClose} />
+        <View
+          style={[
+            styles.modalCard,
+            { backgroundColor: theme.card, borderColor: theme.border },
+          ]}
+        >
+          <Text
+            selectable
+            variant="small"
+            style={[styles.modalTitle, { color: theme.foreground }]}
+          >
+            {row?.label ?? "Edit setting"}
+          </Text>
+          <Text
+            selectable
+            variant="muted"
+            style={[styles.modalSubtitle, { color: theme.mutedForeground }]}
+          >
+            {row?.sub ?? ""}
+          </Text>
+
+          <TextInput
+            value={value}
+            onChangeText={onChangeValue}
+            placeholder="Enter a value"
+            placeholderTextColor={theme.mutedForeground}
+            style={[
+              styles.modalInput,
+              {
+                backgroundColor: theme.muted,
+                borderColor: theme.border,
+                color: theme.foreground,
+              },
+            ]}
+            autoFocus
+          />
+
+          <View style={styles.modalActions}>
+            <Button
+              title="Cancel"
+              variant="outline"
+              size="sm"
+              onPress={onClose}
+            />
+            <Button
+              title="Save"
+              variant="primary"
+              size="sm"
+              onPress={onSave}
+              style={{ backgroundColor: accentColor }}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
@@ -959,11 +1100,13 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
   const activate = useMutation(api.domains.activateDomain);
   const deactivate = useMutation(api.domains.deactivateDomain);
   const togglePin = useMutation(api.domains.togglePinDomain);
+  const saveDomainSetting = useMutation(api.domains.saveDomainSetting);
 
   // Derive active state
   const isActive =
     domainStatus?.status === "active" || domainStatus?.status === "pinned";
   const isPinned = domainStatus?.status === "pinned";
+  const domainSettings = (domainStatus?.settings ?? {}) as DomainSettings;
 
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
@@ -976,6 +1119,27 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
     );
     return init;
   });
+  const [editingRow, setEditingRow] = useState<SetupRowConfig | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+
+  useEffect(() => {
+    if (!config) {
+      return;
+    }
+
+    const nextToggles: Record<string, boolean> = {};
+    config.sections.forEach((section) =>
+      section.rows.forEach((row) => {
+        if (row.right.type === "toggle") {
+          const stored = domainSettings[row.right.toggleKey];
+          nextToggles[row.right.toggleKey] =
+            typeof stored === "boolean" ? stored : (row.right.initial ?? false);
+        }
+      }),
+    );
+
+    setToggles(nextToggles);
+  }, [config, domainSettings]);
 
   /* ── Not found fallback ──────────────────────────────────────────────── */
 
@@ -1010,6 +1174,22 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
 
   function handleToggle(key: string, value: boolean) {
     setToggles((prev) => ({ ...prev, [key]: value }));
+    void saveDomainSetting({
+      domain: domainKey as any,
+      key,
+      value,
+    }).catch((error) => {
+      Alert.alert(
+        "Could not save setting",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    });
+  }
+
+  function handleEdit(row: SetupRowConfig) {
+    const stored = getStoredRowValue(row, domainSettings);
+    setEditingRow(row);
+    setEditingValue(typeof stored === "string" ? stored : "");
   }
 
   async function handleActivate() {
@@ -1026,6 +1206,26 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
     if (!result.ok && result.error) {
       Alert.alert("Pin limit", result.error);
     }
+  }
+
+  async function handleSaveEdit() {
+    if (!editingRow) {
+      return;
+    }
+
+    const value = editingValue.trim();
+    if (!value) {
+      Alert.alert("Enter a value", `Add a value for ${editingRow.label.toLowerCase()}.`);
+      return;
+    }
+
+    await saveDomainSetting({
+      domain: domainKey as any,
+      key: getRowSettingKey(editingRow),
+      value,
+    });
+    setEditingRow(null);
+    setEditingValue("");
   }
 
   /* ── Render ──────────────────────────────────────────────────────────── */
@@ -1056,14 +1256,36 @@ export function DomainSetupScreen({ domainKey }: { domainKey: string }) {
                 key={section.title}
                 section={section}
                 accentColor={accentColor}
+                settings={domainSettings}
                 toggles={toggles}
                 onToggle={handleToggle}
+                onEdit={handleEdit}
                 onDeactivate={handleDeactivate}
               />
             ))}
           </>
         )}
       </ScrollView>
+
+      <EditValueModal
+        visible={editingRow != null}
+        row={editingRow}
+        value={editingValue}
+        accentColor={accentColor}
+        onChangeValue={setEditingValue}
+        onClose={() => {
+          setEditingRow(null);
+          setEditingValue("");
+        }}
+        onSave={() => {
+          void handleSaveEdit().catch((error) => {
+            Alert.alert(
+              "Could not save setting",
+              error instanceof Error ? error.message : "Please try again.",
+            );
+          });
+        }}
+      />
     </Container>
   );
 }
@@ -1127,6 +1349,45 @@ const styles = StyleSheet.create({
     fontFamily: "Geist",
     fontWeight: "600",
     fontSize: 13,
+  },
+  modalRoot: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: UI_PRESETS.spacing.section,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  modalCard: {
+    width: "100%",
+    borderRadius: UI_PRESETS.radius.xl,
+    borderWidth: 1,
+    padding: UI_PRESETS.spacing.xl,
+    gap: UI_PRESETS.spacing.lg,
+  },
+  modalTitle: {
+    fontFamily: "Geist",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  modalSubtitle: {
+    lineHeight: 18,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: UI_PRESETS.radius.lg,
+    minHeight: 48,
+    paddingHorizontal: UI_PRESETS.spacing.lg,
+    paddingVertical: UI_PRESETS.spacing.md,
+    fontFamily: "Figtree",
+    fontSize: 15,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: UI_PRESETS.spacing.md,
   },
 
   /* ── Inactive hero ────────────────────────────────────────────────── */

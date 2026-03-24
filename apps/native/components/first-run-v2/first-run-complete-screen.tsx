@@ -252,8 +252,10 @@ function DayContent({
   day,
   doneIds,
   startedIds,
+  skippedIds,
   startedAtById,
   onToggleActivity,
+  onSkipActivity,
   onCompleteCta,
   onSuggestionFeedback,
   onGoToPreviousDay,
@@ -261,8 +263,10 @@ function DayContent({
   day: CompleteDay;
   doneIds: Set<string>;
   startedIds: Set<string>;
+  skippedIds: Set<string>;
   startedAtById: Record<string, number>;
   onToggleActivity: (id: string) => void;
+  onSkipActivity: (id: string, assignmentId?: string) => void;
   onCompleteCta: () => void;
   onSuggestionFeedback: (
     suggestionId: string | undefined,
@@ -353,18 +357,33 @@ function DayContent({
           <SectionTitle label="Suggested activities" />
           {day.activities.map((activity: DayActivityItem) => {
             const isDone = activity.done === true || doneIds.has(activity.id);
+            const isSkipped =
+              !isDone &&
+              (activity.skipped === true || skippedIds.has(activity.id));
             const isStarted =
               !isDone &&
+              !isSkipped &&
               (activity.started === true || startedIds.has(activity.id));
 
             return (
               <DayActivityCard
                 key={activity.id}
                 item={activity}
-                status={isDone ? "done" : isStarted ? "started" : "pending"}
+                status={
+                  isDone
+                    ? "done"
+                    : isSkipped
+                      ? "skipped"
+                      : isStarted
+                        ? "started"
+                        : "pending"
+                }
                 startedAt={startedAtById[activity.id] ?? activity.startedAt}
                 durationMinutes={activity.durationMinutes}
                 onToggle={() => onToggleActivity(activity.id)}
+                onSkip={() =>
+                  onSkipActivity(activity.id, activity.assignmentId)
+                }
                 onStart={
                   activity.sheetType
                     ? () =>
@@ -479,16 +498,21 @@ export function FirstRunCompleteScreen() {
   const recordSuggestionFeedback = useMutation(
     api.firstRunDays.recordSuggestionFeedback,
   );
+  const recordActivityCompletion = useMutation(
+    api.firstRunDays.recordActivityCompletion,
+  );
   const seedDayActivities = useMutation(api.firstRunDays.seedDayActivities);
 
   // Determine max unlocked day: daysSinceFirstLogin is 0-based days after first login
   // Day 1 is always unlocked. daysSinceFirstLogin=0 → day 1, 1 → day 2, etc.
+  // In dev mode all 7 days are unlocked so the full flow can be exercised quickly.
   const rawDays = daysSinceFirstLogin ?? 0;
-  const maxUnlocked = Math.min(Math.max(rawDays + 1, 1), 7);
+  const maxUnlocked = __DEV__ ? 7 : Math.min(Math.max(rawDays + 1, 1), 7);
 
   const [selectedDay, setSelectedDay] = useState<number>(maxUnlocked);
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [startedIds, setStartedIds] = useState<Set<string>>(new Set());
+  const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
   const [startedAtById, setStartedAtById] = useState<Record<string, number>>(
     {},
   );
@@ -532,6 +556,39 @@ export function FirstRunCompleteScreen() {
       }
       return next;
     });
+  }
+
+  function handleSkipActivity(id: string, assignmentId?: string) {
+    // Optimistic local update
+    setSkippedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    setStartedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setStartedAtById((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    // Persist to backend if we have an assignment
+    if (assignmentId) {
+      void recordActivityCompletion({
+        assignmentId: assignmentId as any,
+        action: "skipped",
+      }).catch((error) => {
+        Alert.alert(
+          "Update failed",
+          error instanceof Error
+            ? error.message
+            : "Could not save activity skip.",
+        );
+      });
+    }
   }
 
   async function handleCompleteCta() {
@@ -604,6 +661,11 @@ export function FirstRunCompleteScreen() {
         });
       }}
       onActivitySkip={(id) => {
+        setSkippedIds((prev) => {
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
         setStartedIds((prev) => {
           const next = new Set(prev);
           next.delete(id);
@@ -663,8 +725,10 @@ export function FirstRunCompleteScreen() {
               day={currentDay}
               doneIds={doneIds}
               startedIds={startedIds}
+              skippedIds={skippedIds}
               startedAtById={startedAtById}
               onToggleActivity={handleToggleActivity}
+              onSkipActivity={handleSkipActivity}
               onCompleteCta={handleCompleteCta}
               onSuggestionFeedback={handleSuggestionFeedback}
               onGoToPreviousDay={() => {
